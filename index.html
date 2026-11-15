@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Snowflake Interview Lab · Course Home</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/space-grotesk@5/300.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/space-grotesk@5/700.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/ibm-plex-sans@5/300.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/ibm-plex-sans@5/400.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/ibm-plex-sans@5/600.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/jetbrains-mono@5/400.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/jetbrains-mono@5/700.css">
+<style>
+:root{
+  --bg:#F2F6FA;--card:#FFFFFF;--card2:#E9EFF5;--ink:#0B1B2B;--ink2:#46596B;--ink3:#7F90A2;
+  --line:rgba(11,27,43,.12);--line2:rgba(11,27,43,.22);
+  --ice:#0A86C2;--ice-s:#DCEFF9;--amber:#B86F00;--amber-s:#FFF0D4;--teal:#0B8A6A;--teal-s:#DAF3EB;
+  --red:#C93C3C;--red-s:#FCE4E4;--grid:rgba(10,134,194,.06);
+  --f-head:"Space Grotesk",sans-serif;--f-body:"IBM Plex Sans",sans-serif;--f-mono:"JetBrains Mono",monospace;
+}
+[data-theme="dark"]{
+  --bg:#08121D;--card:#0F1D2C;--card2:#16293B;--ink:#E5EDF5;--ink2:#9DB0C3;--ink3:#687D91;
+  --line:rgba(229,237,245,.10);--line2:rgba(229,237,245,.22);
+  --ice:#4CC3F0;--ice-s:rgba(76,195,240,.13);--amber:#FFB938;--amber-s:rgba(255,185,56,.13);--teal:#3FD3A8;--teal-s:rgba(63,211,168,.13);
+  --red:#FF7070;--red-s:rgba(255,112,112,.14);--grid:rgba(76,195,240,.05);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:var(--f-body);color:var(--ink);line-height:1.7;font-size:16px;
+  background:
+    radial-gradient(1200px 600px at 85% -10%,var(--ice-s),transparent 60%),
+    radial-gradient(900px 500px at -10% 30%,var(--teal-s),transparent 60%),
+    linear-gradient(var(--grid) 1px,transparent 1px) 0 0/32px 32px,
+    linear-gradient(90deg,var(--grid) 1px,transparent 1px) 0 0/32px 32px,
+    var(--bg);
+  background-attachment:fixed;min-height:100vh}
+.top{position:sticky;top:0;z-index:30;display:flex;align-items:center;gap:16px;padding:12px 28px;
+  border-bottom:1px solid var(--line);background:color-mix(in srgb,var(--bg) 82%,transparent);
+  backdrop-filter:saturate(1.4) blur(8px)}
+.brand{font-family:var(--f-mono);font-weight:700;letter-spacing:.06em;font-size:13px}
+.brand b{color:var(--ice)}
+.theme{margin-left:auto;border:1px solid var(--line2);background:var(--card);color:var(--ink);
+  border-radius:8px;padding:5px 10px;font-size:13px;cursor:pointer;font-family:var(--f-body)}
+.hero{max-width:900px;margin:0 auto;padding:72px 28px 48px}
+.eyebrow{font-family:var(--f-mono);font-size:12px;letter-spacing:.16em;color:var(--ice);margin-bottom:12px}
+h1{font-family:var(--f-head);font-weight:700;font-size:clamp(44px,7vw,88px);line-height:1;letter-spacing:-.03em;margin-bottom:20px}
+h1 .thin{font-weight:300;color:var(--ink2)}
+.lead{font-size:18px;font-weight:300;color:var(--ink2);max-width:680px;margin-bottom:36px}
+.pills{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:52px}
+.pill{font-family:var(--f-mono);font-size:12px;padding:4px 12px;border-radius:99px;
+  border:1px solid var(--line2);color:var(--ink2);background:var(--card)}
+.pill.ok{border-color:var(--teal);color:var(--teal);background:var(--teal-s)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px;
+  max-width:1200px;margin:0 auto 80px;padding:0 28px}
+.card{display:block;border:1px solid var(--line);border-radius:14px;padding:22px 24px;
+  background:var(--card);text-decoration:none;color:var(--ink);transition:all .18s;position:relative;overflow:hidden}
+.card:hover{border-color:var(--ice);transform:translateY(-2px);box-shadow:0 8px 32px rgba(10,134,194,.12)}
+.card::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px}
+.card.arch::before{background:var(--amber)}
+.card.load::before{background:var(--teal)}
+.card.perf::before{background:var(--ice)}
+.card.ing::before{background:var(--amber)}
+.card.dyn::before{background:var(--teal)}
+.card.semi::before{background:var(--ice)}
+.card.prot::before{background:var(--amber)}
+.card.sec::before{background:var(--teal)}
+.card.cost::before{background:var(--ice)}
+.card.share::before{background:var(--amber)}
+.card.ai::before{background:var(--teal)}
+.card.sql::before{background:var(--ice)}
+.card.mod::before{background:var(--amber)}
+.card.sys::before{background:var(--teal)}
+.card-num{font-family:var(--f-mono);font-size:11px;letter-spacing:.12em;color:var(--ink3);margin-bottom:8px}
+.card-title{font-family:var(--f-head);font-weight:700;font-size:18px;margin-bottom:4px;line-height:1.2}
+.card-sub{font-size:13px;color:var(--ink2);margin-bottom:14px;line-height:1.5}
+.card-meta{display:flex;flex-wrap:wrap;gap:6px}
+.tag{font-family:var(--f-mono);font-size:10px;padding:2px 8px;border-radius:99px;
+  border:1px solid var(--line2);color:var(--ink3)}
+.tag.q{border-color:var(--amber);color:var(--amber);background:var(--amber-s)}
+.tag.s{border-color:var(--ice);color:var(--ice);background:var(--ice-s)}
+.cta{font-family:var(--f-mono);font-size:11px;color:var(--ice);margin-top:14px;display:flex;align-items:center;gap:6px}
+.cta::after{content:"→";transition:transform .18s}
+.card:hover .cta::after{transform:translateX(4px)}
+.note{max-width:860px;margin:0 auto 48px;padding:0 28px;font-size:14px;color:var(--ink3);font-style:italic}
+footer{padding:32px 28px;text-align:center;color:var(--ink3);font-size:13px;font-family:var(--f-mono)}
+@media(max-width:600px){.hero{padding:40px 18px 32px}.grid{padding:0 18px;grid-template-columns:1fr}}
+@media(prefers-reduced-motion:no-preference){
+  .card{animation:rise .5s both}
+  @keyframes rise{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+  .card:nth-child(2){animation-delay:.04s}.card:nth-child(3){animation-delay:.08s}
+  .card:nth-child(4){animation-delay:.12s}.card:nth-child(5){animation-delay:.16s}
+  .card:nth-child(6){animation-delay:.20s}.card:nth-child(7){animation-delay:.24s}
+  .card:nth-child(8){animation-delay:.28s}.card:nth-child(9){animation-delay:.32s}
+  .card:nth-child(10){animation-delay:.36s}.card:nth-child(11){animation-delay:.40s}
+  .card:nth-child(12){animation-delay:.44s}.card:nth-child(13){animation-delay:.48s}
+  .card:nth-child(14){animation-delay:.52s}
+}
+</style>
+</head>
+<body>
+<div class="top">
+  <div class="brand">SNOWFLAKE<b>//</b>INTERVIEW LAB</div>
+  <button class="theme" id="themeBtn">Dark / light</button>
+</div>
+
+<div class="hero">
+  <div class="eyebrow">SNOWFLAKE INTERVIEW LAB · 14 MODULES</div>
+  <h1>Everything you need<br><span class="thin">to ace the interview.</span></h1>
+  <p class="lead">A complete, interactive preparation course for senior Snowflake data-engineering roles — from architecture fundamentals to system design. Each module has a simulator, a SQL lab, interview Q&amp;As, a quiz and a cheat sheet.</p>
+  <div class="pills">
+    <span class="pill ok">14 modules</span>
+    <span class="pill ok">12–15 simulators each</span>
+    <span class="pill ok">18–29 Q&amp;As each</span>
+    <span class="pill ok">13–14 question quiz</span>
+    <span class="pill ok">12-card cheat sheet</span>
+    <span class="pill">Prepared for Saurav Patel</span>
+  </div>
+</div>
+
+<div class="grid">
+
+  <a class="card arch" href="module01/">
+    <div class="card-num">MODULE 01</div>
+    <div class="card-title">Architecture</div>
+    <div class="card-sub">Three-layer design, micro-partitions, pruning, warehouses, multi-cluster, caches, billing and editions.</div>
+    <div class="card-meta">
+      <span class="tag s">12 simulators</span>
+      <span class="tag q">16 Q&amp;As</span>
+      <span class="tag">12 quiz</span>
+    </div>
+    <div class="cta">Start here</div>
+  </a>
+
+  <a class="card load" href="module02/">
+    <div class="card-num">MODULE 02</div>
+    <div class="card-title">Load &amp; Automate</div>
+    <div class="card-sub">SnowSQL, PUT/COPY deep dive, unstructured data &amp; AI parsing, streams, tasks, stored procedures.</div>
+    <div class="card-meta">
+      <span class="tag s">10 simulators</span>
+      <span class="tag q">26 Q&amp;As</span>
+      <span class="tag">14 quiz</span>
+    </div>
+    <div class="cta">Open module</div>
+  </a>
+
+  <a class="card perf" href="module03/">
+    <div class="card-num">MODULE 03</div>
+    <div class="card-title">Performance Tuning</div>
+    <div class="card-sub">Query Profile mastery, clustering keys, Search Optimization, Query Acceleration, MVs, SQL anti-patterns, warehouse debugging.</div>
+    <div class="card-meta">
+      <span class="tag s">9 simulators</span>
+      <span class="tag q">19 Q&amp;As</span>
+      <span class="tag">14 quiz</span>
+    </div>
+    <div class="cta">Open module</div>
+  </a>
+
+  <a class="card ing" href="module04/">
+    <div class="card-num">MODULE 04</div>
+    <div class="card-title">Data Ingestion</div>
+    <div class="card-sub">Stages &amp; storage integrations, COPY deep dive, file sizing, Snowpipe auto-ingest, Snowpipe Streaming, External &amp; Iceberg tables, schema evolution.</div>
+    <div class="card-meta">
+      <span class="tag s">9 simulators</span>
+      <span class="tag q">20 Q&amp;As</span>
+      <span class="tag">14 quiz</span>
+    </div>
+    <div class="cta">Open module</div>
+  </a>
+
+  <a class="card dyn" href="module05/">
+    <div class="card-num">MODULE 05</div>
+    <div class="card-title">Dynamic Tables &amp; Transforms</div>
+    <div class="card-sub">Declarative vs procedural pipelines, target lag, incremental vs full refresh, MERGE &amp; SCD, dedup, UDFs, transactions &amp; concurrency.</div>
+    <div class="card-meta">
+      <span class="tag s">10 simulators</span>
+      <span class="tag q">22 Q&amp;As</span>
+      <span class="tag">14 quiz</span>
+    </div>
+    <div class="cta">Open module</div>
+  </a>
+
+  <a class="card semi" href="module06/">
+    <div class="card-num">MODULE 06</div>
+    <div class="card-title">Semi-structured Data</div>
+    <div class="card-sub">VARIANT/OBJECT/ARRAY internals, path notation, two kinds of null, FLATTEN &amp; LATERAL, building JSON, loading files, performance &amp; promotion decisions.</div>
+    <div class="card-meta">
+      <span class="tag s">7 simulators</span>
+      <span class="tag q">19 Q&amp;As</span>
+      <span class="tag">14 quiz</span>
+    </div>
+    <div class="cta">Open module</div>
+  </a>
+
+  <a class="card prot" href="module07/">
+    <div class="card-num">MODULE 07</div>
+    <div class="card-title">Data Protection</div>
+    <div class="card-sub">Micro-partition lifecycle, Time Travel (AT/BEFORE), Fail-safe, table types, zero-copy cloning, replication &amp; failover, backup strategy.</div>
+    <div class="card-meta">
+      <span class="tag s">7 simulators</span>
+      <span class="tag q">19 Q&amp;As</span>
+      <span class="tag">14 quiz</span>
+    </div>
+    <div class="cta">Open module</div>
+  </a>
+
+  <a class="card sec" href="module08/">
+    <div class="card-num">MODULE 08</div>
+    <div class="card-title">Security &amp; Governance</div>
+    <div class="card-sub">Defence in depth, RBAC + DAC, privilege chains, authentication &amp; network policies, dynamic masking, row access policies, tags &amp; classification, encryption.</div>
+    <div class="card-meta">
+      <span class="tag s">9 simulators</span>
+      <span class="tag q">19 Q&amp;As</span>
+      <span class="tag">14 quiz</span>
+    </div>
+    <div class="cta">Open module</div>
+  </a>
+
+  <a class="card cost" href="module09/">
+    <div class="card-num">MODULE 09</div>
+    <div class="card-title">Cost Optimization</div>
+    <div class="card-sub">Three cost buckets, warehouse fleet tuning, storage lifecycle, serverless &amp; cloud-services billing, resource monitors, visibility &amp; attribution, investigation playbook.</div>
+    <div class="card-meta">
+      <span class="tag s">7 simulators</span>
+      <span class="tag q">18 Q&amp;As</span>
+      <span class="tag">14 quiz</span>
+    </div>
+    <div class="cta">Open module</div>
+  </a>
+
+  <a class="card share" href="module10/">
+    <div class="card-num">MODULE 10</div>
+    <div class="card-title">Data Sharing &amp; Collaboration</div>
+    <div class="card-sub">Secure Data Sharing, reader accounts, cross-region &amp; cross-cloud sharing, listings &amp; Marketplace, Data Clean Rooms, Native Apps, governance in sharing.</div>
+    <div class="card-meta">
+      <span class="tag s">7 simulators</span>
+      <span class="tag q">19 Q&amp;As</span>
+      <span class="tag">14 quiz</span>
+    </div>
+    <div class="cta">Open module</div>
+  </a>
+
+  <a class="card ai" href="module11/">
+    <div class="card-num">MODULE 11</div>
+    <div class="card-title">Snowpark &amp; Cortex AI</div>
+    <div class="card-sub">DataFrames &amp; lazy evaluation, UDFs/UDTFs/vectorized, Container Services, Cortex AI SQL functions, Vectors &amp; RAG, Cortex Analyst, Snowflake ML.</div>
+    <div class="card-meta">
+      <span class="tag s">8 simulators</span>
+      <span class="tag q">19 Q&amp;As</span>
+      <span class="tag">13 quiz</span>
+    </div>
+    <div class="cta">Open module</div>
+  </a>
+
+  <a class="card sql" href="module12/">
+    <div class="card-num">MODULE 12</div>
+    <div class="card-title">Advanced SQL</div>
+    <div class="card-sub">Logical execution order, window functions deep dive, QUALIFY &amp; top-N, recursive CTEs, ROLLUP/CUBE/PIVOT, special joins (ASOF, anti), MATCH_RECOGNIZE, 11-problem bank.</div>
+    <div class="card-meta">
+      <span class="tag s">8 simulators</span>
+      <span class="tag q">21 Q&amp;As</span>
+      <span class="tag">14 quiz</span>
+    </div>
+    <div class="cta">Open module</div>
+  </a>
+
+  <a class="card mod" href="module13/">
+    <div class="card-num">MODULE 13</div>
+    <div class="card-title">Modeling &amp; Tooling</div>
+    <div class="card-sub">Dimensional modeling, SCD types, Data Vault 2.0, medallion architecture, keys &amp; constraints, dbt with Snowflake, orchestration &amp; CI/CD blue-green deployments.</div>
+    <div class="card-meta">
+      <span class="tag s">8 simulators</span>
+      <span class="tag q">21 Q&amp;As</span>
+      <span class="tag">14 quiz</span>
+    </div>
+    <div class="cta">Open module</div>
+  </a>
+
+  <a class="card sys" href="module14/">
+    <div class="card-num">MODULE 14</div>
+    <div class="card-title">System Design &amp; Behavioral</div>
+    <div class="card-sub">End-to-end architecture whiteboards, trade-off discussions and STAR-format behavioral stories synthesising all 13 modules.</div>
+    <div class="card-meta">
+      <span class="tag">Coming soon</span>
+    </div>
+    <div class="cta">Open module</div>
+  </a>
+
+</div>
+
+<p class="note">Numbers in course cards are approximate per-module averages. Simulator outputs and benchmark figures throughout the course are illustrative — verify fast-changing limits (Cortex model names, VARIANT size, Gen2 warehouse rates, backup feature names) against the Snowflake docs before your interview.</p>
+
+<footer>Snowflake Interview Lab · 14 Modules · Prepared for Saurav Patel</footer>
+
+<script>
+const root = document.documentElement;
+root.dataset.theme = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+document.getElementById('themeBtn').onclick = () => {
+  root.dataset.theme = root.dataset.theme === 'dark' ? 'light' : 'dark';
+};
+</script>
+</body>
+</html>

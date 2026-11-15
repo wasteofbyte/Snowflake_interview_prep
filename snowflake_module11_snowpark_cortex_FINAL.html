@@ -1,0 +1,1532 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Snowflake Interview Lab · Module 11 · Snowpark &amp; Cortex AI</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/space-grotesk@5/300.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/space-grotesk@5/700.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/ibm-plex-sans@5/300.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/ibm-plex-sans@5/400.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/ibm-plex-sans@5/600.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/jetbrains-mono@5/400.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/jetbrains-mono@5/700.css">
+<style>
+:root{
+  --bg:#F2F6FA; --card:#FFFFFF; --card2:#E9EFF5; --ink:#0B1B2B; --ink2:#46596B; --ink3:#7F90A2;
+  --line:rgba(11,27,43,.12); --line2:rgba(11,27,43,.22);
+  --ice:#0A86C2; --ice-s:#DCEFF9; --amber:#B86F00; --amber-s:#FFF0D4; --teal:#0B8A6A; --teal-s:#DAF3EB;
+  --red:#C93C3C; --red-s:#FCE4E4; --grid:rgba(10,134,194,.06);
+  --f-head:"Space Grotesk",sans-serif; --f-body:"IBM Plex Sans",sans-serif; --f-mono:"JetBrains Mono",monospace;
+  --r:10px;
+}
+[data-theme="dark"]{
+  --bg:#08121D; --card:#0F1D2C; --card2:#16293B; --ink:#E5EDF5; --ink2:#9DB0C3; --ink3:#687D91;
+  --line:rgba(229,237,245,.10); --line2:rgba(229,237,245,.22);
+  --ice:#4CC3F0; --ice-s:rgba(76,195,240,.13); --amber:#FFB938; --amber-s:rgba(255,185,56,.13); --teal:#3FD3A8; --teal-s:rgba(63,211,168,.13);
+  --red:#FF7070; --red-s:rgba(255,112,112,.14); --grid:rgba(76,195,240,.05);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:var(--f-body);color:var(--ink);line-height:1.7;font-size:16px;
+  background:radial-gradient(1200px 600px at 85% -10%, var(--ice-s), transparent 60%),radial-gradient(900px 500px at -10% 30%, var(--teal-s), transparent 60%),
+  linear-gradient(var(--grid) 1px, transparent 1px) 0 0/32px 32px,linear-gradient(90deg, var(--grid) 1px, transparent 1px) 0 0/32px 32px,var(--bg);background-attachment:fixed}
+code,.mono{font-family:var(--f-mono);font-size:.88em}
+p code,li code,td code{background:var(--card2);padding:1px 6px;border-radius:5px}
+button{font-family:var(--f-body);cursor:pointer}
+.top{position:sticky;top:0;z-index:30;display:flex;align-items:center;gap:16px;padding:12px 28px;border-bottom:1px solid var(--line);background:color-mix(in srgb,var(--bg) 82%,transparent);backdrop-filter:saturate(1.4) blur(8px)}
+.brand{font-family:var(--f-mono);font-weight:700;letter-spacing:.06em;font-size:13px}.brand b{color:var(--ice)}
+.pill{font-family:var(--f-mono);font-size:12px;padding:3px 10px;border-radius:99px;border:1px solid var(--line2);color:var(--ink2)}
+.prog{flex:1;height:4px;background:var(--card2);border-radius:4px;overflow:hidden;max-width:360px;margin-left:auto}
+.prog i{display:block;height:100%;width:0;background:var(--ice);transition:width .4s}
+.prog-l{font-family:var(--f-mono);font-size:12px;color:var(--ink2);min-width:84px}
+.theme{border:1px solid var(--line2);background:var(--card);color:var(--ink);border-radius:8px;padding:5px 10px;font-size:13px}
+.wrap{display:grid;grid-template-columns:270px minmax(0,1fr);gap:36px;max-width:1340px;margin:0 auto;padding:28px}
+nav.side{position:sticky;top:76px;align-self:start;max-height:calc(100vh - 96px);overflow:auto;padding-right:6px}
+.side h4{font-family:var(--f-mono);font-size:11px;letter-spacing:.14em;color:var(--ink3);margin:6px 0 10px;font-weight:400}
+.side a{display:flex;gap:10px;align-items:baseline;padding:6px 10px;border-radius:8px;color:var(--ink2);text-decoration:none;font-size:14px;border-left:2px solid transparent}
+.side a span{font-family:var(--f-mono);font-size:11px;color:var(--ink3)}
+.side a:hover{background:var(--card)}
+.side a.act{color:var(--ink);background:var(--card);border-left-color:var(--ice);border-radius:0 8px 8px 0}
+.side a.seen span{color:var(--teal)}
+.road{margin-top:22px;border-top:1px solid var(--line);padding-top:14px}
+.road div{font-size:13px;color:var(--ink3);padding:3px 10px;display:flex;gap:8px}
+.road div.now{color:var(--ink);font-weight:600}.road div.done{color:var(--teal)}
+.road div em{font-style:normal;font-family:var(--f-mono);font-size:11px;min-width:20px}
+main{min-width:0}
+section{padding:36px 0 44px;border-bottom:1px dashed var(--line2);scroll-margin-top:70px}
+.eyebrow{font-family:var(--f-mono);font-size:12px;letter-spacing:.16em;color:var(--ice);margin-bottom:6px}
+h1{font-family:var(--f-head);font-weight:700;font-size:clamp(40px,6vw,76px);line-height:1;letter-spacing:-.03em}
+h1 .thin,h2 .thin{font-weight:300;color:var(--ink2)}
+h2{font-family:var(--f-head);font-weight:700;font-size:clamp(28px,3.4vw,40px);letter-spacing:-.02em;line-height:1.1;margin-bottom:12px}
+h3{font-family:var(--f-head);font-weight:700;font-size:20px;margin:26px 0 10px;letter-spacing:-.01em}
+.lead{font-size:18px;font-weight:300;color:var(--ink2);max-width:820px}
+p{margin:8px 0}
+ul.dots{margin:8px 0 8px 20px}ul.dots li{margin:4px 0}
+.wwh{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:20px 0}
+.wwh .box{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:18px 20px;position:relative;overflow:hidden}
+.wwh .box.how{grid-column:1/-1}
+.wwh .tag{font-family:var(--f-mono);font-size:11px;letter-spacing:.14em;display:inline-block;padding:2px 8px;border-radius:5px;margin-bottom:8px}
+.box.what .tag{background:var(--ice-s);color:var(--ice)}.box.why .tag{background:var(--amber-s);color:var(--amber)}.box.how .tag{background:var(--teal-s);color:var(--teal)}
+.box::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px}
+.box.what::before{background:var(--ice)}.box.why::before{background:var(--amber)}.box.how::before{background:var(--teal)}
+.call{display:flex;gap:14px;padding:14px 18px;border-radius:var(--r);margin:14px 0;border:1px solid var(--line)}
+.call b.k{font-family:var(--f-mono);font-size:11px;letter-spacing:.12em;white-space:nowrap;padding-top:3px}
+.call.analogy{background:var(--ice-s)}.call.analogy b.k{color:var(--ice)}
+.call.trap{background:var(--red-s)}.call.trap b.k{color:var(--red)}
+.call.pro{background:var(--teal-s)}.call.pro b.k{color:var(--teal)}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px;margin:18px 0}
+.panel-h{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+.panel-h .t{font-family:var(--f-mono);font-size:12px;letter-spacing:.12em;color:var(--ink2)}.panel-h .t b{color:var(--ink)}
+.btn{border:1px solid var(--line2);background:var(--card);color:var(--ink);padding:7px 14px;border-radius:8px;font-size:14px;transition:all .15s}
+.btn:hover{border-color:var(--ice);color:var(--ice)}
+.btn.pri{background:var(--ice);color:var(--card);border-color:var(--ice)}.btn.pri:hover{color:var(--card);filter:brightness(1.08)}
+.btn.warn{border-color:var(--red);color:var(--red)}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.ctl{display:flex;align-items:center;gap:12px;font-size:14px;color:var(--ink2);margin:8px 0}
+.ctl label{min-width:150px}.ctl input[type=range]{flex:1;accent-color:var(--ice)}
+.ctl .v{font-family:var(--f-mono);font-size:13px;color:var(--ink);min-width:110px;text-align:right}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:14px 0}
+.stat{background:var(--card2);border-radius:10px;padding:12px 14px}
+.stat .k{font-family:var(--f-mono);font-size:11px;color:var(--ink3);letter-spacing:.08em}
+.stat .n{font-family:var(--f-head);font-weight:700;font-size:28px;line-height:1.2}
+.stat .s{font-size:12px;color:var(--ink2)}
+.sqlbox{font-family:var(--f-mono);font-size:13px;background:var(--card2);border-radius:8px;padding:10px 14px;white-space:pre-wrap;color:var(--ink);border-left:3px solid var(--ice);overflow:auto}
+.insight{font-size:14px;padding:10px 14px;border-radius:8px;background:var(--amber-s);color:var(--ink);margin-top:10px}.insight b{color:var(--amber)}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+.tabs button{border:1px solid var(--line2);background:transparent;color:var(--ink2);padding:6px 12px;border-radius:99px;font-size:13px}
+.tabs button.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}.grid2>div{min-width:0}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.mini{background:var(--card2);border-radius:10px;padding:14px}
+.mini h5{font-family:var(--f-head);font-size:15px;margin-bottom:4px}
+.mini p{font-size:14px;color:var(--ink2);margin:0}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:13px;color:var(--ink2);margin:8px 0}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:-1px;margin-right:6px}
+table.t{width:100%;border-collapse:collapse;font-size:14px}
+table.t th,table.t td{padding:7px 10px;border-bottom:1px solid var(--line);text-align:left}
+table.t th{font-family:var(--f-mono);font-size:11px;letter-spacing:.1em;color:var(--ink3);font-weight:400}
+table.t td.m{font-family:var(--f-mono);font-size:12px}
+svg{width:100%;height:auto;display:block}
+svg .t{font-family:var(--f-body);font-size:14px;fill:var(--ink)}
+svg .ts{font-family:var(--f-body);font-size:12px;fill:var(--ink2)}
+svg .th{font-family:var(--f-head);font-size:14px;font-weight:700;fill:var(--ink)}
+svg .tm{font-family:var(--f-mono);font-size:11px;fill:var(--ink2)}
+.L-cs{fill:var(--amber-s);stroke:var(--amber)}.L-cp{fill:var(--ice-s);stroke:var(--ice)}.L-st{fill:var(--teal-s);stroke:var(--teal)}
+.neutral{fill:var(--card);stroke:var(--line2)}
+.arr{stroke:var(--ink3);stroke-width:1.2;fill:none}
+.fn{transition:opacity .3s}
+.flow.playing .fn{opacity:.25}
+.flow.playing .fn.on{opacity:1}
+.fn.on rect{stroke-width:2.4}
+.edge{stroke:var(--ink3);stroke-width:1.4;fill:none;transition:opacity .3s}
+.flow.playing .edge{opacity:.2}
+.flow.playing .edge.on{opacity:1;stroke:var(--ice);stroke-width:2.4;stroke-dasharray:7 5}
+@media (prefers-reduced-motion:no-preference){
+  .flow.playing .edge.on{animation:dash .8s linear infinite}
+  @keyframes dash{to{stroke-dashoffset:-24}}
+  .pulse{animation:pulse 1.2s ease-in-out infinite}
+  @keyframes pulse{0%,100%{opacity:.35}50%{opacity:1}}
+  .rise{animation:rise .5s both}
+  @keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+  .grow{transform-box:fill-box;transform-origin:left center;animation:grow .6s both}
+  @keyframes grow{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+}
+.stepbar{display:flex;gap:6px;margin:12px 0}
+.stepbar span{flex:1;height:4px;border-radius:4px;background:var(--card2);cursor:pointer}
+.stepbar span.on{background:var(--ice)}
+.stepdesc{min-height:120px;background:var(--card2);border-radius:10px;padding:14px 16px}
+.stepdesc h4{font-family:var(--f-head);font-size:17px;margin-bottom:6px}
+.stepdesc .two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.stepdesc .two div{font-size:14px;color:var(--ink2)}
+.stepdesc .two b.l{display:block;font-family:var(--f-mono);font-size:11px;letter-spacing:.12em;margin-bottom:4px}
+.stepdesc .two .you b.l{color:var(--ice)}.stepdesc .two .be b.l{color:var(--teal)}
+.term{background:#0A141F;color:#D6E2EE;font-family:var(--f-mono);font-size:12.5px;border-radius:12px;padding:14px 16px;height:340px;overflow:auto;border:1px solid #1E3247}
+.term div{white-space:pre;line-height:1.5}
+.term .tin{color:#FFB938}.term .terr{color:#FF7A7A}.term .tok{color:#3FD3A8}.term .tdim{color:#6F8499}
+.tbar{display:flex;gap:6px;align-items:center;margin-bottom:8px}
+.tbar i{width:10px;height:10px;border-radius:50%;display:inline-block}
+.tinput{display:flex;gap:8px;margin-top:8px}
+.tinput input{flex:1;font-family:var(--f-mono);font-size:13px;padding:8px 10px;border-radius:8px;border:1px solid var(--line2);background:var(--card);color:var(--ink)}
+.cmds{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}
+.cmds button{font-family:var(--f-mono);font-size:11.5px;border:1px solid var(--line2);background:var(--card);color:var(--ink);padding:5px 9px;border-radius:7px;text-align:left}
+.cmds button:hover{border-color:var(--amber);color:var(--amber)}
+.cmds button small{display:block;font-family:var(--f-body);font-size:11px;color:var(--ink3)}
+.explain{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 16px;min-height:90px;font-size:14.5px}
+.explain b.h{font-family:var(--f-mono);font-size:12px;color:var(--ice);letter-spacing:.1em;display:block;margin-bottom:4px}
+.gantt-l{font-family:var(--f-mono);font-size:11px;fill:var(--ink2)}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font-family:var(--f-mono);font-size:12px;border:1px solid var(--line2);padding:5px 10px;border-radius:99px;cursor:pointer;user-select:none;background:var(--card);color:var(--ink2)}
+.chip.on{background:var(--ice-s);border-color:var(--ice);color:var(--ice)}
+.chip.now{outline:2px solid var(--amber);outline-offset:2px}
+.fcard{border:1px solid var(--line2);border-radius:10px;padding:10px 12px;cursor:pointer;background:var(--card);text-align:left;color:var(--ink)}
+.fcard.on{border-color:var(--ice);background:var(--ice-s)}
+.fcard b{display:block;font-family:var(--f-mono);font-size:12px}
+.fcard small{color:var(--ink3);font-size:12px}
+.out{font-family:var(--f-mono);font-size:12px;background:var(--card2);border-radius:8px;padding:10px 14px;white-space:pre-wrap;border-left:3px solid var(--teal);max-height:260px;overflow:auto}
+.chunk{border:1px solid var(--line2);border-radius:8px;padding:8px 10px;font-size:13px;margin:6px 0;background:var(--card)}
+.chunk em{font-style:normal;background:var(--amber-s);color:var(--ink);border-bottom:2px solid var(--amber)}
+.chunk b{font-family:var(--f-mono);font-size:11px;color:var(--ice);margin-right:8px}
+.act-i{color:var(--teal);font-family:var(--f-mono);font-size:12px;font-weight:700}
+.act-d{color:var(--red);font-family:var(--f-mono);font-size:12px;font-weight:700}
+.badge{font-family:var(--f-mono);font-size:11px;padding:2px 8px;border-radius:99px;white-space:nowrap}
+.badge.ok{background:var(--teal-s);color:var(--teal)}.badge.bad{background:var(--red-s);color:var(--red)}.badge.mid{background:var(--amber-s);color:var(--amber)}.badge.off{background:var(--card2);color:var(--ink3)}
+.flash{animation:flash 1s}
+@keyframes flash{0%{box-shadow:0 0 0 3px var(--amber)}100%{box-shadow:0 0 0 0 transparent}}
+.tn rect{fill:var(--card);stroke:var(--line2);transition:all .3s}
+.tn.run rect{fill:var(--amber-s);stroke:var(--amber);stroke-width:2.4}
+.tn.ok rect{fill:var(--teal-s);stroke:var(--teal);stroke-width:2}
+.tn.skip rect{fill:var(--card2);stroke:var(--ink3);stroke-dasharray:5 4}
+.tn.fail rect{fill:var(--red-s);stroke:var(--red);stroke-width:2}
+.tn .st{font-family:var(--f-mono);font-size:10px;fill:var(--ink3)}
+.log{max-height:240px;overflow:auto}
+.pk{transition:transform .8s cubic-bezier(.5,.05,.3,1)}
+.code{font-family:var(--f-mono);font-size:13px;background:var(--card2);border-radius:10px;padding:10px 0;overflow:auto}
+.code div{padding:2px 16px 2px 0;cursor:pointer;white-space:pre;display:block}
+.code div em{font-style:normal;color:var(--ink3);width:40px;text-align:right;padding-right:14px;display:inline-block;user-select:none}
+.code div:hover{background:var(--ice-s)}
+.code div.on{background:var(--ice-s);box-shadow:inset 3px 0 var(--ice)}
+.kw{color:var(--ice);font-weight:700}.str{color:var(--teal)}.num{color:var(--amber)}
+.qa{border:1px solid var(--line);border-radius:10px;margin:8px 0;background:var(--card);overflow:hidden}
+.qa summary{list-style:none;cursor:pointer;padding:14px 18px;display:flex;gap:12px;align-items:baseline;font-weight:600}
+.qa summary::-webkit-details-marker{display:none}
+.qa summary .lv{font-family:var(--f-mono);font-size:10px;letter-spacing:.1em;padding:2px 8px;border-radius:99px;flex:none;font-weight:400}
+.lv.b{background:var(--teal-s);color:var(--teal)}.lv.t{background:var(--red-s);color:var(--red)}.lv.s{background:var(--amber-s);color:var(--amber)}
+.qa summary .tp{font-family:var(--f-mono);font-size:10px;color:var(--ink3);flex:none;font-weight:400}
+.qa summary::after{content:"+";margin-left:auto;font-family:var(--f-mono);color:var(--ink3)}
+.qa[open] summary::after{content:"−"}
+.qa .ans{padding:0 18px 16px;color:var(--ink2);font-size:15px;border-top:1px solid var(--line)}
+.qa .ans p:first-child{margin-top:12px}
+.opt{display:block;width:100%;text-align:left;padding:12px 14px;margin:8px 0;border:1px solid var(--line2);border-radius:10px;background:var(--card);color:var(--ink);font-size:15px}
+.opt:hover{border-color:var(--ice)}
+.opt.ok{border-color:var(--teal);background:var(--teal-s)}.opt.bad{border-color:var(--red);background:var(--red-s)}
+.qexp{margin-top:10px;padding:12px 14px;border-radius:10px;background:var(--card2);font-size:14px;color:var(--ink2)}
+.score{font-family:var(--f-head);font-weight:700;font-size:56px;line-height:1}
+.cheat{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+.cheat div{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 16px;font-size:14px}
+.cheat div em{font-style:normal;font-family:var(--f-mono);font-size:20px;font-weight:700;color:var(--ice);display:block;line-height:1.1;margin-bottom:4px}
+.analogy-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:18px}
+.ag{border-radius:12px;padding:16px;border:1px solid var(--line);background:var(--card)}
+.ag .k{font-family:var(--f-mono);font-size:11px;letter-spacing:.12em}
+.ag h5{font-family:var(--f-head);font-size:18px;margin:2px 0 4px}
+.ag p{font-size:14px;color:var(--ink2);margin:0}
+.ag.a1{border-top:3px solid var(--amber)}.ag.a1 .k{color:var(--amber)}
+.ag.a2{border-top:3px solid var(--ice)}.ag.a2 .k{color:var(--ice)}
+.ag.a3{border-top:3px solid var(--teal)}.ag.a3 .k{color:var(--teal)}
+.ag.a4{border-top:3px solid var(--red)}.ag.a4 .k{color:var(--red)}
+footer{padding:40px 0;color:var(--ink3);font-size:13px;font-family:var(--f-mono)}
+.note-s{font-size:12px;color:var(--ink3);font-style:italic}
+@media (max-width:1000px){
+  .wrap{grid-template-columns:1fr;padding:16px}
+  nav.side{display:none}
+  .wwh,.grid2,.stepdesc .two{grid-template-columns:1fr}
+  .grid3,.analogy-grid{grid-template-columns:1fr}
+  .prog{display:none}
+}
+.road a.rm{display:flex;gap:8px;align-items:baseline;font-size:13px;padding:5px 10px;border-radius:8px;text-decoration:none;color:var(--ink2);border-left:2px solid transparent}
+.road a.rm:hover{background:var(--card);color:var(--ink)}
+.road a.rm em{font-style:normal;font-family:var(--f-mono);font-size:11px;min-width:20px}
+.road a.rm i{font-style:normal;font-family:var(--f-mono);font-size:9.5px;margin-left:auto;border:1px solid var(--line2);border-radius:99px;padding:0 6px;white-space:nowrap;color:var(--ink3)}
+.road a.rm.now{color:var(--ink);font-weight:600;border-left-color:var(--ice);background:var(--card);border-radius:0 8px 8px 0}
+.road a.rm.now i{border-color:var(--ice);color:var(--ice)}
+.road a.rm.ready em,.road a.rm.ready i{color:var(--teal)}.road a.rm.ready i{border-color:var(--teal)}
+.road a.rm.soon{color:var(--ink3)}
+.toast{position:fixed;bottom:24px;left:50%;transform:translate(-50%,20px);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;font-size:14px;opacity:0;transition:all .3s;z-index:60;pointer-events:none;max-width:90vw}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+.code div.pdone{box-shadow:inset 3px 0 var(--teal)}
+#pcCode{max-height:600px;position:relative}
+/* ===== Module 11 additions ===== */
+.code div.py{color:var(--ink)}
+.pykw{color:var(--amber);font-weight:700}.cmt{color:var(--ink3);font-style:italic}
+.ops{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:8px;margin:8px 0}
+.ops button{font-family:var(--f-mono);font-size:12px;text-align:left;border:1px solid var(--line2);background:var(--card);color:var(--ink);padding:8px 10px;border-radius:8px}
+.ops button:hover:not(:disabled){border-color:var(--ice);color:var(--ice)}
+.ops button:disabled{opacity:.35;cursor:not-allowed}
+.ops button.used{border-color:var(--teal);background:var(--teal-s)}
+.ops button,.acts button{overflow-wrap:anywhere}
+.ops button small{display:block;font-family:var(--f-body);font-size:11px;color:var(--ink3)}
+.acts button{font-family:var(--f-mono);font-size:12px}
+.sent{font-family:var(--f-mono);font-size:12px;padding:8px 12px;border-radius:8px;margin-top:8px;border:1px dashed var(--line2);color:var(--ink2)}
+.sent.go{border-style:solid;border-color:var(--teal);background:var(--teal-s);color:var(--ink)}
+.lane-bg{fill:var(--card2);stroke:var(--line)}
+.rb{fill:var(--ice);transition:transform .45s cubic-bezier(.4,.1,.3,1),opacity .3s}
+.rb.done{fill:var(--teal)}
+.ovh{fill:var(--red);opacity:0;transition:opacity .15s}
+.ovh.on{opacity:.9}
+.worker{fill:var(--amber-s);stroke:var(--amber)}
+.rv{display:flex;gap:10px;align-items:flex-start;border:1px solid var(--line2);border-radius:10px;padding:8px 10px;background:var(--card);cursor:pointer;font-size:13px;color:var(--ink);text-align:left;width:100%}
+.rv.on{border-color:var(--ice);background:var(--ice-s)}
+.rv b{font-family:var(--f-mono);font-size:11px;color:var(--ink3);flex:none}
+.rvlist{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:8px 0}
+.pt circle{fill:var(--card);stroke-width:2;transition:all .3s}
+.pt text{font-family:var(--f-mono);font-size:10px;fill:var(--ink2)}
+.pt.c0 circle{stroke:var(--teal)}.pt.c1 circle{stroke:var(--ice)}.pt.c2 circle{stroke:var(--amber)}.pt.c3 circle{stroke:var(--red)}
+.pt.hit circle{stroke-width:3.5}
+.pt.c0.hit circle{fill:var(--teal-s)}.pt.c1.hit circle{fill:var(--ice-s)}.pt.c2.hit circle{fill:var(--amber-s)}.pt.c3.hit circle{fill:var(--red-s)}
+.nnl{stroke:var(--ink);stroke-width:1.4;stroke-dasharray:5 4;opacity:.7}
+.qdot{fill:var(--ink);stroke:var(--bg);stroke-width:2}
+.axis{stroke:var(--line2);stroke-width:1}
+.dec{border-radius:10px;padding:14px 16px;border:1px solid var(--line2);background:var(--card2)}
+.dec h4{font-family:var(--f-head);font-size:20px;margin-bottom:4px}
+.dec.udf{border-left:4px solid var(--teal)}.dec.spcs{border-left:4px solid var(--amber)}.dec.cortex{border-left:4px solid var(--ice)}
+.tgl{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}
+.tgl label{display:flex;gap:8px;align-items:center;border:1px solid var(--line2);border-radius:99px;padding:5px 12px;font-size:13px;cursor:pointer;background:var(--card);color:var(--ink2)}
+.tgl label.on{border-color:var(--ice);background:var(--ice-s);color:var(--ink)}
+.tgl input{accent-color:var(--ice)}
+.bar-w{height:14px;background:var(--card2);border-radius:7px;overflow:hidden;margin:4px 0 10px}
+.bar-w i{display:block;height:100%;border-radius:7px;transition:width .4s}
+.fc-line{fill:none;stroke:var(--ice);stroke-width:2}
+.fc-pred{fill:none;stroke:var(--amber);stroke-width:2;stroke-dasharray:6 4}
+.fc-band{fill:var(--amber-s);stroke:none}
+.fc-anom{fill:var(--red);stroke:var(--bg);stroke-width:1.5}
+.sim-tbl td{font-size:13px}
+.hl-row{background:var(--ice-s)}
+#dfPy,#dfSql{white-space:pre}
+@media (max-width:1000px){
+  .grid3{grid-template-columns:1fr!important}
+  .grid2{grid-template-columns:1fr!important}
+  .rvlist{grid-template-columns:1fr}
+  .ctl{flex-wrap:wrap}.ctl label{min-width:0;flex-basis:100%}.ctl .v{min-width:0}
+  .btn{max-width:100%;white-space:normal;text-align:left}
+  .call{flex-direction:column;gap:4px}
+}
+/* course-wide phone layout */
+@media (max-width:560px){
+  .top{flex-wrap:wrap;gap:8px;padding:10px 14px}
+  .top .pill,.top .prog-l,.top .prog{display:none}
+  .brand{flex:1}
+  .ctl{flex-wrap:wrap}.ctl label{min-width:0;flex:1 1 100%}.ctl .v{min-width:0;text-align:left}
+  table{display:block;overflow-x:auto;max-width:100%}
+  .grid2,.grid3,.analogy-grid,[style*="grid-template-columns"]{grid-template-columns:1fr!important}
+  .grid2>*,.grid3>*,.call>div{min-width:0}
+  p code,li code,td code{word-break:break-word}
+  .code,.sqlbox,.out,.term,pre{max-width:100%;overflow-x:auto}
+  .call{flex-direction:column;gap:6px}
+  main,section,.panel,.wwh .box,.mini{min-width:0;max-width:100%}
+}
+</style>
+</head>
+<body>
+<div class="top">
+  <div class="brand">SNOWFLAKE<b>//</b>INTERVIEW LAB</div>
+  <span class="pill">Module 11 · Snowpark &amp; Cortex AI</span>
+  <div class="prog"><i id="progBar"></i></div>
+  <span class="prog-l" id="progLbl">0% explored</span>
+  <button class="theme" id="themeBtn">Dark / light</button>
+</div>
+<div class="wrap">
+<nav class="side">
+  <h4>MODULE 11 · CHAPTERS</h4>
+  <a href="#intro"><span>00</span>Start here</a>
+  <a href="#snowpark"><span>01</span>Snowpark DataFrames</a>
+  <a href="#udf"><span>02</span>UDFs, UDTFs &amp; procedures</a>
+  <a href="#spcs"><span>03</span>Container Services</a>
+  <a href="#cortex"><span>04</span>Cortex AI functions</a>
+  <a href="#rag"><span>05</span>Vectors &amp; RAG</a>
+  <a href="#analyst"><span>06</span>Cortex Analyst</a>
+  <a href="#ml"><span>07</span>Snowflake ML</a>
+  <a href="#sql"><span>08</span>SQL / Python lab</a>
+  <a href="#qa"><span>09</span>Interview Q&amp;A</a>
+  <a href="#quiz"><span>10</span>Quiz</a>
+  <a href="#cheat"><span>11</span>Cheat sheet</a>
+  <div class="road">
+    <h4>COURSE ROADMAP · CLICK TO OPEN</h4>
+    <a class="rm ready" href="../module01/"><em>01</em>Architecture<i>open</i></a>
+    <a class="rm ready" href="../module02/"><em>02</em>SnowSQL · unstructured · streams, tasks &amp; procedures<i>open</i></a>
+    <a class="rm ready" href="../module03/"><em>03</em>Performance tuning<i>open</i></a>
+    <a class="rm ready" href="../module04/"><em>04</em>Data ingestion (Snowpipe)<i>open</i></a>
+    <a class="rm ready" href="../module05/"><em>05</em>Dynamic tables &amp; transforms<i>open</i></a>
+    <a class="rm ready" href="../module06/"><em>06</em>Semi-structured data<i>open</i></a>
+    <a class="rm ready" href="../module07/"><em>07</em>Data protection<i>open</i></a>
+    <a class="rm ready" href="../module08/"><em>08</em>Security &amp; governance<i>open</i></a>
+    <a class="rm ready" href="../module09/"><em>09</em>Cost optimization<i>open</i></a>
+    <a class="rm ready" href="../module10/"><em>10</em>Data sharing<i>open</i></a>
+    <a class="rm now" href="../module11/"><em>11</em>Snowpark &amp; Cortex AI<i>you are here</i></a>
+    <a class="rm ready" href="../module12/"><em>12</em>Advanced SQL<i>open</i></a>
+    <a class="rm ready" href="../module13/"><em>13</em>Modeling &amp; tooling<i>open</i></a>
+    <a class="rm ready" href="../module14/"><em>14</em>System design &amp; behavioral<i>open</i></a>
+  </div>
+</nav>
+<main>
+
+<section id="intro">
+  <div class="eyebrow">MODULE 11 · SNOWPARK &amp; CORTEX AI</div>
+  <h1>Bring the code<br><span class="thin">to the data.</span></h1>
+  <p class="lead" style="margin-top:18px">The first ten modules were mostly about SQL: loading, tuning, protecting and sharing data. This module is about everything that <i>isn't</i> plain SQL: Python DataFrames that turn into SQL, Python functions running next to your tables, containers with GPUs, and AI models you call like a SQL function. They all follow one idea: <b>don't pull the data out to your code; push your code in to the data.</b></p>
+  <p style="margin-top:14px">Four characters for this module, using a library as the analogy:</p>
+  <div class="analogy-grid">
+    <div class="ag a1 rise"><div class="k">SNOWPARK DATAFRAME</div><h5>A written request slip</h5><p>You fill in a slip ("all shipped orders, totals by region"). Nobody fetches anything until you hand it to the desk. Then the librarians (the warehouse) do all the work inside the building.</p></div>
+    <div class="ag a2 rise" style="animation-delay:.1s"><div class="k">UDF / PROCEDURE</div><h5>A specialist who works on-site</h5><p>Instead of carrying 10,000 books home to check them, you hire a specialist who sits in the reading room and checks each book there.</p></div>
+    <div class="ag a3 rise" style="animation-delay:.2s"><div class="k">CONTAINER SERVICES</div><h5>Renting a private study room</h5><p>Bring your own equipment (any software, even GPUs) and set it up in a room <i>inside</i> the library, still behind the library's doors.</p></div>
+    <div class="ag a4 rise" style="animation-delay:.3s"><div class="k">CORTEX AI</div><h5>The in-house expert reader</h5><p>An expert who reads, summarises, translates and answers questions about the books, and never takes a book out of the building.</p></div>
+  </div>
+
+  <div class="wwh" style="margin-top:26px">
+    <div class="box what"><span class="tag">01 · WHAT IS IT</span>
+      <p>"Code to data" means the <b>computation runs where the data lives</b> (inside Snowflake, on a warehouse or a compute pool) instead of copying rows out to a laptop, a Spark cluster or an external ML server.</p>
+      <p>Snowflake gives you several ways to do that: <b>Snowpark</b> (DataFrame API + Python/Java/Scala functions), <b>Snowpark Container Services</b> (your own containers), <b>Cortex AI</b> (managed LLM and ML functions) and <b>Snowflake ML</b> (feature store, model registry, ML functions).</p>
+    </div>
+    <div class="box why"><span class="tag">02 · WHY WE USE IT</span>
+      <ul class="dots">
+        <li><b>Speed:</b> moving terabytes over a network is slow; returning a 20-row answer is instant.</li>
+        <li><b>Security and governance:</b> data never leaves Snowflake, so RBAC, masking policies and auditing still apply. No forgotten CSV copies on laptops.</li>
+        <li><b>Scale:</b> warehouses scale up and out; your laptop doesn't.</li>
+        <li><b>Fewer systems:</b> one platform instead of Snowflake + Spark cluster + model server + vector database.</li>
+      </ul>
+    </div>
+    <div class="box how"><span class="tag">03 · HOW IT WORKS · COMPARE THE TWO APPROACHES</span>
+      <p>The classic beginner pattern is <code>pd.read_sql("SELECT * FROM orders")</code> and then pandas on a laptop. Move the slider and compare it with pushing the same logic down to Snowflake.</p>
+      <div class="panel" style="margin:10px 0 0">
+        <div class="panel-h"><div class="t">SIMULATOR · <b>DATA TO CODE vs CODE TO DATA</b></div><span class="note-s">Illustrative model, not a benchmark: 100 MB/s effective network, 16 GB laptop RAM</span></div>
+        <div class="ctl"><label>Table size</label><input type="range" id="c0Size" min="0" max="100" value="40"><span class="v" id="c0SizeV"></span></div>
+        <div class="row" style="margin:6px 0"><span class="note-s" style="min-width:150px">Approach:</span><div class="tabs" id="c0Mode" style="margin:0"><button class="on" data-m="pull">Pull data to laptop (pandas)</button><button data-m="push">Push code to Snowflake (Snowpark)</button></div></div>
+        <div class="sqlbox" id="c0Code"></div>
+        <div style="margin-top:12px"><div class="note-s">Bytes crossing the network</div><div class="bar-w"><i id="c0Bar"></i></div></div>
+        <div class="stats">
+          <div class="stat"><div class="k">DATA MOVED</div><div class="n" id="c0Moved">–</div></div>
+          <div class="stat"><div class="k">TRANSFER TIME</div><div class="n" id="c0Time">–</div></div>
+          <div class="stat"><div class="k">COMPUTE RUNS ON</div><div class="n" id="c0Where" style="font-size:20px">–</div></div>
+          <div class="stat"><div class="k">GOVERNANCE</div><div class="n" id="c0Gov" style="font-size:20px">–</div></div>
+        </div>
+        <div class="insight" id="c0Ins"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="snowpark">
+  <div class="eyebrow">CHAPTER 01</div>
+  <h2>Snowpark DataFrames <span class="thin">· Python that becomes SQL</span></h2>
+  <div class="wwh">
+    <div class="box what"><span class="tag">01 · WHAT IS IT</span>
+      <p><b>Snowpark</b> is Snowflake's developer framework for <b>Python, Java and Scala</b>. Its main piece is the <b>DataFrame API</b>: you write <code>df.filter(...).group_by(...).agg(...)</code>, and Snowpark translates it into <b>SQL that runs on a Snowflake warehouse</b>.</p>
+      <p>Everything starts with a <b>Session</b>, your connection plus context (role, warehouse, database, schema): <code>Session.builder.configs({...}).create()</code>. Inside a stored procedure, Snowflake hands you a session automatically.</p>
+      <p class="note-s">It feels like PySpark (same style of API), but there is no cluster to manage: the "cluster" is your virtual warehouse.</p>
+    </div>
+    <div class="box why"><span class="tag">02 · WHY WE USE IT</span>
+      <ul class="dots">
+        <li>Python developers and data scientists can work in Python <b>without pulling data out</b>.</li>
+        <li>Complex pipelines become <b>testable, reusable code</b> (functions, classes, unit tests, CI/CD) instead of 800-line SQL strings.</li>
+        <li>The generated SQL gets the full Snowflake optimizer: pruning, result cache, elastic warehouses.</li>
+        <li>A common migration path for <b>Spark jobs</b>: similar API, no cluster tuning.</li>
+      </ul>
+    </div>
+    <div class="box how"><span class="tag">03 · HOW IT WORKS · LAZY EVALUATION</span>
+      <p>A DataFrame is <b>not data</b>. It is a <b>recipe</b> (a logical plan) kept in your Python process. Each <b>transformation</b> (<code>filter</code>, <code>select</code>, <code>join</code>, <code>group_by</code>, <code>with_column</code>, <code>sort</code>) just returns a new, bigger recipe. Nothing is sent to Snowflake.</p>
+      <p>When you call an <b>action</b> (<code>collect()</code>, <code>show()</code>, <code>count()</code>, <code>to_pandas()</code>, <code>write.save_as_table()</code>), Snowpark compiles the whole recipe into SQL, sends it through the connector to <b>cloud services</b> (which parses, optimizes and plans it like any query), and a <b>warehouse executes it</b>. You can see the SQL with <code>df.queries</code> or <code>df.explain()</code>, and every Snowpark query shows up in Query History.</p>
+      <div class="grid2" style="margin-top:10px">
+        <div class="mini"><h5>Client side (your Python process)</h5><p>Builds the plan, generates SQL, receives results. DataFrame code runs here only to <i>describe</i> work. No rows are processed on the client unless you <code>collect()</code> or <code>to_pandas()</code> them.</p></div>
+        <div class="mini"><h5>Server side (Snowflake)</h5><p>Cloud services compiles, the warehouse executes. Your <b>UDF and stored procedure</b> code (next chapter) also runs here, inside a secure Python sandbox on the warehouse nodes.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-h"><div class="t">SIMULATOR · <b>BUILD A DATAFRAME CHAIN</b> · watch the SQL grow</div><button class="btn" id="dfReset">Reset</button></div>
+    <p style="font-size:14px;color:var(--ink2);margin-top:0">Start from <code>session.table("ORDERS")</code>. Click transformations in any order (some need columns that exist at that point). Notice that <b>no query is sent</b> until you press an action. SQL is simplified but shaped like what Snowpark generates (nested sub-queries, quoted identifiers).</p>
+    <div class="note-s">1 · Transformations (lazy):</div>
+    <div class="ops" id="dfOps"></div>
+    <div class="note-s">2 · Actions (execute):</div>
+    <div class="row acts" id="dfActs" style="margin:8px 0 12px"></div>
+    <div class="grid2">
+      <div><div class="note-s">Your Python</div><div class="sqlbox" id="dfPy" style="border-left-color:var(--amber)"></div></div>
+      <div><div class="note-s">Generated SQL (kept on the client until an action)</div><div class="sqlbox" id="dfSql"></div></div>
+    </div>
+    <svg viewBox="0 0 680 120" class="flow" id="dfFlow" style="margin-top:12px">
+      <path class="edge" id="dfe1" d="M170 60 L250 60"/><path class="edge" id="dfe2" d="M420 60 L500 60"/><path class="edge" id="dfe3" d="M585 92 C585 116 90 116 90 92"/>
+      <g class="fn" id="dfn1"><rect class="neutral" x="10" y="28" width="160" height="64" rx="10" stroke-width="1"/><text class="th" x="90" y="50" text-anchor="middle" dominant-baseline="central">Python client</text><text class="ts" x="90" y="70" text-anchor="middle" dominant-baseline="central">builds plan + SQL</text></g>
+      <g class="fn" id="dfn2"><rect class="L-cs" x="250" y="28" width="170" height="64" rx="10" stroke-width="1"/><text class="th" x="335" y="50" text-anchor="middle" dominant-baseline="central">Cloud services</text><text class="ts" x="335" y="70" text-anchor="middle" dominant-baseline="central">parse · optimize · prune</text></g>
+      <g class="fn" id="dfn3"><rect class="L-cp" x="500" y="28" width="170" height="64" rx="10" stroke-width="1"/><text class="th" x="585" y="50" text-anchor="middle" dominant-baseline="central">Warehouse</text><text class="ts" x="585" y="70" text-anchor="middle" dominant-baseline="central" id="dfWh">idle</text></g>
+    </svg>
+    <div class="sent" id="dfSent">No query sent yet. Transformations only change the recipe.</div>
+    <div class="stats">
+      <div class="stat"><div class="k">TRANSFORMATIONS QUEUED</div><div class="n" id="dfT">0</div></div>
+      <div class="stat"><div class="k">QUERIES SENT</div><div class="n" id="dfQ">0</div></div>
+      <div class="stat"><div class="k">ROWS TO CLIENT</div><div class="n" id="dfR">0</div><div class="s">illustrative, ORDERS = 50M rows</div></div>
+    </div>
+    <div class="insight" id="dfIns">Click a transformation. Watch the counters: <b>queries sent</b> stays at 0.</div>
+  </div>
+
+  <table class="t" style="margin-top:6px">
+    <tr><th>TYPE</th><th>EXAMPLES</th><th>WHAT HAPPENS</th></tr>
+    <tr><td><b>Transformation</b> (lazy)</td><td class="m">filter, select, with_column, join, group_by().agg(), sort, limit, union</td><td>Returns a new DataFrame. Only the plan changes. Free and instant.</td></tr>
+    <tr><td><b>Action</b> (eager)</td><td class="m">collect, show, count, first, to_pandas, write.save_as_table, cache_result</td><td>Generates SQL, runs it on the warehouse, returns rows or writes a table.</td></tr>
+  </table>
+  <div class="grid2" style="margin-top:14px">
+    <div class="call trap" style="margin:0"><b class="k">INTERVIEW TRAP</b><div><b>Every action re-runs the query.</b> Call <code>df.count()</code> and then <code>df.show()</code> and you have run the full pipeline twice (the result cache may help only if the SQL and data are identical). If you reuse an expensive intermediate result, call <code>df.cache_result()</code>, which materializes it into a temporary table and returns a DataFrame over it.</div></div>
+    <div class="call pro" style="margin:0"><b class="k">SENIOR ANGLE</b><div><b>The anti-pattern to name in interviews:</b> <code>for row in df.collect(): ...</code> or <code>df.to_pandas()</code> on a 50M-row table. It drags everything into client memory and makes Python do the work row by row. Keep the logic in DataFrame operations (pushed down as SQL) and only collect small, final results. Snowflake also offers a <b>pandas-compatible API</b> (Snowpark pandas on Modin) that pushes pandas-style code down as SQL; check current docs for supported operations.</div></div>
+  </div>
+</section>
+
+<section id="udf">
+  <div class="eyebrow">CHAPTER 02</div>
+  <h2>UDFs, UDTFs, vectorized UDFs &amp; procedures <span class="thin">· Python on the server</span></h2>
+  <div class="wwh">
+    <div class="box what"><span class="tag">01 · WHAT IS IT</span>
+      <p>When SQL alone can't express your logic, you write it in Python (or Java, Scala, JavaScript, SQL) and register it in Snowflake:</p>
+      <ul class="dots">
+        <li><b>Scalar UDF</b>: one row in, one value out. <code>SELECT clean_phone(phone) FROM customers</code>.</li>
+        <li><b>UDTF</b> (table function): rows in, <b>zero or many rows out</b>. A handler class with <code>process()</code> (per row) and optional <code>end_partition()</code>. Called as <code>TABLE(my_udtf(col)) OVER (PARTITION BY ...)</code>.</li>
+        <li><b>Vectorized UDF</b>: the handler receives a <b>batch of rows as a pandas DataFrame</b> and returns a batch of results. Same SQL call, much less per-row overhead.</li>
+        <li><b>Stored procedure</b>: run with <code>CALL</code>; the handler gets a Snowpark <code>session</code> and can run DML/DDL (Module 02 covered procedures in depth).</li>
+      </ul>
+    </div>
+    <div class="box why"><span class="tag">02 · WHY WE USE IT</span>
+      <ul class="dots">
+        <li>Use the <b>Python ecosystem</b> (regex, scikit-learn, XGBoost, NLP libraries) inside SQL queries.</li>
+        <li><b>Score ML models</b> on millions of rows where the data lives.</li>
+        <li>Share one tested implementation: analysts call it from SQL, engineers from Snowpark.</li>
+        <li>Governed: UDFs run under Snowflake RBAC, and the sandbox has <b>no internet access</b> unless you grant an <b>external access integration</b>.</li>
+      </ul>
+    </div>
+    <div class="box how"><span class="tag">03 · HOW IT WORKS · BACKEND</span>
+      <div class="grid3">
+        <div class="mini"><h5>Packages</h5><p><code>PACKAGES = ('pandas','scikit-learn')</code> are resolved from Snowflake's <b>Anaconda channel</b> (an org admin must accept the Anaconda terms once). List what's available with <code>SELECT * FROM INFORMATION_SCHEMA.PACKAGES WHERE language = 'python'</code>. Pin versions for reproducibility.</p></div>
+        <div class="mini"><h5>Imports from stages</h5><p><code>IMPORTS = ('@ml_stage/model.joblib', '@code/utils.zip')</code> copies files from a stage onto the nodes. Your code finds them via <code>sys._xoptions["snowflake_import_directory"]</code>. Load models <b>once at module level</b>, not inside the handler.</p></div>
+        <div class="mini"><h5>Execution</h5><p>The query runs on the warehouse. Each node starts Python worker processes in a <b>secure sandbox</b>; Snowflake sends rows to them in batches and collects results. A scalar UDF still pays a Python function call per row; a vectorized UDF gets a whole pandas batch per call.</p></div>
+      </div>
+      <p style="margin-top:10px"><b>Snowpark-optimized warehouses</b> (<code>WAREHOUSE_TYPE = 'SNOWPARK-OPTIMIZED'</code>) give each node much more memory than a standard warehouse, for memory-hungry work such as training a model inside a stored procedure or loading a large model into a UDF. They cost more per hour, so use them only when standard warehouses run out of memory. Check current docs for the exact memory multiples and supported sizes.</p>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-h"><div class="t">SIMULATOR · <b>ROW-AT-A-TIME vs VECTORIZED</b></div><span class="note-s">Illustrative model, not a benchmark</span></div>
+    <div class="row" style="margin-bottom:6px"><span class="note-s" style="min-width:150px">UDF type:</span><div class="tabs" id="vzMode" style="margin:0"><button class="on" data-m="row">Scalar (row at a time)</button><button data-m="vec">Vectorized (pandas batches)</button></div><button class="btn pri" id="vzPlay">▶ Animate 48 rows</button></div>
+    <div class="ctl"><label>Rows to score</label><input type="range" id="vzRows" min="0" max="5" value="3"><span class="v" id="vzRowsV"></span></div>
+    <div class="ctl"><label>Batch size (vectorized)</label><input type="range" id="vzBatch" min="0" max="4" value="2"><span class="v" id="vzBatchV"></span></div>
+    <div class="ctl"><label>Warehouse size</label><input type="range" id="vzWh" min="0" max="3" value="1"><span class="v" id="vzWhV"></span></div>
+    <svg viewBox="0 0 680 170" id="vzSvg"></svg>
+    <div class="legend"><span><i style="background:var(--ice)"></i>row waiting / moving</span><span><i style="background:var(--red)"></i>per-call overhead (serialize + Python call)</span><span><i style="background:var(--teal)"></i>scored</span></div>
+    <div class="stats">
+      <div class="stat"><div class="k">PYTHON CALLS</div><div class="n" id="vzCalls">–</div></div>
+      <div class="stat"><div class="k">EST. TIME</div><div class="n" id="vzTime">–</div></div>
+      <div class="stat"><div class="k">THROUGHPUT</div><div class="n" id="vzTp">–</div><div class="s">rows / second</div></div>
+      <div class="stat"><div class="k">OVERHEAD SHARE</div><div class="n" id="vzOv">–</div></div>
+    </div>
+    <div class="insight" id="vzIns"></div>
+  </div>
+  <div class="grid2">
+    <div class="call trap" style="margin:0"><b class="k">INTERVIEW TRAP</b><div>"Our Python UDF is slow, so we moved to a 4XL warehouse and it barely helped." Bigger warehouses add nodes, but if the handler <b>loads a model on every call</b> or processes one row at a time with pure-Python loops, the overhead scales with it. Fix the code first: load once at module level, switch to a <b>vectorized</b> UDF with numpy/pandas operations, and check whether plain SQL could do it (built-in functions beat any UDF).</div></div>
+    <div class="call pro" style="margin:0"><b class="k">SENIOR ANGLE</b><div><b>UDF vs procedure in one sentence:</b> a UDF is a <i>calculation</i> used inside a query (read-only, runs per row or batch, parallel across nodes); a procedure is an <i>action</i> you CALL (runs once, gets a session, can run DML/DDL and orchestrate many queries). A Python procedure that does <code>session.table(...).to_pandas()</code> and loops in pandas runs on <b>one node</b> and loses the warehouse's parallelism; push the work into DataFrame operations or UDFs instead.</div></div>
+  </div>
+</section>
+
+<section id="spcs">
+  <div class="eyebrow">CHAPTER 03</div>
+  <h2>Snowpark Container Services <span class="thin">· your own containers inside Snowflake</span></h2>
+  <div class="wwh">
+    <div class="box what"><span class="tag">01 · WHAT IS IT</span>
+      <p><b>Snowpark Container Services (SPCS)</b> is a managed runtime for <b>OCI/Docker container images</b> inside Snowflake. You build an image with any language, libraries and runtime, push it to Snowflake, and run it on Snowflake-managed nodes, including <b>GPU nodes</b>.</p>
+      <ul class="dots">
+        <li><b>Image repository</b>: an OCI registry that lives in a schema. You <code>docker push</code> to its URL.</li>
+        <li><b>Compute pool</b>: a group of VM nodes of one <b>instance family</b> (CPU or GPU sizes), with MIN_NODES / MAX_NODES.</li>
+        <li><b>Service</b>: long-running containers (an API, a web app, a model server) described by a YAML <b>specification</b>, optionally with public <b>endpoints</b>.</li>
+        <li><b>Job service</b>: runs to completion (<code>EXECUTE JOB SERVICE</code>), e.g. a batch training job.</li>
+        <li><b>Service function</b>: a SQL function that calls a service endpoint, so SQL users can use your container like a UDF.</li>
+      </ul>
+    </div>
+    <div class="box why"><span class="tag">02 · WHY WE USE IT</span>
+      <ul class="dots">
+        <li><b>GPUs</b> for deep learning training, fine-tuning or running open-source models.</li>
+        <li><b>Custom runtimes</b>: libraries not in the Anaconda channel, system packages, other languages, long-running processes.</li>
+        <li><b>Full apps</b> (React front ends, APIs, notebooks) hosted next to the data, behind Snowflake authentication.</li>
+        <li>Still governed: data access uses Snowflake roles; outbound internet needs an external access integration.</li>
+      </ul>
+    </div>
+    <div class="box how"><span class="tag">03 · HOW IT WORKS</span>
+      <div class="grid3" style="grid-template-columns:repeat(4,1fr)">
+        <div class="mini"><h5>1 · Repository</h5><p><code>CREATE IMAGE REPOSITORY</code>, then <code>docker login</code>, <code>docker tag</code> and <code>docker push</code> to the repository URL shown by <code>SHOW IMAGE REPOSITORIES</code>.</p></div>
+        <div class="mini"><h5>2 · Compute pool</h5><p><code>CREATE COMPUTE POOL</code> with an <code>INSTANCE_FAMILY</code> (e.g. a CPU or GPU family) and node limits. Billed for <b>nodes while the pool is running</b>, busy or idle. Set auto-suspend.</p></div>
+        <div class="mini"><h5>3 · Service</h5><p><code>CREATE SERVICE ... IN COMPUTE POOL ... FROM SPECIFICATION</code> (YAML: containers, image, env, resources, endpoints, volumes). Snowflake schedules and restarts the containers for you.</p></div>
+        <div class="mini"><h5>4 · Use it</h5><p>Call it from SQL through a <b>service function</b>, open a public endpoint (Snowflake login required), or run it as a job. Logs are available through the event table / <code>SYSTEM$GET_SERVICE_LOGS</code>.</p></div>
+      </div>
+      <p class="note-s" style="margin-top:8px">SPCS features, instance families and regional availability evolve quickly. Treat this chapter as the concept; check current docs for exact instance names and limits.</p>
+    </div>
+  </div>
+  <div class="panel">
+    <div class="panel-h"><div class="t">DECISION HELPER · <b>UDF, CONTAINER OR CORTEX?</b></div><span class="note-s">Tick what your workload needs</span></div>
+    <div class="tgl" id="spTgl"></div>
+    <div class="dec" id="spDec"></div>
+  </div>
+  <table class="t">
+    <tr><th></th><th>PYTHON UDF / PROCEDURE</th><th>CONTAINER SERVICES</th><th>CORTEX AI FUNCTIONS</th></tr>
+    <tr><td><b>Compute</b></td><td>Virtual warehouse (standard or Snowpark-optimized)</td><td>Compute pool (CPU or GPU nodes)</td><td>Snowflake-managed model inference</td></tr>
+    <tr><td><b>Your code</b></td><td>Python function, Anaconda packages</td><td>Any container image</td><td>None: you call a SQL function</td></tr>
+    <tr><td><b>Lifetime</b></td><td>Per query</td><td>Long-running service or a job</td><td>Per query</td></tr>
+    <tr><td><b>Billing</b></td><td>Warehouse credits</td><td>Compute pool node time (+ storage, transfer)</td><td>Tokens/pages (AI credits) + warehouse running the query</td></tr>
+    <tr><td><b>Pick when</b></td><td>Row/batch logic inside SQL</td><td>GPUs, custom runtimes, apps, APIs</td><td>Standard LLM tasks with managed models</td></tr>
+  </table>
+  <div class="call trap"><b class="k">INTERVIEW TRAP</b><div>"We'll use SPCS for everything." A compute pool bills for its nodes while running, even if no requests come in, and you own the image, patching and scaling settings. If a vectorized UDF or a Cortex function does the job, it is usually simpler and cheaper. Reach for containers when you genuinely need GPUs, a custom runtime or a long-running service.</div></div>
+</section>
+
+<section id="cortex">
+  <div class="eyebrow">CHAPTER 04</div>
+  <h2>Cortex AI SQL functions <span class="thin">· LLMs you call like SUM()</span></h2>
+  <div class="wwh">
+    <div class="box what"><span class="tag">01 · WHAT IS IT</span>
+      <p><b>Snowflake Cortex</b> is Snowflake's managed AI layer. Its <b>AI SQL functions</b> let you run large language models on table columns with plain SQL. No API keys, no GPUs, no Python required. The current family uses the <code>AI_</code> prefix (older equivalents live under <code>SNOWFLAKE.CORTEX.*</code>, e.g. <code>COMPLETE</code>, <code>SENTIMENT</code>, <code>SUMMARIZE</code>, <code>TRANSLATE</code>):</p>
+      <table class="t" style="margin-top:6px">
+        <tr><td class="m">AI_COMPLETE</td><td>Free-form generation with a chosen model and prompt</td></tr>
+        <tr><td class="m">AI_CLASSIFY</td><td>Assign one (or more) of <i>your</i> labels</td></tr>
+        <tr><td class="m">AI_FILTER</td><td>TRUE/FALSE for a natural-language condition (use in WHERE / JOIN)</td></tr>
+        <tr><td class="m">AI_SENTIMENT</td><td>Overall and per-aspect sentiment</td></tr>
+        <tr><td class="m">AI_AGG / AI_SUMMARIZE_AGG</td><td><b>Aggregate</b> functions: insight or summary across many rows (GROUP BY)</td></tr>
+        <tr><td class="m">AI_EMBED / AI_SIMILARITY</td><td>Text (or image) to vector; similarity score between two inputs</td></tr>
+        <tr><td class="m">AI_TRANSLATE</td><td>Translate between supported languages</td></tr>
+      </table>
+      <p class="note-s" style="margin-top:6px">Function names, signatures, models and regions change often. Phrase it in interviews as "the AI SQL functions such as AI_COMPLETE and AI_CLASSIFY" and check current docs before relying on a specific model.</p>
+    </div>
+    <div class="box why"><span class="tag">02 · WHY WE USE IT</span>
+      <ul class="dots">
+        <li><b>Analysts can do AI</b>: classify 2 million support tickets with one SELECT.</li>
+        <li><b>Data stays in Snowflake</b>: models run inside Snowflake's security boundary, so RBAC and masking apply, and no data goes to a third-party API you manage.</li>
+        <li><b>Batch scale</b>: run over whole tables, schedule with tasks or dynamic tables.</li>
+        <li><b>Choice of models</b> (Snowflake, Meta, Mistral, Anthropic, OpenAI and others, depending on region) without hosting any of them.</li>
+      </ul>
+    </div>
+    <div class="box how"><span class="tag">03 · HOW IT WORKS · BACKEND &amp; BILLING</span>
+      <div class="grid3">
+        <div class="mini"><h5>Execution</h5><p>Your query runs on <b>your warehouse</b>. Each AI function call is sent to Snowflake-hosted model inference and the result returns as a value in the row. A bigger warehouse doesn't make the model faster; Snowflake recommends a <b>MEDIUM or smaller</b> warehouse for Cortex queries.</p></div>
+        <div class="mini"><h5>Tokens</h5><p>Billed per <b>token</b> (roughly 4 characters of English text). Generative functions count <b>input + output</b> tokens; some count input only. Rates differ by function and model (see Snowflake's Service Consumption Table). Track spend in ACCOUNT_USAGE Cortex usage views.</p></div>
+        <div class="mini"><h5>Governance</h5><p>Access via the <code>SNOWFLAKE.CORTEX_USER</code> database role (granted to PUBLIC by default; revoke it to lock down). Admins can restrict models with an allowlist parameter and enable <b>cross-region inference</b> when a model isn't in your region; check current docs for parameter names.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-h"><div class="t">SIMULATOR · <b>CORTEX FUNCTION PLAYGROUND</b> · table PRODUCT_REVIEWS</div><span class="note-s">Outputs are illustrative, not real model responses</span></div>
+    <div class="note-s">1 · Pick a function:</div>
+    <div class="tabs" id="cxFn" style="margin:8px 0 10px"></div>
+    <div class="row" id="cxModelRow" style="margin-bottom:8px"><span class="note-s" style="min-width:110px">Model:</span><div class="tabs" id="cxModel" style="margin:0"><button class="on" data-m="claude-sonnet-4-5">claude-sonnet-4-5</button><button data-m="llama3.3-70b">llama3.3-70b</button><button data-m="mistral-large2">mistral-large2</button><button data-m="llama3.1-8b">llama3.1-8b</button></div></div>
+    <div class="note-s">2 · Choose which sample reviews the query touches (click to toggle):</div>
+    <div class="rvlist" id="cxRev"></div>
+    <div class="grid2">
+      <div><div class="note-s">SQL you run</div><div class="sqlbox" id="cxSql"></div></div>
+      <div><div class="note-s">Result (illustrative)</div><div class="out" id="cxOut"></div></div>
+    </div>
+    <div class="insight" id="cxIns"></div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-h"><div class="t">CALCULATOR · <b>TOKEN &amp; COST ESTIMATOR</b></div><span class="note-s">Illustrative rates only. Real credits per million tokens are in Snowflake's Service Consumption Table.</span></div>
+    <div class="ctl"><label>Rows processed</label><input type="range" id="cxRows" min="0" max="6" value="3"><span class="v" id="cxRowsV"></span></div>
+    <div class="ctl"><label>Avg words per review</label><input type="range" id="cxWords" min="10" max="400" step="10" value="80"><span class="v" id="cxWordsV"></span></div>
+    <div class="ctl"><label>Prompt words added</label><input type="range" id="cxPrompt" min="0" max="200" step="10" value="30"><span class="v" id="cxPromptV"></span></div>
+    <div class="ctl"><label>Output tokens per row</label><input type="range" id="cxOutTok" min="0" max="500" step="10" value="60"><span class="v" id="cxOutTokV"></span></div>
+    <div class="row" style="margin:6px 0"><span class="note-s" style="min-width:150px">Model tier:</span><div class="tabs" id="cxTier" style="margin:0"><button data-r="0.2">Small (≈0.2 cr / 1M)</button><button class="on" data-r="1.2">Medium (≈1.2 cr / 1M)</button><button data-r="4">Large (≈4 cr / 1M)</button></div></div>
+    <div class="stats">
+      <div class="stat"><div class="k">INPUT TOKENS</div><div class="n" id="cxIn">–</div></div>
+      <div class="stat"><div class="k">OUTPUT TOKENS</div><div class="n" id="cxOt">–</div></div>
+      <div class="stat"><div class="k">AI CREDITS</div><div class="n" id="cxCr">–</div><div class="s">plus warehouse time</div></div>
+      <div class="stat"><div class="k">AT $3 / CREDIT</div><div class="n" id="cxUsd">–</div><div class="s">illustrative price</div></div>
+    </div>
+    <div class="insight" id="cxCIns"></div>
+  </div>
+  <div class="grid2">
+    <div class="call trap" style="margin:0"><b class="k">INTERVIEW TRAP</b><div>"We put <code>AI_COMPLETE</code> in a view and the bill exploded." Every query on that view <b>re-calls the model for every row</b>. AI results are not free like a SUM: compute them <b>once</b> into a table (incrementally, with a stream + task or a dynamic table), then let dashboards read the stored results. Also test on <code>LIMIT 100</code> before running on the full table.</div></div>
+    <div class="call pro" style="margin:0"><b class="k">SENIOR ANGLE</b><div><b>Pick the smallest function and model that work.</b> Task-specific functions (AI_CLASSIFY, AI_SENTIMENT, AI_FILTER) are simpler to govern and usually cheaper than a free-form AI_COMPLETE prompt. For COMPLETE, try a small model first, constrain output (short answers, structured JSON output where supported), and measure quality on a labelled sample before scaling up.</div></div>
+  </div>
+</section>
+
+<section id="rag">
+  <div class="eyebrow">CHAPTER 05</div>
+  <h2>Vectors &amp; RAG <span class="thin">· search by meaning, answer with your data</span></h2>
+  <div class="wwh">
+    <div class="box what"><span class="tag">01 · WHAT IS IT</span>
+      <p>An <b>embedding</b> is a list of numbers (e.g. 768 or 1024 of them) that represents the <b>meaning</b> of a piece of text. Texts with similar meanings get vectors that point in similar directions, even with different words ("refund" ≈ "money back").</p>
+      <p>Snowflake has a native <b><code>VECTOR(FLOAT, n)</code></b> data type (also <code>INT</code> elements; check docs for the maximum dimension), embedding functions (<code>AI_EMBED</code>, older <code>SNOWFLAKE.CORTEX.EMBED_TEXT_768/1024</code>) and distance functions: <code>VECTOR_COSINE_SIMILARITY</code>, <code>VECTOR_INNER_PRODUCT</code>, <code>VECTOR_L2_DISTANCE</code>.</p>
+      <p><b>RAG (retrieval-augmented generation)</b> = find the most relevant chunks of <i>your</i> documents, paste them into the prompt, and let the LLM answer from them.</p>
+    </div>
+    <div class="box why"><span class="tag">02 · WHY WE USE IT</span>
+      <ul class="dots">
+        <li>LLMs don't know your private policies, contracts or tickets, and they <b>hallucinate</b> when they guess. RAG grounds them in your data.</li>
+        <li>Keyword search misses synonyms; vector search finds meaning. <b>Hybrid</b> search combines both.</li>
+        <li>Keeping vectors in Snowflake means no separate vector database to sync and secure.</li>
+      </ul>
+    </div>
+    <div class="box how"><span class="tag">03 · HOW IT WORKS · THE RAG FLOW</span>
+      <div class="grid3" style="grid-template-columns:repeat(5,1fr)">
+        <div class="mini"><h5>1 · Chunk</h5><p>Split documents into small passages (Module 02's chunking visualizer).</p></div>
+        <div class="mini"><h5>2 · Embed</h5><p>Turn every chunk into a vector with an embedding model.</p></div>
+        <div class="mini"><h5>3 · Index</h5><p>Store vectors (a VECTOR column) or let <b>Cortex Search</b> build a managed index.</p></div>
+        <div class="mini"><h5>4 · Retrieve</h5><p>Embed the question with the <b>same model</b>, find the top-k nearest chunks.</p></div>
+        <div class="mini"><h5>5 · Generate</h5><p>Prompt = instructions + retrieved chunks + question → AI_COMPLETE.</p></div>
+      </div>
+      <p style="margin-top:10px"><b>Cortex Search</b> is a managed service: <code>CREATE CORTEX SEARCH SERVICE ... ON text_col ATTRIBUTES ... WAREHOUSE = ... TARGET_LAG = '1 hour' AS (SELECT ...)</code>. Snowflake embeds the text, builds a <b>hybrid index</b> (vector + keyword, with semantic re-ranking), and refreshes it <b>incrementally</b> when the source changes, within the target lag (like a dynamic table). Apps query it through the Python API, REST API, or <code>SNOWFLAKE.CORTEX.SEARCH_PREVIEW</code> in SQL for testing, with filters on ATTRIBUTES columns.</p>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-h"><div class="t">SIMULATOR · <b>EMBEDDING SPACE &amp; NEAREST NEIGHBOURS</b> · 12 help-centre chunks</div><span class="note-s">Illustrative: real embeddings have hundreds of dimensions; this is a 2-D picture</span></div>
+    <div class="note-s">Ask a question (pick one or type your own):</div>
+    <div class="row" id="vrQs" style="margin:8px 0"></div>
+    <div class="tinput" style="margin-bottom:8px"><input id="vrIn" placeholder="type a question, e.g. my parcel is late" autocomplete="off"><button class="btn pri" id="vrGo">Search</button></div>
+    <div class="row" style="margin:6px 0"><span class="note-s" style="min-width:110px">Retrieval mode:</span><div class="tabs" id="vrMode" style="margin:0"><button class="on" data-m="vec">Vector (cosine)</button><button data-m="kw">Keyword only</button><button data-m="hyb">Hybrid (Cortex Search style)</button></div></div>
+    <div class="ctl"><label>top-k chunks</label><input type="range" id="vrK" min="1" max="5" value="3"><span class="v" id="vrKV"></span></div>
+    <div class="grid2" style="grid-template-columns:1.1fr 1fr">
+      <div><svg viewBox="0 0 420 380" id="vrSvg"></svg>
+        <div class="legend"><span><i style="background:var(--teal)"></i>refunds</span><span><i style="background:var(--ice)"></i>shipping</span><span><i style="background:var(--amber)"></i>account</span><span><i style="background:var(--red)"></i>product care</span><span><i style="background:var(--ink)"></i>your question</span></div></div>
+      <div><table class="t sim-tbl" id="vrTbl"></table></div>
+    </div>
+    <div class="grid2" style="margin-top:12px">
+      <div><div class="note-s">Prompt sent to AI_COMPLETE (retrieved chunks injected)</div><div class="sqlbox" id="vrPrompt"></div></div>
+      <div><div class="note-s">Answer (illustrative)</div><div class="out" id="vrAns"></div></div>
+    </div>
+    <div class="insight" id="vrIns"></div>
+  </div>
+  <div class="grid2">
+    <div class="call trap" style="margin:0"><b class="k">INTERVIEW TRAP</b><div><b>Mixing embedding models.</b> Vectors from different models (or different dimensions) live in different "spaces" and can't be compared. The question must be embedded with the <b>same model</b> as the documents, and if you switch models you must re-embed everything. Also: <code>ORDER BY VECTOR_COSINE_SIMILARITY(...)</code> over a table is a <b>full scan</b>; fine for thousands or a few million rows, but for large, low-latency apps use Cortex Search.</div></div>
+    <div class="call pro" style="margin:0"><b class="k">SENIOR ANGLE</b><div><b>RAG quality is mostly retrieval quality.</b> Tune chunk size (Snowflake suggests chunks of roughly 512 tokens or less for Cortex Search), keep useful metadata as ATTRIBUTES for filtering (region, product, doc date), use hybrid search for codes and names that embeddings handle poorly, and evaluate with a set of real questions and expected sources. Tell the model to answer <i>only</i> from the context and to say "I don't know" otherwise.</div></div>
+  </div>
+</section>
+
+<section id="analyst">
+  <div class="eyebrow">CHAPTER 06</div>
+  <h2>Cortex Analyst &amp; semantic models <span class="thin">· ask your data in English</span></h2>
+  <div class="wwh">
+    <div class="box what"><span class="tag">01 · WHAT IS IT</span>
+      <p><b>Cortex Analyst</b> is a managed <b>natural-language-to-SQL</b> service. A business user asks "What was revenue by region last quarter?", Analyst generates SQL against your tables, runs it, and returns the answer plus the SQL it used. Apps call it through a <b>REST API</b> (e.g. from a Streamlit chat app).</p>
+      <p>It relies on a <b>semantic model</b>: a YAML file on a stage, or a <b>semantic view</b> object in the database (<code>CREATE SEMANTIC VIEW</code>). It describes tables, relationships, <b>dimensions</b> (things you group by), <b>facts/measures and metrics</b> (things you add up), synonyms, and <b>verified queries</b>.</p>
+    </div>
+    <div class="box why"><span class="tag">02 · WHY A SEMANTIC LAYER?</span>
+      <ul class="dots">
+        <li>Raw schemas are ambiguous to an LLM: is revenue <code>AMOUNT</code>, <code>NET_AMT</code> or <code>AMOUNT - DISCOUNT</code>? Which date is "last quarter" based on?</li>
+        <li>The semantic model encodes <b>business definitions once</b>, so every answer uses the same metric logic.</li>
+        <li><b>Verified queries</b> (question + trusted SQL) are reused or used as examples for similar questions, which raises accuracy.</li>
+        <li>Generated SQL runs with the <b>user's role</b>, so RBAC, row access and masking policies still apply.</li>
+      </ul>
+    </div>
+    <div class="box how"><span class="tag">03 · HOW IT WORKS · STEP THROUGH A QUESTION</span>
+      <div class="row" style="margin-bottom:8px"><span class="note-s" style="min-width:110px">Setup:</span><div class="tabs" id="anMode" style="margin:0"><button class="on" data-m="sem">With semantic view</button><button data-m="raw">LLM on raw schema only</button></div></div>
+      <svg viewBox="0 0 680 130" class="flow" id="anFlow">
+        <path class="edge" id="ane1" d="M120 65 L150 65"/><path class="edge" id="ane2" d="M260 65 L290 65"/><path class="edge" id="ane3" d="M400 65 L430 65"/><path class="edge" id="ane4" d="M540 65 L570 65"/>
+        <g class="fn" id="ann1"><rect class="neutral" x="10" y="35" width="110" height="60" rx="10" stroke-width="1"/><text class="th" x="65" y="57" text-anchor="middle" dominant-baseline="central">Question</text><text class="ts" x="65" y="76" text-anchor="middle" dominant-baseline="central">plain English</text></g>
+        <g class="fn" id="ann2"><rect class="L-cs" x="150" y="35" width="110" height="60" rx="10" stroke-width="1"/><text class="th" x="205" y="57" text-anchor="middle" dominant-baseline="central">Semantic</text><text class="ts" x="205" y="76" text-anchor="middle" dominant-baseline="central">model / view</text></g>
+        <g class="fn" id="ann3"><rect class="L-cs" x="290" y="35" width="110" height="60" rx="10" stroke-width="1"/><text class="th" x="345" y="57" text-anchor="middle" dominant-baseline="central">LLM → SQL</text><text class="ts" x="345" y="76" text-anchor="middle" dominant-baseline="central">+ validation</text></g>
+        <g class="fn" id="ann4"><rect class="L-cp" x="430" y="35" width="110" height="60" rx="10" stroke-width="1"/><text class="th" x="485" y="57" text-anchor="middle" dominant-baseline="central">Warehouse</text><text class="ts" x="485" y="76" text-anchor="middle" dominant-baseline="central">user's role</text></g>
+        <g class="fn" id="ann5"><rect class="L-st" x="570" y="35" width="100" height="60" rx="10" stroke-width="1"/><text class="th" x="620" y="57" text-anchor="middle" dominant-baseline="central">Answer</text><text class="ts" x="620" y="76" text-anchor="middle" dominant-baseline="central">rows + SQL</text></g>
+      </svg>
+      <div class="stepbar" id="anBar"></div>
+      <div class="stepdesc" id="anDesc"></div>
+      <div class="row" style="margin-top:12px"><button class="btn" id="anPrev">Back</button><button class="btn pri" id="anNext">Start</button><button class="btn" id="anReset">Reset</button></div>
+    </div>
+  </div>
+  <div class="grid2">
+    <div><div class="note-s">A minimal semantic view (syntax evolves; check current docs)</div>
+<div class="sqlbox">CREATE OR REPLACE SEMANTIC VIEW sales_sv
+  TABLES (
+    orders    AS sales_db.public.orders    PRIMARY KEY (order_id),
+    customers AS sales_db.public.customers PRIMARY KEY (customer_id)
+  )
+  RELATIONSHIPS (
+    orders_to_customers AS orders (customer_id) REFERENCES customers
+  )
+  FACTS ( orders.net_amount AS amount - discount )
+  DIMENSIONS (
+    customers.region   AS region,
+    orders.order_date  AS order_date
+  )
+  METRICS ( orders.total_revenue AS SUM(orders.net_amount) );</div></div>
+    <div>
+      <div class="mini" style="margin-bottom:10px"><h5>Snowflake Intelligence &amp; Cortex Agents</h5><p>Newer layers build on these pieces: an <b>agent</b> plans a multi-step answer and calls <b>tools</b> such as Cortex Analyst (structured data → SQL) and Cortex Search (documents → RAG), then combines the results. Snowflake Intelligence is the end-user chat experience on top. These products are evolving fast; describe the concept and check current availability.</p></div>
+      <div class="call trap" style="margin:0"><b class="k">INTERVIEW TRAP</b><div>"Can't we just give the LLM our schema?" It works for demos, but real schemas have cryptic names, many similar columns and business rules the LLM can't guess. Without a semantic layer you get <b>confident, plausible, wrong SQL</b>. The semantic model is where data engineers add real value.</div></div>
+    </div>
+  </div>
+</section>
+
+<section id="ml">
+  <div class="eyebrow">CHAPTER 07</div>
+  <h2>Snowflake ML <span class="thin">· features, models and MLOps in one place</span></h2>
+  <div class="wwh">
+    <div class="box what"><span class="tag">01 · WHAT IS IT</span>
+      <p><b>Snowflake ML</b> is a set of tools for the whole ML lifecycle, mostly through the <code>snowflake-ml-python</code> library:</p>
+      <ul class="dots">
+        <li><b>Feature Store</b>: define <b>entities</b> (customer, product) and <b>feature views</b> (feature SQL/DataFrames, refreshed on a schedule, typically backed by dynamic tables), then generate point-in-time-correct training data.</li>
+        <li><b>Model Registry</b>: log models (scikit-learn, XGBoost, PyTorch and others) with versions and metadata, then run inference from Python or SQL, on a warehouse or in Container Services.</li>
+        <li><b>ML Functions</b>: SQL-only ML for common jobs, such as <code>SNOWFLAKE.ML.FORECAST</code> and <code>SNOWFLAKE.ML.ANOMALY_DETECTION</code> (also classification and top-insights functions).</li>
+        <li>Plus notebooks, distributed training/processing APIs and ML jobs (newer; check docs).</li>
+      </ul>
+    </div>
+    <div class="box why"><span class="tag">02 · WHY WE USE IT</span>
+      <ul class="dots">
+        <li>Train and serve models <b>without exporting data</b> to a separate ML platform.</li>
+        <li>The same features for training and inference, so you avoid <b>training/serving skew</b>.</li>
+        <li>Versioned, governed models: who can use which version is controlled with RBAC.</li>
+        <li>Analysts can forecast or detect anomalies with two SQL statements.</li>
+      </ul>
+    </div>
+    <div class="box how"><span class="tag">03 · HOW IT WORKS · MLOPS IN SNOWFLAKE</span>
+      <div class="grid3" style="grid-template-columns:repeat(5,1fr)">
+        <div class="mini"><h5>1 · Features</h5><p>Feature views over raw tables, refreshed incrementally.</p></div>
+        <div class="mini"><h5>2 · Train</h5><p>Snowpark-optimized warehouse, notebook or GPU compute pool.</p></div>
+        <div class="mini"><h5>3 · Register</h5><p><code>reg.log_model(model, model_name=..., version_name=...)</code>.</p></div>
+        <div class="mini"><h5>4 · Infer</h5><p><code>mv.run(df, function_name="predict")</code> or SQL on the model; batch via a task.</p></div>
+        <div class="mini"><h5>5 · Monitor</h5><p>Track drift and accuracy; promote or roll back versions.</p></div>
+      </div>
+      <p style="margin-top:10px"><b>ML Functions</b> are schema objects: <code>CREATE SNOWFLAKE.ML.FORECAST my_model(INPUT_DATA =&gt; SYSTEM$REFERENCE('VIEW','daily_sales_v'), TIMESTAMP_COLNAME =&gt; 'ts', TARGET_COLNAME =&gt; 'revenue')</code> trains a model (gradient boosting-based, per Snowflake docs) and <code>CALL my_model!FORECAST(FORECASTING_PERIODS =&gt; 14)</code> predicts with intervals. Training uses your warehouse.</p>
+    </div>
+  </div>
+  <div class="panel">
+    <div class="panel-h"><div class="t">SIMULATOR · <b>FORECAST &amp; ANOMALY DETECTION</b> · daily revenue</div><span class="note-s">Illustrative sample series and model output</span></div>
+    <div class="ctl"><label>FORECASTING_PERIODS</label><input type="range" id="fcH" min="7" max="28" value="14"><span class="v" id="fcHV"></span></div>
+    <div class="row" style="margin:6px 0"><span class="note-s" style="min-width:150px">prediction_interval:</span><div class="tabs" id="fcPi" style="margin:0"><button data-p="0.8">0.80</button><button class="on" data-p="0.95">0.95</button><button data-p="0.99">0.99</button></div>
+      <span class="note-s" style="margin-left:10px">Show anomalies in history:</span><div class="tabs" id="fcAn" style="margin:0"><button class="on" data-a="0">Off</button><button data-a="1">ANOMALY_DETECTION</button></div></div>
+    <svg viewBox="0 0 680 230" id="fcSvg"></svg>
+    <div class="sqlbox" id="fcSql"></div>
+    <div class="insight" id="fcIns"></div>
+  </div>
+  <div class="grid2">
+    <div class="call trap" style="margin:0"><b class="k">INTERVIEW TRAP</b><div><b>Point-in-time correctness.</b> When building training data you must join features <b>as they were at the label's timestamp</b>, not today's values; otherwise the model "sees the future" (leakage) and looks great offline but fails in production. The Feature Store's training-set generation handles this with timestamp-aware joins.</div></div>
+    <div class="call pro" style="margin:0"><b class="k">SENIOR ANGLE</b><div>Know when <b>not</b> to build a custom model: an ML Function forecast or a Cortex function may be good enough, and is much cheaper to maintain. When you do build one, the Snowflake-native story is: features in the Feature Store, training in Snowpark/notebooks, model in the Registry, batch inference scheduled by a task, all governed by roles. That's a strong system-design answer.</div></div>
+  </div>
+</section>
+
+<section id="sql">
+  <div class="eyebrow">CHAPTER 08</div>
+  <h2>SQL / Python lab <span class="thin">· click any line for an explanation</span></h2>
+  <p>Seven realistic snippets. Python lines are highlighted in amber keywords; SQL in blue. Every non-blank line has a plain-English explanation. Model names are examples: availability varies by region.</p>
+  <div class="panel">
+    <div class="tabs" id="sqlTabs"></div>
+    <div class="grid2" style="grid-template-columns:1.35fr 1fr">
+      <div class="code" id="sqlCode"></div>
+      <div class="explain" id="sqlExp"><b class="h">CLICK A LINE</b>Each line is explained in plain English.</div>
+    </div>
+  </div>
+</section>
+
+<section id="qa">
+  <div class="eyebrow">CHAPTER 09</div>
+  <h2>Interview Q&amp;A <span class="thin">· answer out loud first, then open</span></h2>
+  <div class="tabs" id="qaTabs"><button class="on" data-f="all">All</button><button data-f="Snowpark">Snowpark</button><button data-f="UDFs">UDFs</button><button data-f="SPCS">SPCS</button><button data-f="Cortex">Cortex</button><button data-f="RAG">Vectors &amp; RAG</button><button data-f="Analyst/ML">Analyst &amp; ML</button></div>
+  <div id="qaList"></div>
+</section>
+
+<section id="quiz">
+  <div class="eyebrow">CHAPTER 10</div>
+  <h2>Quiz <span class="thin">· 13 questions</span></h2>
+  <div class="panel">
+    <div class="panel-h"><div class="t">QUESTION <b id="qzN">1</b> / 13</div><div class="t">SCORE <b id="qzS">0</b></div></div>
+    <div class="stepbar" id="qzBar"></div>
+    <div id="qzBody"></div>
+    <div class="row" style="margin-top:12px"><button class="btn" id="qzPrev">Back</button><button class="btn pri" id="qzNext">Next</button></div>
+  </div>
+</section>
+
+<section id="cheat">
+  <div class="eyebrow">CHAPTER 11</div>
+  <h2>Cheat sheet <span class="thin">· if you remember only these</span></h2>
+  <div class="cheat">
+    <div><em>Code → data</em>Run logic where the data lives (warehouse, compute pool, Cortex). Move answers, not tables.</div>
+    <div><em>Lazy</em>Snowpark transformations only build a plan. Actions (collect, show, count, to_pandas, save_as_table) generate SQL and run it.</div>
+    <div><em>df.queries</em>See the SQL Snowpark will send. Every action re-runs it; <code>cache_result()</code> materializes a temp table.</div>
+    <div><em>collect() ≠ free</em>collect / to_pandas pull rows into client memory. Collect only small, final results.</div>
+    <div><em>UDF / UDTF</em>Scalar: row → value. UDTF: rows → rows (process + end_partition). Both read-only, used inside queries.</div>
+    <div><em>Vectorized</em>pandas batches per call: far less per-row overhead. Load models once at module level.</div>
+    <div><em>PACKAGES / IMPORTS</em>Libraries from the Anaconda channel; your files from a stage. No internet without an external access integration.</div>
+    <div><em>Snowpark-optimized</em>Warehouse type with much more memory per node, for training and big models. Costs more.</div>
+    <div><em>SPCS</em>Image repository + compute pool + service/job spec. GPUs and custom runtimes. Pool nodes bill while running.</div>
+    <div><em>AI_ functions</em>COMPLETE, CLASSIFY, FILTER, SENTIMENT, AGG, SUMMARIZE_AGG, EMBED, SIMILARITY, TRANSLATE. Billed per token + warehouse.</div>
+    <div><em>RAG</em>Chunk → embed (same model for docs and question) → retrieve top-k → prompt → generate. Cortex Search = managed hybrid index with TARGET_LAG.</div>
+    <div><em>Semantic layer</em>Cortex Analyst needs a semantic model/view: dimensions, metrics, relationships, verified queries. SQL runs with the user's role.</div>
+  </div>
+  <div class="call analogy" style="margin-top:20px"><b class="k">NEXT MODULE</b><div><b>Module 12: Advanced SQL.</b> Window functions, QUALIFY, recursive CTEs, MATCH_RECOGNIZE, PIVOT/UNPIVOT and the tricky SQL questions interviewers love. <a href="../module12/" style="color:var(--ice)">Open Module 12 →</a></div></div>
+</section>
+<footer>Snowflake Interview Lab · Module 11 · Snowpark &amp; Cortex AI · Prepared for Saurav Patel</footer>
+</main>
+</div>
+
+<script>
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+const fmt = (n, d = 0) => Number(n).toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d });
+const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+const tabs = (sel, cb) => $$(sel + ' button').forEach(b => b.addEventListener('click', () => { $$(sel + ' button').forEach(x => x.classList.remove('on')); b.classList.add('on'); cb(b.dataset); }));
+const bytesFmt = gb => gb >= 1024 ? fmt(gb / 1024, 1) + ' TB' : gb >= 1 ? fmt(gb, 1) + ' GB' : gb >= 0.001 ? fmt(gb * 1024, 0) + ' MB' : fmt(gb * 1048576, 0) + ' KB';
+const secFmt = s => s < 1 ? fmt(s * 1000, 0) + ' ms' : s < 120 ? fmt(s, 1) + ' s' : s < 7200 ? fmt(s / 60, 1) + ' min' : fmt(s / 3600, 1) + ' h';
+const bigFmt = n => n >= 1e9 ? fmt(n / 1e9, 1) + 'B' : n >= 1e6 ? fmt(n / 1e6, 1) + 'M' : n >= 1e3 ? fmt(n / 1e3, 1) + 'K' : fmt(n, 0);
+
+/* theme + progress */
+const root = document.documentElement;
+root.dataset.theme = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+$('#themeBtn').onclick = () => { root.dataset.theme = root.dataset.theme === 'dark' ? 'light' : 'dark'; };
+const secs = $$('main section'), seen = new Set();
+const io = new IntersectionObserver(es => es.forEach(e => {
+  if (!e.isIntersecting) return;
+  seen.add(e.target.id);
+  $$('.side > a').forEach(a => { const id = a.getAttribute('href').slice(1); a.classList.toggle('act', id === e.target.id); if (seen.has(id)) a.classList.add('seen'); });
+  const pct = Math.round(seen.size / secs.length * 100);
+  $('#progBar').style.width = pct + '%'; $('#progLbl').textContent = pct + '% explored';
+}), { rootMargin: '-40% 0px -55% 0px' });
+secs.forEach(s => io.observe(s));
+
+/* ===== 00 data to code vs code to data ===== */
+let c0Mode = 'pull';
+function c0() {
+  const v = +$('#c0Size').value, gb = 0.1 * Math.pow(20000, v / 100);
+  $('#c0SizeV').textContent = bytesFmt(gb);
+  const pull = c0Mode === 'pull';
+  const moved = pull ? gb : 2 / 1048576;
+  const t = pull ? gb * 1024 / 100 : 0.05;
+  $('#c0Code').textContent = pull
+    ? `# data to code: every row crosses the network\ndf = pd.read_sql("SELECT * FROM ORDERS", conn)   # ${bytesFmt(gb)} downloaded\nout = df[df.STATUS == "SHIPPED"].groupby("REGION").AMOUNT.sum()`
+    : `# code to data: only the plan goes in, only the answer comes out\nout = (session.table("ORDERS")\n         .filter(col("STATUS") == "SHIPPED")\n         .group_by("REGION").agg(sum_("AMOUNT")))\nout.show()   # SQL runs on the warehouse; ~8 rows come back`;
+  const maxLog = Math.log10(2000 * 1048576), w = Math.max(1, Math.log10(Math.max(moved * 1048576, 1)) / maxLog * 100);
+  $('#c0Bar').style.width = w + '%'; $('#c0Bar').style.background = pull ? 'var(--red)' : 'var(--teal)';
+  $('#c0Moved').textContent = bytesFmt(moved);
+  $('#c0Time').textContent = secFmt(t);
+  $('#c0Where').textContent = pull ? 'Your laptop (1 CPU-bound process)' : 'Snowflake warehouse (parallel)';
+  $('#c0Gov').textContent = pull ? 'Copy leaves Snowflake' : 'Data never leaves';
+  $('#c0Gov').style.color = pull ? 'var(--red)' : 'var(--teal)';
+  let ins;
+  if (pull && gb * 3 > 16) ins = `<b>Out of memory:</b> pandas typically needs several times the raw data size in RAM. At ${bytesFmt(gb)} a 16 GB laptop can't even hold it, and the download alone takes ${secFmt(t)}. Plus there is now an ungoverned copy of the data outside Snowflake.`;
+  else if (pull) ins = `<b>Works at this size,</b> but it already costs ${secFmt(t)} of transfer and a copy outside Snowflake's masking and access policies. It gets worse as the table grows; slide right.`;
+  else ins = `<b>Same answer, almost nothing moved:</b> Snowpark sends a few hundred bytes of SQL, the warehouse scans ${bytesFmt(gb)} in parallel (with pruning), and only the aggregated rows return. The data size changes warehouse time, not network time.`;
+  $('#c0Ins').innerHTML = ins;
+}
+$('#c0Size').addEventListener('input', c0);
+tabs('#c0Mode', d => { c0Mode = d.m; c0(); });
+c0();
+
+/* ===== 01 DataFrame builder ===== */
+const ind = s => s.split('\n').map(l => '  ' + l).join('\n');
+const DFOPS = [
+  { k: 'fs', py: '.filter(col("STATUS") == "SHIPPED")', d: 'keep shipped orders', need: ['STATUS'], f: 0.6, sql: s => `SELECT * FROM (\n${ind(s)}\n) WHERE ("STATUS" = 'SHIPPED')`, ins: `<b>filter</b> became a WHERE clause wrapped around the previous SQL. Snowflake's optimizer will flatten the nesting and push the predicate down to prune micro-partitions.` },
+  { k: 'fa', py: '.filter(col("AMOUNT") > 100)', d: 'orders over 100', need: ['AMOUNT'], f: 0.4, sql: s => `SELECT * FROM (\n${ind(s)}\n) WHERE ("AMOUNT" > 100)`, ins: `Another <b>filter</b>, another WHERE. Chaining filters costs nothing: the optimizer merges them into one predicate.` },
+  { k: 'sel', py: '.select("CUSTOMER_ID", "REGION", "AMOUNT")', d: 'keep 3 columns', need: ['CUSTOMER_ID', 'REGION', 'AMOUNT'], cols: ['CUSTOMER_ID', 'REGION', 'AMOUNT'], sql: s => `SELECT "CUSTOMER_ID", "REGION", "AMOUNT" FROM (\n${ind(s)}\n)`, ins: `<b>select</b> = projection. Because Snowflake storage is columnar, reading only 3 columns means far fewer bytes scanned. Other columns are no longer available to later steps.` },
+  { k: 'join', py: '.join(customers, "CUSTOMER_ID")', d: 'add SEGMENT from CUSTOMERS', need: ['CUSTOMER_ID'], add: ['SEGMENT'], sql: s => `SELECT * FROM (\n${ind(s)}\n) AS "L" INNER JOIN (\n  SELECT "CUSTOMER_ID", "SEGMENT" FROM CUSTOMERS\n) AS "R" USING ("CUSTOMER_ID")`, ins: `<b>join</b> with another DataFrame (<code>customers = session.table("CUSTOMERS")</code>). Both sides stay in Snowflake; the warehouse picks the join strategy. Nothing is downloaded to join.` },
+  { k: 'agg', py: '.group_by("REGION").agg(sum_("AMOUNT").alias("TOTAL"))', d: 'total per region', need: ['REGION', 'AMOUNT'], cols: ['REGION', 'TOTAL'], rows: 8, sql: s => `SELECT "REGION", sum("AMOUNT") AS "TOTAL" FROM (\n${ind(s)}\n) GROUP BY "REGION"`, ins: `<b>group_by + agg</b> became GROUP BY. Millions of rows will collapse to about 8 on the warehouse, so only 8 rows would ever need to come back. Now only REGION and TOTAL exist.` },
+  { k: 'sort', py: '.sort(col("TOTAL").desc())', d: 'biggest first', need: ['TOTAL'], sql: s => `SELECT * FROM (\n${ind(s)}\n) ORDER BY "TOTAL" DESC NULLS LAST`, ins: `<b>sort</b> → ORDER BY. Still nothing executed.` },
+  { k: 'lim', py: '.limit(5)', d: 'top 5 rows', need: [], rows: 5, sql: s => `SELECT * FROM (\n${ind(s)}\n) LIMIT 5`, ins: `<b>limit</b> → LIMIT. Combined with ORDER BY, the warehouse can use a top-N optimization.` }
+];
+const DFACTS = [
+  { k: 'show', py: 'df.show()', w: s => `${s}\nLIMIT 10`, back: r => Math.min(10, r), ins: `<b>show()</b> wraps the query with LIMIT 10 and prints the rows. Handy for debugging; it still runs the full pipeline up to the limit.` },
+  { k: 'collect', py: 'rows = df.collect()', w: s => s, back: r => r, ins: `<b>collect()</b> runs the query and returns a Python list of Row objects, all of them, into client memory.` },
+  { k: 'count', py: 'n = df.count()', w: s => `SELECT count(1) AS "COUNT" FROM (\n${ind(s)}\n)`, back: () => 1, ins: `<b>count()</b> wraps the query in SELECT count(1). One number comes back. Calling count() and then show() runs the pipeline <b>twice</b>.` },
+  { k: 'pandas', py: 'pdf = df.to_pandas()', w: s => s, back: r => r, ins: `<b>to_pandas()</b> runs the query and downloads every result row into a pandas DataFrame in your Python process. Great for small results; dangerous for big ones.` },
+  { k: 'save', py: 'df.write.mode("overwrite").save_as_table("REGION_TOTALS")', w: s => `CREATE OR REPLACE TABLE REGION_TOTALS AS\n${s}`, back: () => 0, ins: `<b>save_as_table()</b> runs a CREATE TABLE AS SELECT <b>entirely inside Snowflake</b>. Zero rows travel to the client: the ideal ending for a pipeline.` }
+];
+let DF, dfTimer = [];
+function dfInit() { DF = { used: [], sql: 'SELECT * FROM ORDERS', cols: ['ORDER_ID', 'CUSTOMER_ID', 'REGION', 'STATUS', 'AMOUNT', 'ORDER_DATE'], rows: 50e6, queries: 0, back: 0, last: null }; }
+function dfPy(act) {
+  const lines = ['df = (session.table("ORDERS")'].concat(DF.used.map(k => '      ' + DFOPS.find(o => o.k === k).py));
+  lines[lines.length - 1] += ')';
+  if (act) lines.push(act);
+  return lines.join('\n');
+}
+function dfRender(msg) {
+  $('#dfOps').innerHTML = DFOPS.map(o => {
+    const ok = !DF.used.includes(o.k) && o.need.every(c => DF.cols.includes(c));
+    const why = DF.used.includes(o.k) ? 'already applied' : ok ? o.d : 'needs ' + o.need.filter(c => !DF.cols.includes(c)).join(', ');
+    return `<button data-k="${o.k}" ${ok ? '' : 'disabled'} class="${DF.used.includes(o.k) ? 'used' : ''}">${esc(o.py)}<small>${why}</small></button>`;
+  }).join('');
+  $$('#dfOps button').forEach(b => b.onclick = () => dfApply(b.dataset.k));
+  $('#dfActs').innerHTML = DFACTS.map(a => `<button class="btn" data-k="${a.k}">${esc(a.py)}</button>`).join('');
+  $$('#dfActs button').forEach(b => b.onclick = () => dfAct(b.dataset.k));
+  $('#dfT').textContent = DF.used.length; $('#dfQ').textContent = DF.queries; $('#dfR').textContent = bigFmt(DF.back);
+  if (msg) $('#dfIns').innerHTML = msg;
+}
+function dfFlowOff() { dfTimer.forEach(clearTimeout); dfTimer = []; $('#dfFlow').classList.remove('playing'); $$('#dfFlow .fn,#dfFlow .edge').forEach(x => x.classList.remove('on')); $('#dfWh').textContent = 'idle'; }
+function dfApply(k) {
+  const o = DFOPS.find(x => x.k === k);
+  DF.used.push(k);
+  DF.sql = o.sql(DF.sql);
+  if (o.cols) DF.cols = o.cols.slice();
+  if (o.add) DF.cols = DF.cols.concat(o.add);
+  if (o.f) DF.rows *= o.f;
+  if (o.rows) DF.rows = Math.min(DF.rows, o.rows);
+  dfFlowOff();
+  $('#dfPy').textContent = dfPy();
+  $('#dfSql').textContent = DF.sql;
+  $('#dfSent').className = 'sent'; $('#dfSent').textContent = `Still no query sent. The recipe now has ${DF.used.length} transformation${DF.used.length === 1 ? '' : 's'} and lives only in your Python process.`;
+  dfRender(o.ins);
+}
+function dfAct(k) {
+  const a = DFACTS.find(x => x.k === k), sent = a.w(DF.sql), back = a.back(Math.round(DF.rows));
+  DF.queries++; DF.back += back;
+  $('#dfPy').textContent = dfPy(a.py);
+  $('#dfSql').textContent = sent;
+  $('#dfSent').className = 'sent go';
+  $('#dfSent').innerHTML = `QUERY SENT TO WAREHOUSE (#${DF.queries}) · ${back ? bigFmt(back) + ' row' + (back === 1 ? '' : 's') + ' returned to the client' : 'result written to a table, 0 rows to the client'}`;
+  dfFlowOff();
+  const svg = $('#dfFlow'); svg.classList.add('playing');
+  const on = (id, d) => dfTimer.push(setTimeout(() => $('#' + id).classList.add('on'), d));
+  on('dfn1', 0); on('dfe1', 0); on('dfn2', 350); on('dfe2', 700); on('dfn3', 700);
+  dfTimer.push(setTimeout(() => { $('#dfWh').textContent = 'running query'; }, 700));
+  if (back) { on('dfe3', 1200); dfTimer.push(setTimeout(() => { $('#dfWh').textContent = 'streaming results'; }, 1200)); }
+  else dfTimer.push(setTimeout(() => { $('#dfWh').textContent = 'wrote REGION_TOTALS'; }, 1200));
+  let extra = '';
+  if ((k === 'collect' || k === 'pandas') && back > 1e6) extra = ` <b style="color:var(--red)">Danger:</b> about ${bigFmt(back)} rows into client memory. Add group_by/agg or a filter first, or write the result with save_as_table instead.`;
+  else if (!DF.used.length) extra = ' You sent a query with <b>no transformations</b>: SELECT * on the whole table.';
+  dfRender(a.ins + extra);
+}
+$('#dfReset').onclick = () => { dfInit(); dfFlowOff(); $('#dfPy').textContent = dfPy(); $('#dfSql').textContent = DF.sql; $('#dfSent').className = 'sent'; $('#dfSent').textContent = 'No query sent yet. Transformations only change the recipe.'; dfRender('Click a transformation. Watch the counters: <b>queries sent</b> stays at 0.'); };
+dfInit(); $('#dfPy').textContent = dfPy(); $('#dfSql').textContent = DF.sql; dfRender();
+
+/* ===== 02 row vs vectorized ===== */
+const VZ_ROWS = [1e4, 1e5, 1e6, 1e7, 5e7, 2e8], VZ_BATCH = [100, 1000, 4000, 10000, 50000], VZ_WH = [['X-Small', 1], ['Small', 2], ['Medium', 4], ['Large', 8]];
+let vzMode = 'row', vzT = [];
+function vzCalc() {
+  const n = VZ_ROWS[+$('#vzRows').value], b = VZ_BATCH[+$('#vzBatch').value], [whn, nodes] = VZ_WH[+$('#vzWh').value];
+  $('#vzRowsV').textContent = bigFmt(n); $('#vzBatchV').textContent = fmt(b) + ' rows'; $('#vzWhV').textContent = whn + ' · ' + nodes + ' node' + (nodes > 1 ? 's' : '');
+  $('#vzBatch').disabled = vzMode === 'row';
+  const lanes = nodes * 8;
+  let perRow, ov, calls;
+  if (vzMode === 'row') { ov = 20; perRow = 20 + 3; calls = n; }
+  else { ov = 500 / b; perRow = ov + 0.45; calls = Math.ceil(n / b); }
+  const t = n * perRow / 1e6 / lanes;
+  $('#vzCalls').textContent = bigFmt(calls);
+  $('#vzTime').textContent = secFmt(t);
+  $('#vzTp').textContent = bigFmt(n / t);
+  $('#vzOv').textContent = Math.round(ov / perRow * 100) + '%';
+  let ins;
+  if (vzMode === 'row') ins = `<b>Scalar UDF:</b> ${bigFmt(n)} separate Python calls. About ${Math.round(ov / perRow * 100)}% of the time is per-call overhead (moving each value into Python and back), not your logic. Switch to <b>Vectorized</b> to compare.`;
+  else if (b <= 100) ins = `<b>Tiny batches</b> still pay the batch overhead often. Better than row-at-a-time, but larger batches amortize it further.`;
+  else if (b >= 50000) ins = `<b>Huge batches</b> barely improve speed now (overhead is already small) but each worker must hold ${fmt(b)} rows in memory as a pandas DataFrame. With wide rows or big models this is where you hit memory limits and may need a Snowpark-optimized warehouse. <code>max_batch_size</code> caps the batch; Snowflake picks the actual size.`;
+  else ins = `<b>Vectorized:</b> ${bigFmt(calls)} calls instead of ${bigFmt(n)}, and the work inside each call is a fast numpy/pandas operation. Roughly ${Math.round(23 / perRow)}x the throughput of the scalar version in this model. More nodes divide the time further; overhead per row doesn't change with warehouse size.`;
+  $('#vzIns').innerHTML = ins;
+}
+const VZN = 48;
+function vzDraw() {
+  let h = `<rect class="lane-bg" x="10" y="10" width="190" height="150" rx="10"/><text class="tm" x="20" y="26">table rows</text>
+  <rect class="worker" x="270" y="45" width="140" height="80" rx="12" stroke-width="1.5"/><text class="th" x="340" y="70" text-anchor="middle">Python worker</text><text class="ts" x="340" y="88" text-anchor="middle" id="vzWl">${vzMode === 'row' ? 'handler(x) per row' : 'handler(df) per batch'}</text>
+  <rect class="ovh" id="vzOvh" x="270" y="45" width="140" height="8" rx="4"/>
+  <rect class="lane-bg" x="480" y="10" width="190" height="150" rx="10"/><text class="tm" x="490" y="26">results</text>
+  <path class="arr" d="M205 85 L262 85"/><path class="arr" d="M415 85 L474 85"/>`;
+  for (let i = 0; i < VZN; i++) { const x = 22 + (i % 8) * 22, y = 36 + Math.floor(i / 8) * 20; h += `<rect class="rb" id="vzr${i}" width="16" height="12" rx="2" style="transform:translate(${x}px,${y}px)"/>`; }
+  $('#vzSvg').innerHTML = h;
+}
+function vzStop() { vzT.forEach(clearTimeout); vzT = []; }
+function vzPlay() {
+  vzStop(); vzDraw();
+  const R = i => $('#vzr' + i), dest = i => [492 + (i % 8) * 22, 36 + Math.floor(i / 8) * 20];
+  const flash = () => { const o = $('#vzOvh'); if (!o) return; o.classList.add('on'); vzT.push(setTimeout(() => o.classList.remove('on'), 90)); };
+  if (vzMode === 'row') {
+    for (let i = 0; i < VZN; i++) {
+      const t0 = i * 110;
+      vzT.push(setTimeout(() => { const r = R(i); r.style.transition = 'transform .1s linear'; r.style.transform = `translate(${332}px,${95}px)`; flash(); }, t0));
+      vzT.push(setTimeout(() => { const r = R(i), [x, y] = dest(i); r.style.transform = `translate(${x}px,${y}px)`; r.classList.add('done'); }, t0 + 100));
+    }
+  } else {
+    const B = 12;
+    for (let g = 0; g < VZN / B; g++) {
+      const t0 = g * 700;
+      vzT.push(setTimeout(() => { flash(); for (let j = 0; j < B; j++) { const i = g * B + j, r = R(i); r.style.transition = 'transform .35s ease'; r.style.transform = `translate(${282 + (j % 6) * 20}px,${97 + Math.floor(j / 6) * 14}px)`; } }, t0));
+      vzT.push(setTimeout(() => { for (let j = 0; j < B; j++) { const i = g * B + j, r = R(i), [x, y] = dest(i); r.style.transform = `translate(${x}px,${y}px)`; r.classList.add('done'); } }, t0 + 400));
+    }
+  }
+}
+['#vzRows', '#vzBatch', '#vzWh'].forEach(s => $(s).addEventListener('input', vzCalc));
+tabs('#vzMode', d => { vzMode = d.m; vzStop(); vzDraw(); vzCalc(); });
+$('#vzPlay').onclick = vzPlay;
+vzDraw(); vzCalc();
+
+/* ===== 03 SPCS decision helper ===== */
+const SPQ = [
+  ['gpu', 'Needs GPUs'], ['rt', 'Libraries or runtime not in Anaconda / not Python'], ['svc', 'Always-on API or web app'],
+  ['sql', 'Logic applied to rows inside SQL'], ['llm', 'Standard text task (classify, summarize, translate)'], ['net', 'Calls an external API']
+];
+const spS = {};
+$('#spTgl').innerHTML = SPQ.map(([k, l]) => `<label data-k="${k}"><input type="checkbox" data-k="${k}"> ${l}</label>`).join('');
+function spDecide() {
+  $$('#spTgl label').forEach(l => l.classList.toggle('on', !!spS[l.dataset.k]));
+  let cls, h, p;
+  if (spS.llm && !spS.gpu && !spS.rt && !spS.svc) { cls = 'cortex'; h = 'Cortex AI SQL functions'; p = 'A managed model already does this. Call <code>AI_CLASSIFY</code> / <code>AI_SUMMARIZE_AGG</code> / <code>AI_TRANSLATE</code> from SQL: no code, no infrastructure, billed per token.'; }
+  else if (spS.gpu || spS.rt || spS.svc) { cls = 'spcs'; h = 'Snowpark Container Services'; p = `You need ${[spS.gpu && 'GPUs', spS.rt && 'a custom runtime', spS.svc && 'a long-running service'].filter(Boolean).join(' + ')}. Build an image, push it to an image repository, run it as a service or job on a compute pool${spS.sql ? ', and expose it to SQL through a <b>service function</b>' : ''}.`; }
+  else if (spS.sql) { cls = 'udf'; h = 'Python UDF (vectorized)'; p = 'Row-level logic inside queries with Anaconda packages: a <b>vectorized UDF</b> on a normal warehouse is the simplest, cheapest fit. Use a Snowpark-optimized warehouse only if memory runs out.'; }
+  else { cls = 'udf'; h = 'Snowpark DataFrames / stored procedure'; p = 'Nothing here needs special compute. Express the logic with Snowpark DataFrames (pushed down as SQL) and orchestrate with a stored procedure + task.'; }
+  if (spS.net) p += ' <b>External API:</b> both UDFs and services need an <b>external access integration</b> (network rule + secret) to reach the internet; Cortex needs nothing extra.';
+  $('#spDec').className = 'dec ' + cls;
+  $('#spDec').innerHTML = `<div class="note-s">RECOMMENDATION</div><h4>${h}</h4><p style="font-size:14px;color:var(--ink2)">${p}</p>`;
+}
+$$('#spTgl input').forEach(i => i.addEventListener('change', () => { spS[i.dataset.k] = i.checked; spDecide(); }));
+spDecide();
+</script>
+
+<script>
+/* ===== 04 Cortex playground ===== */
+const RV = [
+  { id: 1, t: `Absolutely love this backpack. The zips feel solid and it fits my laptop perfectly.`, s: 'positive', c: 'quality', f: false, sim: 0.12, en: null, rep: `Thank you so much! We're thrilled the backpack fits your laptop and the zips are holding up well.`, e: '[0.0213, -0.0458, 0.0071, ...]' },
+  { id: 2, t: `Arrived nine days late and the box was crushed. The bag itself is fine.`, s: 'mixed', c: 'shipping', f: true, sim: 0.81, en: null, rep: `We're sorry your order arrived late and in a damaged box. We've shared this with our courier team; please contact us if anything inside was affected.`, e: '[-0.0312, 0.0187, 0.0544, ...]' },
+  { id: 3, t: `Too expensive for what you get. The straps started fraying after two weeks.`, s: 'negative', c: 'price', f: false, sim: 0.09, en: null, rep: `We're sorry the straps frayed so quickly. That isn't the quality we aim for; our support team can arrange a replacement under warranty.`, e: '[0.0098, -0.0611, -0.0230, ...]' },
+  { id: 4, t: `El envío fue rapidísimo y la calidad es excelente.`, s: 'positive', c: 'shipping', f: false, sim: 0.47, en: `Shipping was super fast and the quality is excellent.`, rep: `¡Muchas gracias! Nos alegra que el envío fuera rápido y que la calidad te encante.`, e: '[0.0401, 0.0122, -0.0175, ...]' },
+  { id: 5, t: `Die Größe ist kleiner als beschrieben, aber das Material ist gut.`, s: 'mixed', c: 'sizing', f: false, sim: 0.15, en: `The size is smaller than described, but the material is good.`, rep: `Danke für Ihr Feedback! Wir prüfen die Größenangaben in unserer Produktbeschreibung.`, e: '[-0.0057, -0.0249, 0.0386, ...]' },
+  { id: 6, t: `Customer support replaced my broken buckle within a day. Great service!`, s: 'positive', c: 'service', f: false, sim: 0.21, en: null, rep: `Thanks for the kind words! We'll pass them on to our support team.`, e: '[0.0275, 0.0033, -0.0492, ...]' }
+];
+const CXF = {
+  AI_COMPLETE: { sql: (ids, m) => `SELECT review_id,\n       AI_COMPLETE(\n         '${m}',\n         CONCAT('Write a short, polite reply to this customer review: ', review_text)\n       ) AS reply\nFROM product_reviews\nWHERE review_id IN (${ids});`, row: r => r.rep, ins: m => `<b>AI_COMPLETE</b> is the most flexible and usually the most expensive: you pay for <b>input tokens (prompt + review) and output tokens (the reply)</b>, at the rate of the chosen model (<code>${m}</code>). Larger models cost more per token. Notice it replied in the customer's language without being told.` },
+  AI_CLASSIFY: { sql: ids => `SELECT review_id,\n       AI_CLASSIFY(\n         review_text,\n         ['shipping', 'quality', 'price', 'sizing', 'service']\n       ):labels[0]::STRING AS topic\nFROM product_reviews\nWHERE review_id IN (${ids});`, row: r => r.c, ins: () => `<b>AI_CLASSIFY</b> returns JSON like <code>{"labels": ["shipping"]}</code>, so you extract the label with <code>:labels[0]::STRING</code>. You define the categories (optionally with descriptions); multi-label output is also supported (check the config options). Ideal for routing tickets to teams.` },
+  AI_FILTER: { sql: ids => `SELECT review_id, review_text\nFROM product_reviews\nWHERE review_id IN (${ids})\n  AND AI_FILTER(PROMPT(\n        'Is this review complaining about a delivery problem? {0}',\n        review_text));`, row: null, ins: () => `<b>AI_FILTER</b> returns a BOOLEAN, so it goes in WHERE (or a JOIN condition). <code>PROMPT()</code> builds the question with the column value in <code>{0}</code>. Note review 4 mentions shipping but is <i>positive</i>, so it's correctly excluded: something keyword search can't do. Every row scanned is a model call, so filter cheaply with normal SQL first.` },
+  AI_SENTIMENT: { sql: ids => `SELECT review_id,\n       AI_SENTIMENT(review_text):categories[0]:sentiment::STRING AS sentiment\nFROM product_reviews\nWHERE review_id IN (${ids});`, row: r => r.s, ins: () => `<b>AI_SENTIMENT</b> returns labels such as positive / negative / neutral / mixed, overall and optionally per aspect you name (e.g. ['delivery','price']). The older <code>SNOWFLAKE.CORTEX.SENTIMENT</code> returns a number between -1 and 1 instead. Know both for interviews.` },
+  AI_SUMMARIZE_AGG: { agg: true, sql: ids => `SELECT AI_SUMMARIZE_AGG(review_text) AS summary\nFROM product_reviews\nWHERE review_id IN (${ids});`, ins: () => `<b>AI_SUMMARIZE_AGG</b> is an <b>aggregate</b>: many rows in, one summary out, and it works with GROUP BY (e.g. one summary per product). It handles more text than fits in a single prompt by summarizing in stages, so you don't have to concatenate rows yourself.` },
+  AI_AGG: { agg: true, sql: ids => `SELECT AI_AGG(\n         review_text,\n         'List the main complaints in these reviews as short bullet points.'\n       ) AS complaints\nFROM product_reviews\nWHERE review_id IN (${ids});`, ins: () => `<b>AI_AGG</b> is an aggregate with <b>your own instruction</b>: "top complaints", "feature requests", "themes by month". Like AI_SUMMARIZE_AGG it can process more rows than one context window. Combine with GROUP BY product_id for one insight per product.` },
+  AI_EMBED: { sql: ids => `SELECT review_id,\n       AI_EMBED('snowflake-arctic-embed-m-v1.5', review_text) AS emb\n       -- returns VECTOR(FLOAT, 768)\nFROM product_reviews\nWHERE review_id IN (${ids});`, row: r => r.e + '  (768 values)', ins: () => `<b>AI_EMBED</b> turns text (or images, with a multimodal model) into a <b>VECTOR</b>. The numbers mean nothing to humans; what matters is that similar texts get similar vectors. Billed on input tokens only. Store them in a VECTOR column for search (next chapter).` },
+  AI_SIMILARITY: { sql: ids => `SELECT review_id,\n       AI_SIMILARITY(review_text, 'The package arrived late') AS sim\nFROM product_reviews\nWHERE review_id IN (${ids})\nORDER BY sim DESC;`, row: r => r.sim.toFixed(2), sort: true, ins: () => `<b>AI_SIMILARITY</b> embeds both inputs and returns their similarity in one call. Review 2 scores highest even though it says "nine days late", not "package arrived late": meaning, not words. Review 4 scores medium because it's about shipping, but positive.` },
+  AI_TRANSLATE: { sql: ids => `SELECT review_id,\n       AI_TRANSLATE(review_text, '', 'en') AS review_en\n       -- '' = detect the source language\nFROM product_reviews\nWHERE review_id IN (${ids});`, row: r => r.en || r.t, ins: () => `<b>AI_TRANSLATE</b>(text, source, target). Leaving the source empty asks the model to detect it (check docs for the supported language list). A common pattern: translate everything to English <b>once</b> into a column, then run sentiment and classification on that column.` }
+};
+let cxF = 'AI_SENTIMENT', cxM = 'claude-sonnet-4-5';
+const cxSel = new Set([1, 2, 3, 4]);
+$('#cxFn').innerHTML = Object.keys(CXF).map(k => `<button data-f="${k}" class="${k === cxF ? 'on' : ''}">${k}</button>`).join('');
+$('#cxRev').innerHTML = RV.map(r => `<button class="rv" data-id="${r.id}"><b>#${r.id}</b><span>${esc(r.t)}</span></button>`).join('');
+function cxAggOut(rs) {
+  if (cxF === 'AI_AGG') {
+    const m = { 2: '- Late delivery and crushed packaging', 3: '- Price feels too high for the quality\n- Straps fray quickly', 5: '- Runs smaller than described' };
+    const out = rs.map(r => m[r.id]).filter(Boolean);
+    return out.length ? out.join('\n') : 'No clear complaints in the selected reviews.';
+  }
+  const pos = rs.filter(r => r.s === 'positive').length, neg = rs.filter(r => r.s !== 'positive').length;
+  const topics = [...new Set(rs.map(r => r.c))].join(', ');
+  return `Across ${rs.length} review${rs.length > 1 ? 's' : ''}, ${pos} ${pos === 1 ? 'is' : 'are'} positive and ${neg} mention problems. Customers discuss ${topics}.` + (rs.some(r => r.id === 2) ? ' One delivery arrived late and damaged.' : '') + (rs.some(r => r.id === 3) ? ' Some feel the price is high given strap durability.' : '') + (rs.some(r => r.id === 1 || r.id === 4) ? ' Build quality is praised.' : '');
+}
+function cx() {
+  $$('#cxRev .rv').forEach(b => b.classList.toggle('on', cxSel.has(+b.dataset.id)));
+  $('#cxModelRow').style.display = cxF === 'AI_COMPLETE' ? 'flex' : 'none';
+  const f = CXF[cxF], rs = RV.filter(r => cxSel.has(r.id));
+  if (!rs.length) { $('#cxSql').textContent = '-- select at least one review'; $('#cxOut').textContent = '(no rows)'; $('#cxIns').innerHTML = 'Select one or more reviews.'; return; }
+  const ids = rs.map(r => r.id).join(', ');
+  $('#cxSql').textContent = f.sql(ids, cxM);
+  let out;
+  if (f.agg) out = cxAggOut(rs);
+  else if (!f.row) { const k = rs.filter(r => r.f); out = 'REVIEW_ID | REVIEW_TEXT\n' + (k.length ? k.map(r => `${r.id}         | ${r.t}`).join('\n') : '(0 rows: no selected review complains about delivery)'); }
+  else { let list = rs.slice(); if (f.sort) list.sort((a, b) => b.sim - a.sim); out = 'REVIEW_ID | RESULT\n' + list.map(r => `${r.id}         | ${f.row(r)}`).join('\n'); }
+  $('#cxOut').textContent = out;
+  $('#cxIns').innerHTML = f.ins(cxM) + (f.agg ? '' : ` <b>${rs.length} row${rs.length > 1 ? 's' : ''} = ${rs.length} model call${rs.length > 1 ? 's' : ''}.</b>`);
+}
+$$('#cxRev .rv').forEach(b => b.onclick = () => { const id = +b.dataset.id; cxSel.has(id) ? cxSel.delete(id) : cxSel.add(id); cx(); });
+tabs('#cxFn', d => { cxF = d.f; cx(); });
+tabs('#cxModel', d => { cxM = d.m; cx(); });
+cx();
+
+/* ===== 04 token estimator ===== */
+const CX_ROWS = [1e3, 1e4, 1e5, 1e6, 5e6, 1e7, 5e7];
+let cxRate = 1.2;
+function cxEst() {
+  const n = CX_ROWS[+$('#cxRows').value], w = +$('#cxWords').value, p = +$('#cxPrompt').value, o = +$('#cxOutTok').value;
+  $('#cxRowsV').textContent = bigFmt(n); $('#cxWordsV').textContent = w + ' words'; $('#cxPromptV').textContent = p + ' words'; $('#cxOutTokV').textContent = o + ' tokens';
+  const inTok = n * (w + p) * 1.33, outTok = n * o, cr = (inTok + outTok) / 1e6 * cxRate;
+  $('#cxIn').textContent = bigFmt(inTok); $('#cxOt').textContent = bigFmt(outTok);
+  $('#cxCr').textContent = cr < 10 ? fmt(cr, 2) : fmt(cr, 0); $('#cxUsd').textContent = '$' + (cr * 3 < 10 ? fmt(cr * 3, 2) : fmt(cr * 3, 0));
+  const pShare = p / (w + p);
+  let ins;
+  if (pShare > 0.5) ins = `<b>Your prompt is bigger than the data:</b> ${Math.round(pShare * 100)}% of input tokens are the instruction repeated on every row. Shorten it, or use a task-specific function (AI_CLASSIFY, AI_SENTIMENT) that needs no long prompt.`;
+  else if (outTok > inTok) ins = `<b>Output dominates.</b> Generated text is often the expensive part. Ask for short answers or structured labels instead of paragraphs.`;
+  else if (cr > 5000) ins = `<b>That's a big bill.</b> Test on a sample, pick the smallest model that meets your quality bar, and process only new rows incrementally (stream + task) instead of re-running the whole table.`;
+  else ins = `Rule of thumb: <b>1 token ≈ 4 characters ≈ 0.75 English words</b>. Cost scales linearly with rows × (prompt + text + output) × model rate. The warehouse running the query is billed separately.`;
+  $('#cxCIns').innerHTML = ins;
+}
+['#cxRows', '#cxWords', '#cxPrompt', '#cxOutTok'].forEach(s => $(s).addEventListener('input', cxEst));
+tabs('#cxTier', d => { cxRate = +d.r; cxEst(); });
+cxEst();
+
+/* ===== 05 vector space ===== */
+const VC = [
+  [0, 15, .95, `Refunds are issued to the original payment method within 5 business days.`],
+  [0, 30, .75, `You can return unused items within 30 days for a full refund.`],
+  [0, 44, .88, `Refunds for damaged items include the original shipping cost.`],
+  [1, 98, .9, `Standard delivery takes 3 to 5 business days.`],
+  [1, 114, .7, `Track your parcel with the link in your shipping email.`],
+  [1, 130, .92, `If your order is late by more than 7 days, contact support for a reship.`],
+  [2, 192, .9, `Reset your password from the sign-in page using Forgot password.`],
+  [2, 208, .72, `You can change your email address under Account settings.`],
+  [2, 224, .88, `Two-factor authentication can be enabled in Security settings.`],
+  [3, 288, .85, `Hand-wash the backpack in cold water and air-dry it.`],
+  [3, 304, .95, `Do not tumble-dry; heat can damage the waterproof coating.`],
+  [3, 320, .72, `Re-apply waterproof spray every few months for best results.`]
+];
+const VQ = [
+  [`How long until I get my money back?`, 24, .85],
+  [`My parcel is late`, 124, .85],
+  [`I forgot my password`, 196, .85],
+  [`Can I put the bag in the dryer?`, 300, .85],
+  [`Refund for a broken item that arrived late`, 62, .7]
+];
+const VKW = [['refund', 'money', 'return', 'reimburs', 'payment', 'cash'], ['ship', 'deliver', 'parcel', 'package', 'late', 'track', 'arriv', 'courier', 'order'], ['password', 'login', 'log in', 'sign', 'email', 'account', '2fa', 'security', 'username'], ['wash', 'clean', 'dry', 'waterproof', 'care', 'stain', 'spray', 'rain']];
+const VCA = [27, 114, 208, 304];
+const STOP = new Set(['the', 'and', 'for', 'how', 'can', 'my', 'you', 'your', 'until', 'get', 'put', 'what', 'does', 'that', 'with', 'is', 'in', 'a', 'an', 'to', 'of', 'it', 'do', 'i', 'me', 'long']);
+let vrQ = { text: VQ[0][0], a: VQ[0][1], r: VQ[0][2], ok: true }, vrMode = 'vec';
+const CX0 = 210, CY0 = 190, RAD = 160;
+const pxy = (a, r) => [CX0 + Math.cos(a * Math.PI / 180) * r * RAD, CY0 - Math.sin(a * Math.PI / 180) * r * RAD];
+function vrEmbed(text) {
+  const t = text.toLowerCase(); let x = 0, y = 0;
+  VKW.forEach((ks, c) => { const m = ks.filter(k => t.includes(k)).length; x += m * Math.cos(VCA[c] * Math.PI / 180); y += m * Math.sin(VCA[c] * Math.PI / 180); });
+  if (!x && !y) return { a: 250, r: .25, ok: false };
+  return { a: (Math.atan2(y, x) * 180 / Math.PI + 360) % 360, r: .8, ok: true };
+}
+const toks = s => s.toLowerCase().replace(/[^a-z0-9 ]/g, ' ').split(/\s+/).filter(w => w.length > 2 && !STOP.has(w));
+function vr() {
+  const k = +$('#vrK').value; $('#vrKV').textContent = k;
+  const qt = toks(vrQ.text);
+  const sc = VC.map(([c, a, r, txt], i) => {
+    const cos = Math.cos((vrQ.a - a) * Math.PI / 180);
+    const words = toks(txt), kw = qt.length ? qt.filter(w => words.some(x => x === w || (w.length > 4 && x.startsWith(w.slice(0, 5))))).length / qt.length : 0;
+    const s = vrMode === 'vec' ? cos : vrMode === 'kw' ? kw : 0.7 * Math.max(cos, 0) + 0.3 * kw;
+    return { i, c, a, r, txt, cos, kw, s };
+  });
+  const ranked = sc.slice().sort((p, q) => q.s - p.s);
+  const hits = ranked.slice(0, k).filter(h => vrMode !== 'kw' || h.kw > 0);
+  const hitSet = new Set(hits.map(h => h.i));
+  const [qx, qy] = pxy(vrQ.a, vrQ.r);
+  let h = `<circle cx="${CX0}" cy="${CY0}" r="${RAD}" fill="none" stroke="var(--line)" stroke-dasharray="3 5"/><line class="axis" x1="${CX0 - RAD - 20}" y1="${CY0}" x2="${CX0 + RAD + 20}" y2="${CY0}"/><line class="axis" x1="${CX0}" y1="${CY0 - RAD - 20}" x2="${CX0}" y2="${CY0 + RAD + 20}"/><text class="tm" x="12" y="18">dimension 1 vs dimension 2 (projection)</text>`;
+  if (vrMode !== 'kw') h += `<line x1="${CX0}" y1="${CY0}" x2="${qx}" y2="${qy}" stroke="var(--ink)" stroke-width="1" opacity=".35"/>`;
+  hits.forEach(t => { const [x, y] = pxy(t.a, t.r); h += `<line class="nnl" x1="${qx}" y1="${qy}" x2="${x}" y2="${y}"/>`; });
+  sc.forEach(t => { const [x, y] = pxy(t.a, t.r); h += `<g class="pt c${t.c} ${hitSet.has(t.i) ? 'hit' : ''}"><circle cx="${x}" cy="${y}" r="${hitSet.has(t.i) ? 11 : 8}"/><text x="${x}" y="${y + 3.5}" text-anchor="middle">${t.i + 1}</text></g>`; });
+  h += `<circle class="qdot" cx="${qx}" cy="${qy}" r="8"/><text class="tm" x="${qx + 12}" y="${qy - 10}" style="fill:var(--ink)">Q</text>`;
+  $('#vrSvg').innerHTML = h;
+  const col = vrMode === 'vec' ? 'COSINE' : vrMode === 'kw' ? 'KEYWORD' : 'HYBRID';
+  $('#vrTbl').innerHTML = `<tr><th>#</th><th>CHUNK</th><th>${col}</th></tr>` + ranked.slice(0, 6).map(t => `<tr class="${hitSet.has(t.i) ? 'hl-row' : ''}"><td class="m">${t.i + 1}</td><td>${esc(t.txt)}</td><td class="m">${t.s.toFixed(3)}</td></tr>`).join('');
+  $('#vrPrompt').textContent = `Answer the question using ONLY the context below.\nIf the answer is not in the context, say you don't know.\n\nContext:\n${hits.length ? hits.map((t, j) => `[${j + 1}] ${t.txt}`).join('\n') : '(nothing retrieved)'}\n\nQuestion: ${vrQ.text}`;
+  const top = hits[0];
+  let ans;
+  if (!top || (vrMode === 'vec' && top.cos < 0.5) || (vrMode === 'hyb' && top.s < 0.4)) ans = `I don't know. The help centre content I was given doesn't answer that question.`;
+  else ans = `Based on the help centre: ${top.txt}` + (hits[1] && hits[1].c !== top.c && hits[1].s > 0.3 ? ` Also: ${hits[1].txt}` : '');
+  $('#vrAns').textContent = ans;
+  let ins;
+  if (!vrQ.ok && vrMode !== 'kw') ins = `<b>No meaning detected</b> by this toy embedder, so the question vector sits near the centre and nothing is truly close. A real model always produces a vector; low similarity scores are the signal to answer "I don't know".`;
+  else if (vrMode === 'kw' && !hits.length) ins = `<b>Keyword search found nothing:</b> the question shares no words with any chunk (e.g. "money back" vs "refund", "dryer" vs "tumble-dry"). This is exactly why vector search exists. Switch to <b>Vector</b> or <b>Hybrid</b>.`;
+  else if (vrMode === 'kw') ins = `<b>Keyword only:</b> works when the user uses the same words as the documents (codes, names, exact phrases), and fails on synonyms.`;
+  else if (vrMode === 'vec') ins = `<b>Cosine similarity</b> compares directions, not lengths: points at the same angle as Q score near 1.0 regardless of distance from the centre. The top-${k} chunks are pasted into the prompt. Try the "broken item that arrived late" question: it lands between two topics and retrieves from both.`;
+  else ins = `<b>Hybrid</b> blends vector similarity with keyword matches (illustrative 70/30 weighting; Cortex Search's real fusion and re-ranking are internal). It keeps semantic matches and boosts chunks containing the exact terms the user typed.`;
+  $('#vrIns').innerHTML = ins;
+}
+$('#vrQs').innerHTML = VQ.map((q, i) => `<button class="btn ${i === 0 ? 'pri' : ''}" data-i="${i}">${esc(q[0])}</button>`).join('');
+$$('#vrQs button').forEach(b => b.onclick = () => { const q = VQ[+b.dataset.i]; vrQ = { text: q[0], a: q[1], r: q[2], ok: true }; $$('#vrQs button').forEach(x => x.classList.toggle('pri', x === b)); vr(); });
+const vrRun = () => { const t = $('#vrIn').value.trim(); if (!t) return; const e = vrEmbed(t); vrQ = { text: t, a: e.a, r: e.r, ok: e.ok }; $$('#vrQs button').forEach(x => x.classList.remove('pri')); vr(); };
+$('#vrGo').onclick = vrRun;
+$('#vrIn').addEventListener('keydown', e => { if (e.key === 'Enter') vrRun(); });
+$('#vrK').addEventListener('input', vr);
+tabs('#vrMode', d => { vrMode = d.m; vr(); });
+vr();
+
+/* ===== 06 Cortex Analyst stepper ===== */
+const AN = {
+  sem: [
+    { n: ['ann1'], e: [], h: '1 · A business user asks a question', you: `In a Streamlit chat app: <b>"What was net revenue by region last quarter?"</b>`, be: `The app calls the Cortex Analyst <b>REST API</b> with the message history and the name of the semantic view (or the stage path of a semantic model YAML).` },
+    { n: ['ann1', 'ann2'], e: ['ane1'], h: '2 · The semantic view supplies meaning', you: `Nothing: this was defined once by the data team.`, be: `"net revenue" → metric <code>total_revenue = SUM(amount - discount)</code>. "region" → dimension <code>customers.region</code>. "last quarter" → time dimension <code>order_date</code>. The relationship <code>orders.customer_id → customers</code> gives the join path. Synonyms map "sales" or "turnover" to the same metric.` },
+    { n: ['ann2', 'ann3'], e: ['ane2'], h: '3 · Verified queries help', you: `The team earlier saved "Revenue by region this year" with trusted SQL.`, be: `Analyst finds this similar verified query and uses it as a strong example (or reuses it directly if the question matches), which improves accuracy and consistency.` },
+    { n: ['ann3'], e: [], h: '4 · The LLM writes SQL, Snowflake validates it', you: `—`, be: `<code>SELECT c.region, SUM(o.amount - o.discount) AS net_revenue FROM orders o JOIN customers c ON o.customer_id = c.customer_id WHERE o.order_date &gt;= DATEADD(quarter, -1, DATE_TRUNC(quarter, CURRENT_DATE())) AND o.order_date &lt; DATE_TRUNC(quarter, CURRENT_DATE()) GROUP BY c.region;</code> The SQL is checked against the model before running. If the question is ambiguous, Analyst can ask a clarifying question instead of guessing.` },
+    { n: ['ann3', 'ann4'], e: ['ane3'], h: '5 · It runs with the user’s own role', you: `—`, be: `The query executes on a warehouse <b>as the calling user</b>. A row access policy that limits this user to EMEA and APAC still applies, so they only see their regions. Masking policies apply too.` },
+    { n: ['ann4', 'ann5'], e: ['ane4'], h: '6 · Answer + SQL returned', you: `The user sees a table (and maybe a chart) plus the SQL that produced it.`, be: `Showing the SQL builds trust and lets analysts verify it. Good answers can be promoted to new verified queries, so the system gets better over time.` }
+  ],
+  raw: [
+    { n: ['ann1'], e: [], h: '1 · Same question', you: `<b>"What was net revenue by region last quarter?"</b>`, be: `This time the LLM only gets table and column names: ORDERS(ORDER_ID, AMOUNT, DISCOUNT, NET_AMT_OLD, ORDER_TS, SHIP_TS, CUST_ID), CUSTOMERS(ID, REGION_CD), REGIONS(CD, NAME).` },
+    { n: ['ann1', 'ann2'], e: ['ane1'], h: '2 · No business definitions', you: `—`, be: `Is net revenue <code>AMOUNT</code>, <code>NET_AMT_OLD</code> (a deprecated column!) or <code>AMOUNT - DISCOUNT</code>? Is "last quarter" by order date or ship date? Is REGION_CD the region or do we need REGIONS? The model has to <b>guess</b>.` },
+    { n: ['ann2', 'ann3'], e: ['ane2'], h: '3 · No verified queries', you: `—`, be: `There are no trusted examples, so every user's question may produce different logic for the same metric.` },
+    { n: ['ann3'], e: [], h: '4 · Plausible but wrong SQL', you: `—`, be: `<code>SELECT region_cd, SUM(net_amt_old) FROM orders JOIN customers ON cust_id = id WHERE ship_ts &gt;= DATEADD(month, -3, CURRENT_DATE()) GROUP BY 1;</code> Wrong column, wrong date, "last 3 months" instead of last calendar quarter, region codes instead of names.` },
+    { n: ['ann3', 'ann4'], e: ['ane3'], h: '5 · It runs without error', you: `—`, be: `Nothing fails. Valid SQL is not the same as <b>correct</b> SQL.` },
+    { n: ['ann4', 'ann5'], e: ['ane4'], h: '6 · A confident wrong number', you: `The user puts the number in a board deck.`, be: `The total is off by double digits and nobody notices. This is the core argument for a semantic layer: <b>encode the business meaning once</b>, and test it with verified queries.` }
+  ]
+};
+let anM = 'sem', anI = -1;
+function anBuild() { $('#anBar').innerHTML = ''; AN[anM].forEach((_, i) => { const s = document.createElement('span'); s.onclick = () => anGo(i); $('#anBar').appendChild(s); }); }
+function anGo(i) {
+  anI = i; const S = AN[anM];
+  $('#anFlow').classList.toggle('playing', i >= 0);
+  [...$('#anBar').children].forEach((s, k) => s.classList.toggle('on', k <= i));
+  if (i < 0) { $$('#anFlow .fn,#anFlow .edge').forEach(x => x.classList.remove('on')); $('#anDesc').innerHTML = `<h4>Ready</h4><div style="font-size:14px;color:var(--ink2)">Press Start to follow one question through Cortex Analyst. Then switch the setup to <b>LLM on raw schema only</b> and replay.</div>`; $('#anNext').textContent = 'Start'; return; }
+  const st = S[i];
+  $$('#anFlow .fn').forEach(g => g.classList.toggle('on', st.n.includes(g.id)));
+  $$('#anFlow .edge').forEach(e => e.classList.toggle('on', st.e.includes(e.id)));
+  $('#anDesc').innerHTML = `<h4>${st.h}</h4><div class="two"><div class="you"><b class="l">WHAT THE USER SEES / DOES</b>${st.you}</div><div class="be"><b class="l">WHAT HAPPENS IN THE BACKEND</b>${st.be}</div></div>`;
+  $('#anNext').textContent = i === S.length - 1 ? 'Replay' : 'Next';
+}
+$('#anNext').onclick = () => anGo(anI === AN[anM].length - 1 ? 0 : anI + 1);
+$('#anPrev').onclick = () => anGo(Math.max(-1, anI - 1));
+$('#anReset').onclick = () => anGo(-1);
+tabs('#anMode', d => { anM = d.m; anBuild(); anGo(-1); });
+anBuild(); anGo(-1);
+
+/* ===== 07 forecast ===== */
+const FC_N = 56, FC_SEAS = [-120, -40, 0, 30, 80, 200, 150], FC_SIG = 45;
+const fcExp = t => 1000 + 3 * t + FC_SEAS[t % 7];
+const FC_HIST = Array.from({ length: FC_N }, (_, t) => fcExp(t) + Math.round(Math.sin(t * 12.9898) * 43758.5453 % 1 * 70) + (t === 20 ? 430 : t === 41 ? -380 : 0));
+let fcPi = 0.95, fcAn = false;
+const FCZ = { '0.8': 1.28, '0.95': 1.96, '0.99': 2.58 };
+function fc() {
+  const H = +$('#fcH').value; $('#fcHV').textContent = H + ' days';
+  const z = FCZ[String(fcPi)], N = FC_N + H;
+  const pred = Array.from({ length: H }, (_, h) => { const t = FC_N + h, w = z * FC_SIG * Math.sqrt(1 + h / 10); return [t, fcExp(t), fcExp(t) - w, fcExp(t) + w]; });
+  const all = FC_HIST.concat(pred.map(p => p[3]), pred.map(p => p[2]));
+  const lo = Math.min(...all) - 40, hi = Math.max(...all) + 40;
+  const X = t => 40 + t / (N - 1) * 625, Y = v => 200 - (v - lo) / (hi - lo) * 180;
+  let s = `<line class="axis" x1="40" y1="200" x2="665" y2="200"/><line class="axis" x1="${X(FC_N - 0.5)}" y1="10" x2="${X(FC_N - 0.5)}" y2="200" stroke-dasharray="4 4"/>`;
+  s += `<text class="tm" x="44" y="222">history (${FC_N} days)</text><text class="tm" x="${X(FC_N) + 4}" y="222">forecast</text><text class="tm" x="4" y="${Y(hi - 40) + 4}">${fmt(hi - 40)}</text><text class="tm" x="4" y="${Y(lo + 40) + 4}">${fmt(lo + 40)}</text>`;
+  s += `<path class="fc-band" d="M${pred.map(p => X(p[0]) + ' ' + Y(p[3])).join(' L')} L${pred.slice().reverse().map(p => X(p[0]) + ' ' + Y(p[2])).join(' L')} Z"/>`;
+  s += `<path class="fc-line" d="M${FC_HIST.map((v, t) => X(t) + ' ' + Y(v)).join(' L')}"/>`;
+  s += `<path class="fc-pred" d="M${X(FC_N - 1)} ${Y(FC_HIST[FC_N - 1])} L${pred.map(p => X(p[0]) + ' ' + Y(p[1])).join(' L')}"/>`;
+  let an = [];
+  if (fcAn) { an = FC_HIST.map((v, t) => [t, v]).filter(([t, v]) => Math.abs(v - fcExp(t)) > z * FC_SIG); an.forEach(([t, v]) => { s += `<circle class="fc-anom" cx="${X(t)}" cy="${Y(v)}" r="5"/>`; }); }
+  $('#fcSvg').innerHTML = s;
+  $('#fcSql').textContent = `CREATE OR REPLACE SNOWFLAKE.ML.FORECAST sales_fc(\n  INPUT_DATA => SYSTEM$REFERENCE('VIEW', 'daily_sales_v'),\n  TIMESTAMP_COLNAME => 'ts',\n  TARGET_COLNAME => 'revenue');\n\nCALL sales_fc!FORECAST(\n  FORECASTING_PERIODS => ${H},\n  CONFIG_OBJECT => {'prediction_interval': ${fcPi}});` + (fcAn ? `\n\nCREATE OR REPLACE SNOWFLAKE.ML.ANOMALY_DETECTION sales_ad(\n  INPUT_DATA => SYSTEM$REFERENCE('VIEW', 'daily_sales_train_v'),\n  TIMESTAMP_COLNAME => 'ts', TARGET_COLNAME => 'revenue',\n  LABEL_COLNAME => '');\n\nCALL sales_ad!DETECT_ANOMALIES(\n  INPUT_DATA => SYSTEM$REFERENCE('VIEW', 'daily_sales_v'),\n  TIMESTAMP_COLNAME => 'ts', TARGET_COLNAME => 'revenue',\n  CONFIG_OBJECT => {'prediction_interval': ${fcPi}});` : '');
+  let ins = `The dashed line is the forecast; the shaded band is the <b>${Math.round(fcPi * 100)}% prediction interval</b> (FORECAST returns FORECAST, LOWER_BOUND and UPPER_BOUND per timestamp). The band <b>widens with the horizon</b>: ${H} days out, uncertainty is much larger than tomorrow.`;
+  if (fcAn) ins += ` <b>Anomaly detection flagged ${an.length} day${an.length === 1 ? '' : 's'}</b> outside the expected range. ${fcPi === 0.8 ? 'A narrow 80% interval flags more points, including some normal noise (false positives).' : fcPi === 0.99 ? 'A wide 99% interval flags only extreme points, so subtle problems may be missed.' : 'The two injected incidents (a spike and a drop) stand out.'}`;
+  $('#fcIns').innerHTML = ins;
+}
+$('#fcH').addEventListener('input', fc);
+tabs('#fcPi', d => { fcPi = +d.p; fc(); });
+tabs('#fcAn', d => { fcAn = d.a === '1'; fc(); });
+fc();
+</script>
+
+<script>
+/* ===== 08 SQL / Python lab ===== */
+const LAB = [
+  { t: 'Snowpark DataFrame (Python)', py: true, l: [
+    ['from snowflake.snowpark import Session', 'Import the Session class: the entry point for all Snowpark work (pip install snowflake-snowpark-python).'],
+    ['from snowflake.snowpark.functions import col, sum as sum_', 'col() refers to a column; sum is renamed sum_ so it does not shadow Python\'s built-in sum().'],
+    ['', ''],
+    ['session = Session.builder.config("connection_name", "dev").create()', 'Open a session using a named connection from your local connections config (account, user, auth, role, warehouse). Inside a stored procedure you never do this: the session is passed in.'],
+    ['orders = session.table("SALES_DB.PUBLIC.ORDERS")', 'A DataFrame pointing at the table. No data is read: it is just "SELECT * FROM ORDERS" as a plan.'],
+    ['shipped = orders.filter(col("STATUS") == "SHIPPED")', 'Transformation: adds a WHERE clause to the plan. Still lazy.'],
+    ['by_region = (shipped.group_by("REGION")', 'Start a grouped aggregation. Parentheses let the chain span several lines.'],
+    ['                    .agg(sum_("AMOUNT").alias("TOTAL")))', 'SUM(AMOUNT) AS TOTAL per region. Still nothing has executed.'],
+    ['print(by_region.queries)', 'Prints the SQL Snowpark will send (a dict with the queries and any post-actions). Great for debugging and for code reviews.'],
+    ['by_region.show()', 'ACTION: runs the query with a LIMIT 10 on the warehouse and prints a small table.'],
+    ['by_region.write.mode("overwrite").save_as_table("REGION_TOTALS")', 'ACTION: CREATE OR REPLACE TABLE ... AS SELECT, executed entirely in Snowflake. No rows travel to Python.'],
+    ['pdf = by_region.to_pandas()', 'ACTION: downloads the result into a pandas DataFrame. Fine here because it is about 8 rows; never do this on a raw 50M-row table.'],
+    ['session.close()', 'Close the session and release its resources.']
+  ] },
+  { t: 'Python UDF + vectorized UDF', l: [
+    ['CREATE OR REPLACE FUNCTION clean_phone(p STRING)', 'A scalar UDF: one input value per row, one output value per row.'],
+    ['  RETURNS STRING', 'The SQL return type.'],
+    ['  LANGUAGE PYTHON', 'Handler code is Python, executed in a secure sandbox on the warehouse.'],
+    ["  RUNTIME_VERSION = '3.11'", 'The Python version to run (check docs for supported versions).'],
+    ["  HANDLER = 'clean'", 'The Python function Snowflake calls for each row.'],
+    ['AS $$', 'Start of the inline Python body. Everything until the closing $$ is Python.'],
+    ['import re', 'Standard-library modules need no PACKAGES entry.'],
+    ['def clean(p):', 'The handler: receives one value, returns one value.'],
+    ['    if p is None:', 'SQL NULL arrives in Python as None. Always handle it.'],
+    ['        return None', 'Return None to produce SQL NULL.'],
+    ["    digits = re.sub(r'\\D', '', p)", 'Strip everything that is not a digit.'],
+    ['    return digits[-10:]', 'Keep the last 10 digits.'],
+    ['$$;', 'End of the Python body.'],
+    ['', ''],
+    ['CREATE OR REPLACE FUNCTION churn_score(amount FLOAT, items INT)', 'A vectorized UDF: same SQL call style, but the handler gets batches of rows.'],
+    ['  RETURNS FLOAT', 'One score per row.'],
+    ['  LANGUAGE PYTHON', 'Python handler again, running in the warehouse sandbox.'],
+    ["  RUNTIME_VERSION = '3.11'", 'Same Python version as the first UDF.'],
+    ["  PACKAGES = ('pandas', 'scikit-learn', 'joblib')", 'Third-party libraries resolved from Snowflake\'s Anaconda channel and cached on the warehouse.'],
+    ["  IMPORTS = ('@ml_stage/churn_model.joblib')", 'Copy this file from a stage onto each node so the code can load it.'],
+    ["  HANDLER = 'predict'", 'The function decorated as vectorized below.'],
+    ['AS $$', 'Start of the Python body.'],
+    ['import sys, joblib, pandas as pd', 'Imports run once per Python process, not once per row.'],
+    ['from _snowflake import vectorized', 'The decorator that turns a handler into a vectorized (pandas batch) handler.'],
+    ['model = joblib.load(sys._xoptions["snowflake_import_directory"] + "churn_model.joblib")', 'Load the model ONCE at module level from the import directory. Loading inside the handler would repeat it for every batch.'],
+    ['@vectorized(input=pd.DataFrame, max_batch_size=5000)', 'Input arrives as a pandas DataFrame (columns 0, 1 = the arguments). max_batch_size caps the batch; Snowflake chooses the actual size.'],
+    ['def predict(df):', 'Called once per batch, not once per row.'],
+    ['    return model.predict_proba(df)[:, 1]', 'Return an array or Series with one value per input row, in the same order.'],
+    ['$$;', 'End of the Python body.'],
+    ['', ''],
+    ['SELECT customer_id, churn_score(amount, items) AS churn_p FROM customer_features;', 'Callers use it like any SQL function. Rows are sent to the Python workers in batches, in parallel across the warehouse nodes.']
+  ] },
+  { t: 'Python stored procedure', l: [
+    ['CREATE OR REPLACE PROCEDURE refresh_region_totals(min_amount FLOAT)', 'A procedure: run with CALL, can read and write tables.'],
+    ['  RETURNS STRING', 'Returns a status message.'],
+    ['  LANGUAGE PYTHON', 'The procedure body is Python.'],
+    ["  RUNTIME_VERSION = '3.11'", 'Python version for the procedure runtime.'],
+    ["  PACKAGES = ('snowflake-snowpark-python')", 'Required for Python procedures: provides the Snowpark session API.'],
+    ["  HANDLER = 'run'", 'Entry point. Its first parameter is always the session.'],
+    ['AS $$', 'Start of the Python body.'],
+    ['from snowflake.snowpark.functions import col, sum as sum_', 'Same DataFrame functions as on the client.'],
+    ['def run(session, min_amount):', 'Snowflake injects a Snowpark Session as the first argument; SQL arguments follow.'],
+    ['    df = (session.table("ORDERS")', 'Build a DataFrame. Even inside a procedure, DataFrame work is pushed down as SQL to the warehouse.'],
+    ['                 .filter(col("AMOUNT") >= min_amount)', 'Use the procedure argument in the filter.'],
+    ['                 .group_by("REGION")', 'Group by region...'],
+    ['                 .agg(sum_("AMOUNT").alias("TOTAL")))', '...and total the amounts.'],
+    ['    df.write.mode("overwrite").save_as_table("REGION_TOTALS")', 'Runs the query and writes the result as a table: query #1.'],
+    ['    n = session.table("REGION_TOTALS").count()', 'Count from the small saved table instead of df.count(), which would re-run the whole aggregation.'],
+    ['    return f"refreshed {n} regions"', 'The returned string is what CALL shows.'],
+    ['$$;', 'End of the Python body.'],
+    ['', ''],
+    ['CALL refresh_region_totals(100);', 'Run it. Schedule it with a task: CREATE TASK ... AS CALL refresh_region_totals(100);']
+  ] },
+  { t: 'Cortex AI functions', l: [
+    ['SELECT review_id,', 'Row-level AI functions run once per row returned by the query.'],
+    ['       AI_SENTIMENT(review_text) AS sentiment,', 'Returns an object with sentiment labels (overall, and per aspect if you pass categories).'],
+    ["       AI_CLASSIFY(review_text, ['shipping', 'quality', 'price', 'sizing']):labels[0]::STRING AS topic,", 'Classify into your own labels; take the first label as a string.'],
+    ["       AI_COMPLETE('llama3.3-70b',", 'Free-form LLM call. First argument = model name (availability varies by region).'],
+    ["         CONCAT('Write a polite one-sentence reply to this review: ', review_text)) AS draft_reply", 'The prompt: instruction + the column value. Billed on input and output tokens.'],
+    ['FROM product_reviews', 'Source table: governed by normal RBAC and masking policies.'],
+    ["WHERE AI_FILTER(PROMPT('Is this review complaining about delivery? {0}', review_text))", 'Natural-language WHERE clause. PROMPT() inserts the column into {0}. Each scanned row is a model call.'],
+    ['LIMIT 100;', 'Always test AI queries on a small sample first.'],
+    ['', ''],
+    ['SELECT product_id,', 'Aggregate AI: one result per group.'],
+    ["       AI_AGG(review_text, 'List the three most common complaints.') AS top_complaints", 'AI_AGG reduces many rows to one insight following your instruction; handles more text than one prompt can hold.'],
+    ['FROM product_reviews', 'Same reviews table as above.'],
+    ['GROUP BY product_id;', 'One AI_AGG result per product.'],
+    ['', ''],
+    ["SELECT review_id, AI_TRANSLATE(review_text, '', 'en') AS review_en FROM product_reviews;", 'Translate to English; an empty source language means detect automatically.'],
+    ['', ''],
+    ['SELECT * FROM SNOWFLAKE.ACCOUNT_USAGE.CORTEX_FUNCTIONS_USAGE_HISTORY', 'Track AI spend: tokens and credits by function and model (ACCOUNT_USAGE views have some latency). Newer, more detailed Cortex usage views also exist; check docs.'],
+    ['ORDER BY start_time DESC LIMIT 20;', 'Most recent usage first.']
+  ] },
+  { t: 'VECTOR + similarity', l: [
+    ['CREATE OR REPLACE TABLE kb_chunks (', 'A table that stores text chunks with their embeddings.'],
+    ['  chunk_id   INT,', 'Key for each chunk.'],
+    ['  chunk_text STRING,', 'The passage itself (what you will paste into the prompt).'],
+    ['  emb        VECTOR(FLOAT, 768)', 'Native vector type: 768 float elements, matching the embedding model\'s output size.'],
+    [');', 'End of the column list.'],
+    ['', ''],
+    ['INSERT INTO kb_chunks', 'Embed once, store, reuse: never embed the same text on every query.'],
+    ['SELECT chunk_id, chunk_text,', 'Copy the id and text as they are...'],
+    ["       AI_EMBED('snowflake-arctic-embed-m-v1.5', chunk_text)", 'Returns a VECTOR(FLOAT, 768) for this model. Billed on input tokens.'],
+    ['FROM raw_chunks;', 'Chunks produced earlier (e.g. by SPLIT_TEXT_RECURSIVE_CHARACTER, Module 02).'],
+    ['', ''],
+    ["SET q = 'How long do refunds take?';", 'A session variable holding the user\'s question.'],
+    ['SELECT chunk_text,', 'Return the passage text plus its similarity score.'],
+    ["       VECTOR_COSINE_SIMILARITY(emb, AI_EMBED('snowflake-arctic-embed-m-v1.5', $q)) AS score", 'Embed the question with the SAME model, then compare it with every stored vector. 1 = same direction, 0 = unrelated.'],
+    ['FROM kb_chunks', 'Brute-force: scans every row. Fine for modest sizes; use Cortex Search for large, low-latency workloads.'],
+    ['ORDER BY score DESC', 'Most similar first.'],
+    ['LIMIT 3;', 'top-k = 3 chunks to feed the LLM.'],
+    ['', ''],
+    ["SELECT AI_SIMILARITY('refund delay', 'money back is slow') AS sim;", 'Quick check: similarity of two texts in one call, without managing vectors yourself.']
+  ] },
+  { t: 'Cortex Search service', l: [
+    ['CREATE OR REPLACE CORTEX SEARCH SERVICE kb_search', 'A managed hybrid (vector + keyword) search index over a query result.'],
+    ['  ON chunk_text', 'The text column to search.'],
+    ['  ATTRIBUTES category', 'Columns you can filter on at query time.'],
+    ['  WAREHOUSE = ai_wh', 'Warehouse used to build and refresh the index (materializing the source query and embeddings).'],
+    ["  TARGET_LAG = '1 hour'", 'Maximum staleness: the index refreshes incrementally when the source changes, like a dynamic table.'],
+    ["  EMBEDDING_MODEL = 'snowflake-arctic-embed-l-v2.0'", 'Optional: which embedding model to use (defaults exist; check docs for supported models).'],
+    ['AS (', 'The source query: any SELECT.'],
+    ['  SELECT chunk_id, chunk_text, category', 'Columns returned in search results.'],
+    ['  FROM kb_chunks_raw', 'The chunk table. No need to compute embeddings yourself.'],
+    [');', 'End of the source query and of the service definition.'],
+    ['', ''],
+    ['SELECT PARSE_JSON(', 'SEARCH_PREVIEW returns a JSON string; parse it to navigate.'],
+    ['  SNOWFLAKE.CORTEX.SEARCH_PREVIEW(', 'SQL function for testing a service. Apps typically use the Python API or REST API.'],
+    ["    'kb_search',", 'The service name.'],
+    ['    \'{"query": "how long do refunds take", "columns": ["chunk_text", "category"], "filter": {"@eq": {"category": "refunds"}}, "limit": 3}\'', 'Request: the question, columns to return, an attribute filter and the number of results.'],
+    ['  )', 'End of the SEARCH_PREVIEW call.'],
+    [")['results'] AS results;", 'The ranked chunks.'],
+    ['', ''],
+    ["ALTER CORTEX SEARCH SERVICE kb_search SET TARGET_LAG = '1 day';", 'Relax freshness to cut refresh cost when the documents rarely change.'],
+    ['SHOW CORTEX SEARCH SERVICES;', 'List services with their state, source and settings.']
+  ] },
+  { t: 'ML forecast', l: [
+    ['CREATE OR REPLACE VIEW daily_sales_v AS', 'ML Functions need a timestamp column and a numeric target.'],
+    ['  SELECT order_date::TIMESTAMP_NTZ AS ts, SUM(amount) AS revenue', 'One row per day: timestamp + value.'],
+    ['  FROM orders GROUP BY 1;', 'Aggregate orders to daily totals (GROUP BY 1 = the first column, ts).'],
+    ['', ''],
+    ['CREATE OR REPLACE SNOWFLAKE.ML.FORECAST sales_fc(', 'Creating the object TRAINS the model on your warehouse.'],
+    ["  INPUT_DATA => SYSTEM$REFERENCE('VIEW', 'daily_sales_v'),", 'A reference to the training data, so the model can read it with your privileges.'],
+    ["  TIMESTAMP_COLNAME => 'ts',", 'Which column is time.'],
+    ["  TARGET_COLNAME => 'revenue'", 'Which column to predict.'],
+    [');', 'End of the model definition: training runs now.'],
+    ['', ''],
+    ["CALL sales_fc!FORECAST(FORECASTING_PERIODS => 14, CONFIG_OBJECT => {'prediction_interval': 0.9});", 'Predict 14 periods ahead. Returns TS, FORECAST, LOWER_BOUND, UPPER_BOUND.'],
+    ['CREATE OR REPLACE TABLE sales_forecast AS SELECT * FROM TABLE(RESULT_SCAN(LAST_QUERY_ID()));', 'CALL output is not a table; RESULT_SCAN saves it into one for dashboards.'],
+    ['CALL sales_fc!SHOW_EVALUATION_METRICS();', 'Cross-validation metrics (e.g. MAE, MAPE) to judge model quality before trusting it.']
+  ] }
+];
+const KWS = /^(SELECT|FROM|WHERE|GROUP|BY|ORDER|DESC|AS|CREATE|OR|REPLACE|FUNCTION|PROCEDURE|RETURNS|LANGUAGE|PYTHON|RUNTIME_VERSION|HANDLER|PACKAGES|IMPORTS|TABLE|VIEW|INSERT|INTO|LIMIT|SET|ON|ATTRIBUTES|WAREHOUSE|TARGET_LAG|EMBEDDING_MODEL|CORTEX|SEARCH|SERVICE|SERVICES|ALTER|SHOW|CALL|INT|STRING|FLOAT|VECTOR|TIMESTAMP_NTZ|AND|NOT|NULL|TRUE|FALSE|CONCAT|PROMPT|SUM|PARSE_JSON|RESULT_SCAN|LAST_QUERY_ID|AI_SENTIMENT|AI_CLASSIFY|AI_COMPLETE|AI_FILTER|AI_AGG|AI_TRANSLATE|AI_EMBED|AI_SIMILARITY|VECTOR_COSINE_SIMILARITY)$/;
+const PYK = /^(from|import|def|return|if|is|None|True|False|as|with|for|in|print|and|or|not|lambda|class)$/;
+function hlLine(s, py) {
+  const re = py ? /("[^"]*"|'[^']*'|#.*$|[A-Za-z_][A-Za-z0-9_]*|\d+(?:\.\d+)?)/g : /('[^']*'|--.*$|[A-Za-z_][A-Za-z0-9_$]*|\d+(?:\.\d+)?)/g;
+  let out = '', last = 0, m;
+  while ((m = re.exec(s))) {
+    out += esc(s.slice(last, m.index)); const t = m[0]; last = m.index + t.length;
+    if (t[0] === '"' || t[0] === "'") out += `<span class="str">${esc(t)}</span>`;
+    else if (t[0] === '#' || t.startsWith('--')) out += `<span class="cmt">${esc(t)}</span>`;
+    else if (/^\d/.test(t)) out += `<span class="num">${t}</span>`;
+    else if (py ? PYK.test(t) : KWS.test(t)) out += `<span class="${py ? 'pykw' : 'kw'}">${t}</span>`;
+    else out += esc(t);
+  }
+  return out + esc(s.slice(last));
+}
+let labI = 0;
+function labShow(i) {
+  labI = i;
+  $$('#sqlTabs button').forEach((b, k) => b.classList.toggle('on', k === i));
+  let inPy = !!LAB[i].py;
+  $('#sqlCode').innerHTML = LAB[i].l.map(([l], k) => {
+    let py = inPy;
+    if (!LAB[i].py && l.includes('$$')) { inPy = !inPy; py = false; }
+    return `<div data-k="${k}"><em>${k + 1}</em>${l ? hlLine(l, py) : ' '}</div>`;
+  }).join('');
+  $('#sqlExp').innerHTML = '<b class="h">CLICK A LINE</b>Each line is explained in plain English.';
+  $$('#sqlCode div').forEach(d => d.onclick = () => {
+    const e = LAB[labI].l[d.dataset.k][1]; if (!e) return;
+    $$('#sqlCode div').forEach(x => x.classList.remove('on')); d.classList.add('on');
+    $('#sqlExp').innerHTML = `<b class="h">LINE ${+d.dataset.k + 1}</b>${esc(e)}`;
+  });
+}
+$('#sqlTabs').innerHTML = LAB.map(s => `<button>${s.t}</button>`).join('');
+$$('#sqlTabs button').forEach((b, i) => b.onclick = () => labShow(i));
+labShow(0);
+
+/* ===== 09 Q&A ===== */
+const QA = [
+  ['Snowpark', 'b', `What is Snowpark, and what actually runs where?`, `<p>Snowpark is Snowflake's developer framework for Python, Java and Scala. The <b>DataFrame API</b> runs on the client only to build a logical plan and generate SQL; that SQL is compiled by cloud services and executed on a virtual warehouse. <b>UDFs, UDTFs and stored procedures</b> written with Snowpark run server-side, in a secure sandbox on the warehouse nodes. So: DataFrame code describes work; warehouse does the work; only results come back.</p>`],
+  ['Snowpark', 'b', `Explain lazy evaluation in Snowpark. Transformations vs actions?`, `<p>Transformations (<code>filter, select, join, group_by().agg(), with_column, sort</code>) return a new DataFrame and only extend the plan, with no query sent. Actions (<code>collect, show, count, first, to_pandas, write.save_as_table, cache_result</code>) trigger SQL generation and execution. Benefits: the whole chain becomes one optimized query; cost: every action re-executes the plan unless you cache it.</p>`],
+  ['Snowpark', 't', `A Snowpark job calls df.count() for logging, then df.write.save_as_table(). Why is it twice as slow as expected?`, `<p>Each action runs the full query. count() executed the whole pipeline, then save_as_table() executed it again. Fixes: save first and count the saved table, or call <code>df = df.cache_result()</code> (materializes into a temporary table) before reusing it. Check Query History: you'll see two big queries with the same plan.</p>`],
+  ['Snowpark', 's', `A data scientist's notebook does session.table('EVENTS').to_pandas() on 400M rows and crashes. How do you fix it?`, `<p>The data is being pulled to the client. Push the work down: express filters, joins and aggregations as Snowpark DataFrame operations so only the final result returns; use <code>save_as_table</code> for large outputs; use a <b>vectorized UDF</b> for per-row Python logic; or use the Snowpark pandas API so pandas-style code is translated into SQL. If they truly need to train on a large sample in memory, do it in a stored procedure on a <b>Snowpark-optimized warehouse</b> (or a notebook on container runtime), not on a laptop.</p>`],
+  ['UDFs', 'b', `UDF vs UDTF vs vectorized UDF vs stored procedure?`, `<p><b>UDF</b>: scalar, one value per row, used inside SELECT. <b>UDTF</b>: returns a table (zero or more rows per input), handler class with <code>process()</code> and optional <code>end_partition()</code>, called with <code>TABLE(...) OVER (PARTITION BY ...)</code>. <b>Vectorized UDF</b>: handler receives pandas DataFrame batches; much higher throughput for numeric/ML work. <b>Stored procedure</b>: invoked with CALL, gets a session, can run DML/DDL and orchestrate many statements; not usable inside a SELECT.</p>`],
+  ['UDFs', 't', `How do third-party packages and your own files get into a Python UDF?`, `<p><code>PACKAGES</code> lists libraries resolved from Snowflake's <b>Anaconda channel</b> (terms accepted once by an org admin; check availability in <code>INFORMATION_SCHEMA.PACKAGES</code>). <code>IMPORTS</code> pulls files from stages (.py, .zip, model files), which the code reads from <code>sys._xoptions["snowflake_import_directory"]</code>. Pure-Python packages not in the channel can be uploaded to a stage and imported; newer options for PyPI packages exist (check current docs). The sandbox has no internet unless you attach an <b>external access integration</b>.</p>`],
+  ['UDFs', 't', `Why is a vectorized UDF faster, and what are its trade-offs?`, `<p>A scalar Python UDF pays per-row overhead: converting each value and making a Python function call per row. A vectorized UDF receives a batch (pandas DataFrame) per call, so overhead is amortized and the work can use vectorized numpy/pandas operations. Trade-offs: memory per batch (wide rows, big models), the handler must return exactly one result per input row in order, and it only helps if your code is actually vectorized. <code>max_batch_size</code> limits batch size; Snowflake decides actual batches.</p>`],
+  ['UDFs', 's', `You need to score 300M rows nightly with a 2 GB scikit-learn model. Design it.`, `<p>Register the model in the Model Registry (or put the file on a stage). Use a <b>vectorized UDF</b> (or the registry's batch inference) that loads the model <b>once at module level</b>. Run it from a task-scheduled procedure as <code>INSERT ... SELECT id, score(...) FROM features</code>, processing only new/changed rows (stream). Because the model is large, use a <b>Snowpark-optimized warehouse</b> if standard nodes run out of memory. Monitor run time and credits; consider GPU inference in SPCS only if the model is deep learning.</p>`],
+  ['SPCS', 'b', `What is Snowpark Container Services and what are its main objects?`, `<p>A managed container runtime inside Snowflake. Objects: <b>image repository</b> (OCI registry in a schema), <b>compute pool</b> (nodes of an instance family, CPU or GPU, with min/max nodes), <b>service</b> (long-running containers from a YAML spec, with optional endpoints), <b>job service</b> (runs to completion), and <b>service functions</b> to call a service from SQL. Access is governed by Snowflake roles; outbound internet needs external access integrations.</p>`],
+  ['SPCS', 't', `When would you choose SPCS over a Python UDF, and what's the cost catch?`, `<p>Choose SPCS for <b>GPUs</b>, custom runtimes or system libraries, non-Python stacks, long-running APIs or web apps, and large open-source models. Catch: a compute pool bills for its nodes while running, even idle, and you own image builds, patching and scaling settings. If a vectorized UDF or Cortex function solves it, those are simpler; set auto-suspend and min nodes carefully for pools.</p>`],
+  ['Cortex', 'b', `What are Cortex AI SQL functions, and how are they billed?`, `<p>Managed LLM functions callable from SQL: AI_COMPLETE, AI_CLASSIFY, AI_FILTER, AI_SENTIMENT, AI_AGG, AI_SUMMARIZE_AGG, AI_EMBED, AI_SIMILARITY, AI_TRANSLATE and others (older SNOWFLAKE.CORTEX.* equivalents exist). They're billed in credits per million <b>tokens</b> (input, and output for generative ones), at rates that depend on function and model, plus the warehouse running the query. Usage is visible in ACCOUNT_USAGE Cortex usage views.</p>`],
+  ['Cortex', 't', `How does Cortex keep data governed? Can you restrict which models people use?`, `<p>Models are hosted within Snowflake's security boundary, so data doesn't go to an external API you manage, and table RBAC and masking still apply to what the query reads. Access to the functions is via the <code>SNOWFLAKE.CORTEX_USER</code> database role (granted to PUBLIC by default; revoke and grant selectively). Account-level settings can restrict allowed models and control <b>cross-region inference</b> (if a model isn't in your region, enabling it allows processing in another region, which matters for data-residency rules). Check current docs for exact parameter names.</p>`],
+  ['Cortex', 's', `Marketing wants sentiment and topic on 20M reviews, refreshed daily, on a dashboard. Design it cost-effectively.`, `<p>Don't call AI functions in a view. Create a results table; process <b>only new reviews</b> via a stream + task (or an incremental dynamic table). Translate once if multilingual, then <code>AI_SENTIMENT</code> and <code>AI_CLASSIFY</code> (cheaper and more consistent than an AI_COMPLETE prompt). Test on a labelled sample first, use a small warehouse (MEDIUM or smaller), and monitor Cortex usage views with a budget/alert. Dashboards read stored results; weekly <code>AI_AGG</code> per product produces "top complaints".</p>`],
+  ['RAG', 'b', `What is RAG and how do you build it in Snowflake?`, `<p>Retrieval-augmented generation: retrieve relevant chunks of your own content and include them in the LLM prompt so answers are grounded. In Snowflake: parse documents (AI_PARSE_DOCUMENT, Module 02), chunk them (SPLIT_TEXT_RECURSIVE_CHARACTER), create a <b>Cortex Search service</b> on the chunk table (or store <code>VECTOR</code> embeddings yourself), retrieve top-k for the question, then call <code>AI_COMPLETE</code> with instructions + context + question, typically from a Streamlit app or an agent.</p>`],
+  ['RAG', 't', `Cortex Search vs a VECTOR column with VECTOR_COSINE_SIMILARITY?`, `<p>A VECTOR column + similarity function is flexible and fully SQL, but you manage embeddings and it's a brute-force scan per query, so latency grows with table size. <b>Cortex Search</b> is managed: it embeds text, maintains a <b>hybrid</b> (vector + keyword, with re-ranking) index, refreshes incrementally within TARGET_LAG, supports attribute filters, and serves low-latency queries via API. Use VECTOR for analytics/dedup/similarity joins; Cortex Search for search and RAG apps.</p>`],
+  ['RAG', 't', `Your RAG chatbot gives wrong answers. How do you debug it?`, `<p>Separate retrieval from generation. First check retrieval: for real questions, are the right chunks in the top-k? If not: tune chunk size/overlap, add metadata filters, use hybrid search for exact terms (product codes), and make sure documents and questions use the same embedding model. If retrieval is right but answers are wrong: tighten the prompt ("answer only from context, say I don't know"), try a stronger model, and return citations. Build an evaluation set of questions with expected sources and measure after each change.</p>`],
+  ['Analyst/ML', 'b', `What is Cortex Analyst and why does it need a semantic model?`, `<p>A managed natural-language-to-SQL service exposed through a REST API. The <b>semantic model</b> (YAML on a stage) or <b>semantic view</b> defines tables, relationships, dimensions, facts/metrics, synonyms and <b>verified queries</b>. Without it the LLM guesses business meaning from raw column names and produces plausible but wrong SQL. Generated SQL runs with the user's role, so governance holds.</p>`],
+  ['Analyst/ML', 't', `What do the Feature Store and Model Registry give you?`, `<p><b>Feature Store</b>: entities and feature views (refreshed on a schedule, typically via dynamic tables), reusable across teams, with point-in-time-correct training set generation to avoid leakage and training/serving skew. <b>Model Registry</b>: versioned models with metadata and metrics, RBAC on who can use them, and inference from Python (<code>mv.run</code>) or SQL, on warehouses or in Container Services. Together with tasks they form a Snowflake-native MLOps loop.</p>`],
+  ['Analyst/ML', 's', `A business user wants a 30-day sales forecast per store and alerts for unusual days, with no data science team. What do you propose?`, `<p>Use ML Functions. Build a view with store, date and sales; create <code>SNOWFLAKE.ML.FORECAST</code> with a series column for store, then <code>CALL model!FORECAST(FORECASTING_PERIODS =&gt; 30)</code> and save the result via RESULT_SCAN into a table for the dashboard. Create <code>SNOWFLAKE.ML.ANOMALY_DETECTION</code> on history and run <code>DETECT_ANOMALIES</code> daily from a task, with an alert/notification on flagged days. Retrain periodically, check <code>SHOW_EVALUATION_METRICS</code>, and graduate to custom models only if accuracy isn't enough.</p>`]
+];
+const LV = { b: 'FUNDAMENTAL', t: 'TRICKY', s: 'SCENARIO' };
+function qa(f) { $('#qaList').innerHTML = QA.filter(q => f === 'all' || q[0] === f).map(([tp, l, q, a]) => `<details class="qa"><summary><span class="lv ${l}">${LV[l]}</span><span class="tp">${tp.toUpperCase()}</span>${q}</summary><div class="ans">${a}</div></details>`).join(''); }
+tabs('#qaTabs', d => qa(d.f));
+qa('all');
+
+/* ===== 10 quiz ===== */
+const QZ = [
+  [`In Snowpark, when does a query actually run on the warehouse?`, [`On every transformation like filter()`, `When an action such as collect(), show() or save_as_table() is called`, `When the session is created`, `Every 60 seconds`], 1, `Transformations only build a plan. Actions generate SQL and execute it.`],
+  [`Where does Snowpark DataFrame code (filter, group_by) get executed?`, [`On the client, row by row`, `It is translated to SQL and executed on a virtual warehouse`, `In a container service`, `In Cortex`], 1, `The client builds SQL; the warehouse processes the data.`],
+  [`Which call writes a result inside Snowflake without moving rows to the client?`, [`df.to_pandas()`, `df.collect()`, `df.write.save_as_table("T")`, `df.show()`], 2, `save_as_table runs CREATE TABLE AS SELECT entirely server-side.`],
+  [`You call df.count() and then df.show(). How many times does the pipeline execute?`, [`Once`, `Twice`, `Zero`, `It depends on warehouse size`], 1, `Each action re-executes the plan. Use cache_result() or save the result first.`],
+  [`What does a vectorized Python UDF receive per call?`, [`One row`, `A batch of rows as a pandas DataFrame`, `The whole table`, `A Snowpark session`], 1, `Vectorized UDFs get pandas batches, cutting per-row overhead.`],
+  [`Where should a Python UDF load a large model file from IMPORTS?`, [`Inside the handler on every call`, `Once at module level`, `From the internet`, `From the client laptop`], 1, `Module-level code runs once per Python process; the handler runs per row or batch.`],
+  [`What is the main reason to use a Snowpark-optimized warehouse?`, [`Faster SQL joins`, `Much more memory per node for memory-heavy Python/ML work`, `Free Cortex calls`, `GPU access`], 1, `It's about memory per node. GPUs are a Container Services topic.`],
+  [`Which need most clearly points to Snowpark Container Services?`, [`Cleaning phone numbers in SQL`, `Running a GPU-based deep learning model with a custom runtime`, `Classifying review sentiment`, `Filtering rows by date`], 1, `GPUs and custom runtimes are the classic SPCS use cases.`],
+  [`Which Cortex function returns a BOOLEAN suitable for a WHERE clause?`, [`AI_CLASSIFY`, `AI_FILTER`, `AI_AGG`, `AI_EMBED`], 1, `AI_FILTER evaluates a natural-language condition to TRUE/FALSE.`],
+  [`How are Cortex LLM functions primarily billed?`, [`Per query, flat fee`, `By tokens processed (rates vary by function/model), plus the warehouse running the query`, `Only by warehouse time`, `Per user per month`], 1, `Token-based AI credits, separate from warehouse credits.`],
+  [`Why must the question and the documents use the same embedding model?`, [`Licensing`, `Vectors from different models are in different spaces and are not comparable`, `Same model is cheaper`, `Cortex Search requires 1024 dimensions`], 1, `Similarity only makes sense within one model's vector space.`],
+  [`What does TARGET_LAG control on a Cortex Search service?`, [`Query timeout`, `How stale the index may get relative to the source before refreshing`, `Number of results`, `Embedding dimension`], 1, `Like dynamic tables: maximum allowed staleness of the index.`],
+  [`Why does Cortex Analyst rely on a semantic model or semantic view?`, [`To store embeddings`, `To give the LLM business definitions (metrics, dimensions, joins, verified queries) so it generates correct SQL`, `To cache results`, `To bypass RBAC`], 1, `It encodes business meaning; SQL still runs with the user's role.`]
+];
+let qi = 0; const qAns = Array(QZ.length).fill(null);
+QZ.forEach((_, i) => { const s = document.createElement('span'); s.onclick = () => qShow(i); $('#qzBar').appendChild(s); });
+function qShow(i) {
+  qi = i; const [q, opts, ok, ex] = QZ[i], a = qAns[i];
+  $('#qzN').textContent = i + 1;
+  [...$('#qzBar').children].forEach((s, k) => { s.classList.toggle('on', qAns[k] !== null); s.style.outline = k === i ? '2px solid var(--ice)' : ''; });
+  $('#qzBody').innerHTML = `<h3 style="margin-top:6px">${q}</h3>` + opts.map((o, k) => `<button class="opt ${a !== null ? (k === ok ? 'ok' : (k === a ? 'bad' : '')) : ''}" data-k="${k}">${String.fromCharCode(65 + k)}. ${o}</button>`).join('') + (a !== null ? `<div class="qexp"><b>${a === ok ? 'Correct.' : 'Not quite.'}</b> ${ex}</div>` : '');
+  $$('#qzBody .opt').forEach(b => b.onclick = () => { if (qAns[qi] !== null) return; qAns[qi] = +b.dataset.k; qShow(qi); $('#qzS').textContent = qAns.filter((x, j) => x === QZ[j][2]).length; });
+  $('#qzNext').textContent = i === QZ.length - 1 ? 'See result' : 'Next';
+}
+function qResult() {
+  const s = qAns.filter((x, j) => x === QZ[j][2]).length;
+  const msg = s >= QZ.length - 2 ? 'Interview-ready on Snowpark and Cortex.' : s >= Math.round(QZ.length * 0.6) ? 'Solid. Replay the DataFrame builder and the RAG simulator, then retry.' : 'Walk through the DataFrame builder, the vectorized UDF animation and the Cortex playground again, then retry.';
+  $('#qzBody').innerHTML = `<div class="score">${s} / ${QZ.length}</div><p style="margin-top:8px">${msg}</p><button class="btn pri" id="qzAgain" style="margin-top:10px">Retry quiz</button>`;
+  $('#qzAgain').onclick = () => { qAns.fill(null); $('#qzS').textContent = 0; qShow(0); };
+}
+$('#qzNext').onclick = () => qi === QZ.length - 1 ? qResult() : qShow(qi + 1);
+$('#qzPrev').onclick = () => qShow(Math.max(0, qi - 1));
+qShow(0);
+</script>
+<div class="toast" id="toast"></div>
+<script>
+(() => {
+  const t = document.getElementById('toast'); let h;
+  document.querySelectorAll('.road a.soon').forEach(a => a.addEventListener('click', e => {
+    e.preventDefault();
+    t.textContent = `Module ${a.dataset.m} isn't built yet. Ask for it in chat and it will be added here.`;
+    t.classList.add('on'); clearTimeout(h); h = setTimeout(() => t.classList.remove('on'), 2800);
+  }));
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,1648 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Snowflake Interview Lab · Module 05 · Dynamic Tables &amp; Transforms</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/space-grotesk@5/300.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/space-grotesk@5/700.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/ibm-plex-sans@5/300.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/ibm-plex-sans@5/400.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/ibm-plex-sans@5/600.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/jetbrains-mono@5/400.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/jetbrains-mono@5/700.css">
+<style>
+:root{
+  --bg:#F2F6FA; --card:#FFFFFF; --card2:#E9EFF5; --ink:#0B1B2B; --ink2:#46596B; --ink3:#7F90A2;
+  --line:rgba(11,27,43,.12); --line2:rgba(11,27,43,.22);
+  --ice:#0A86C2; --ice-s:#DCEFF9; --amber:#B86F00; --amber-s:#FFF0D4; --teal:#0B8A6A; --teal-s:#DAF3EB;
+  --red:#C93C3C; --red-s:#FCE4E4; --grid:rgba(10,134,194,.06);
+  --f-head:"Space Grotesk",sans-serif; --f-body:"IBM Plex Sans",sans-serif; --f-mono:"JetBrains Mono",monospace;
+  --r:10px;
+}
+[data-theme="dark"]{
+  --bg:#08121D; --card:#0F1D2C; --card2:#16293B; --ink:#E5EDF5; --ink2:#9DB0C3; --ink3:#687D91;
+  --line:rgba(229,237,245,.10); --line2:rgba(229,237,245,.22);
+  --ice:#4CC3F0; --ice-s:rgba(76,195,240,.13); --amber:#FFB938; --amber-s:rgba(255,185,56,.13); --teal:#3FD3A8; --teal-s:rgba(63,211,168,.13);
+  --red:#FF7070; --red-s:rgba(255,112,112,.14); --grid:rgba(76,195,240,.05);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:var(--f-body);color:var(--ink);line-height:1.7;font-size:16px;
+  background:radial-gradient(1200px 600px at 85% -10%, var(--ice-s), transparent 60%),radial-gradient(900px 500px at -10% 30%, var(--teal-s), transparent 60%),
+  linear-gradient(var(--grid) 1px, transparent 1px) 0 0/32px 32px,linear-gradient(90deg, var(--grid) 1px, transparent 1px) 0 0/32px 32px,var(--bg);background-attachment:fixed}
+code,.mono{font-family:var(--f-mono);font-size:.88em}
+p code,li code,td code{background:var(--card2);padding:1px 6px;border-radius:5px}
+button{font-family:var(--f-body);cursor:pointer}
+.top{position:sticky;top:0;z-index:30;display:flex;align-items:center;gap:16px;padding:12px 28px;border-bottom:1px solid var(--line);background:color-mix(in srgb,var(--bg) 82%,transparent);backdrop-filter:saturate(1.4) blur(8px)}
+.brand{font-family:var(--f-mono);font-weight:700;letter-spacing:.06em;font-size:13px}.brand b{color:var(--ice)}
+.pill{font-family:var(--f-mono);font-size:12px;padding:3px 10px;border-radius:99px;border:1px solid var(--line2);color:var(--ink2)}
+.prog{flex:1;height:4px;background:var(--card2);border-radius:4px;overflow:hidden;max-width:360px;margin-left:auto}
+.prog i{display:block;height:100%;width:0;background:var(--ice);transition:width .4s}
+.prog-l{font-family:var(--f-mono);font-size:12px;color:var(--ink2);min-width:84px}
+.theme{border:1px solid var(--line2);background:var(--card);color:var(--ink);border-radius:8px;padding:5px 10px;font-size:13px}
+.wrap{display:grid;grid-template-columns:270px minmax(0,1fr);gap:36px;max-width:1340px;margin:0 auto;padding:28px}
+nav.side{position:sticky;top:76px;align-self:start;max-height:calc(100vh - 96px);overflow:auto;padding-right:6px}
+.side h4{font-family:var(--f-mono);font-size:11px;letter-spacing:.14em;color:var(--ink3);margin:6px 0 10px;font-weight:400}
+.side a{display:flex;gap:10px;align-items:baseline;padding:6px 10px;border-radius:8px;color:var(--ink2);text-decoration:none;font-size:14px;border-left:2px solid transparent}
+.side a span{font-family:var(--f-mono);font-size:11px;color:var(--ink3)}
+.side a:hover{background:var(--card)}
+.side a.act{color:var(--ink);background:var(--card);border-left-color:var(--ice);border-radius:0 8px 8px 0}
+.side a.seen span{color:var(--teal)}
+.road{margin-top:22px;border-top:1px solid var(--line);padding-top:14px}
+.road div{font-size:13px;color:var(--ink3);padding:3px 10px;display:flex;gap:8px}
+.road div.now{color:var(--ink);font-weight:600}.road div.done{color:var(--teal)}
+.road div em{font-style:normal;font-family:var(--f-mono);font-size:11px;min-width:20px}
+main{min-width:0}
+section{padding:36px 0 44px;border-bottom:1px dashed var(--line2);scroll-margin-top:70px}
+.eyebrow{font-family:var(--f-mono);font-size:12px;letter-spacing:.16em;color:var(--ice);margin-bottom:6px}
+h1{font-family:var(--f-head);font-weight:700;font-size:clamp(40px,6vw,76px);line-height:1;letter-spacing:-.03em}
+h1 .thin,h2 .thin{font-weight:300;color:var(--ink2)}
+h2{font-family:var(--f-head);font-weight:700;font-size:clamp(28px,3.4vw,40px);letter-spacing:-.02em;line-height:1.1;margin-bottom:12px}
+h3{font-family:var(--f-head);font-weight:700;font-size:20px;margin:26px 0 10px;letter-spacing:-.01em}
+.lead{font-size:18px;font-weight:300;color:var(--ink2);max-width:820px}
+p{margin:8px 0}
+ul.dots{margin:8px 0 8px 20px}ul.dots li{margin:4px 0}
+.wwh{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:20px 0}
+.wwh .box{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:18px 20px;position:relative;overflow:hidden}
+.wwh .box.how{grid-column:1/-1}
+.wwh .tag{font-family:var(--f-mono);font-size:11px;letter-spacing:.14em;display:inline-block;padding:2px 8px;border-radius:5px;margin-bottom:8px}
+.box.what .tag{background:var(--ice-s);color:var(--ice)}.box.why .tag{background:var(--amber-s);color:var(--amber)}.box.how .tag{background:var(--teal-s);color:var(--teal)}
+.box::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px}
+.box.what::before{background:var(--ice)}.box.why::before{background:var(--amber)}.box.how::before{background:var(--teal)}
+.call{display:flex;gap:14px;padding:14px 18px;border-radius:var(--r);margin:14px 0;border:1px solid var(--line)}
+.call b.k{font-family:var(--f-mono);font-size:11px;letter-spacing:.12em;white-space:nowrap;padding-top:3px}
+.call.analogy{background:var(--ice-s)}.call.analogy b.k{color:var(--ice)}
+.call.trap{background:var(--red-s)}.call.trap b.k{color:var(--red)}
+.call.pro{background:var(--teal-s)}.call.pro b.k{color:var(--teal)}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px;margin:18px 0}
+.panel-h{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+.panel-h .t{font-family:var(--f-mono);font-size:12px;letter-spacing:.12em;color:var(--ink2)}.panel-h .t b{color:var(--ink)}
+.btn{border:1px solid var(--line2);background:var(--card);color:var(--ink);padding:7px 14px;border-radius:8px;font-size:14px;transition:all .15s}
+.btn:hover{border-color:var(--ice);color:var(--ice)}
+.btn.pri{background:var(--ice);color:var(--card);border-color:var(--ice)}.btn.pri:hover{color:var(--card);filter:brightness(1.08)}
+.btn.warn{border-color:var(--red);color:var(--red)}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.ctl{display:flex;align-items:center;gap:12px;font-size:14px;color:var(--ink2);margin:8px 0}
+.ctl label{min-width:150px}.ctl input[type=range]{flex:1;accent-color:var(--ice)}
+.ctl .v{font-family:var(--f-mono);font-size:13px;color:var(--ink);min-width:110px;text-align:right}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:14px 0}
+.stat{background:var(--card2);border-radius:10px;padding:12px 14px}
+.stat .k{font-family:var(--f-mono);font-size:11px;color:var(--ink3);letter-spacing:.08em}
+.stat .n{font-family:var(--f-head);font-weight:700;font-size:28px;line-height:1.2}
+.stat .s{font-size:12px;color:var(--ink2)}
+.sqlbox{font-family:var(--f-mono);font-size:13px;background:var(--card2);border-radius:8px;padding:10px 14px;white-space:pre-wrap;color:var(--ink);border-left:3px solid var(--ice);overflow:auto}
+.insight{font-size:14px;padding:10px 14px;border-radius:8px;background:var(--amber-s);color:var(--ink);margin-top:10px}.insight b{color:var(--amber)}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+.tabs button{border:1px solid var(--line2);background:transparent;color:var(--ink2);padding:6px 12px;border-radius:99px;font-size:13px}
+.tabs button.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}.grid2>div{min-width:0}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.mini{background:var(--card2);border-radius:10px;padding:14px}
+.mini h5{font-family:var(--f-head);font-size:15px;margin-bottom:4px}
+.mini p{font-size:14px;color:var(--ink2);margin:0}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:13px;color:var(--ink2);margin:8px 0}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:-1px;margin-right:6px}
+table.t{width:100%;border-collapse:collapse;font-size:14px}
+table.t th,table.t td{padding:7px 10px;border-bottom:1px solid var(--line);text-align:left}
+table.t th{font-family:var(--f-mono);font-size:11px;letter-spacing:.1em;color:var(--ink3);font-weight:400}
+table.t td.m{font-family:var(--f-mono);font-size:12px}
+svg{width:100%;height:auto;display:block}
+svg .t{font-family:var(--f-body);font-size:14px;fill:var(--ink)}
+svg .ts{font-family:var(--f-body);font-size:12px;fill:var(--ink2)}
+svg .th{font-family:var(--f-head);font-size:14px;font-weight:700;fill:var(--ink)}
+svg .tm{font-family:var(--f-mono);font-size:11px;fill:var(--ink2)}
+.L-cs{fill:var(--amber-s);stroke:var(--amber)}.L-cp{fill:var(--ice-s);stroke:var(--ice)}.L-st{fill:var(--teal-s);stroke:var(--teal)}
+.neutral{fill:var(--card);stroke:var(--line2)}
+.arr{stroke:var(--ink3);stroke-width:1.2;fill:none}
+.fn{transition:opacity .3s}
+.flow.playing .fn{opacity:.25}
+.flow.playing .fn.on{opacity:1}
+.fn.on rect{stroke-width:2.4}
+.edge{stroke:var(--ink3);stroke-width:1.4;fill:none;transition:opacity .3s}
+.flow.playing .edge{opacity:.2}
+.flow.playing .edge.on{opacity:1;stroke:var(--ice);stroke-width:2.4;stroke-dasharray:7 5}
+@media (prefers-reduced-motion:no-preference){
+  .flow.playing .edge.on{animation:dash .8s linear infinite}
+  @keyframes dash{to{stroke-dashoffset:-24}}
+  .pulse{animation:pulse 1.2s ease-in-out infinite}
+  @keyframes pulse{0%,100%{opacity:.35}50%{opacity:1}}
+  .rise{animation:rise .5s both}
+  @keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+  .grow{transform-box:fill-box;transform-origin:left center;animation:grow .6s both}
+  @keyframes grow{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+}
+.stepbar{display:flex;gap:6px;margin:12px 0}
+.stepbar span{flex:1;height:4px;border-radius:4px;background:var(--card2);cursor:pointer}
+.stepbar span.on{background:var(--ice)}
+.stepdesc{min-height:120px;background:var(--card2);border-radius:10px;padding:14px 16px}
+.stepdesc h4{font-family:var(--f-head);font-size:17px;margin-bottom:6px}
+.stepdesc .two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.stepdesc .two div{font-size:14px;color:var(--ink2)}
+.stepdesc .two b.l{display:block;font-family:var(--f-mono);font-size:11px;letter-spacing:.12em;margin-bottom:4px}
+.stepdesc .two .you b.l{color:var(--ice)}.stepdesc .two .be b.l{color:var(--teal)}
+.term{background:#0A141F;color:#D6E2EE;font-family:var(--f-mono);font-size:12.5px;border-radius:12px;padding:14px 16px;height:340px;overflow:auto;border:1px solid #1E3247}
+.term div{white-space:pre;line-height:1.5}
+.term .tin{color:#FFB938}.term .terr{color:#FF7A7A}.term .tok{color:#3FD3A8}.term .tdim{color:#6F8499}
+.tbar{display:flex;gap:6px;align-items:center;margin-bottom:8px}
+.tbar i{width:10px;height:10px;border-radius:50%;display:inline-block}
+.tinput{display:flex;gap:8px;margin-top:8px}
+.tinput input{flex:1;font-family:var(--f-mono);font-size:13px;padding:8px 10px;border-radius:8px;border:1px solid var(--line2);background:var(--card);color:var(--ink)}
+.cmds{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}
+.cmds button{font-family:var(--f-mono);font-size:11.5px;border:1px solid var(--line2);background:var(--card);color:var(--ink);padding:5px 9px;border-radius:7px;text-align:left}
+.cmds button:hover{border-color:var(--amber);color:var(--amber)}
+.cmds button small{display:block;font-family:var(--f-body);font-size:11px;color:var(--ink3)}
+.explain{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 16px;min-height:90px;font-size:14.5px}
+.explain b.h{font-family:var(--f-mono);font-size:12px;color:var(--ice);letter-spacing:.1em;display:block;margin-bottom:4px}
+.gantt-l{font-family:var(--f-mono);font-size:11px;fill:var(--ink2)}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font-family:var(--f-mono);font-size:12px;border:1px solid var(--line2);padding:5px 10px;border-radius:99px;cursor:pointer;user-select:none;background:var(--card);color:var(--ink2)}
+.chip.on{background:var(--ice-s);border-color:var(--ice);color:var(--ice)}
+.chip.now{outline:2px solid var(--amber);outline-offset:2px}
+.fcard{border:1px solid var(--line2);border-radius:10px;padding:10px 12px;cursor:pointer;background:var(--card);text-align:left;color:var(--ink)}
+.fcard.on{border-color:var(--ice);background:var(--ice-s)}
+.fcard b{display:block;font-family:var(--f-mono);font-size:12px}
+.fcard small{color:var(--ink3);font-size:12px}
+.out{font-family:var(--f-mono);font-size:12px;background:var(--card2);border-radius:8px;padding:10px 14px;white-space:pre-wrap;border-left:3px solid var(--teal);max-height:260px;overflow:auto}
+.chunk{border:1px solid var(--line2);border-radius:8px;padding:8px 10px;font-size:13px;margin:6px 0;background:var(--card)}
+.chunk em{font-style:normal;background:var(--amber-s);color:var(--ink);border-bottom:2px solid var(--amber)}
+.chunk b{font-family:var(--f-mono);font-size:11px;color:var(--ice);margin-right:8px}
+.act-i{color:var(--teal);font-family:var(--f-mono);font-size:12px;font-weight:700}
+.act-d{color:var(--red);font-family:var(--f-mono);font-size:12px;font-weight:700}
+.badge{font-family:var(--f-mono);font-size:11px;padding:2px 8px;border-radius:99px;white-space:nowrap}
+.badge.ok{background:var(--teal-s);color:var(--teal)}.badge.bad{background:var(--red-s);color:var(--red)}.badge.mid{background:var(--amber-s);color:var(--amber)}.badge.off{background:var(--card2);color:var(--ink3)}
+.flash{animation:flash 1s}
+@keyframes flash{0%{box-shadow:0 0 0 3px var(--amber)}100%{box-shadow:0 0 0 0 transparent}}
+.tn rect{fill:var(--card);stroke:var(--line2);transition:all .3s}
+.tn.run rect{fill:var(--amber-s);stroke:var(--amber);stroke-width:2.4}
+.tn.ok rect{fill:var(--teal-s);stroke:var(--teal);stroke-width:2}
+.tn.skip rect{fill:var(--card2);stroke:var(--ink3);stroke-dasharray:5 4}
+.tn.fail rect{fill:var(--red-s);stroke:var(--red);stroke-width:2}
+.tn .st{font-family:var(--f-mono);font-size:10px;fill:var(--ink3)}
+.log{max-height:240px;overflow:auto}
+.pk{transition:transform .8s cubic-bezier(.5,.05,.3,1)}
+.code{font-family:var(--f-mono);font-size:13px;background:var(--card2);border-radius:10px;padding:10px 0;overflow:auto}
+.code div{padding:2px 16px 2px 0;cursor:pointer;white-space:pre;display:block}
+.code div em{font-style:normal;color:var(--ink3);width:40px;text-align:right;padding-right:14px;display:inline-block;user-select:none}
+.code div:hover{background:var(--ice-s)}
+.code div.on{background:var(--ice-s);box-shadow:inset 3px 0 var(--ice)}
+.kw{color:var(--ice);font-weight:700}.str{color:var(--teal)}.num{color:var(--amber)}
+.qa{border:1px solid var(--line);border-radius:10px;margin:8px 0;background:var(--card);overflow:hidden}
+.qa summary{list-style:none;cursor:pointer;padding:14px 18px;display:flex;gap:12px;align-items:baseline;font-weight:600}
+.qa summary::-webkit-details-marker{display:none}
+.qa summary .lv{font-family:var(--f-mono);font-size:10px;letter-spacing:.1em;padding:2px 8px;border-radius:99px;flex:none;font-weight:400}
+.lv.b{background:var(--teal-s);color:var(--teal)}.lv.t{background:var(--red-s);color:var(--red)}.lv.s{background:var(--amber-s);color:var(--amber)}
+.qa summary .tp{font-family:var(--f-mono);font-size:10px;color:var(--ink3);flex:none;font-weight:400}
+.qa summary::after{content:"+";margin-left:auto;font-family:var(--f-mono);color:var(--ink3)}
+.qa[open] summary::after{content:"−"}
+.qa .ans{padding:0 18px 16px;color:var(--ink2);font-size:15px;border-top:1px solid var(--line)}
+.qa .ans p:first-child{margin-top:12px}
+.opt{display:block;width:100%;text-align:left;padding:12px 14px;margin:8px 0;border:1px solid var(--line2);border-radius:10px;background:var(--card);color:var(--ink);font-size:15px}
+.opt:hover{border-color:var(--ice)}
+.opt.ok{border-color:var(--teal);background:var(--teal-s)}.opt.bad{border-color:var(--red);background:var(--red-s)}
+.qexp{margin-top:10px;padding:12px 14px;border-radius:10px;background:var(--card2);font-size:14px;color:var(--ink2)}
+.score{font-family:var(--f-head);font-weight:700;font-size:56px;line-height:1}
+.cheat{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+.cheat div{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 16px;font-size:14px}
+.cheat div em{font-style:normal;font-family:var(--f-mono);font-size:20px;font-weight:700;color:var(--ice);display:block;line-height:1.1;margin-bottom:4px}
+.analogy-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:18px}
+.ag{border-radius:12px;padding:16px;border:1px solid var(--line);background:var(--card)}
+.ag .k{font-family:var(--f-mono);font-size:11px;letter-spacing:.12em}
+.ag h5{font-family:var(--f-head);font-size:18px;margin:2px 0 4px}
+.ag p{font-size:14px;color:var(--ink2);margin:0}
+.ag.a1{border-top:3px solid var(--amber)}.ag.a1 .k{color:var(--amber)}
+.ag.a2{border-top:3px solid var(--ice)}.ag.a2 .k{color:var(--ice)}
+.ag.a3{border-top:3px solid var(--teal)}.ag.a3 .k{color:var(--teal)}
+.ag.a4{border-top:3px solid var(--red)}.ag.a4 .k{color:var(--red)}
+footer{padding:40px 0;color:var(--ink3);font-size:13px;font-family:var(--f-mono)}
+.note-s{font-size:12px;color:var(--ink3);font-style:italic}
+@media (max-width:1000px){
+  .wrap{grid-template-columns:1fr;padding:16px}
+  nav.side{display:none}
+  .wwh,.grid2,.stepdesc .two{grid-template-columns:1fr}
+  .grid3,.analogy-grid{grid-template-columns:1fr}
+  .prog{display:none}
+}
+.road a.rm{display:flex;gap:8px;align-items:baseline;font-size:13px;padding:5px 10px;border-radius:8px;text-decoration:none;color:var(--ink2);border-left:2px solid transparent}
+.road a.rm:hover{background:var(--card);color:var(--ink)}
+.road a.rm em{font-style:normal;font-family:var(--f-mono);font-size:11px;min-width:20px}
+.road a.rm i{font-style:normal;font-family:var(--f-mono);font-size:9.5px;margin-left:auto;border:1px solid var(--line2);border-radius:99px;padding:0 6px;white-space:nowrap;color:var(--ink3)}
+.road a.rm.now{color:var(--ink);font-weight:600;border-left-color:var(--ice);background:var(--card);border-radius:0 8px 8px 0}
+.road a.rm.now i{border-color:var(--ice);color:var(--ice)}
+.road a.rm.ready em,.road a.rm.ready i{color:var(--teal)}.road a.rm.ready i{border-color:var(--teal)}
+.road a.rm.soon{color:var(--ink3)}
+.toast{position:fixed;bottom:24px;left:50%;transform:translate(-50%,20px);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;font-size:14px;opacity:0;transition:all .3s;z-index:60;pointer-events:none;max-width:90vw}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+.code div.pdone{box-shadow:inset 3px 0 var(--teal)}
+#pcCode{max-height:600px;position:relative}
+/* ===== Module 05 additions ===== */
+.sel{font-family:var(--f-mono);font-size:12px;padding:4px 8px;border-radius:7px;border:1px solid var(--line2);background:var(--card);color:var(--ink)}
+.dtcfg{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:10px 0}
+.dtcfg .mini{padding:10px 12px;min-width:0}
+.dtcfg select{width:100%;max-width:100%;text-overflow:ellipsis}
+.dtcfg .mini b{display:block;font-family:var(--f-mono);font-size:11.5px;margin-bottom:4px}
+.dtcfg .mini small{display:block;font-size:11.5px;color:var(--ink3);margin-top:4px}
+.lane-l{font-family:var(--f-mono);font-size:10.5px;fill:var(--ink2)}
+.tick{fill:var(--ice)}.tick.nd{fill:var(--ink3);opacity:.55}.tick.man{fill:var(--amber)}
+.lagline{fill:none;stroke:var(--teal);stroke-width:1.4}
+.tgtline{stroke:var(--red);stroke-width:1;stroke-dasharray:4 3}
+.cursor{stroke:var(--amber);stroke-width:2}
+.cells{display:grid;grid-template-columns:repeat(50,1fr);gap:2px;margin:10px 0}
+.cells i{display:block;aspect-ratio:1;border-radius:2px;background:var(--card2);transition:background .3s}
+.cells i.sc{background:var(--ice-s);outline:1px solid var(--ice)}
+.cells i.ch{background:var(--amber)}
+.bar2{height:18px;border-radius:5px;background:var(--card2);overflow:hidden;margin:4px 0 10px}
+.bar2 i{display:block;height:100%;transition:width .5s}
+.bar2 i.inc{background:var(--teal)}.bar2 i.full{background:var(--ice)}
+.blbl{display:flex;justify-content:space-between;font-family:var(--f-mono);font-size:12px;color:var(--ink2)}
+table.scd td,table.scd th{font-size:12.5px;padding:6px 8px}
+table.scd tr.r-new td{background:var(--teal-s)}
+table.scd tr.r-closed td{background:var(--amber-s)}
+table.scd tr.r-upd td{background:var(--ice-s)}
+table.scd tr.r-old td{color:var(--ink3)}
+table.scd tr.r-del td{text-decoration:line-through;color:var(--ink3)}
+.src{font-family:var(--f-mono);font-size:12.5px;background:var(--card2);border-radius:8px;padding:8px 12px;border-left:3px solid var(--amber)}
+.dq{background:var(--card2);border-radius:10px;padding:10px 14px;margin:8px 0}
+.dq p{margin:0 0 6px;font-size:14px;font-weight:600}
+.dq .tabs{margin:0}
+.rec{border:1px solid var(--line2);border-radius:12px;padding:14px 16px;background:var(--card)}
+.rec h4{font-family:var(--f-head);font-size:22px;margin-bottom:4px}
+.rec ul{margin:6px 0 0 18px;font-size:14px;color:var(--ink2)}
+.mx td{font-size:13px;vertical-align:top}
+.ddrow td{font-size:12.5px}
+.ddrow.keep td{background:var(--teal-s)}
+.ddrow.drop td{color:var(--ink3);text-decoration:line-through}
+.ddrow.tie td:first-child{box-shadow:inset 3px 0 var(--amber)}
+.ddrow.grp td{border-top:2px solid var(--line2)}
+.lk{font-family:var(--f-mono);font-size:11px}
+.txlane rect.blk{rx:6}
+@media (max-width:1000px){ .dtcfg{grid-template-columns:1fr 1fr} .cells{grid-template-columns:repeat(25,1fr)} }
+/* course-wide phone layout */
+@media (max-width:560px){
+  .top{flex-wrap:wrap;gap:8px;padding:10px 14px}
+  .top .pill,.top .prog-l,.top .prog{display:none}
+  .brand{flex:1}
+  .ctl{flex-wrap:wrap}.ctl label{min-width:0;flex:1 1 100%}.ctl .v{min-width:0;text-align:left}
+  table{display:block;overflow-x:auto;max-width:100%}
+  .grid2,.grid3,.analogy-grid,[style*="grid-template-columns"]{grid-template-columns:1fr!important}
+  .grid2>*,.grid3>*,.call>div{min-width:0}
+  p code,li code,td code{word-break:break-word}
+  .code,.sqlbox,.out,.term,pre{max-width:100%;overflow-x:auto}
+  .call{flex-direction:column;gap:6px}
+  main,section,.panel,.wwh .box,.mini{min-width:0;max-width:100%}
+}
+</style>
+</head>
+<body>
+<div class="top">
+  <div class="brand">SNOWFLAKE<b>//</b>INTERVIEW LAB</div>
+  <span class="pill">Module 05 · Dynamic tables &amp; transforms</span>
+  <div class="prog"><i id="progBar"></i></div>
+  <span class="prog-l" id="progLbl">0% explored</span>
+  <button class="theme" id="themeBtn">Dark / light</button>
+</div>
+<div class="wrap">
+<nav class="side">
+  <h4>MODULE 05 · CHAPTERS</h4>
+  <a href="#intro"><span>00</span>Start here</a>
+  <a href="#dt"><span>01</span>Dynamic tables</a>
+  <a href="#incr"><span>02</span>Incremental vs full</a>
+  <a href="#choose"><span>03</span>DT vs streams vs MV vs view</a>
+  <a href="#merge"><span>04</span>MERGE &amp; SCD</a>
+  <a href="#dedup"><span>05</span>Dedup &amp; idempotency</a>
+  <a href="#udf"><span>06</span>UDFs &amp; UDTFs</a>
+  <a href="#txn"><span>07</span>Transactions &amp; concurrency</a>
+  <a href="#sql"><span>08</span>SQL lab</a>
+  <a href="#qa"><span>09</span>Interview Q&amp;A</a>
+  <a href="#quiz"><span>10</span>Quiz</a>
+  <a href="#cheat"><span>11</span>Cheat sheet</a>
+  <div class="road">
+    <h4>COURSE ROADMAP · CLICK TO OPEN</h4>
+    <a class="rm ready" href="../module01/"><em>01</em>Architecture<i>open</i></a>
+    <a class="rm ready" href="../module02/"><em>02</em>SnowSQL · unstructured · streams, tasks &amp; procedures<i>open</i></a>
+    <a class="rm ready" href="../module03/"><em>03</em>Performance tuning<i>open</i></a>
+    <a class="rm ready" href="../module04/"><em>04</em>Data ingestion (Snowpipe)<i>open</i></a>
+    <a class="rm now" href="../module05/"><em>05</em>Dynamic tables &amp; transforms<i>you are here</i></a>
+    <a class="rm ready" href="../module06/"><em>06</em>Semi-structured data<i>open</i></a>
+    <a class="rm ready" href="../module07/"><em>07</em>Data protection<i>open</i></a>
+    <a class="rm ready" href="../module08/"><em>08</em>Security &amp; governance<i>open</i></a>
+    <a class="rm ready" href="../module09/"><em>09</em>Cost optimization<i>open</i></a>
+    <a class="rm ready" href="../module10/"><em>10</em>Data sharing<i>open</i></a>
+    <a class="rm ready" href="../module11/"><em>11</em>Snowpark &amp; Cortex AI<i>open</i></a>
+    <a class="rm ready" href="../module12/"><em>12</em>Advanced SQL<i>open</i></a>
+    <a class="rm ready" href="../module13/"><em>13</em>Modeling &amp; tooling<i>open</i></a>
+    <a class="rm ready" href="../module14/"><em>14</em>System design &amp; behavioral<i>open</i></a>
+  </div>
+</nav>
+<main>
+
+<section id="intro">
+  <div class="eyebrow">MODULE 05 · DYNAMIC TABLES &amp; TRANSFORMS</div>
+  <h1>Describe the result.<br><span class="thin">Let Snowflake keep it fresh.</span></h1>
+  <p class="lead" style="margin-top:18px">Module 04 got raw data <i>into</i> Snowflake. This module is about what happens next: turning messy raw rows into clean, trustworthy tables that dashboards and data scientists can use. You'll learn dynamic tables (Snowflake's declarative pipelines), how incremental refresh really works, when to pick streams + tasks or materialized views instead, MERGE and slowly changing dimensions, deduplication, UDFs, and how transactions and locks behave when several jobs write at once.</p>
+  <p style="margin-top:14px">Four characters to keep in mind as we go:</p>
+  <div class="analogy-grid">
+    <div class="ag a1 rise"><div class="k">DYNAMIC TABLE</div><h5>A spreadsheet formula cell</h5><p>You type <code>=SUM(A1:A9)</code> once and the cell keeps itself up to date. A dynamic table is a SELECT that Snowflake keeps refreshed, within a delay you choose.</p></div>
+    <div class="ag a2 rise" style="animation-delay:.1s"><div class="k">MERGE</div><h5>Updating the class register</h5><p>New student? Add a line. Existing student changed section? Update their line. Left the school? Strike them off. One pass over the register does all three.</p></div>
+    <div class="ag a3 rise" style="animation-delay:.2s"><div class="k">SCD TYPE 2</div><h5>Passport stamps</h5><p>You don't erase the old visa when you get a new one. Every version stays, each with its own valid-from and valid-to dates, so you can answer "where was this customer living in March?"</p></div>
+    <div class="ag a4 rise" style="animation-delay:.3s"><div class="k">UDF</div><h5>A custom kitchen gadget</h5><p>When the built-in knives aren't enough, you build your own tool once (a function) and every chef can use it inside any recipe (query).</p></div>
+  </div>
+
+  <div class="wwh" style="margin-top:28px">
+    <div class="box what"><span class="tag">01 · WHAT IS IT</span>
+      <p>The <b>transformation layer</b> is everything between "data landed" and "data is ready to use". Most teams organise it in layers (you'll hear <b>bronze / silver / gold</b> or <b>raw / staging / marts</b>):</p>
+      <ul class="dots"><li><b>Raw</b>: exactly what arrived (files, CDC rows, JSON). Never edited, so you can always replay.</li><li><b>Clean / staging</b>: typed, deduplicated, renamed, filtered, joined to reference data.</li><li><b>Marts</b>: business-shaped tables (facts and dimensions, daily aggregates) built for BI.</li></ul>
+      <p>There are two ways to build those layers: <b>procedural</b> ("do step 1, then step 2, on this schedule") and <b>declarative</b> ("this table should always equal this SELECT, no more than 10 minutes behind").</p>
+    </div>
+    <div class="box why"><span class="tag">02 · WHY IT MATTERS</span>
+      <p>Raw data is rarely usable directly: duplicates from retries, late-arriving rows, inconsistent types, history that needs to be kept. Interviewers for a senior role want to hear that you can build this layer so that it is:</p>
+      <ul class="dots"><li><b>Correct</b>: no duplicates, history handled deliberately (SCD).</li><li><b>Fresh enough</b>: matched to what the business really needs, not "real time" by default.</li><li><b>Cheap</b>: processes only what changed where possible.</li><li><b>Re-runnable</b>: a retry never doubles the numbers.</li></ul>
+    </div>
+    <div class="box how"><span class="tag">03 · HOW IT WORKS · PROCEDURAL VS DECLARATIVE (click around)</span>
+      <p>Pick a style, then pick a layer. Notice what <b>you</b> have to write and own in each style. In Module 02 you built the procedural version with streams, tasks and stored procedures; here you see the declarative alternative next to it.</p>
+      <div class="row" style="margin:10px 0"><span class="note-s" style="min-width:90px">Style:</span><div class="tabs" id="iMode" style="margin:0"><button class="on" data-v="proc">Procedural (streams + tasks)</button><button data-v="decl">Declarative (dynamic tables)</button></div></div>
+      <div class="row" style="margin:6px 0 10px"><span class="note-s" style="min-width:90px">Layer:</span><div class="tabs" id="iLayer" style="margin:0"><button class="on" data-v="0">Raw → clean</button><button data-v="1">Clean → mart</button><button data-v="2">Whole pipeline</button></div></div>
+      <svg viewBox="0 0 680 150" class="flow playing" id="iFlow">
+        <path class="edge" id="ie0" d="M170 75 L250 75"/><path class="edge" id="ie1" d="M420 75 L500 75"/>
+        <g class="fn" id="in0"><rect class="L-st" x="20" y="40" width="150" height="70" rx="10" stroke-width="1"/><text class="th" x="95" y="65" text-anchor="middle" dominant-baseline="central">RAW_ORDERS</text><text class="ts" x="95" y="88" text-anchor="middle" dominant-baseline="central">as landed · append-only</text></g>
+        <g class="fn" id="in1"><rect class="L-cp" x="250" y="40" width="170" height="70" rx="10" stroke-width="1"/><text class="th" x="335" y="65" text-anchor="middle" dominant-baseline="central">CLEAN_ORDERS</text><text class="ts" x="335" y="88" text-anchor="middle" dominant-baseline="central">typed · deduped</text></g>
+        <g class="fn" id="in2"><rect class="L-cs" x="500" y="40" width="160" height="70" rx="10" stroke-width="1"/><text class="th" x="580" y="65" text-anchor="middle" dominant-baseline="central">DAILY_SALES</text><text class="ts" x="580" y="88" text-anchor="middle" dominant-baseline="central">mart for BI</text></g>
+        <text class="tm" x="210" y="62" text-anchor="middle" id="iL0">stream+task</text><text class="tm" x="460" y="62" text-anchor="middle" id="iL1">stream+task</text>
+      </svg>
+      <div class="sqlbox" id="iCode"></div>
+      <div class="insight" id="iIns"></div>
+    </div>
+  </div>
+  <div class="call analogy"><b class="k">ANALOGY</b><div><b>Procedural</b> is giving a new cook a recipe card: "every 5 minutes, check the ticket rail, chop what's new, add it to the pot". <b>Declarative</b> is telling the head chef: "this pot must always contain today's soup, never more than 10 minutes old". How and when to cook is now the chef's problem, and the chef (Snowflake) is quite good at it.</div></div>
+</section>
+
+<section id="dt">
+  <div class="eyebrow">CHAPTER 01</div>
+  <h2>Dynamic tables <span class="thin">· a SELECT that keeps itself fresh</span></h2>
+  <div class="wwh">
+    <div class="box what"><span class="tag">01 · WHAT IS IT</span>
+      <p>A <b>dynamic table (DT)</b> is a table whose contents are defined by a query. You don't INSERT into it; Snowflake <b>refreshes</b> it so that it matches the query result, within a delay you choose called the <b>target lag</b>.</p>
+      <div class="sqlbox" style="margin:8px 0">CREATE OR REPLACE DYNAMIC TABLE stg_orders
+  TARGET_LAG   = '10 minutes'        -- or DOWNSTREAM
+  WAREHOUSE    = transform_wh        -- compute used for refreshes
+  REFRESH_MODE = AUTO                -- AUTO | INCREMENTAL | FULL
+  INITIALIZE   = ON_CREATE           -- or ON_SCHEDULE
+AS
+  SELECT order_id, customer_id, amount::NUMBER(12,2) AS amount, order_ts
+  FROM raw_orders
+  WHERE amount IS NOT NULL;</div>
+      <p>It's a real table on disk (micro-partitions, queryable, clonable), just <b>read-only</b> for DML: Snowflake owns its contents.</p>
+    </div>
+    <div class="box why"><span class="tag">02 · WHY WE USE IT</span>
+      <ul class="dots">
+        <li><b>No orchestration code:</b> no streams, tasks, MERGE statements or dependency wiring for straightforward transformations.</li>
+        <li><b>Freshness as a setting:</b> you state "10 minutes behind at most" instead of hand-tuning schedules.</li>
+        <li><b>Incremental for free (when possible):</b> Snowflake works out which rows changed and updates only the affected results.</li>
+        <li><b>Chains are automatic:</b> a DT can read other DTs; Snowflake builds the dependency graph and refreshes it in the right order with consistent snapshots.</li>
+        <li><b>Built-in observability:</b> refresh history, graph view in Snowsight, per-refresh statistics.</li>
+      </ul>
+    </div>
+    <div class="box how"><span class="tag">03 · HOW IT WORKS · THE BACKEND</span>
+      <div class="grid2">
+        <div class="mini"><h5>Target lag</h5><p>The maximum amount of time the DT's content should trail its <b>base tables</b> (lag is measured against the original sources, not against the DT right above it). A time value such as <code>'1 minute'</code> or <code>'4 hours'</code> (check the docs for the current minimum), or <code>DOWNSTREAM</code>: "refresh me only when a DT that reads from me needs fresh data". A DOWNSTREAM table with no time-based consumer never refreshes on its own.</p></div>
+        <div class="mini"><h5>Scheduling by lag</h5><p>There is no CRON. Snowflake's scheduler picks refresh times so the lag stays under target, typically refreshing <b>more often than the lag value</b> to leave headroom. Refreshes across a graph are aligned so every DT reads upstream data <b>as of the same data timestamp</b>, which keeps joins consistent.</p></div>
+        <div class="mini"><h5>Refresh modes</h5><p><b>INCREMENTAL</b>: process only changes since the last refresh, using change tracking on the sources. <b>FULL</b>: recompute the whole query and replace the content. <b>AUTO</b>: Snowflake chooses at creation time based on the query. The chosen mode is visible in <code>SHOW DYNAMIC TABLES</code> (<code>refresh_mode</code>, plus <code>refresh_mode_reason</code> when it picks FULL). For production, Snowflake advises setting the mode explicitly rather than relying on AUTO.</p></div>
+        <div class="mini"><h5>Initialization</h5><p><code>INITIALIZE = ON_CREATE</code> (default) runs the first full population <b>synchronously</b> inside the CREATE, so a slow query means a slow CREATE. <code>ON_SCHEDULE</code> returns immediately and populates at the first scheduled refresh. Change tracking is enabled on the source tables automatically if the owner has the rights to do so.</p></div>
+        <div class="mini"><h5>Each refresh</h5><p>Cloud services first checks whether any source changed. If nothing did, the refresh is recorded as <b>NO_DATA</b> and the data timestamp still moves forward without real warehouse work. Otherwise the refresh runs as an ordinary query on the DT's <code>WAREHOUSE</code> and commits atomically: readers see the old version or the new one, never half.</p></div>
+        <div class="mini"><h5>Operate &amp; monitor</h5><p><code>ALTER DYNAMIC TABLE … SUSPEND | RESUME | REFRESH</code> (needs <b>OPERATE</b>). History in <code>INFORMATION_SCHEMA.DYNAMIC_TABLE_REFRESH_HISTORY()</code> and <code>ACCOUNT_USAGE.DYNAMIC_TABLE_REFRESH_HISTORY</code>. Repeated consecutive refresh failures can auto-suspend a DT, so alert on failures.</p></div>
+      </div>
+      <p style="margin-top:10px"><b>Cost model:</b> you pay (1) <b>warehouse credits</b> for every refresh that does real work, under the usual warehouse billing (60-second minimum on resume, then per second, plus idle time before auto-suspend), (2) a small amount of <b>cloud services</b> for change checks, and (3) <b>storage</b> for the DT's data and its Time Travel history. Shorter lag means more refreshes, so lag is the biggest cost dial you have.</p>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-h"><div class="t">SIMULATOR · <b>DYNAMIC TABLE GRAPH OVER 2 HOURS</b> · 09:00 → 11:00</div><span class="note-s">Illustrative model, not a benchmark: refresh spacing, durations and credits are made up to show behaviour.</span></div>
+    <div class="dtcfg" id="dtCfg"></div>
+    <div class="row" style="margin:6px 0"><span class="note-s" style="min-width:120px">Source changes:</span><div class="tabs" id="dtSrc" style="margin:0"><button class="on" data-v="cont">Continuous (every minute)</button><button data-v="burst">Bursty (09:00–09:30 only)</button><button data-v="none">None after creation</button></div></div>
+    <div class="row" style="margin:6px 0 10px"><span class="note-s" style="min-width:120px">STG_ORDERS state:</span><div class="tabs" id="dtSusp" style="margin:0"><button class="on" data-v="0">Active</button><button data-v="1">SUSPEND at 10:00</button></div>
+      <button class="btn pri" id="dtRun" style="margin-left:auto">▶ Run 2 hours</button><button class="btn" id="dtEnd">Jump to end</button></div>
+    <svg viewBox="0 0 760 380" id="dtSvg"></svg>
+    <div class="legend"><span><i style="background:var(--ice)"></i>refresh with changes (warehouse)</span><span><i style="background:var(--ink3)"></i>NO_DATA refresh (no warehouse work)</span><span><i style="background:var(--teal)"></i>current lag (sawtooth)</span><span><i style="background:var(--red)"></i>target lag</span></div>
+    <div class="stats">
+      <div class="stat"><div class="k">REFRESHES WITH WORK</div><div class="n" id="dtR">0</div><div class="s">across all 4 DTs</div></div>
+      <div class="stat"><div class="k">NO_DATA REFRESHES</div><div class="n" id="dtN">0</div><div class="s">change check only</div></div>
+      <div class="stat"><div class="k">WAREHOUSE AWAKE</div><div class="n" id="dtW">0 min</div><div class="s">≈ billed minutes</div></div>
+      <div class="stat"><div class="k">EST. CREDITS (XS)</div><div class="n" id="dtC">0</div><div class="s">illustrative, 1 credit/hour</div></div>
+    </div>
+    <div class="insight" id="dtIns">Set a target lag for each DT and press <b>Run 2 hours</b>. Try making a middle DT <b>DOWNSTREAM</b>, then try making the <b>last</b> one DOWNSTREAM.</div>
+  </div>
+  <div class="grid2">
+    <div class="call trap" style="margin:0"><b class="k">INTERVIEW TRAP</b><div>"I set every DT to <code>DOWNSTREAM</code> and nothing refreshes." DOWNSTREAM means "refresh when someone below me needs it". If the <b>leaf</b> DT is also DOWNSTREAM, nobody ever asks, so the graph sits still unless you refresh manually. Rule of thumb: <b>time-based lag on the leaves</b> (what users query), DOWNSTREAM on the intermediate DTs.</div></div>
+    <div class="call pro" style="margin:0"><b class="k">SENIOR ANGLE</b><div>Don't ask for "1 minute" because it sounds good. Ask what decision the data drives. A finance mart refreshed hourly can cost a small fraction of the same mart at 1-minute lag. Also keep refresh warehouses <b>separate</b> from BI warehouses so refresh load never slows dashboards, and size them for the refresh query, not the base table.</div></div>
+  </div>
+</section>
+
+<section id="incr">
+  <div class="eyebrow">CHAPTER 02</div>
+  <h2>Incremental vs full refresh <span class="thin">· the deep dive</span></h2>
+  <div class="wwh">
+    <div class="box what"><span class="tag">01 · WHAT IS IT</span>
+      <p><b>Full refresh</b> re-runs the whole query and swaps in the result. Simple, always correct, cost grows with the <b>size of the inputs</b>.</p>
+      <p><b>Incremental refresh</b> computes only <b>how the result changes</b> because of the rows that changed in the inputs, then applies that change to the DT. Its cost grows with the <b>amount of change</b>, not with table size.</p>
+    </div>
+    <div class="box why"><span class="tag">02 · WHY IT MATTERS</span>
+      <p>A 2-billion-row fact table where 50,000 rows arrive every 10 minutes: full refresh re-reads 2 billion rows each time; incremental touches roughly the 50,000 new ones and the results they affect. That's the difference between a pipeline that costs a little and one that costs a lot.</p>
+      <p>But incremental is <b>not always cheaper</b>: when a large share of the input changes, or changes are scattered everywhere, working out the delta can cost more than just recomputing.</p>
+    </div>
+    <div class="box how"><span class="tag">03 · HOW IT WORKS · INSIDE AN INCREMENTAL REFRESH</span>
+      <div class="grid3" style="grid-template-columns:repeat(4,1fr)">
+        <div class="mini"><h5>1 · Change tracking</h5><p>Sources have change tracking enabled (the same hidden row-level metadata that powers streams, from Module 02). Snowflake can ask: "which rows were inserted or deleted between version A and version B?"</p></div>
+        <div class="mini"><h5>2 · Delta query</h5><p>The DT's SELECT is rewritten into a <b>delta query</b>. A filter just filters the changed rows. A join becomes "changed left rows ⋈ right" plus "left ⋈ changed right rows". An aggregate recomputes only the <b>groups</b> those rows belong to.</p></div>
+        <div class="mini"><h5>3 · Apply</h5><p>The delta is merged into the DT: inserts, deletes, and updates as delete + insert. Micro-partitions are immutable, so every DT partition holding a changed row is <b>rewritten</b>. Scattered changes mean many partitions rewritten.</p></div>
+        <div class="mini"><h5>4 · Commit</h5><p>The new DT version and its <b>data timestamp</b> commit atomically. Downstream DTs then use this version as their input snapshot.</p></div>
+      </div>
+      <h3 style="margin-top:16px">What makes a query incremental-capable?</h3>
+      <div class="grid2">
+        <div class="mini"><h5>Usually fine for incremental</h5><p>Projections and deterministic expressions, <code>WHERE</code>, inner and outer joins, <code>GROUP BY</code> with common aggregates, <code>UNION ALL</code>, <code>DISTINCT</code>, <code>LATERAL FLATTEN</code>, window functions with <code>PARTITION BY</code>, CTEs, reading other DTs.</p></div>
+        <div class="mini"><h5>Commonly forces FULL (verify against current docs)</h5><p><b>Non-deterministic</b> functions such as <code>RANDOM()</code> or time functions like <code>CURRENT_TIMESTAMP()</code> in the logic, external functions, sampling, some set operators (e.g. <code>MINUS</code>/<code>INTERSECT</code>) and certain unusual nested constructs. Snowflake keeps widening support, so check <code>refresh_mode_reason</code> instead of memorising a list.</p></div>
+      </div>
+      <p style="margin-top:10px">If you say <code>REFRESH_MODE = INCREMENTAL</code> and the query isn't supported, the <b>CREATE fails</b> with an explanation. With <code>AUTO</code>, Snowflake silently picks FULL. That silence is why teams pin the mode explicitly in production: you'd rather find out at deploy time than on the invoice.</p>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-h"><div class="t">SIMULATOR · <b>ROWS PROCESSED PER REFRESH</b> · DT = filter + join to customers + GROUP BY day</div><span class="note-s">Illustrative model, not a benchmark: throughput and partition sizes are assumptions.</span></div>
+    <div class="ctl"><label>Source table size</label><input type="range" id="inN" min="0" max="4" value="3"><span class="v" id="inNV"></span></div>
+    <div class="ctl"><label>Rows changed since last refresh</label><input type="range" id="inC" min="0" max="100" value="20"><span class="v" id="inCV"></span></div>
+    <div class="row" style="margin:6px 0"><span class="note-s" style="min-width:150px">Where changes land:</span><div class="tabs" id="inS" style="margin:0"><button class="on" data-v="clu">Clustered (new / recent rows)</button><button data-v="sca">Scattered (updates all over)</button></div></div>
+    <div class="row" style="margin:6px 0"><span class="note-s" style="min-width:150px">Query:</span><div class="tabs" id="inQ" style="margin:0"><button class="on" data-v="inc">Incremental-capable</button><button data-v="non">Uses a non-incremental construct</button></div></div>
+    <div class="row" style="margin:6px 0 10px"><span class="note-s" style="min-width:150px">REFRESH_MODE:</span><div class="tabs" id="inM" style="margin:0"><button class="on" data-v="AUTO">AUTO</button><button data-v="INCREMENTAL">INCREMENTAL</button><button data-v="FULL">FULL</button></div></div>
+    <div class="grid2" style="grid-template-columns:1fr 1.1fr">
+      <div><div class="sqlbox" id="inSql"></div></div>
+      <div>
+        <div class="note-s">Source micro-partitions (each square ≈ 1/200 of the table): <span style="color:var(--amber)">■</span> holds changed rows · <span style="color:var(--ice)">□</span> scanned</div>
+        <div class="cells" id="inCells"></div>
+        <div class="blbl"><span>Incremental: work</span><span id="inBI"></span></div><div class="bar2"><i class="inc" id="inBarI"></i></div>
+        <div class="blbl"><span>Full: work</span><span id="inBF"></span></div><div class="bar2"><i class="full" id="inBarF"></i></div>
+      </div>
+    </div>
+    <div class="stats">
+      <div class="stat"><div class="k">MODE USED</div><div class="n" id="inMode" style="font-size:22px">–</div><div class="s" id="inModeS"></div></div>
+      <div class="stat"><div class="k">ROWS PROCESSED</div><div class="n" id="inRows">–</div></div>
+      <div class="stat"><div class="k">SOURCE PARTITIONS READ</div><div class="n" id="inParts">–</div><div class="s">read / total</div></div>
+      <div class="stat"><div class="k">EST. REFRESH TIME</div><div class="n" id="inTime">–</div><div class="s">illustrative, one warehouse size</div></div>
+    </div>
+    <div class="insight" id="inIns"></div>
+  </div>
+  <div class="grid2">
+    <div class="call trap" style="margin:0"><b class="k">INTERVIEW TRAP</b><div>"AUTO will switch to FULL on days with lots of changes." <b>No</b>: AUTO picks a mode <b>when the DT is created</b> (or recreated) and keeps it. It doesn't re-decide per refresh. If your change ratio swings wildly, choose the mode yourself.</div></div>
+    <div class="call pro" style="margin:0"><b class="k">SENIOR ANGLE</b><div>To keep incremental refresh cheap: avoid non-deterministic functions, keep the DT's natural write pattern append-like, cluster or order the DT by the column most changes land in (often a date), and split one giant DT into a chain so each step has a simple, incremental-friendly shape.</div></div>
+  </div>
+</section>
+
+<section id="choose">
+  <div class="eyebrow">CHAPTER 03</div>
+  <h2>DT vs streams + tasks vs MV vs view <span class="thin">· picking the right tool</span></h2>
+  <div class="wwh">
+    <div class="box what"><span class="tag">01 · WHAT IS IT</span>
+      <p>Four ways to give users "a table that reflects a query": a <b>view</b> (computed every time someone queries it), a <b>materialized view</b> (pre-computed and kept current by a background service), a <b>dynamic table</b> (pre-computed, refreshed to a target lag), and <b>streams + tasks</b> (you write the change-processing logic yourself, from Module 02).</p>
+    </div>
+    <div class="box why"><span class="tag">02 · WHY IT MATTERS</span>
+      <p>"Which would you use and why?" is one of the most common senior-level questions. The right answer always names the trade-off: <b>freshness vs cost vs flexibility vs how much code you own</b>.</p>
+    </div>
+    <div class="box how"><span class="tag">03 · HOW THEY DIFFER IN THE BACKEND</span>
+      <table class="t mx">
+        <tr><th></th><th>VIEW</th><th>MATERIALIZED VIEW</th><th>DYNAMIC TABLE</th><th>STREAMS + TASKS</th></tr>
+        <tr><td><b>What's stored</b></td><td>Only the SQL text</td><td>Pre-computed results</td><td>Pre-computed results</td><td>Whatever your MERGE writes</td></tr>
+        <tr><td><b>Freshness</b></td><td>Always current (computed at query time)</td><td>Always current: Snowflake combines stored results with not-yet-maintained base changes</td><td>Within TARGET_LAG</td><td>As often as the task runs</td></tr>
+        <tr><td><b>Query shapes</b></td><td>Anything</td><td>Single table only: no joins, limited functions (no window functions)</td><td>Joins, aggregates, windows, unions, DT-on-DT chains</td><td>Anything, plus procedural logic</td></tr>
+        <tr><td><b>Who does the work</b></td><td>The querying warehouse, every time</td><td>Snowflake-managed serverless maintenance</td><td>The DT's warehouse, on refresh</td><td>Your task (serverless or warehouse)</td></tr>
+        <tr><td><b>Custom write logic</b></td><td>–</td><td>–</td><td>No (result must equal the SELECT)</td><td>Yes: SCD2, soft deletes, multi-target, CALL procedures</td></tr>
+        <tr><td><b>Optimizer rewrite</b></td><td>–</td><td>Yes, queries on the base table can be auto-rewritten to use the MV</td><td>No, users query the DT directly</td><td>No</td></tr>
+        <tr><td><b>Edition</b></td><td>All</td><td>Enterprise or higher</td><td>Check docs for your edition</td><td>All</td></tr>
+        <tr><td><b>Best for</b></td><td>Light logic, rarely queried, or always-current needs</td><td>Hot, expensive single-table aggregates / filters</td><td>Declarative multi-step pipelines with a freshness SLA</td><td>CDC with business rules, history, side effects</td></tr>
+      </table>
+    </div>
+  </div>
+  <div class="panel">
+    <div class="panel-h"><div class="t">DECISION HELPER · <b>ANSWER FIVE QUESTIONS</b></div><button class="btn" id="chReset">Reset</button></div>
+    <div class="grid2" style="grid-template-columns:1.1fr 1fr">
+      <div id="chQs"></div>
+      <div><div class="rec" id="chRec"></div></div>
+    </div>
+  </div>
+  <div class="grid2">
+    <div class="call trap" style="margin:0"><b class="k">INTERVIEW TRAP</b><div>"Materialized views are just cached results, so they can be stale." For Snowflake MVs that's wrong: results are always current, because Snowflake fills in base-table changes that background maintenance hasn't applied yet. The real limits are <b>single table, restricted SQL, Enterprise edition, and a serverless maintenance bill</b> that grows with how often the base table changes.</div></div>
+    <div class="call pro" style="margin:0"><b class="k">SENIOR ANGLE</b><div>Mixed architectures are normal: <b>Snowpipe → raw</b>, <b>streams + tasks</b> where you need SCD2 or side effects, <b>dynamic tables</b> for the bulk of the clean and mart layers, <b>secure views</b> on top for consumers and sharing, and a <b>materialized view</b> only for one or two hot single-table aggregates.</div></div>
+  </div>
+</section>
+
+<section id="merge">
+  <div class="eyebrow">CHAPTER 04</div>
+  <h2>MERGE patterns <span class="thin">· upserts, deletes, SCD Type 1 &amp; 2</span></h2>
+  <div class="wwh">
+    <div class="box what"><span class="tag">01 · WHAT IS IT</span>
+      <p><b>MERGE</b> compares a <b>source</b> (new data) with a <b>target</b> table on a key and, in one statement, decides per row what to do:</p>
+      <ul class="dots"><li><code>WHEN MATCHED [AND cond] THEN UPDATE</code>: the key exists, so change it</li><li><code>WHEN MATCHED [AND cond] THEN DELETE</code>: the key exists but the source says remove it</li><li><code>WHEN NOT MATCHED [AND cond] THEN INSERT</code>: a new key, so add it</li></ul>
+      <p>A <b>slowly changing dimension (SCD)</b> is a dimension (customer, product, employee) whose attributes change now and then. <b>Type 1</b> overwrites: only the latest value survives. <b>Type 2</b> keeps history: the old row is <b>closed</b> (<code>effective_to</code> set, <code>is_current = FALSE</code>) and a new version is <b>opened</b>.</p>
+    </div>
+    <div class="box why"><span class="tag">02 · WHY WE USE IT</span>
+      <ul class="dots"><li><b>One atomic statement</b> instead of separate UPDATE + INSERT + DELETE that could half-succeed.</li><li><b>Idempotent loads:</b> re-running a MERGE with the same source doesn't create duplicates.</li><li><b>CDC application:</b> apply inserts, updates and deletes from a stream or a source system's change feed.</li><li><b>Correct history:</b> SCD2 lets you report "sales by the region the customer lived in <i>at the time</i>", which SCD1 can't.</li></ul>
+    </div>
+    <div class="box how"><span class="tag">03 · HOW IT WORKS · BACKEND</span>
+      <p>MERGE runs as a <b>join</b> between source and target (the Query Profile literally shows a join), followed by writes. Because micro-partitions are immutable, every target partition with an updated or deleted row is <b>rewritten</b>, and new rows go into new partitions. Two consequences interviewers like:</p>
+      <div class="grid3">
+        <div class="mini"><h5>Prune the target</h5><p>Add a predicate on a clustered column (e.g. <code>AND t.order_date &gt;= '2024-06-01'</code>) in the ON clause or source so the join reads only recent partitions instead of the whole target.</p></div>
+        <div class="mini"><h5>One source row per key</h5><p>If two source rows match the same target row for UPDATE/DELETE, Snowflake raises a <b>nondeterministic merge</b> error (controlled by <code>ERROR_ON_NONDETERMINISTIC_MERGE</code>, default TRUE). Deduplicate the source first (next chapter).</p></div>
+        <div class="mini"><h5>Hash diff</h5><p>Compare one hash of all tracked columns instead of <code>a.x &lt;&gt; b.x OR …</code>. Use <code>MD5</code>/<code>SHA2</code> over a delimited string, and <b>COALESCE NULLs</b> first: <code>CONCAT_WS</code> returns NULL if any argument is NULL, and <code>NULL &lt;&gt; 'x'</code> is not TRUE.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-h"><div class="t">SIMULATOR · <b>SCD STEPPER</b> · DIM_CUSTOMER</div>
+      <div class="row"><span class="note-s">Dimension type:</span><div class="tabs" id="scType" style="margin:0"><button class="on" data-v="2">SCD Type 2</button><button data-v="1">SCD Type 1</button></div></div></div>
+    <div class="stepbar" id="scBar"></div>
+    <div class="src" id="scSrc"></div>
+    <div style="overflow:auto;margin-top:10px"><table class="t scd" id="scTbl"></table></div>
+    <div class="legend"><span><i style="background:var(--teal-s);border:1px solid var(--teal)"></i>inserted (new version / new key)</span><span><i style="background:var(--amber-s);border:1px solid var(--amber)"></i>closed by this step (SCD2)</span><span><i style="background:var(--ice-s);border:1px solid var(--ice)"></i>overwritten in place (SCD1)</span></div>
+    <div class="stats">
+      <div class="stat"><div class="k">ROWS IN DIM</div><div class="n" id="scRows">0</div></div>
+      <div class="stat"><div class="k">CURRENT ROWS</div><div class="n" id="scCur">0</div></div>
+      <div class="stat"><div class="k">THIS STEP</div><div class="n" id="scAct" style="font-size:18px">–</div></div>
+      <div class="stat"><div class="k">C001 TIER ON 2024-03-01?</div><div class="n" id="scAsOf" style="font-size:20px">–</div><div class="s">an "as of" question</div></div>
+    </div>
+    <div class="insight" id="scIns"></div>
+    <div class="row" style="margin-top:12px"><button class="btn" id="scPrev">Back</button><button class="btn pri" id="scNext">Apply next change ▶</button><button class="btn" id="scReset">Reset</button></div>
+  </div>
+  <div class="grid2">
+    <div class="call trap" style="margin:0"><b class="k">INTERVIEW TRAP</b><div>"Write SCD2 with one MERGE." A single MERGE can either update <i>or</i> insert per source row, but a changed customer needs <b>both</b> (close the old row and insert the new one). The classic trick: build the source as a UNION ALL where changed keys appear <b>twice</b>, once with the real key (matches → close) and once with a NULL merge key (never matches → insert). The alternative is UPDATE then INSERT inside one explicit transaction. Both are in the SQL lab.</div></div>
+    <div class="call pro" style="margin:0"><b class="k">SENIOR ANGLE</b><div>Use a <b>surrogate key</b> (sequence or IDENTITY) on SCD2 dimensions so facts point at the <i>version</i> that was current when the event happened. Use <code>effective_to = '9999-12-31'</code> (or NULL) consistently for open rows, and make <code>effective_from</code> come from the <b>source change time</b>, not load time, otherwise late-arriving changes create wrong history.</div></div>
+  </div>
+</section>
+
+<section id="dedup">
+  <div class="eyebrow">CHAPTER 05</div>
+  <h2>Deduplication &amp; idempotency <span class="thin">· run it twice, get the same answer</span></h2>
+  <div class="wwh">
+    <div class="box what"><span class="tag">01 · WHAT IS IT</span>
+      <p><b>Deduplication</b> keeps exactly one row per business key. The Snowflake idiom is <code>QUALIFY ROW_NUMBER() OVER (PARTITION BY key ORDER BY version DESC) = 1</code>: number the rows inside each key, newest first, and keep row 1. <code>QUALIFY</code> filters on a window function the way <code>HAVING</code> filters on an aggregate.</p>
+      <p><b>Idempotency</b> means running a load once or five times leaves the target in the <b>same state</b>.</p>
+    </div>
+    <div class="box why"><span class="tag">02 · WHY WE USE IT</span>
+      <ul class="dots"><li>Retries, at-least-once delivery (Kafka, Snowpipe re-sends, CDC tools) and re-dropped files all create duplicates.</li><li>Orchestrators retry failed jobs automatically. If the job isn't idempotent, a retry doubles revenue on the dashboard.</li><li><b>Late-arriving data</b>: an older version of a row can arrive <i>after</i> a newer one. Picking "the last one loaded" then silently goes backwards in time.</li></ul>
+    </div>
+    <div class="box how"><span class="tag">03 · HOW IT WORKS · BACKEND</span>
+      <p>The window function needs all rows for a key together, so Snowflake <b>repartitions</b> (shuffles) rows by the PARTITION BY key across the warehouse, sorts within each key, then filters. On large tables that shuffle is the cost; limit it by deduplicating only the <b>new batch plus a lookback window</b>, not all of history.</p>
+      <div class="grid3">
+        <div class="mini"><h5>ROW_NUMBER vs RANK</h5><p><code>ROW_NUMBER</code> always gives 1, 2, 3, so exactly one survivor. <code>RANK</code> / <code>DENSE_RANK</code> give <b>ties the same number</b>, so two rows can both be "1" and duplicates survive.</p></div>
+        <div class="mini"><h5>Deterministic tie-break</h5><p>If two rows tie on the ORDER BY, which one is "1" is <b>not guaranteed</b> and can change between runs. Always add tie-breakers (ingest time, file name, row number in file) until the order is total.</p></div>
+        <div class="mini"><h5>Version, not arrival</h5><p>Order by the <b>source's</b> version (<code>updated_at</code>, CDC LSN / sequence), then by arrival only as a tie-break. Ordering by arrival time lets late, older data win.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-h"><div class="t">SIMULATOR · <b>DEDUP VISUALIZER</b> · raw_orders → one row per order_id</div><button class="btn" id="ddRerun">Run again (same data)</button></div>
+    <div class="row" style="margin:6px 0"><span class="note-s" style="min-width:110px">Window function:</span><div class="tabs" id="ddFn" style="margin:0"><button class="on" data-v="ROW_NUMBER">ROW_NUMBER()</button><button data-v="RANK">RANK()</button><button data-v="DENSE_RANK">DENSE_RANK()</button></div></div>
+    <div class="row" style="margin:6px 0"><span class="note-s" style="min-width:110px">ORDER BY:</span><div class="tabs" id="ddOrd" style="margin:0"><button class="on" data-v="u">updated_at DESC</button><button data-v="ui">updated_at DESC, _ingest_ts DESC</button><button data-v="i">_ingest_ts DESC (arrival)</button></div></div>
+    <div class="row" style="margin:6px 0 10px"><span class="note-s" style="min-width:110px">Late arrival:</span><div class="tabs" id="ddLate" style="margin:0"><button class="on" data-v="0">No late rows</button><button data-v="1">Old version of order 103 arrives late</button></div></div>
+    <div class="grid2" style="grid-template-columns:1.4fr 1fr">
+      <div style="overflow:auto"><table class="t" id="ddTbl"></table></div>
+      <div><div class="sqlbox" id="ddSql"></div>
+        <div class="stats" style="grid-template-columns:1fr 1fr">
+          <div class="stat"><div class="k">RAW ROWS</div><div class="n" id="ddRaw">0</div></div>
+          <div class="stat"><div class="k">ROWS KEPT</div><div class="n" id="ddKeep">0</div></div>
+          <div class="stat"><div class="k">KEYS STILL DUPLICATED</div><div class="n" id="ddDup">0</div></div>
+          <div class="stat"><div class="k">NONDETERMINISTIC KEYS</div><div class="n" id="ddND">0</div></div>
+        </div></div>
+    </div>
+    <div class="insight" id="ddIns"></div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-h"><div class="t">SIMULATOR · <b>IS MY LOAD RE-RUNNABLE?</b> · load for business date 2024-06-01 (5 source rows)</div><button class="btn" id="rrReset">Reset</button></div>
+    <div class="row" style="margin-bottom:8px"><span class="note-s" style="min-width:110px">Load strategy:</span><div class="tabs" id="rrStrat" style="margin:0"><button class="on" data-v="app">INSERT (append)</button><button data-v="merge">MERGE on order_id</button><button data-v="del">DELETE date + INSERT (one txn)</button><button data-v="ow">INSERT OVERWRITE (whole table)</button></div></div>
+    <div class="row" style="margin-bottom:8px"><button class="btn pri" id="rrRun">Run the load</button><button class="btn" id="rrLate">Corrected file arrives (1 changed, 1 new row)</button></div>
+    <div class="stats">
+      <div class="stat"><div class="k">TARGET ROWS (2024-06-01)</div><div class="n" id="rrN">0</div><div class="s">correct answer: <span id="rrOk">5</span></div></div>
+      <div class="stat"><div class="k">OTHER DATES</div><div class="n" id="rrO">1,000</div><div class="s">rows from earlier days</div></div>
+      <div class="stat"><div class="k">RUNS</div><div class="n" id="rrRuns">0</div></div>
+      <div class="stat"><div class="k">VERDICT</div><div class="n" id="rrV" style="font-size:18px">–</div></div>
+    </div>
+    <div class="insight" id="rrIns">Pick a strategy and press <b>Run the load</b> two or three times, as an orchestrator retry would.</div>
+  </div>
+  <div class="grid2">
+    <div class="call trap" style="margin:0"><b class="k">INTERVIEW TRAP</b><div><code>INSERT OVERWRITE INTO t SELECT …</code> replaces the <b>entire table</b> (truncate + insert in one transaction). It's idempotent, but it is not a "partition overwrite" like Hive or Spark: if your SELECT only returns one day, every other day is gone. For per-date reloads use DELETE-for-date + INSERT in one transaction, or MERGE.</div></div>
+    <div class="call pro" style="margin:0"><b class="k">SENIOR ANGLE</b><div>For late data, define a <b>lookback window</b> (e.g. reprocess the last 3 days on every run) and make the step idempotent so reprocessing is safe. Pair dedup with a <b>data-quality check</b>: <code>SELECT key, COUNT(*) … HAVING COUNT(*) &gt; 1</code> on the target should always return zero, and the job should fail if it doesn't.</div></div>
+  </div>
+</section>
+
+<section id="udf">
+  <div class="eyebrow">CHAPTER 06</div>
+  <h2>UDFs &amp; UDTFs <span class="thin">· your own functions inside SQL</span></h2>
+  <div class="wwh">
+    <div class="box what"><span class="tag">01 · WHAT IS IT</span>
+      <p>A <b>user-defined function (UDF)</b> is a function you create and then call inside any query, like a built-in: <code>SELECT clean_phone(phone) FROM customers</code>. A scalar UDF returns <b>one value per input row</b>.</p>
+      <p>A <b>user-defined table function (UDTF)</b> returns <b>zero, one or many rows per input row</b> (or per partition of rows), and you call it in the FROM clause: <code>FROM events, TABLE(sessionize(user_id, ts) OVER (PARTITION BY user_id ORDER BY ts))</code>.</p>
+      <p>Languages: <b>SQL, Python, Java, JavaScript</b> (and Scala). UDFs are <b>read-only</b>: they can't run DML. That's what procedures are for (Module 02).</p>
+    </div>
+    <div class="box why"><span class="tag">02 · WHY WE USE IT</span>
+      <ul class="dots"><li><b>Reuse:</b> one tested definition of "clean a phone number" or "fiscal quarter" instead of the same CASE expression copied into 40 models.</li><li><b>Logic SQL can't express easily:</b> regex-heavy parsing, scoring with a Python library, fuzzy matching.</li><li><b>Row-expanding logic (UDTF):</b> sessionization, splitting a string into tokens, exploding date ranges into days, stateful running logic per partition.</li><li><b>Hide logic or data:</b> secure UDFs keep the definition and any internal lookup data private, which helps with sharing.</li></ul>
+    </div>
+    <div class="box how"><span class="tag">03 · HOW IT WORKS · WHERE THE CODE RUNS</span>
+      <div class="grid2">
+        <div class="mini"><h5>SQL UDFs</h5><p>The expression is typically <b>inlined</b> into the calling query, so the optimizer treats it like hand-written SQL. Usually the fastest option, with no sandbox overhead.</p></div>
+        <div class="mini"><h5>Python / Java / Scala</h5><p>Run in a <b>secure sandbox</b> on the warehouse nodes. Rows are sent to the handler in batches and results streamed back. Libraries come via <code>PACKAGES</code> (Anaconda channel for Python) or <code>IMPORTS</code> from a stage. Scalar Python UDFs call the handler once <b>per row</b>.</p></div>
+        <div class="mini"><h5>Vectorized Python UDFs</h5><p>The handler receives a <b>pandas DataFrame</b> (a batch of rows) and returns a pandas Series or array. Far fewer Python calls and vectorised maths, often much faster for numeric work. Mark it with the <code>@vectorized(input=pandas.DataFrame)</code> decorator from <code>_snowflake</code>; batch size is chosen by Snowflake, with an optional upper bound (<code>max_batch_size</code>).</p></div>
+        <div class="mini"><h5>UDTF handlers</h5><p>A Python UDTF is a class: optional <code>__init__</code> (once per partition), <code>process(self, …)</code> called for <b>each row</b> and <code>yield</code>s output rows, and optional <code>end_partition(self)</code> called after the last row of a partition, perfect for emitting totals or the final session. Java uses <code>process</code> / <code>endPartition</code>. With <code>OVER (PARTITION BY … ORDER BY …)</code> you control grouping and order.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-h"><div class="t">COMPARE · <b>ONE PROBLEM, SIX KINDS OF FUNCTION</b></div></div>
+    <div class="tabs" id="ufTabs"><button class="on" data-v="sql">SQL UDF</button><button data-v="py">Python UDF</button><button data-v="vec">Vectorized Python</button><button data-v="java">Java UDF</button><button data-v="js">JavaScript UDF</button><button data-v="udtf">Python UDTF</button></div>
+    <div class="grid2" style="grid-template-columns:1.3fr 1fr">
+      <div><div class="sqlbox" id="ufCode"></div></div>
+      <div><table class="t" id="ufProps"></table></div>
+    </div>
+    <div class="insight" id="ufIns"></div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-h"><div class="t">SIMULATOR · <b>ROW-AT-A-TIME VS VECTORIZED</b></div><span class="note-s">Illustrative model, not a benchmark: per-call overhead and per-row cost are assumptions.</span></div>
+    <div class="ctl"><label>Rows scored</label><input type="range" id="ufRows" min="0" max="4" value="2"><span class="v" id="ufRowsV"></span></div>
+    <div class="ctl"><label>Batch size (vectorized)</label><input type="range" id="ufBatch" min="0" max="4" value="2"><span class="v" id="ufBatchV"></span></div>
+    <div class="blbl"><span>Scalar Python UDF: handler calls</span><span id="ufSC"></span></div><div class="bar2"><i class="full" id="ufSB"></i></div>
+    <div class="blbl"><span>Vectorized Python UDF: handler calls</span><span id="ufVC"></span></div><div class="bar2"><i class="inc" id="ufVB"></i></div>
+    <div class="stats">
+      <div class="stat"><div class="k">SCALAR EST. TIME</div><div class="n" id="ufST">–</div></div>
+      <div class="stat"><div class="k">VECTORIZED EST. TIME</div><div class="n" id="ufVT">–</div></div>
+      <div class="stat"><div class="k">SPEED-UP</div><div class="n" id="ufX">–</div></div>
+    </div>
+    <div class="insight" id="ufBIns"></div>
+  </div>
+
+  <div class="grid3">
+    <div class="mini"><h5>Secure UDFs</h5><p><code>CREATE SECURE FUNCTION</code> hides the body from users who don't own it, and Snowflake disables some optimizations that could leak information about the underlying data. Use it for shared logic or logic that embeds sensitive rules. Cost: it can be <b>slower</b>, so don't make everything secure "just because".</p></div>
+    <div class="mini"><h5>External functions</h5><p>Call a service <b>outside</b> Snowflake (e.g. through a cloud API gateway) via an <b>API integration</b>. Rows are batched into HTTPS requests. Useful for legacy integrations; for most new work Snowflake points you to external access instead. Calls add latency and generally prevent incremental DT refresh.</p></div>
+    <div class="mini"><h5>External access integrations</h5><p>Let Python/Java UDFs and procedures reach specific external endpoints directly. You define a <b>network rule</b> (allowed hosts), optional <b>secrets</b> (API keys, OAuth), and an <b>external access integration</b> combining them, then attach it with <code>EXTERNAL_ACCESS_INTEGRATIONS = (…)</code> and <code>SECRETS = (…)</code>. Check current docs for edition and cloud availability.</p></div>
+  </div>
+  <div class="grid2" style="margin-top:14px">
+    <div class="call trap" style="margin:0"><b class="k">INTERVIEW TRAP</b><div>"My Python UDF is slow on 500 million rows, should I use a bigger warehouse?" First ask whether it needs to be Python at all. A <b>SQL expression or SQL UDF</b> is usually much faster. If it must be Python, make it <b>vectorized</b>, avoid per-row network calls, load models or lookup files <b>once</b> (module-level or cached), and only then consider a larger or Snowpark-optimized warehouse for memory-heavy work.</div></div>
+    <div class="call pro" style="margin:0"><b class="k">SENIOR ANGLE</b><div>UDFs inside dynamic tables: deterministic SQL UDFs are generally fine for incremental refresh; anything non-deterministic or calling out to external systems may force FULL refresh or block it. Mark Python UDFs <code>IMMUTABLE</code> only when they really are (same input → same output), since that is a promise to the engine.</div></div>
+  </div>
+</section>
+
+<section id="txn">
+  <div class="eyebrow">CHAPTER 07</div>
+  <h2>Transactions &amp; concurrency <span class="thin">· when two jobs write at once</span></h2>
+  <div class="wwh">
+    <div class="box what"><span class="tag">01 · WHAT IS IT</span>
+      <p>A <b>transaction</b> is a group of statements that succeed or fail together. By default Snowflake runs in <b>autocommit</b> mode: every DML statement is its own transaction and commits when it finishes. An <b>explicit transaction</b> (<code>BEGIN TRANSACTION</code> … <code>COMMIT</code> / <code>ROLLBACK</code>) groups several statements.</p>
+      <p><b>Concurrency control</b> decides what happens when two sessions touch the same table at the same time.</p>
+    </div>
+    <div class="box why"><span class="tag">02 · WHY IT MATTERS</span>
+      <ul class="dots"><li>A transform that deletes yesterday's rows and inserts new ones must not leave dashboards showing <b>zero</b> in between.</li><li>Two tasks MERGEing into the same table at the same time will <b>queue</b> behind each other, and long explicit transactions can make other jobs wait or time out.</li><li>"Intermittent lock timeouts" is a classic production incident and a classic interview scenario.</li></ul>
+    </div>
+    <div class="box how"><span class="tag">03 · HOW IT WORKS · BACKEND</span>
+      <div class="grid2">
+        <div class="mini"><h5>Readers never wait (MVCC)</h5><p>Every commit creates a new table <b>version</b> (a new set of micro-partition pointers in cloud services metadata). A SELECT reads the latest <b>committed</b> version when it starts, so readers never block writers and writers never block readers. Isolation level for standard tables is <b>READ COMMITTED</b>.</p></div>
+        <div class="mini"><h5>Writers on the same table</h5><p>UPDATE, DELETE and MERGE take locks that generally stop them running <b>in parallel</b> with other UPDATE/DELETE/MERGE on the same table; the second one waits. INSERT and COPY only add new micro-partitions, so they can usually run alongside other writes. (Hybrid tables use row-level locking, a different model.)</p></div>
+        <div class="mini"><h5>Locks last until commit</h5><p>In autocommit, a lock is released when the statement ends. Inside an explicit transaction, locks are held until <b>COMMIT or ROLLBACK</b>, so slow work between the MERGE and the COMMIT keeps everyone else waiting. Waiting statements give up after <code>LOCK_TIMEOUT</code> (default 43,200 seconds = 12 hours), and there's a cap on how many statements may queue on one table's lock.</p></div>
+        <div class="mini"><h5>Implicit commits &amp; tools</h5><p>DDL (CREATE, ALTER, DROP…) commits any open transaction. Deadlocks are detected and one transaction is rolled back. Investigate with <code>SHOW LOCKS</code>, <code>SHOW TRANSACTIONS</code>, Query History (the "blocked" time), and end a stuck one with <code>SELECT SYSTEM$ABORT_TRANSACTION(&lt;id&gt;)</code>.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-h"><div class="t">SIMULATOR · <b>TWO SESSIONS, ONE TABLE</b> · FACT_SALES</div><span class="note-s">Illustrative timings. Session B starts 10 s after session A.</span></div>
+    <div class="row" style="margin:6px 0"><span class="note-s" style="min-width:150px">Session A (nightly job):</span><div class="tabs" id="txA" style="margin:0"><button class="on" data-v="auto">Autocommit MERGE (40 s)</button><button data-v="exp">BEGIN · MERGE · 60 s more work · COMMIT</button></div></div>
+    <div class="row" style="margin:6px 0"><span class="note-s" style="min-width:150px">Session B does:</span><div class="tabs" id="txB" style="margin:0"><button class="on" data-v="sel">SELECT</button><button data-v="ins">INSERT new rows</button><button data-v="upd">UPDATE</button><button data-v="mrg">MERGE</button><button data-v="del">DELETE</button></div></div>
+    <div class="row" style="margin:6px 0 10px"><span class="note-s" style="min-width:150px">B's LOCK_TIMEOUT:</span><div class="tabs" id="txT" style="margin:0"><button class="on" data-v="43200">43200 s (default)</button><button data-v="45">45 s</button></div></div>
+    <svg viewBox="0 0 760 170" id="txSvg"></svg>
+    <div class="stats">
+      <div class="stat"><div class="k">B WAITED</div><div class="n" id="txW">–</div></div>
+      <div class="stat"><div class="k">B RESULT</div><div class="n" id="txR" style="font-size:20px">–</div></div>
+      <div class="stat"><div class="k">B SEES A's CHANGES?</div><div class="n" id="txS" style="font-size:20px">–</div></div>
+    </div>
+    <div class="insight" id="txIns"></div>
+  </div>
+  <div class="grid2">
+    <div class="call trap" style="margin:0"><b class="k">INTERVIEW TRAP</b><div>"Snowflake has no locking because it's MVCC." Half right: <b>reads</b> never lock, but <b>writes</b> to the same table do coordinate. Two MERGE tasks on one table run one after the other, and a long explicit transaction can make others wait for a long time. That's why intermittent "lock wait timeout" failures appear when schedules start to overlap as data grows.</div></div>
+    <div class="call pro" style="margin:0"><b class="k">SENIOR ANGLE</b><div>Design for <b>one writer per table</b> (or per table per time window). Fan-in many sources into a staging table with INSERT/COPY (those can run concurrently), then have <b>one</b> MERGE task apply it. Keep explicit transactions short: do validation and heavy SELECTs <i>before</i> <code>BEGIN TRANSACTION</code>, and only the final writes inside it.</div></div>
+  </div>
+</section>
+
+<section id="sql">
+  <div class="eyebrow">CHAPTER 08</div>
+  <h2>SQL lab <span class="thin">· click any line for an explanation</span></h2>
+  <div class="panel">
+    <div class="tabs" id="sqlTabs"></div>
+    <div class="grid2" style="grid-template-columns:1.35fr 1fr">
+      <div class="code" id="sqlCode"></div>
+      <div class="explain" id="sqlExp"><b class="h">CLICK A LINE</b>Each line is explained in plain English.</div>
+    </div>
+  </div>
+</section>
+
+<section id="qa">
+  <div class="eyebrow">CHAPTER 09</div>
+  <h2>Interview Q&amp;A <span class="thin">· answer out loud first, then open</span></h2>
+  <div class="tabs" id="qaTabs"><button class="on" data-f="all">All</button><button data-f="Dynamic tables">Dynamic tables</button><button data-f="Refresh">Refresh</button><button data-f="Choosing">Choosing</button><button data-f="MERGE/SCD">MERGE/SCD</button><button data-f="Dedup">Dedup</button><button data-f="UDFs">UDFs</button><button data-f="Transactions">Transactions</button></div>
+  <div id="qaList"></div>
+</section>
+
+<section id="quiz">
+  <div class="eyebrow">CHAPTER 10</div>
+  <h2>Quiz <span class="thin">· 14 questions</span></h2>
+  <div class="panel">
+    <div class="panel-h"><div class="t">QUESTION <b id="qzN">1</b> / 14</div><div class="t">SCORE <b id="qzS">0</b></div></div>
+    <div class="stepbar" id="qzBar"></div>
+    <div id="qzBody"></div>
+    <div class="row" style="margin-top:12px"><button class="btn" id="qzPrev">Back</button><button class="btn pri" id="qzNext">Next</button></div>
+  </div>
+</section>
+
+<section id="cheat">
+  <div class="eyebrow">CHAPTER 11</div>
+  <h2>Cheat sheet <span class="thin">· if you remember only these</span></h2>
+  <div class="cheat">
+    <div><em>DT = SELECT + lag</em>Dynamic table: a query result Snowflake keeps fresh within TARGET_LAG, refreshed on the WAREHOUSE you name. Read-only for DML.</div>
+    <div><em>DOWNSTREAM</em>Refresh only when a consumer needs it. Leaves need a time lag, or nothing refreshes on its own.</div>
+    <div><em>Lag vs base</em>Target lag is measured against the base tables. A DT can't be fresher than what it reads from.</div>
+    <div><em>AUTO decides once</em>REFRESH_MODE AUTO picks INCREMENTAL or FULL at creation. Pin it explicitly in production; check refresh_mode_reason.</div>
+    <div><em>NO_DATA</em>No source changes → the refresh is skipped cheaply and the data timestamp still advances.</div>
+    <div><em>Incremental ≠ always cheaper</em>Cost follows the change volume and how scattered it is. Big or scattered changes can favour FULL.</div>
+    <div><em>MV limits</em>Single table, no joins, no window functions, Enterprise edition, serverless maintenance. Always current.</div>
+    <div><em>One source row per key</em>MERGE with duplicate matches → nondeterministic merge error. Dedup the source first.</div>
+    <div><em>SCD2</em>Close old row (effective_to, is_current = FALSE) + insert new version. Hash diff with NULL-safe COALESCE.</div>
+    <div><em>QUALIFY ROW_NUMBER() = 1</em>Exactly one survivor per key. RANK keeps ties. Add tie-breakers for determinism.</div>
+    <div><em>INSERT OVERWRITE</em>Replaces the whole table atomically. Not a per-partition overwrite.</div>
+    <div><em>Writers queue</em>UPDATE/DELETE/MERGE on one table serialize; INSERT/COPY usually don't. Readers never block. LOCK_TIMEOUT default 12 h.</div>
+  </div>
+  <div class="call analogy" style="margin-top:20px"><b class="k">NEXT MODULE</b><div><b><a href="../module06/" style="color:var(--ice)">Module 06: Semi-structured data →</a></b> VARIANT, OBJECT and ARRAY, how Snowflake stores JSON in columnar form, FLATTEN and LATERAL, schema detection and evolution, and the performance traps of querying nested data.</div></div>
+</section>
+<footer>Snowflake Interview Lab · Module 05 · Dynamic Tables &amp; Transforms · Prepared for Saurav Patel</footer>
+</main>
+</div>
+
+<script>
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+const fmt = (n, d = 0) => Number(n).toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d });
+const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+const tabs = (sel, cb) => $$(sel + ' button').forEach(b => b.addEventListener('click', () => { $$(sel + ' button').forEach(x => x.classList.remove('on')); b.classList.add('on'); cb(b.dataset); }));
+const big = n => n >= 1e9 ? fmt(n / 1e9, n % 1e9 ? 1 : 0) + ' B' : n >= 1e6 ? fmt(n / 1e6, n >= 1e7 ? 0 : 1) + ' M' : n >= 1e3 ? fmt(n / 1e3, n >= 1e4 ? 0 : 1) + ' K' : fmt(n);
+const secs2 = s => s >= 60 ? fmt(s / 60, 1) + ' min' : fmt(s, s < 10 ? 1 : 0) + ' s';
+
+/* theme + progress */
+const root = document.documentElement;
+root.dataset.theme = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+$('#themeBtn').onclick = () => { root.dataset.theme = root.dataset.theme === 'dark' ? 'light' : 'dark'; };
+const secs = $$('main section'), seen = new Set();
+const io = new IntersectionObserver(es => es.forEach(e => {
+  if (!e.isIntersecting) return;
+  seen.add(e.target.id);
+  $$('.side a').forEach(a => { const id = a.getAttribute('href').slice(1); a.classList.toggle('act', id === e.target.id); if (seen.has(id)) a.classList.add('seen'); });
+  const pct = Math.round(seen.size / secs.length * 100);
+  $('#progBar').style.width = pct + '%'; $('#progLbl').textContent = pct + '% explored';
+}), { rootMargin: '-40% 0px -55% 0px' });
+secs.forEach(s => io.observe(s));
+
+/* ===== 00 intro: procedural vs declarative ===== */
+const IC = {
+  proc: [
+    { c: `CREATE STREAM raw_orders_strm ON TABLE raw_orders APPEND_ONLY = TRUE;
+
+CREATE TASK load_clean_orders
+  SCHEDULE = '5 MINUTE'
+  WHEN SYSTEM$STREAM_HAS_DATA('raw_orders_strm')
+AS
+  MERGE INTO clean_orders t
+  USING (SELECT * FROM raw_orders_strm
+         QUALIFY ROW_NUMBER() OVER (PARTITION BY order_id ORDER BY updated_at DESC) = 1) s
+  ON t.order_id = s.order_id
+  WHEN MATCHED THEN UPDATE SET t.status = s.status, t.amount = s.amount, t.updated_at = s.updated_at
+  WHEN NOT MATCHED THEN INSERT (order_id, status, amount, updated_at)
+                        VALUES (s.order_id, s.status, s.amount, s.updated_at);`, n: `<b>You own the "how":</b> a stream to find new rows, a task to run on a schedule, and a MERGE that you wrote and must keep correct (dedup, update rules, inserts). Total control, and total responsibility.` },
+    { c: `CREATE STREAM clean_orders_strm ON TABLE clean_orders;
+
+CREATE TASK build_daily_sales
+  AFTER load_clean_orders              -- wire the dependency yourself
+AS
+  MERGE INTO daily_sales t
+  USING (SELECT order_ts::DATE AS d, SUM(amount) AS revenue
+         FROM clean_orders
+         WHERE order_ts::DATE IN (SELECT DISTINCT updated_at::DATE FROM clean_orders_strm)
+         GROUP BY 1) s
+  ON t.d = s.d
+  WHEN MATCHED THEN UPDATE SET t.revenue = s.revenue
+  WHEN NOT MATCHED THEN INSERT (d, revenue) VALUES (s.d, s.revenue);`, n: `<b>Incremental aggregates by hand are tricky:</b> you have to figure out which days were affected and recompute just those. Easy to get subtly wrong (what if an order's date changes?).` },
+    { c: `-- Objects you build and operate:
+--   2 streams, 2 tasks, 2 hand-written MERGE statements
+--   dependency wiring (AFTER), resume order (children first, root last)
+--   retry / idempotency logic, monitoring via TASK_HISTORY
+ALTER TASK build_daily_sales RESUME;
+ALTER TASK load_clean_orders RESUME;`, n: `<b>Whole pipeline, procedural:</b> 6+ objects and two pieces of custom change logic. Worth it when you need custom behaviour (SCD2, side effects, several targets), overkill for plain "this table = this SELECT".` }
+  ],
+  decl: [
+    { c: `CREATE OR REPLACE DYNAMIC TABLE clean_orders
+  TARGET_LAG = DOWNSTREAM
+  WAREHOUSE  = transform_wh
+AS
+  SELECT order_id, status, amount, updated_at
+  FROM raw_orders
+  QUALIFY ROW_NUMBER() OVER (PARTITION BY order_id ORDER BY updated_at DESC) = 1;`, n: `<b>You describe the "what":</b> the rows clean_orders should contain. No stream, no task, no MERGE. Snowflake tracks changes in raw_orders and keeps the result up to date. <code>DOWNSTREAM</code> means "refresh me whenever the table that reads me needs fresh data".` },
+    { c: `CREATE OR REPLACE DYNAMIC TABLE daily_sales
+  TARGET_LAG = '15 minutes'
+  WAREHOUSE  = transform_wh
+AS
+  SELECT order_ts::DATE AS d, SUM(amount) AS revenue
+  FROM clean_orders
+  GROUP BY 1;`, n: `<b>The aggregate is just a GROUP BY.</b> When refreshing incrementally, Snowflake itself works out which days (groups) were affected and recomputes only those, including the "order's date changed" case you'd have to handle by hand.` },
+    { c: `-- Objects you build and operate:
+--   2 dynamic tables. That's it.
+-- Snowflake infers the graph raw_orders -> clean_orders -> daily_sales,
+-- schedules refreshes to keep daily_sales within 15 minutes of raw_orders,
+-- and refreshes clean_orders just before daily_sales (DOWNSTREAM).
+SHOW DYNAMIC TABLES LIKE '%ORDERS%';`, n: `<b>Whole pipeline, declarative:</b> two objects, zero orchestration code. The trade-off: the result must be expressible as a SELECT, and you control freshness, not exact run times.` }
+  ]
+};
+let iM = 'proc', iL = 0;
+function iDraw() {
+  const x = IC[iM][iL];
+  $('#iCode').textContent = x.c; $('#iIns').innerHTML = x.n;
+  const nodes = iL === 0 ? [0, 1] : iL === 1 ? [1, 2] : [0, 1, 2], edges = iL === 0 ? [0] : iL === 1 ? [1] : [0, 1];
+  [0, 1, 2].forEach(k => $('#in' + k).classList.toggle('on', nodes.includes(k)));
+  [0, 1].forEach(k => $('#ie' + k).classList.toggle('on', edges.includes(k)));
+  $('#iL0').textContent = $('#iL1').textContent = iM === 'proc' ? 'stream + task' : 'DT refresh';
+}
+tabs('#iMode', d => { iM = d.v; iDraw(); });
+tabs('#iLayer', d => { iL = +d.v; iDraw(); });
+iDraw();
+
+/* ===== 01 dynamic table graph simulator ===== */
+const DTN = [
+  { id: 'stg', name: 'STG_ORDERS', reads: ['raw'], def: 'DOWNSTREAM', sec: 20, desc: 'cleans + types RAW_ORDERS' },
+  { id: 'enr', name: 'ORDERS_ENRICHED', reads: ['stg', 'cust'], def: 'DOWNSTREAM', sec: 35, desc: 'joins RAW_CUSTOMERS' },
+  { id: 'fct', name: 'DAILY_SALES', reads: ['enr'], def: '15', sec: 25, desc: 'GROUP BY day, region' },
+  { id: 'kpi', name: 'EXEC_KPIS', reads: ['fct'], def: '60', sec: 10, desc: 'tiny table for the CEO dashboard' }
+];
+const DLAGS = ['DOWNSTREAM', '1', '5', '15', '30', '60'];
+const DT = { src: 'cont', susp: false, cfg: DTN.map(n => n.def), sim: null, t: 0, timer: null };
+$('#dtCfg').innerHTML = DTN.map((n, i) => `<div class="mini"><b>${n.name}</b><span class="note-s" style="font-style:normal;font-family:var(--f-mono)">TARGET_LAG =</span><select class="sel" data-i="${i}">${DLAGS.map(l => `<option value="${l}"${l === n.def ? ' selected' : ''}>${l === 'DOWNSTREAM' ? 'DOWNSTREAM' : `'${l} minute${l === '1' ? '' : 's'}'`}</option>`).join('')}</select><small>${n.desc}</small></div>`).join('');
+$$('#dtCfg select').forEach(s => s.onchange = () => { DT.cfg[+s.dataset.i] = s.value; dtStop(); dtCompute(); dtDraw(0); dtIdle(); });
+tabs('#dtSrc', d => { DT.src = d.v; dtStop(); dtCompute(); dtDraw(0); dtIdle(); });
+tabs('#dtSusp', d => { DT.susp = d.v === '1'; dtStop(); dtCompute(); dtDraw(0); dtIdle(); });
+const dtPer = T => { if (!isFinite(T)) return Infinity; let p = 1; [1, 2, 4, 8, 16, 32].forEach(c => { if (c <= Math.max(1, T / 2)) p = c; }); return p; };
+function dtCompute() {
+  const n = DTN.length, T = Array(n).fill(0);
+  for (let i = n - 1; i >= 0; i--) {
+    if (DT.cfg[i] !== 'DOWNSTREAM') { T[i] = +DT.cfg[i]; continue; }
+    const cons = DTN.map((x, k) => x.reads.includes(DTN[i].id) ? k : -1).filter(k => k >= 0);
+    T[i] = cons.length ? Math.min(...cons.map(k => T[k])) : Infinity;
+  }
+  const warn = T.map((t, i) => i > 0 && isFinite(t) && DT.cfg[i] !== 'DOWNSTREAM' && DT.cfg[i - 1] !== 'DOWNSTREAM' && +DT.cfg[i - 1] > t);
+  const P = T.map(dtPer);
+  const baseChg = t => DT.src === 'cont' ? t : DT.src === 'burst' ? Math.min(t, 30) : 0;
+  const st = DTN.map(() => ({ ts: 0, chg: 0, refs: [], lag: [0] }));
+  const minuteSec = {};
+  for (let t = 1; t <= 120; t++) {
+    DTN.forEach((nd, i) => {
+      const s = st[i];
+      const suspended = DT.susp && i === 0 && t >= 60;
+      if (!suspended && isFinite(P[i]) && t % P[i] === 0) {
+        let ts = t, chg = 0;
+        nd.reads.forEach(r => {
+          if (r === 'raw') { chg = Math.max(chg, baseChg(t)); }
+          else if (r === 'cust') { /* static reference table */ }
+          else { const u = st[DTN.findIndex(x => x.id === r)]; ts = Math.min(ts, u.ts); chg = Math.max(chg, u.chg); }
+        });
+        const noData = chg <= s.chg;
+        s.ts = ts; s.chg = chg; s.refs.push({ t, nd: noData });
+        if (!noData) minuteSec[t] = (minuteSec[t] || 0) + nd.sec;
+      }
+      s.lag.push(t - s.ts);
+    });
+  }
+  DT.sim = { T, P, warn, st, minuteSec };
+}
+function dtStats(upto) {
+  const { st, minuteSec } = DT.sim;
+  let work = 0, nd = 0, awake = 0;
+  st.forEach(s => s.refs.forEach(r => { if (r.t <= upto) { if (r.nd) nd++; else work++; } }));
+  Object.entries(minuteSec).forEach(([t, s]) => { if (+t <= upto) awake += Math.max(60, s); });
+  $('#dtR').textContent = work; $('#dtN').textContent = nd;
+  $('#dtW').textContent = fmt(awake / 60) + ' min'; $('#dtC').textContent = fmt(awake / 3600, 2);
+  return { work, nd, awake };
+}
+function dtDraw(upto) {
+  const { T, warn, st } = DT.sim, X = m => 110 + m * (640 / 120);
+  let h = '';
+  const box = (x, y, w, hh, cls, a, b, id, gcls) => `<g class="${gcls || ''}" ${id ? `id="${id}"` : ''}><rect class="${cls}" x="${x}" y="${y}" width="${w}" height="${hh}" rx="10" stroke-width="1"/><text class="th" x="${x + w / 2}" y="${y + hh / 2 - 9}" text-anchor="middle" dominant-baseline="central" style="font-size:11px">${a}</text><text class="st tm" x="${x + w / 2}" y="${y + hh / 2 + 10}" text-anchor="middle" dominant-baseline="central">${b}</text></g>`;
+  h += `<path class="arr" d="M120 32 L150 52"/><path class="arr" d="M120 92 C 200 100, 270 92, 300 72"/><path class="arr" d="M290 58 L300 58"/><path class="arr" d="M440 58 L450 58"/><path class="arr" d="M590 58 L600 58"/>`;
+  h += box(10, 10, 110, 44, 'L-st', 'RAW_ORDERS', DT.src === 'none' ? 'no new rows' : DT.src === 'burst' ? (upto <= 30 ? 'rows arriving' : 'quiet') : 'new rows/min');
+  h += box(10, 70, 110, 44, 'L-st', 'RAW_CUSTOMERS', 'reference');
+  DTN.forEach((n, i) => {
+    const s = st[i], x = 150 + i * 150, r = s.refs.find(q => q.t === upto);
+    const susp = DT.susp && i === 0 && upto >= 60;
+    const cls = upto === 0 ? '' : r ? (r.nd ? 'skip' : 'run') : susp ? 'fail' : 'ok';
+    const cnt = s.refs.filter(q => q.t <= upto && !q.nd).length;
+    const lagNow = s.lag[upto];
+    h += `<g class="tn ${cls}"><rect x="${x}" y="30" width="140" height="56" rx="10"/><text class="th" x="${x + 70}" y="48" text-anchor="middle" dominant-baseline="central" style="font-size:12px">${n.name}</text><text class="st" x="${x + 70}" y="68" text-anchor="middle" dominant-baseline="central">${susp ? 'SUSPENDED · ' : ''}lag ${lagNow}m · ${cnt} refresh${cnt === 1 ? '' : 'es'}</text></g>`;
+    if (warn[i]) h += `<text class="tm" x="${x + 70}" y="102" text-anchor="middle" style="fill:var(--red)">upstream lag is longer</text>`;
+  });
+  DTN.forEach((n, i) => {
+    const s = st[i], y0 = 140 + i * 50, tUser = T[i];
+    const M = Math.min(120, Math.max(4, isFinite(tUser) ? tUser * 2 : 60));
+    const Y = v => y0 + 40 - Math.min(v, M) / M * 34;
+    h += `<rect x="110" y="${y0 + 4}" width="640" height="44" rx="6" fill="var(--card2)" opacity=".55"/>`;
+    h += `<text class="lane-l" x="8" y="${y0 + 20}">${n.name}</text><text class="lane-l" x="8" y="${y0 + 34}" style="fill:var(--ink3)">${DT.cfg[i] === 'DOWNSTREAM' ? 'DOWNSTREAM' + (isFinite(tUser) ? ` → ${tUser}m` : ' → never') : `lag ${tUser}m`}</text>`;
+    if (isFinite(tUser) && tUser <= M) h += `<line class="tgtline" x1="110" x2="750" y1="${Y(tUser)}" y2="${Y(tUser)}"/>`;
+    let d = '';
+    for (let m = 0; m <= upto; m++) d += (m ? ' L' : 'M') + X(m).toFixed(1) + ' ' + Y(s.lag[m]).toFixed(1);
+    if (upto > 0) h += `<path class="lagline" d="${d}"/>`;
+    s.refs.filter(r => r.t <= upto).forEach(r => { h += `<rect class="tick ${r.nd ? 'nd' : ''}" x="${(X(r.t) - 1.5).toFixed(1)}" y="${y0 + 42}" width="3" height="6"/>`; });
+  });
+  ['09:00', '09:30', '10:00', '10:30', '11:00'].forEach((l, k) => { h += `<text class="tm" x="${X(k * 30)}" y="362" text-anchor="${k === 4 ? 'end' : k === 0 ? 'start' : 'middle'}">${l}</text><line x1="${X(k * 30)}" x2="${X(k * 30)}" y1="342" y2="348" stroke="var(--ink3)"/>`; });
+  if (DT.susp) h += `<line x1="${X(60)}" x2="${X(60)}" y1="136" y2="342" stroke="var(--red)" stroke-dasharray="3 3"/><text class="tm" x="${X(60) + 4}" y="134" style="fill:var(--red)">STG suspended</text>`;
+  h += `<line class="cursor" x1="${X(upto)}" x2="${X(upto)}" y1="136" y2="344"/>`;
+  $('#dtSvg').innerHTML = h;
+  dtStats(upto);
+}
+function dtIdle() { $('#dtIns').innerHTML = `Configured. Press <b>Run 2 hours</b> (or <b>Jump to end</b>). Each lane shows that DT's lag over time: it drops to near zero at each refresh and climbs until the next one.`; }
+function dtStop() { clearInterval(DT.timer); DT.timer = null; $('#dtRun').textContent = '▶ Run 2 hours'; }
+function dtFinish() {
+  dtStop(); dtDraw(120);
+  const { T, warn, st } = DT.sim, notes = [];
+  DTN.forEach((n, i) => { if (!isFinite(T[i])) notes.push(`<b>${n.name} never refreshed:</b> it is DOWNSTREAM and nothing with a time-based lag reads from it, so its lag just grows (${st[i].lag[120]} min by 11:00). Give the leaf a time lag.`); });
+  DTN.forEach((n, i) => { if (warn[i]) notes.push(`<b>${n.name} can't meet its target:</b> it reads from a DT with a longer lag, and a DT can never be fresher than its inputs. Set downstream lag ≥ upstream lag, or make the upstream DOWNSTREAM.`); });
+  const ds = DTN.map((n, i) => DT.cfg[i] === 'DOWNSTREAM' && isFinite(T[i]) ? n.name : null).filter(Boolean);
+  if (ds.length) notes.push(`<b>DOWNSTREAM at work:</b> ${ds.join(', ')} refreshed only when a consumer needed data (every ${DT.sim.P[DTN.findIndex(n => n.name === ds[0])]} min in this model), always aligned with it.`);
+  if (DT.src !== 'cont') notes.push(`<b>NO_DATA refreshes:</b> with ${DT.src === 'burst' ? 'quiet sources after 09:30' : 'no source changes'}, refreshes become cheap change checks (grey ticks). Lag still drops, because the DT is confirmed current even though nothing changed.`);
+  if (DT.susp) notes.push(`<b>Suspension ripples down:</b> after STG_ORDERS was suspended at 10:00, everything below it could only see data up to 10:00, so their lag climbs too, even though they kept "refreshing".`);
+  const fast = DT.cfg.filter(c => c === '1').length;
+  if (fast) notes.push(`<b>1-minute lag is expensive:</b> refreshes run every minute, so the warehouse barely sleeps. Compare credits with 15 or 60 minutes.`);
+  if (!notes.length) notes.push(`<b>Healthy graph.</b> Every DT stayed near its target lag. Now try a 1-minute lag on DAILY_SALES and compare the credits, or make EXEC_KPIS DOWNSTREAM.`);
+  $('#dtIns').innerHTML = notes.join(' ');
+}
+$('#dtRun').onclick = () => {
+  if (DT.timer) { dtStop(); return; }
+  if (DT.t >= 120) DT.t = 0;
+  $('#dtRun').textContent = '❚❚ Pause';
+  DT.timer = setInterval(() => { DT.t++; if (DT.t >= 120) { DT.t = 120; dtFinish(); return; } dtDraw(DT.t); }, 55);
+};
+$('#dtEnd').onclick = () => { DT.t = 120; dtFinish(); };
+dtCompute(); dtDraw(0); dtIdle();
+
+/* ===== 02 incremental vs full ===== */
+const IN_N = [10e6, 50e6, 100e6, 500e6, 1e9], RPP = 500000;
+const IN = { n: 3, c: 20, s: 'clu', q: 'inc', m: 'AUTO' };
+$('#inCells').innerHTML = Array.from({ length: 200 }, () => '<i></i>').join('');
+const inScatter = Array.from({ length: 200 }, (_, i) => (i * 73 + 41) % 200);
+function inDraw() {
+  const N = IN_N[IN.n], pct = Math.pow(10, -5 + 4.7 * IN.c / 100), c = Math.max(1, Math.round(N * pct)), P = N / RPP;
+  $('#inNV').textContent = big(N) + ' rows'; $('#inCV').textContent = big(c) + ' (' + (pct * 100 < 0.01 ? fmt(pct * 100, 4) : fmt(pct * 100, 2)) + '%)';
+  const touched = IN.s === 'clu' ? Math.min(P, Math.ceil(c / RPP) + 1) : P * (1 - Math.exp(-c / P));
+  const wInc = touched * RPP * 0.5 + c * 4 + 2e6, wFull = N + 1e6;
+  const tInc = 3 + wInc / 25e6, tFull = 3 + wFull / 25e6;
+  const err = IN.q === 'non' && IN.m === 'INCREMENTAL';
+  const mode = err ? 'ERROR' : IN.m === 'FULL' || IN.q === 'non' ? 'FULL' : 'INCREMENTAL';
+  $('#inSql').textContent = `CREATE OR REPLACE DYNAMIC TABLE daily_region_sales
+  TARGET_LAG   = '15 minutes'
+  WAREHOUSE    = transform_wh
+  REFRESH_MODE = ${IN.m}
+AS
+SELECT o.order_ts::DATE AS order_day,
+       c.region,
+       SUM(o.amount)     AS revenue${IN.q === 'non' ? `,
+       CURRENT_TIMESTAMP() AS computed_at   -- non-deterministic` : ''}
+FROM   orders o
+JOIN   customers c ON c.customer_id = o.customer_id
+WHERE  o.status <> 'CANCELLED'
+GROUP BY 1, 2;${err ? `
+
+-- CREATE fails: the query can't be refreshed incrementally
+-- (illustrative message; the real one names the construct)` : ''}`;
+  const nCh = Math.max(1, Math.round(touched / P * 200));
+  const chSet = new Set(IN.s === 'clu' ? Array.from({ length: nCh }, (_, k) => 199 - k) : inScatter.slice(0, nCh));
+  $$('#inCells i').forEach((el, k) => { el.className = chSet.has(k) ? 'ch' : (mode === 'FULL' ? 'sc' : ''); });
+  const mx = Math.max(wInc, wFull);
+  $('#inBarI').style.width = (wInc / mx * 100) + '%'; $('#inBarF').style.width = (wFull / mx * 100) + '%';
+  $('#inBI').textContent = big(wInc) + ' row-units · ' + secs2(tInc); $('#inBF').textContent = big(wFull) + ' row-units · ' + secs2(tFull);
+  $('#inBarI').style.opacity = mode === 'INCREMENTAL' ? 1 : .35; $('#inBarF').style.opacity = mode === 'FULL' ? 1 : .35;
+  $('#inMode').textContent = mode;
+  $('#inModeS').textContent = err ? 'CREATE DYNAMIC TABLE fails' : IN.m === 'AUTO' ? `AUTO resolved to ${mode} at creation` : 'as requested';
+  $('#inRows').textContent = err ? '–' : big(mode === 'FULL' ? wFull : wInc);
+  $('#inParts').textContent = err ? '–' : fmt(mode === 'FULL' ? P : Math.round(touched)) + ' / ' + fmt(P);
+  $('#inTime').textContent = err ? '–' : secs2(mode === 'FULL' ? tFull : tInc);
+  let msg;
+  if (err) msg = `<b>Deploy-time failure (good!).</b> You asked for INCREMENTAL but the query contains a non-deterministic function. Snowflake refuses rather than silently recomputing everything. Remove <code>CURRENT_TIMESTAMP()</code> (put load timestamps in the raw layer instead) or accept FULL.`;
+  else if (IN.q === 'non' && IN.m === 'AUTO') msg = `<b>Silent FULL.</b> AUTO quietly chose FULL because of the non-deterministic function, so every refresh now reads all ${big(N)} rows even when only ${big(c)} changed. You'd only notice via <code>refresh_mode_reason</code> in SHOW DYNAMIC TABLES, or the bill.`;
+  else if (mode === 'INCREMENTAL' && wInc > wFull) msg = `<b>Incremental is losing here.</b> With ${IN.s === 'sca' ? 'changes scattered across almost every partition' : 'this many rows changed'}, computing and applying the delta costs more than recomputing (${secs2(tInc)} vs ${secs2(tFull)}). For tables that are largely rewritten each cycle, <b>FULL</b> is the honest choice. AUTO won't switch for you per refresh.`;
+  else if (mode === 'INCREMENTAL') msg = `<b>Incremental wins:</b> about ${fmt(wFull / wInc, 1)}× less work than full. Only ${fmt(Math.round(touched))} of ${fmt(P)} source partitions had changes to read. Try sliding changes up, or switch to <b>Scattered</b>, and watch the advantage shrink.`;
+  else msg = wFull < wInc ? `<b>FULL is the right call</b> at this change volume: recomputing beats delta processing. Every refresh still reads all ${fmt(P)} partitions, so watch it as the table grows.` : `<b>FULL reads everything every time</b> (blue squares): ${big(N)} rows to reflect ${big(c)} changed ones. Incremental would be about ${fmt(wFull / wInc, 1)}× less work here.`;
+  $('#inIns').innerHTML = msg;
+}
+$('#inN').oninput = e => { IN.n = +e.target.value; inDraw(); };
+$('#inC').oninput = e => { IN.c = +e.target.value; inDraw(); };
+tabs('#inS', d => { IN.s = d.v; inDraw(); }); tabs('#inQ', d => { IN.q = d.v; inDraw(); }); tabs('#inM', d => { IN.m = d.v; inDraw(); });
+inDraw();
+
+/* ===== 03 decision helper ===== */
+const CHQ = [
+  { k: 'proc', q: '1 · Do you need custom write logic? (SCD2 history, conditional deletes, calling procedures, notifications, writing several targets)', o: [['y', 'Yes'], ['n', 'No, the result is just a SELECT']] },
+  { k: 'fresh', q: '2 · How fresh must the result be?', o: [['now', 'Exactly current at query time'], ['min', 'Within minutes'], ['hrs', 'Hours / daily is fine']] },
+  { k: 'shape', q: '3 · What does the query look like?', o: [['single', 'One table, simple filter / aggregate'], ['complex', 'Joins, windows, several steps']] },
+  { k: 'load', q: '4 · How is it used?', o: [['hot', 'Queried constantly and expensive to compute'], ['cold', 'Queried rarely, or cheap to compute']] },
+  { k: 'ed', q: '5 · Snowflake edition?', o: [['std', 'Standard'], ['ent', 'Enterprise or higher']] }
+];
+const CH = {};
+$('#chQs').innerHTML = CHQ.map(x => `<div class="dq"><p>${x.q}</p><div class="tabs" id="chq-${x.k}">${x.o.map(([v, l]) => `<button data-v="${v}">${l}</button>`).join('')}</div></div>`).join('');
+CHQ.forEach(x => tabs('#chq-' + x.k, d => { CH[x.k] = d.v; chDraw(); }));
+function chDraw() {
+  const a = CH, n = Object.keys(a).length;
+  if (!n) { $('#chRec').innerHTML = `<div class="note-s">RECOMMENDATION</div><h4>Answer the questions</h4><p style="font-size:14px;color:var(--ink2)">The recommendation updates as you answer, with the reasoning an interviewer wants to hear.</p>`; return; }
+  let rec, why = [], alt;
+  if (a.proc === 'y') { rec = 'Streams + tasks'; why.push('Custom write logic (history, deletes, side effects) can\'t be expressed as "table = SELECT", so a dynamic table is out.', 'A stream gives you exactly the changed rows; a task runs your MERGE or procedure (see Module 02).'); alt = 'Use dynamic tables for the downstream layers that are pure SELECTs.'; }
+  else if (a.fresh === 'now') {
+    if (a.shape === 'single' && a.load === 'hot' && a.ed !== 'std') { rec = 'Materialized view'; why.push('Results must be exactly current: MVs are always current (unmaintained changes are combined at query time).', 'Single-table shape fits MV restrictions, and heavy, frequent queries justify paying for background maintenance.', 'The optimizer can even rewrite queries on the base table to use the MV.'); alt = 'If the query grows a join, MVs no longer apply: use a view, or a DT with a short lag if slight staleness is acceptable.'; }
+    else { rec = 'View'; why.push('"Exactly current" rules out DTs (they trail by the target lag).'); if (a.shape === 'complex') why.push('Joins and windows rule out materialized views.'); if (a.ed === 'std' && a.shape === 'single' && a.load === 'hot') why.push('Materialized views need Enterprise edition or higher.'); if (a.load === 'cold') why.push('Rarely queried or cheap: computing at query time costs less than maintaining stored results.'); alt = a.load === 'hot' ? 'If dashboards get slow, negotiate a small lag and switch to a dynamic table, or tune with clustering (Module 03).' : 'Revisit if usage grows.'; }
+  } else {
+    if (a.load === 'cold' && a.shape === 'single') { rec = 'View'; why.push('Simple and rarely used: no need to store and refresh results.', 'Zero maintenance cost; compute only when someone actually queries.'); alt = 'Switch to a dynamic table if it becomes popular or slow.'; }
+    else { rec = 'Dynamic table'; why.push('The result is a pure SELECT and a little staleness is acceptable, the exact case DTs are built for.', a.fresh === 'hrs' ? 'Hours-level freshness: set a long TARGET_LAG (e.g. \'4 hours\') to keep refresh cost low, and DOWNSTREAM on intermediate DTs.' : 'Minutes-level freshness: set TARGET_LAG to the business need, DOWNSTREAM for intermediate steps.'); if (a.shape === 'complex') why.push('Joins, windows and multi-step chains are supported, and Snowflake orders the refreshes for you.'); alt = 'Check refresh_mode after creation; if it fell back to FULL on a large table, reshape the query or split the chain.'; }
+  }
+  $('#chRec').innerHTML = `<div class="note-s">RECOMMENDATION${n < CHQ.length ? ` · ${n}/${CHQ.length} answered, may change` : ''}</div><h4 style="color:var(--ice)">${rec}</h4><ul>${why.map(w => `<li>${w}</li>`).join('')}</ul><p style="font-size:13.5px;margin-top:8px"><b>Runner-up / watch out:</b> ${alt}</p>`;
+}
+$('#chReset').onclick = () => { Object.keys(CH).forEach(k => delete CH[k]); $$('#chQs button').forEach(b => b.classList.remove('on')); chDraw(); };
+chDraw();
+</script>
+
+<script>
+/* ===== 04 SCD stepper ===== */
+const SC_INIT = [['C001', 'Asha Rao', 'Pune', 'Silver'], ['C002', 'Ben Clark', 'Leeds', 'Gold']];
+const SC_STEPS = [
+  { d: '2024-02-01', id: 'C001', op: 'U', city: 'Mumbai', tier: 'Silver', txt: 'C001 Asha Rao moved: city Pune → Mumbai' },
+  { d: '2024-03-01', id: 'C003', op: 'I', name: 'Chen Li', city: 'Austin', tier: 'Silver', txt: 'New customer C003 Chen Li (Austin, Silver)' },
+  { d: '2024-03-15', id: 'C002', op: 'U', city: 'Leeds', tier: 'Platinum', txt: 'C002 Ben Clark upgraded: tier Gold → Platinum' },
+  { d: '2024-04-01', id: 'C001', op: 'U', city: 'Mumbai', tier: 'Silver', txt: 'C001 sent again by the source system, nothing actually changed' },
+  { d: '2024-05-01', id: 'C001', op: 'U', city: 'Mumbai', tier: 'Gold', txt: 'C001 upgraded: tier Silver → Gold' },
+  { d: '2024-06-01', id: 'C003', op: 'D', txt: 'C003 deleted in the source system (op = D)' }
+];
+const scHash = s => { let h = 5381; for (const ch of s) h = ((h << 5) + h + ch.charCodeAt(0)) >>> 0; return h.toString(16).slice(-6).padStart(6, '0'); };
+const SC = { type: '2', i: 0 };
+function scBuild(type, upto) {
+  let sk = 0, rows = SC_INIT.map(([id, name, city, tier]) => ({ sk: ++sk, id, name, city, tier, from: '2024-01-01', to: '9999-12-31', cur: true, upd: '2024-01-01', hash: scHash(city + '|' + tier), flag: '' }));
+  let act = 'initial load: 2 inserts';
+  for (let k = 0; k < upto; k++) {
+    const s = SC_STEPS[k], last = k === upto - 1;
+    rows = rows.filter(r => r.flag !== 'del');
+    rows.forEach(r => r.flag = '');
+    const cur = rows.find(r => r.id === s.id && r.cur);
+    if (s.op === 'D') {
+      if (type === '2') { cur.cur = false; cur.to = s.d; cur.flag = 'closed'; act = '1 row closed (soft delete)'; }
+      else { cur.flag = 'del'; act = '1 row deleted'; }
+      continue;
+    }
+    const h = scHash(s.city + '|' + s.tier);
+    if (!cur) { rows.push({ sk: ++sk, id: s.id, name: s.name, city: s.city, tier: s.tier, from: s.d, to: '9999-12-31', cur: true, upd: s.d, hash: h, flag: 'new' }); act = '1 row inserted'; continue; }
+    if (cur.hash === h) { act = 'no-op: hash_diff unchanged'; continue; }
+    if (type === '2') {
+      cur.cur = false; cur.to = s.d; cur.flag = 'closed';
+      rows.push({ sk: ++sk, id: s.id, name: cur.name, city: s.city, tier: s.tier, from: s.d, to: '9999-12-31', cur: true, upd: s.d, hash: h, flag: 'new' });
+      act = '1 closed + 1 inserted';
+    } else { cur.city = s.city; cur.tier = s.tier; cur.hash = h; cur.upd = s.d; cur.flag = 'upd'; act = '1 row updated in place'; }
+  }
+  return { rows, act };
+}
+const SC_NOTES = {
+  '2': [
+    `<b>Starting point:</b> two customers loaded on 2024-01-01. Each row has a surrogate key (sk), <code>effective_from</code>, an open <code>effective_to</code> of 9999-12-31, <code>is_current = TRUE</code> and a <code>hash_diff</code> of the tracked columns (city, tier).`,
+    `<b>Change detected</b> because the incoming hash differs from the current row's hash. The old Pune row is <b>closed</b> (effective_to = 2024-02-01, is_current = FALSE) and a new Mumbai row is <b>opened</b>. Facts loaded before February still point at sk 1, the Pune version.`,
+    `<b>New key:</b> no current row for C003, so MERGE takes the WHEN NOT MATCHED branch and inserts it.`,
+    `<b>Another version.</b> Ben's Gold row is closed on 2024-03-15 and a Platinum row opened. Ask "revenue by tier in Q1" and Ben's January–mid-March orders count as Gold, which is correct.`,
+    `<b>No-op.</b> Source systems resend unchanged records all the time. The hash matches the current row, so nothing is written. Without hash comparison you'd create a useless new version on every resend.`,
+    `<b>Third version of C001.</b> Now C001 has three rows: Pune/Silver, Mumbai/Silver, Mumbai/Gold. Only one has is_current = TRUE. That's the invariant to test: exactly one current row per business key.`,
+    `<b>Soft delete.</b> In SCD2 you normally don't physically delete: the current row is closed (some designs also add an <code>is_deleted</code> flag or a tombstone version). History for C003 is preserved, and no current row remains.`
+  ],
+  '1': [
+    `<b>Starting point:</b> SCD Type 1 keeps exactly one row per customer with the latest values, plus an <code>updated_at</code>. No validity dates.`,
+    `<b>Overwritten in place:</b> Pune is gone forever. Any report that groups past orders by city now shows them under Mumbai.`,
+    `<b>New key inserted</b>, same as SCD2.`,
+    `<b>Overwritten:</b> Ben is now Platinum for all time, including orders he placed as a Gold customer.`,
+    `<b>No-op</b> thanks to the hash check (an SCD1 MERGE without it would still rewrite the row, which is harmless but costs micro-partition rewrites).`,
+    `<b>Overwritten again.</b> Ask "what tier was C001 on 2024-03-01?" and SCD1 answers <b>Gold</b>, which is wrong (it was Silver). That's the price of Type 1: simple and small, but no history.`,
+    `<b>Hard delete</b> (WHEN MATCHED AND op = 'D' THEN DELETE). The row is gone. Fact rows that referenced C003 now have no dimension row unless you keep an "unknown member" row.`
+  ]
+};
+$('#scBar').innerHTML = Array.from({ length: SC_STEPS.length + 1 }, (_, i) => `<span data-i="${i}"></span>`).join('');
+$$('#scBar span').forEach(s => s.onclick = () => { SC.i = +s.dataset.i; scDraw(); });
+function scDraw() {
+  const { rows, act } = scBuild(SC.type, SC.i), two = SC.type === '2';
+  $$('#scBar span').forEach((s, k) => s.classList.toggle('on', k <= SC.i));
+  const s = SC.i ? SC_STEPS[SC.i - 1] : null;
+  $('#scSrc').innerHTML = s ? `SOURCE CHANGE ${SC.i}/${SC_STEPS.length} · ${s.d} · ${esc(s.txt)}` : 'SOURCE · 2024-01-01 · initial load of C001 and C002';
+  const sorted = [...rows].sort((a, b) => a.id.localeCompare(b.id) || a.sk - b.sk);
+  $('#scTbl').innerHTML = (two ? `<tr><th>SK</th><th>CUSTOMER_ID</th><th>NAME</th><th>CITY</th><th>TIER</th><th>EFFECTIVE_FROM</th><th>EFFECTIVE_TO</th><th>IS_CURRENT</th><th>HASH_DIFF</th></tr>` : `<tr><th>CUSTOMER_ID</th><th>NAME</th><th>CITY</th><th>TIER</th><th>UPDATED_AT</th><th>HASH_DIFF</th></tr>`) +
+    sorted.map(r => {
+      const cls = r.flag === 'new' ? 'r-new' : r.flag === 'closed' ? 'r-closed' : r.flag === 'upd' ? 'r-upd' : r.flag === 'del' ? 'r-del' : (!r.cur ? 'r-old' : '');
+      return two ? `<tr class="${cls}"><td class="m">${r.sk}</td><td class="m">${r.id}</td><td>${r.name}</td><td>${r.city}</td><td>${r.tier}</td><td class="m">${r.from}</td><td class="m">${r.to}</td><td class="m">${r.cur ? 'TRUE' : 'FALSE'}</td><td class="m">${r.hash}</td></tr>`
+        : `<tr class="${cls}"><td class="m">${r.id}</td><td>${r.name}</td><td>${r.city}</td><td>${r.tier}</td><td class="m">${r.upd}</td><td class="m">${r.hash}</td></tr>`;
+    }).join('');
+  const live = rows.filter(r => r.flag !== 'del');
+  $('#scRows').textContent = live.length; $('#scCur').textContent = live.filter(r => r.cur).length;
+  $('#scAct').textContent = act;
+  let asOf;
+  if (two) { const r = live.find(x => x.id === 'C001' && x.from <= '2024-03-01' && x.to > '2024-03-01'); asOf = r ? r.tier + ' ✓' : '–'; }
+  else { const r = live.find(x => x.id === 'C001'); asOf = r.tier === 'Silver' ? 'Silver (luck)' : r.tier + ' ✗ wrong'; }
+  $('#scAsOf').textContent = asOf;
+  $('#scIns').innerHTML = SC_NOTES[SC.type][SC.i];
+  $('#scNext').disabled = SC.i === SC_STEPS.length; $('#scPrev').disabled = SC.i === 0;
+}
+$('#scNext').onclick = () => { if (SC.i < SC_STEPS.length) { SC.i++; scDraw(); } };
+$('#scPrev').onclick = () => { if (SC.i > 0) { SC.i--; scDraw(); } };
+$('#scReset').onclick = () => { SC.i = 0; scDraw(); };
+tabs('#scType', d => { SC.type = d.v; scDraw(); });
+scDraw();
+
+/* ===== 05 dedup visualizer ===== */
+const DD_BASE = [
+  { id: 101, st: 'NEW', u: '10:00', g: '10:05', f: 'f1.json' },
+  { id: 101, st: 'NEW', u: '10:00', g: '10:20', f: 'f2.json (re-sent)' },
+  { id: 102, st: 'NEW', u: '10:02', g: '10:05', f: 'f1.json' },
+  { id: 102, st: 'PAID', u: '10:30', g: '10:35', f: 'f3.json' },
+  { id: 103, st: 'NEW', u: '10:10', g: '10:15', f: 'f1.json' },
+  { id: 103, st: 'SHIPPED', u: '11:00', g: '11:05', f: 'f4.json' },
+  { id: 104, st: 'PAID', u: '10:40', g: '10:45', f: 'f3.json' },
+  { id: 104, st: 'REFUNDED', u: '10:40', g: '10:50', f: 'f3b.json' }
+];
+const DD_LATE = { id: 103, st: 'PAID', u: '10:45', g: '11:30', f: 'f5.json (late)' };
+const DD = { fn: 'ROW_NUMBER', ord: 'u', late: false, seed: 1 };
+const ddRand = () => { DD.seed = (DD.seed * 9301 + 49297) % 233280; return DD.seed / 233280; };
+function ddDraw() {
+  const rows = DD_BASE.concat(DD.late ? [DD_LATE] : []).map((r, i) => ({ ...r, i }));
+  const keyOf = r => DD.ord === 'u' ? [r.u] : DD.ord === 'ui' ? [r.u, r.g] : [r.g];
+  const cmp = (a, b) => { const ka = keyOf(a), kb = keyOf(b); for (let k = 0; k < ka.length; k++) { if (ka[k] !== kb[k]) return ka[k] < kb[k] ? 1 : -1; } return 0; };
+  const groups = {}; rows.forEach(r => (groups[r.id] = groups[r.id] || []).push(r));
+  let kept = 0, dupKeys = 0, ndKeys = [], out = [];
+  Object.keys(groups).sort().forEach(id => {
+    const g = groups[id].map(r => ({ ...r, rnd: ddRand() }));
+    g.sort((a, b) => cmp(a, b) || a.rnd - b.rnd);
+    let rank = 0, dense = 0;
+    g.forEach((r, k) => {
+      const tiePrev = k > 0 && cmp(g[k - 1], r) === 0;
+      if (!tiePrev) { rank = k + 1; dense++; }
+      r.n = DD.fn === 'ROW_NUMBER' ? k + 1 : DD.fn === 'RANK' ? rank : dense;
+      r.tie = g.some((x, j) => j !== k && cmp(x, r) === 0);
+    });
+    const winners = g.filter(r => r.n === 1);
+    kept += winners.length; if (winners.length > 1) dupKeys++;
+    if (DD.fn === 'ROW_NUMBER' && g.length > 1 && cmp(g[0], g[1]) === 0) ndKeys.push(+id);
+    g.forEach((r, k) => out.push({ ...r, first: k === 0 }));
+  });
+  $('#ddTbl').innerHTML = `<tr><th>${DD.fn === 'ROW_NUMBER' ? 'RN' : DD.fn === 'RANK' ? 'RANK' : 'DRANK'}</th><th>ORDER_ID</th><th>STATUS</th><th>UPDATED_AT</th><th>_INGEST_TS</th><th>FILE</th></tr>` +
+    out.map(r => `<tr class="ddrow ${r.n === 1 ? 'keep' : 'drop'} ${r.tie ? 'tie' : ''} ${r.first ? 'grp' : ''}"><td class="m">${r.n}</td><td class="m">${r.id}</td><td class="m">${r.st}</td><td class="m">${r.u}</td><td class="m">${r.g}</td><td class="m">${esc(r.f)}</td></tr>`).join('');
+  const ob = DD.ord === 'u' ? 'updated_at DESC' : DD.ord === 'ui' ? 'updated_at DESC, _ingest_ts DESC' : '_ingest_ts DESC';
+  $('#ddSql').textContent = `SELECT *\nFROM raw_orders\nQUALIFY ${DD.fn}() OVER (\n  PARTITION BY order_id\n  ORDER BY ${ob}\n) = 1;`;
+  $('#ddRaw').textContent = rows.length; $('#ddKeep').textContent = kept; $('#ddDup').textContent = dupKeys;
+  $('#ddND').textContent = ndKeys.length;
+  const w103 = out.find(r => r.id === 103 && r.n === 1), w104 = out.filter(r => r.id === 104 && r.n === 1).map(r => r.st).join(' + ');
+  const notes = [];
+  if (DD.fn !== 'ROW_NUMBER') notes.push(`<b>${DD.fn} keeps ties:</b> ${dupKeys ? `${dupKeys} key${dupKeys > 1 ? 's' : ''} still ha${dupKeys > 1 ? 've' : 's'} two "rank 1" rows (order 104: ${w104})` : 'no ties at the top right now, but any future tie would leak duplicates'}. Use ROW_NUMBER for dedup.`);
+  if (DD.fn === 'ROW_NUMBER' && DD.ord === 'u') notes.push(`<b>Nondeterministic:</b> order 104 has two rows with the same updated_at, so the survivor is <b>${w104}</b> this time, and may differ on the next run (press <b>Run again</b>). Order 101's tie is harmless (identical content), but 104's isn't. Add <code>_ingest_ts DESC</code> as a tie-breaker.`);
+  if (DD.ord === 'i' && DD.late) notes.push(`<b>Late data went backwards:</b> ordering by arrival picked <b>${w103.st}</b> for order 103, an older status that arrived late, overwriting SHIPPED. Order by the source's version (updated_at) first.`);
+  else if (DD.ord === 'i') notes.push(`<b>Arrival order looks fine today</b>, only because nothing arrived out of order. Turn on the late arrival to see it break.`);
+  if (DD.ord === 'ui' && DD.fn === 'ROW_NUMBER') notes.push(`<b>Deterministic and correct:</b> the source's version decides, arrival time breaks ties, and exactly one row per key survives${DD.late ? '. The late, older PAID row for 103 correctly loses to SHIPPED' : ''}.`);
+  $('#ddIns').innerHTML = notes.join(' ');
+}
+tabs('#ddFn', d => { DD.fn = d.v; ddDraw(); });
+tabs('#ddOrd', d => { DD.ord = d.v; ddDraw(); });
+tabs('#ddLate', d => { DD.late = d.v === '1'; ddDraw(); });
+$('#ddRerun').onclick = () => { DD.seed = Math.floor(Math.random() * 233280); ddDraw(); };
+ddDraw();
+
+/* ===== 05 re-runnable loads ===== */
+const RR = { strat: 'app', src: 5, corrected: false, rows: [], other: 1000, runs: 0 };
+function rrDraw(note) {
+  const n = RR.rows.length, ok = RR.src;
+  $('#rrN').textContent = fmt(n); $('#rrOk').textContent = ok; $('#rrO').textContent = fmt(RR.other); $('#rrRuns').textContent = RR.runs;
+  const stale = RR.corrected && RR.rows.some(r => r.id === 3 && !r.fixed);
+  const good = RR.runs > 0 && n === ok && RR.other === 1000 && !stale;
+  $('#rrV').innerHTML = RR.runs === 0 ? '–' : good ? '<span class="badge ok">CORRECT</span>' : '<span class="badge bad">WRONG</span>';
+  if (note) $('#rrIns').innerHTML = note;
+}
+$('#rrRun').onclick = () => rrRun();
+function rrRun(extra) {
+  const src = Array.from({ length: RR.src }, (_, k) => ({ id: k + 1, fixed: RR.corrected }));
+  RR.runs++;
+  let note;
+  if (RR.strat === 'app') { RR.rows.push(...src); note = `<b>Append is not idempotent.</b> Run ${RR.runs} added ${src.length} more rows: now ${RR.rows.length} rows for a day that has ${RR.src}. ${RR.corrected ? 'The old and corrected versions of order 3 both exist.' : 'An orchestrator retry just doubled revenue.'}`; }
+  else if (RR.strat === 'merge') { src.forEach(s => { const t = RR.rows.find(r => r.id === s.id); if (t) t.fixed = s.fixed; else RR.rows.push({ ...s }); }); note = `<b>MERGE is idempotent:</b> matching keys are updated, new keys inserted. Run it 10 times and you still have ${RR.rows.length} rows. ${RR.corrected ? 'The correction updated order 3 and inserted order 6.' : ''} Caveat: MERGE alone doesn't remove rows that disappeared from the source.`; }
+  else if (RR.strat === 'del') { RR.rows = src.map(s => ({ ...s })); note = `<b>DELETE + INSERT for the date, in one transaction, is idempotent:</b> the day is replaced wholesale, other days untouched, readers never see an empty day. It also handles rows that vanished from the source, which MERGE doesn't.`; }
+  else { RR.rows = src.map(s => ({ ...s })); RR.other = 0; note = `<b>INSERT OVERWRITE replaced the whole table</b> with the SELECT result, which only contained 2024-06-01. Idempotent, yes, but the 1,000 rows from earlier days are gone (recoverable with Time Travel, Module 07). Use it only when the SELECT produces the complete table, e.g. small reference tables.`; }
+  rrDraw((extra || '') + note);
+}
+$('#rrLate').onclick = () => { RR.src = 6; RR.corrected = true; rrRun('<b>Corrected file arrived</b> and the load re-ran. '); };
+$('#rrReset').onclick = () => { Object.assign(RR, { src: 5, corrected: false, rows: [], other: 1000, runs: 0 }); rrDraw('Pick a strategy and press <b>Run the load</b> two or three times, as an orchestrator retry would.'); };
+tabs('#rrStrat', d => { RR.strat = d.v; $('#rrReset').onclick(); });
+rrDraw();
+
+/* ===== 06 UDF comparison ===== */
+const UF = {
+  sql: { c: `CREATE OR REPLACE FUNCTION clean_phone(p STRING)
+  RETURNS STRING
+AS
+$$
+  IFF(LENGTH(REGEXP_REPLACE(p, '[^0-9]', '')) >= 10,
+      RIGHT(REGEXP_REPLACE(p, '[^0-9]', ''), 10),
+      NULL)
+$$;
+
+SELECT clean_phone(phone) FROM customers;`, p: [['Runs where', 'Inside the query plan (warehouse)'], ['Inlined by optimizer', 'Typically yes'], ['Rows per call', 'n/a, it becomes part of the SQL'], ['Libraries', 'Built-in SQL functions only'], ['Best for', 'Reusable expressions, business rules']], n: `<b>Start here.</b> A SQL UDF is essentially a named expression. Because it's inlined, there's no sandbox, no data serialization, and pruning and other optimizations still work. If the logic fits in SQL, this is nearly always the fastest choice.` },
+  py: { c: `CREATE OR REPLACE FUNCTION clean_phone_py(p STRING)
+  RETURNS STRING
+  LANGUAGE PYTHON
+  RUNTIME_VERSION = '3.11'
+  HANDLER = 'clean'
+AS $$
+import re
+def clean(p):
+    if p is None:
+        return None
+    digits = re.sub(r'\\D', '', p)
+    return digits[-10:] if len(digits) >= 10 else None
+$$;`, p: [['Runs where', 'Python sandbox on warehouse nodes'], ['Inlined by optimizer', 'No'], ['Rows per call', '1 row per handler call'], ['Libraries', 'PACKAGES (Anaconda channel), IMPORTS from stages'], ['Best for', 'Logic that needs Python or its libraries']], n: `<b>Flexible, with overhead.</b> Rows are shipped from the query engine to a Python process and results shipped back. The handler is called once per row, so per-call overhead dominates for simple logic. Imports at module level run once per process, not per row: load models and lookup files there.` },
+  vec: { c: `CREATE OR REPLACE FUNCTION clean_phone_vec(p STRING)
+  RETURNS STRING
+  LANGUAGE PYTHON
+  RUNTIME_VERSION = '3.11'
+  PACKAGES = ('pandas')
+  HANDLER = 'clean'
+AS $$
+import pandas as pd
+from _snowflake import vectorized
+
+@vectorized(input=pd.DataFrame)
+def clean(df):
+    digits = df[0].str.replace(r'\\D', '', regex=True)
+    return digits.str[-10:].where(digits.str.len() >= 10)
+$$;`, p: [['Runs where', 'Python sandbox on warehouse nodes'], ['Inlined by optimizer', 'No'], ['Rows per call', 'A batch (pandas DataFrame) per call'], ['Libraries', 'pandas plus any PACKAGES'], ['Best for', 'Numeric scoring, ML inference, column-wise maths']], n: `<b>Same sandbox, far fewer calls.</b> The handler receives a DataFrame whose columns are the arguments (<code>df[0]</code>, <code>df[1]</code>…) and returns a Series of the same length. Vectorised pandas/NumPy operations then run in optimized native code. Snowflake picks the batch size; you can cap it with <code>max_batch_size</code>.` },
+  java: { c: `CREATE OR REPLACE FUNCTION clean_phone_java(p STRING)
+  RETURNS STRING
+  LANGUAGE JAVA
+  RUNTIME_VERSION = '11'
+  HANDLER = 'Phone.clean'
+AS $$
+class Phone {
+  public static String clean(String p) {
+    if (p == null) return null;
+    String d = p.replaceAll("\\\\D", "");
+    return d.length() >= 10 ? d.substring(d.length() - 10) : null;
+  }
+}
+$$;`, p: [['Runs where', 'JVM sandbox on warehouse nodes'], ['Inlined by optimizer', 'No'], ['Rows per call', '1 row per call (UDTFs: process/endPartition)'], ['Libraries', 'JARs via IMPORTS from a stage'], ['Best for', 'Reusing existing Java libraries, CPU-heavy logic']], n: `<b>Java UDFs</b> suit teams with existing JVM code (parsers, validators). Code can be inline as here or compiled into a JAR on a stage. JVM start-up is paid per process, after which per-row calls are cheap.` },
+  js: { c: `CREATE OR REPLACE FUNCTION clean_phone_js(P STRING)
+  RETURNS STRING
+  LANGUAGE JAVASCRIPT
+AS $$
+  if (P === undefined || P === null) return null;
+  var d = P.replace(/\\D/g, '');
+  return d.length >= 10 ? d.slice(-10) : null;
+$$;`, p: [['Runs where', 'JavaScript engine on warehouse nodes'], ['Inlined by optimizer', 'No'], ['Rows per call', '1 row per call'], ['Libraries', 'None (no package imports)'], ['Best for', 'Legacy code; small string/JSON logic']], n: `<b>The oldest UDF language</b>, still common in existing code. Same trap as JavaScript procedures: argument names are referenced in <b>UPPERCASE</b> (<code>P</code>). SQL NULL arrives as <code>undefined</code>, hence the double check. For new work, prefer SQL or Python.` },
+  udtf: { c: `CREATE OR REPLACE FUNCTION sessionize(event_ts TIMESTAMP_NTZ)
+  RETURNS TABLE (session_no INT, event_ts TIMESTAMP_NTZ)
+  LANGUAGE PYTHON
+  RUNTIME_VERSION = '3.11'
+  HANDLER = 'Sessionize'
+AS $$
+class Sessionize:
+    def __init__(self):
+        self.session, self.last = 0, None
+    def process(self, event_ts):
+        if self.last is None or (event_ts - self.last).total_seconds() > 1800:
+            self.session += 1
+        self.last = event_ts
+        yield (self.session, event_ts)
+$$;
+
+SELECT e.user_id, s.session_no, s.event_ts
+FROM events e,
+     TABLE(sessionize(e.event_ts) OVER (PARTITION BY e.user_id ORDER BY e.event_ts)) s;`, p: [['Runs where', 'Python sandbox on warehouse nodes'], ['Called from', 'FROM clause: TABLE(fn(...) OVER (...))'], ['Rows per call', 'process() per row; yields 0..n rows'], ['State', 'Kept on the instance per partition'], ['Best for', 'Sessionization, exploding, stateful per-group logic']], n: `<b>A UDTF is a class.</b> <code>__init__</code> runs once per partition, <code>process</code> runs for every row (in the ORDER BY order) and <code>yield</code>s output rows, and an optional <code>end_partition</code> runs after the partition's last row (e.g. to emit a summary). <code>PARTITION BY user_id</code> means each user gets a fresh instance, and partitions can be processed in parallel.` }
+};
+function ufShow(k) { const x = UF[k]; $('#ufCode').textContent = x.c; $('#ufProps').innerHTML = '<tr><th>PROPERTY</th><th>VALUE</th></tr>' + x.p.map(([a, b]) => `<tr><td>${a}</td><td>${b}</td></tr>`).join(''); $('#ufIns').innerHTML = x.n; }
+tabs('#ufTabs', d => ufShow(d.v));
+ufShow('sql');
+
+const UF_ROWS = [1e6, 10e6, 100e6, 500e6, 1e9], UF_B = [100, 1000, 5000, 10000, 50000];
+function ufBDraw() {
+  const r = UF_ROWS[+$('#ufRows').value], b = UF_B[+$('#ufBatch').value];
+  $('#ufRowsV').textContent = big(r) + ' rows'; $('#ufBatchV').textContent = fmt(b) + ' rows / batch';
+  const sc = r, vc = Math.ceil(r / b);
+  const st = r * 6e-6 / 16, vt = (vc * 200e-6 + r * 0.3e-6) / 16;
+  $('#ufSC').textContent = big(sc) + ' calls'; $('#ufVC').textContent = big(vc) + ' calls';
+  $('#ufSB').style.width = '100%'; $('#ufVB').style.width = Math.max(0.5, vc / sc * 100) + '%';
+  $('#ufST').textContent = secs2(st); $('#ufVT').textContent = secs2(vt); $('#ufX').textContent = fmt(st / vt, 1) + '×';
+  $('#ufBIns').innerHTML = b <= 100 ? `<b>Tiny batches</b> bring back much of the per-call overhead (${big(vc)} calls). Let Snowflake choose the batch size unless memory forces a cap.` : `<b>${fmt(st / vt, 1)}× faster in this model:</b> per-call overhead (moving data in and out of Python, calling the function) is paid ${big(vc)} times instead of ${big(sc)}, and the maths runs in vectorised native code. Real gains depend on the logic; measure with the Query Profile.`;
+}
+$('#ufRows').oninput = ufBDraw; $('#ufBatch').oninput = ufBDraw;
+ufBDraw();
+
+/* ===== 07 transactions & concurrency ===== */
+const TX = { a: 'auto', b: 'sel', to: 43200 };
+function txDraw() {
+  const X = t => 120 + t * 4.8, rel = TX.a === 'auto' ? 40 : 100;
+  let h = `<text class="lane-l" x="8" y="48">SESSION A</text><text class="lane-l" x="8" y="62" style="fill:var(--ink3)">nightly job</text><text class="lane-l" x="8" y="108">SESSION B</text><text class="lane-l" x="8" y="122" style="fill:var(--ink3)">starts at 10 s</text>`;
+  h += `<rect x="120" y="30" width="624" height="44" rx="6" fill="var(--card2)" opacity=".5"/><rect x="120" y="90" width="624" height="44" rx="6" fill="var(--card2)" opacity=".5"/>`;
+  const blk = (s, e, y, fill, stroke, label, dash) => `<rect x="${X(s)}" y="${y}" width="${Math.max(3, X(e) - X(s))}" height="32" rx="6" fill="${fill}" stroke="${stroke}" stroke-width="1.5" ${dash ? 'stroke-dasharray="5 4"' : ''}/><text class="tm" x="${(X(s) + X(e)) / 2}" y="${y + 17}" text-anchor="middle" dominant-baseline="central" style="fill:var(--ink)">${label}</text>`;
+  if (TX.a === 'auto') h += blk(0, 40, 36, 'var(--ice-s)', 'var(--ice)', 'MERGE · lock held · autocommit');
+  else { h += blk(0, 40, 36, 'var(--ice-s)', 'var(--ice)', 'BEGIN · MERGE'); h += blk(40, 100, 36, 'var(--amber-s)', 'var(--amber)', 'more work · lock STILL held'); h += `<line x1="${X(100)}" x2="${X(100)}" y1="30" y2="74" stroke="var(--teal)" stroke-width="3"/><text class="tm" x="${X(100) + 4}" y="26" style="fill:var(--teal)">COMMIT</text>`; }
+  h += `<line x1="${X(rel)}" x2="${X(rel)}" y1="76" y2="140" stroke="var(--teal)" stroke-dasharray="3 3"/><text class="tm" x="${X(rel) + 4}" y="150" style="fill:var(--teal)">lock released @ ${rel}s</text>`;
+  let wait = 0, res, sees, ins;
+  const writer = ['upd', 'mrg', 'del'].includes(TX.b), name = { sel: 'SELECT', ins: 'INSERT', upd: 'UPDATE', mrg: 'MERGE', del: 'DELETE' }[TX.b];
+  if (!writer) {
+    const e = TX.b === 'sel' ? 14 : 18;
+    h += blk(10, e, 96, 'var(--teal-s)', 'var(--teal)', name);
+    res = '<span class="badge ok">DONE</span>';
+    if (TX.b === 'sel') { sees = 'No: old version'; ins = `<b>Readers never wait.</b> The SELECT started at 10 s, read the latest <b>committed</b> version of FACT_SALES (from before A's ${TX.a === 'auto' ? 'MERGE' : 'transaction'}), and finished. A's uncommitted changes are invisible to it (READ COMMITTED). No locks involved.`; }
+    else { sees = 'n/a (new rows only)'; ins = `<b>INSERT usually doesn't queue behind UPDATE/MERGE/DELETE:</b> it only adds new micro-partitions and doesn't modify existing ones, so it typically runs alongside A. That's why "fan in with INSERT/COPY, apply with one MERGE" is a good pattern. (Edge cases exist; check the docs on transactions and locking.)`; }
+  } else {
+    wait = rel - 10;
+    if (wait > TX.to) {
+      h += blk(10, 10 + TX.to, 96, 'var(--amber-s)', 'var(--amber)', 'waiting for lock…', true);
+      h += `<text class="th" x="${X(10 + TX.to) + 8}" y="113" dominant-baseline="central" style="fill:var(--red)">✕ lock wait timeout</text>`;
+      wait = TX.to; res = '<span class="badge bad">FAILED</span>'; sees = '–';
+      ins = `<b>${name} gave up after ${TX.to} s.</b> A's explicit transaction held the table lock for 100 s, and B's <code>LOCK_TIMEOUT</code> was 45 s, so B failed with a lock-timeout error. This is the classic "intermittent failure" when two jobs overlap. Fixes: shorten A's transaction, schedule the jobs apart, or make one job the single writer.`;
+    } else {
+      h += blk(10, rel, 96, 'var(--amber-s)', 'var(--amber)', 'waiting for lock…', true);
+      h += blk(rel, rel + 15, 96, 'var(--teal-s)', 'var(--teal)', name);
+      res = '<span class="badge ok">DONE (late)</span>'; sees = 'Yes';
+      ins = `<b>${name} waited ${wait} s</b> because UPDATE, DELETE and MERGE on the same table generally can't run in parallel. ${TX.a === 'exp' ? 'Inside an explicit transaction, A keeps its lock until COMMIT, so 60 s of unrelated work after the MERGE became 60 s of extra waiting for B. Keep explicit transactions short.' : 'With autocommit, A released the lock as soon as its MERGE finished.'} When B finally ran, it saw A's committed changes. With the default LOCK_TIMEOUT (12 hours) B would wait a very long time before failing, so set a sensible timeout for pipeline jobs.`;
+    }
+  }
+  [0, 30, 60, 90, 120].forEach(t => { h += `<text class="tm" x="${X(t)}" y="166" text-anchor="middle">${t}s</text>`; });
+  $('#txSvg').innerHTML = h;
+  $('#txW').textContent = wait + ' s'; $('#txR').innerHTML = res; $('#txS').textContent = sees; $('#txIns').innerHTML = ins;
+}
+tabs('#txA', d => { TX.a = d.v; txDraw(); }); tabs('#txB', d => { TX.b = d.v; txDraw(); }); tabs('#txT', d => { TX.to = +d.v; txDraw(); });
+txDraw();
+</script>
+
+<script>
+/* ===== 08 SQL lab ===== */
+const SQL = [
+  { t: 'Create a DT pipeline', l: [
+    ['-- Layer 1: clean + dedup raw orders', 'A comment. The pipeline has two dynamic tables: a staging layer and a mart that reads from it.'],
+    ['CREATE OR REPLACE DYNAMIC TABLE analytics.stg_orders', 'Creates (or replaces) a dynamic table. Replacing re-initializes it, so in production prefer ALTER where possible.'],
+    ['  TARGET_LAG = DOWNSTREAM', 'Intermediate layer: refresh only when a downstream DT (daily_sales) needs fresh data. No independent schedule.'],
+    ['  WAREHOUSE = transform_wh', 'The warehouse that runs this DT\'s refreshes and is billed for them. Keep it separate from BI warehouses.'],
+    ['  REFRESH_MODE = INCREMENTAL', 'Pin the mode. If this query can\'t be refreshed incrementally, the CREATE fails loudly instead of silently running full refreshes.'],
+    ['AS', 'Everything after AS is the query that defines the table\'s contents.'],
+    ['SELECT order_id, customer_id, amount::NUMBER(12,2) AS amount, status, order_ts, updated_at', 'Pick and type the columns. The :: cast turns a raw string or float into a fixed-precision number.'],
+    ['FROM raw.orders', 'The base table. Snowflake enables change tracking on it (if the owner has the right privileges) so it can find changed rows.'],
+    ['QUALIFY ROW_NUMBER() OVER (PARTITION BY order_id ORDER BY updated_at DESC, _ingest_ts DESC) = 1;', 'Dedup: keep the newest version per order, with a tie-breaker so the result is deterministic.'],
+    ['', ''],
+    ['-- Layer 2: business mart that users query', 'The leaf of the graph. It gets the time-based lag that drives everything above it.'],
+    ['CREATE OR REPLACE DYNAMIC TABLE analytics.daily_sales', 'A second dynamic table that reads from the first. Snowflake infers the dependency automatically.'],
+    ["  TARGET_LAG = '15 minutes'", 'Data should be at most 15 minutes behind raw.orders and raw.customers (lag is measured against base tables).'],
+    ['  WAREHOUSE = transform_wh', 'Same refresh warehouse; refreshes across the graph are coordinated.'],
+    ['  REFRESH_MODE = INCREMENTAL', 'GROUP BY + inner join is a classic incremental-capable shape: only affected (day, region) groups are recomputed.'],
+    ['  INITIALIZE = ON_CREATE', 'The default: populate synchronously during CREATE. Use ON_SCHEDULE to return immediately and populate at the first scheduled refresh.'],
+    ['AS', 'Start of the defining query.'],
+    ['SELECT o.order_ts::DATE AS order_day, c.region,', 'Group keys: calendar day and customer region.'],
+    ['       SUM(o.amount) AS revenue, COUNT(*) AS orders', 'Aggregates. Deterministic, so fine for incremental refresh.'],
+    ['FROM analytics.stg_orders o', 'Reads the upstream DT. It will be refreshed to the same data timestamp first.'],
+    ['JOIN raw.customers c ON c.customer_id = o.customer_id', 'Joins a second base table. Changes in either side flow into the delta.'],
+    ["WHERE o.status <> 'CANCELLED'", 'Filters are pushed into the delta query too.'],
+    ['GROUP BY 1, 2;', 'Group by the first and second select-list columns (order_day, region).']
+  ] },
+  { t: 'Operate DTs', l: [
+    ["SHOW DYNAMIC TABLES LIKE 'DAILY%' IN SCHEMA analytics;", 'Lists DTs with target_lag, refresh_mode, refresh_mode_reason, scheduling_state (running or suspended) and data_timestamp.'],
+    ["ALTER DYNAMIC TABLE analytics.daily_sales SET TARGET_LAG = '1 hour';", 'Relax freshness to cut cost. Takes effect for future scheduling, with no rebuild.'],
+    ['ALTER DYNAMIC TABLE analytics.daily_sales SET WAREHOUSE = transform_wh_m;', 'Move refreshes to a bigger (or smaller) warehouse.'],
+    ['ALTER DYNAMIC TABLE analytics.daily_sales SUSPEND;', 'Stop scheduled refreshes, e.g. during an upstream incident or to save cost. Data stays queryable but grows stale.'],
+    ['ALTER DYNAMIC TABLE analytics.daily_sales RESUME;', 'Resume scheduled refreshes. The next refresh catches up on all changes since suspension.'],
+    ['ALTER DYNAMIC TABLE analytics.daily_sales REFRESH;', 'Trigger a manual refresh now (also refreshes upstream DTs as needed). Useful after a backfill or for DTs with no time-based consumer.'],
+    ['GRANT OPERATE ON DYNAMIC TABLE analytics.daily_sales TO ROLE pipeline_ops;', 'OPERATE lets a role suspend, resume and refresh the DT without owning it.'],
+    ['GRANT SELECT ON DYNAMIC TABLE analytics.daily_sales TO ROLE bi_reader;', 'Readers just need SELECT, like any table.'],
+    ['DESCRIBE DYNAMIC TABLE analytics.daily_sales;', 'Shows the columns and their types.'],
+    ['-- Changing REFRESH_MODE or the query means CREATE OR REPLACE (re-initializes)', 'The mode and the defining query are fixed at creation: change them by recreating the DT, which triggers a fresh initialization.']
+  ] },
+  { t: 'Monitor refreshes', l: [
+    ['SELECT name, state, refresh_action, refresh_trigger,', 'state: SUCCEEDED / FAILED / SKIPPED…; refresh_action: NO_DATA, INCREMENTAL, FULL or REINITIALIZE; refresh_trigger: SCHEDULED, MANUAL or CREATION.'],
+    ['       data_timestamp, refresh_start_time, refresh_end_time,', 'data_timestamp: the point in time the DT\'s content reflects. Freshness lag = now minus this.'],
+    ["       DATEDIFF('second', refresh_start_time, refresh_end_time) AS secs,", 'Duration of each refresh: the first thing to trend when refreshes get slower.'],
+    ['       state_message', 'Error text for failed refreshes.'],
+    ['FROM TABLE(INFORMATION_SCHEMA.DYNAMIC_TABLE_REFRESH_HISTORY(', 'Table function with recent refresh history (no ACCOUNT_USAGE latency).'],
+    ["       NAME => 'SALES_DB.ANALYTICS.DAILY_SALES'))", 'Filter to one DT by its fully qualified name.'],
+    ['ORDER BY refresh_start_time DESC', 'Newest first.'],
+    ['LIMIT 50;', 'Last 50 refreshes.'],
+    ['', ''],
+    ['SELECT name, state, state_message, refresh_start_time', 'Second query: failures only, across all DTs you can see.'],
+    ['FROM TABLE(INFORMATION_SCHEMA.DYNAMIC_TABLE_REFRESH_HISTORY(ERROR_ONLY => TRUE))', 'ERROR_ONLY => TRUE returns only failed refreshes. A good basis for an alert.'],
+    ['ORDER BY refresh_start_time DESC;', 'Newest failures first.'],
+    ['', ''],
+    ['SELECT * FROM TABLE(INFORMATION_SCHEMA.DYNAMIC_TABLE_GRAPH_HISTORY());', 'The dependency graph: each DT, its inputs, target lag and scheduling state. The same data behind the Snowsight graph view.'],
+    ['', ''],
+    ['SELECT name, refresh_action, COUNT(*) AS refreshes', 'Third query: a weekly profile of how each DT refreshes.'],
+    ['FROM SNOWFLAKE.ACCOUNT_USAGE.DYNAMIC_TABLE_REFRESH_HISTORY', 'Account-wide, longer history, with some ingestion latency.'],
+    ["WHERE refresh_start_time > DATEADD('day', -7, CURRENT_TIMESTAMP())", 'Last 7 days.'],
+    ['GROUP BY 1, 2 ORDER BY 3 DESC;', 'Lots of FULL on a big DT, or lots of refreshes on a DT nobody needs that fresh, are your cost leads.']
+  ] },
+  { t: 'SCD2 MERGE', l: [
+    ['CREATE OR REPLACE TEMPORARY TABLE stg_customer AS', 'Step 1: prepare a clean source batch. Temporary = visible only to this session, dropped at session end.'],
+    ['SELECT customer_id, name, city, tier, changed_at,', 'Business columns plus the source system\'s change time (used for effective dates).'],
+    ["       MD5(CONCAT_WS('||', COALESCE(name, ''), COALESCE(city, ''), COALESCE(tier, ''))) AS hash_diff", 'One hash of all tracked columns. COALESCE first, because CONCAT_WS returns NULL if any input is NULL.'],
+    ['FROM raw.customer_changes', 'The incoming change feed.'],
+    ['QUALIFY ROW_NUMBER() OVER (PARTITION BY customer_id ORDER BY changed_at DESC) = 1;', 'One row per key, or the MERGE could hit a nondeterministic-merge error.'],
+    ['', ''],
+    ['MERGE INTO dim_customer t', 'Step 2: the SCD2 MERGE into the dimension.'],
+    ['USING (', 'The source is built so that changed customers appear twice.'],
+    ['  SELECT s.customer_id AS merge_key, s.* FROM stg_customer s', 'Copy 1: every incoming row with its real key. Matches the current row (to close it), or inserts if the customer is new.'],
+    ['  UNION ALL', 'Stack the second copy underneath.'],
+    ['  SELECT NULL AS merge_key, s.* FROM stg_customer s', 'Copy 2: a NULL key never matches anything, so it always goes to the INSERT branch.'],
+    ['  JOIN dim_customer d ON d.customer_id = s.customer_id AND d.is_current', 'Only for customers that already have a current row…'],
+    ['  WHERE d.hash_diff <> s.hash_diff', '…and whose tracked attributes actually changed. These become the new versions.'],
+    [') src', 'Alias for the combined source.'],
+    ['ON t.customer_id = src.merge_key AND t.is_current', 'Match only against the current version of each customer.'],
+    ['WHEN MATCHED AND t.hash_diff <> src.hash_diff THEN UPDATE SET', 'Changed customer: close the current row. Unchanged customers match but this condition is false, so nothing happens.'],
+    ['  t.is_current = FALSE,', 'The old version is no longer current.'],
+    ['  t.effective_to = src.changed_at', 'Its validity ends when the change happened in the source (half-open interval: [from, to) ).'],
+    ['WHEN NOT MATCHED THEN INSERT', 'New customers (copy 1, no match) and new versions (copy 2, NULL key) both land here.'],
+    ['  (customer_id, name, city, tier, hash_diff, effective_from, effective_to, is_current)', 'Target columns. A surrogate key column with a DEFAULT sequence or IDENTITY fills itself.'],
+    ['VALUES', 'Values for the new row.'],
+    ["  (src.customer_id, src.name, src.city, src.tier, src.hash_diff, src.changed_at, '9999-12-31', TRUE);", 'The new version: valid from the change time, open-ended, current.']
+  ] },
+  { t: 'Upsert, deletes & dedup', l: [
+    ['MERGE INTO orders t', 'CDC upsert: apply inserts, updates and deletes from a change batch.'],
+    ['USING (', 'Deduplicated source.'],
+    ['  SELECT * FROM orders_cdc_batch', 'Raw change rows; may contain several changes per order.'],
+    ['  QUALIFY ROW_NUMBER() OVER (PARTITION BY order_id', 'Keep one row per order…'],
+    ['                             ORDER BY source_lsn DESC, _ingest_ts DESC) = 1', '…the latest by the source\'s log sequence number, then arrival time as a tie-breaker.'],
+    [') s', 'Alias for the source.'],
+    ['ON t.order_id = s.order_id', 'Match on the business key.'],
+    ["WHEN MATCHED AND s.op = 'D' THEN DELETE", 'The source deleted this order: remove it (or set an is_deleted flag for a soft delete).'],
+    ['WHEN MATCHED AND s.source_lsn > t.source_lsn THEN UPDATE SET', 'Only apply changes that are newer than what we have, so late, older records can\'t overwrite newer ones.'],
+    ['  t.status = s.status, t.amount = s.amount, t.source_lsn = s.source_lsn', 'Columns to overwrite, including the version marker.'],
+    ["WHEN NOT MATCHED AND s.op <> 'D' THEN INSERT (order_id, status, amount, source_lsn)", 'New order: insert it, unless the first thing we ever saw is a delete.'],
+    ['  VALUES (s.order_id, s.status, s.amount, s.source_lsn);', 'Values for the new row.'],
+    ['', ''],
+    ['BEGIN TRANSACTION;', 'Idempotent per-date reload: start an explicit transaction so the delete and insert become visible together.'],
+    ["DELETE FROM fact_sales WHERE sale_date = '2024-06-01';", 'Remove anything loaded for this date before (by an earlier run or a retry).'],
+    ["INSERT INTO fact_sales SELECT * FROM stg_sales WHERE sale_date = '2024-06-01';", 'Insert the fresh data for the date.'],
+    ['COMMIT;', 'Both changes appear atomically; readers never see an empty day.'],
+    ['', ''],
+    ['INSERT OVERWRITE INTO dim_currency SELECT * FROM stg_currency;', 'Replace a small reference table completely (truncate + insert in one transaction). Only safe because the SELECT returns the whole table.'],
+    ['', ''],
+    ['SELECT order_id, COUNT(*) FROM orders GROUP BY 1 HAVING COUNT(*) > 1;', 'Data-quality check: must return zero rows. Fail the pipeline if it doesn\'t.']
+  ] },
+  { t: 'UDFs (SQL & vectorized Python)', l: [
+    ['CREATE OR REPLACE FUNCTION fiscal_quarter(d DATE)', 'A SQL UDF taking a DATE. Fiscal year here starts in October.'],
+    ['  RETURNS STRING', 'Return type.'],
+    ['AS', 'Body follows.'],
+    ['$$', 'Dollar quotes delimit the body, so single quotes inside need no escaping.'],
+    ["  'FY' || YEAR(DATEADD('month', 3, d)) || '-Q' || QUARTER(DATEADD('month', 3, d))", 'Shift the date 3 months forward, then take calendar year and quarter. October 2024 becomes FY2025-Q1.'],
+    ['$$;', 'End of body. SQL UDFs are typically inlined into the calling query.'],
+    ['', ''],
+    ['CREATE OR REPLACE FUNCTION score_risk(amount FLOAT, n_orders FLOAT)', 'A Python UDF with two numeric arguments.'],
+    ['  RETURNS FLOAT', 'One float per input row.'],
+    ['  LANGUAGE PYTHON', 'Runs in a Python sandbox on the warehouse.'],
+    ["  RUNTIME_VERSION = '3.11'", 'Python version (check docs for currently supported versions).'],
+    ["  PACKAGES = ('pandas', 'numpy')", 'Libraries from Snowflake\'s Anaconda channel.'],
+    ["  HANDLER = 'score'", 'The Python function Snowflake calls.'],
+    ['AS $$', 'Start of the Python code.'],
+    ['import numpy as np', 'Module-level code runs once per Python process, not per row.'],
+    ['import pandas as pd', 'pandas for the batch DataFrame.'],
+    ['from _snowflake import vectorized', 'The decorator that turns this into a vectorized UDF.'],
+    ['', ''],
+    ['@vectorized(input=pd.DataFrame, max_batch_size=10000)', 'Receive batches as DataFrames, at most 10,000 rows each.'],
+    ['def score(df):', 'df[0] is amount, df[1] is n_orders (columns follow argument order).'],
+    ['    return 1 / (1 + np.exp(-(0.002 * df[0] - 0.3 * df[1])))', 'A logistic score computed on whole columns at once; returns a Series of the same length.'],
+    ['$$;', 'End of the Python body.'],
+    ['', ''],
+    ['SELECT order_id, fiscal_quarter(order_ts::DATE) AS fq, score_risk(amount, n_orders) AS risk', 'Both UDFs are used like built-in functions.'],
+    ['FROM orders_enriched;', 'Source table.']
+  ] },
+  { t: 'UDTF & secure function', l: [
+    ['CREATE OR REPLACE FUNCTION sessionize(event_ts TIMESTAMP_NTZ)', 'A Python UDTF: it can return many rows.'],
+    ['  RETURNS TABLE (session_no INT, event_ts TIMESTAMP_NTZ)', 'RETURNS TABLE defines the output columns.'],
+    ['  LANGUAGE PYTHON', 'Python handler.'],
+    ["  RUNTIME_VERSION = '3.11'", 'Python version.'],
+    ["  HANDLER = 'Sessionize'", 'For a UDTF the handler is a class, not a function.'],
+    ['AS $$', 'Start of the Python code.'],
+    ['class Sessionize:', 'One instance is created per partition.'],
+    ['    def __init__(self):', 'Runs once per partition: initialise state.'],
+    ['        self.session, self.last = 0, None', 'Session counter and the previous event time.'],
+    ['    def process(self, event_ts):', 'Called once per input row, in the ORDER BY order of the partition.'],
+    ['        if self.last is None or (event_ts - self.last).total_seconds() > 1800:', 'More than 30 minutes since the previous event → a new session starts.'],
+    ['            self.session += 1', 'Increment the session number.'],
+    ['        self.last = event_ts', 'Remember this event for the next row.'],
+    ['        yield (self.session, event_ts)', 'Emit one output row. A UDTF may yield zero, one or many rows per input.'],
+    ['    def end_partition(self):', 'Optional: runs after the last row of the partition (e.g. to emit totals).'],
+    ['        pass', 'Nothing to emit here.'],
+    ['$$;', 'End of the UDTF body.'],
+    ['', ''],
+    ['SELECT e.user_id, s.session_no, s.event_ts', 'Call the UDTF from the FROM clause.'],
+    ['FROM events e,', 'Each event row feeds the function…'],
+    ['     TABLE(sessionize(e.event_ts) OVER (PARTITION BY e.user_id ORDER BY e.event_ts)) s;', '…partitioned per user and ordered by time, so state never leaks between users.'],
+    ['', ''],
+    ['CREATE OR REPLACE SECURE FUNCTION discount_rate(tier STRING)', 'SECURE hides the body from non-owners and disables optimizations that could expose data.'],
+    ['  RETURNS NUMBER(4,2)', 'Fixed-precision return type.'],
+    ["AS $$ CASE tier WHEN 'GOLD' THEN 0.15 WHEN 'SILVER' THEN 0.05 ELSE 0 END $$;", 'A pricing rule you may not want consumers (or share recipients) to read.'],
+    ['', ''],
+    ["SHOW USER FUNCTIONS LIKE 'DISCOUNT%';", 'Lists UDFs; is_secure shows TRUE, and the body is hidden from non-owners.']
+  ] }
+];
+const KW = /\b(CREATE|OR|REPLACE|DYNAMIC|TABLE|TABLES|TARGET_LAG|DOWNSTREAM|WAREHOUSE|REFRESH_MODE|INCREMENTAL|INITIALIZE|ON_CREATE|AS|SELECT|FROM|WHERE|GROUP|BY|ORDER|DESC|QUALIFY|ROW_NUMBER|OVER|PARTITION|JOIN|ON|SUM|COUNT|SHOW|LIKE|IN|SCHEMA|ALTER|SET|SUSPEND|RESUME|REFRESH|GRANT|OPERATE|TO|ROLE|DESCRIBE|LIMIT|MERGE|INTO|USING|UNION|ALL|WHEN|MATCHED|NOT|THEN|UPDATE|INSERT|DELETE|VALUES|AND|NULL|TRUE|FALSE|BEGIN|TRANSACTION|COMMIT|OVERWRITE|HAVING|FUNCTION|SECURE|RETURNS|LANGUAGE|PYTHON|RUNTIME_VERSION|PACKAGES|HANDLER|CASE|ELSE|END|TEMPORARY|DATEADD|CURRENT_TIMESTAMP|DATEDIFF|USER|FUNCTIONS|INFORMATION_SCHEMA)\b/g;
+const hl = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/('[^']*')/g, '\u0001$1\u0002').replace(KW, '<span class="kw">$1</span>').replace(/\b(\d+)\b/g, '<span class="num">$1</span>').replace(/\u0001([^\u0002]*)\u0002/g, (m, a) => '<span class="str">' + a.replace(/<[^>]+>/g, '') + '</span>');
+let sqlI = 0;
+function sqlShow(i) {
+  sqlI = i;
+  $$('#sqlTabs button').forEach((b, k) => b.classList.toggle('on', k === i));
+  $('#sqlCode').innerHTML = SQL[i].l.map(([l], k) => `<div data-k="${k}"><em>${k + 1}</em>${l.trim().startsWith('--') ? `<span style="color:var(--ink3)">${esc(l)}</span>` : hl(l) || ' '}</div>`).join('');
+  $('#sqlExp').innerHTML = '<b class="h">CLICK A LINE</b>Each line is explained in plain English.';
+  $$('#sqlCode div').forEach(d => d.onclick = () => {
+    const e = SQL[sqlI].l[d.dataset.k][1]; if (!e) return;
+    $$('#sqlCode div').forEach(x => x.classList.remove('on')); d.classList.add('on');
+    $('#sqlExp').innerHTML = `<b class="h">LINE ${+d.dataset.k + 1}</b>${esc(e)}`;
+  });
+}
+$('#sqlTabs').innerHTML = SQL.map(s => `<button>${s.t}</button>`).join('');
+$$('#sqlTabs button').forEach((b, i) => b.onclick = () => sqlShow(i));
+sqlShow(0);
+
+/* ===== 09 Q&A ===== */
+const QA = [
+  ['Dynamic tables', 'b', `What is a dynamic table and how is it different from a regular table?`, `<p>A dynamic table is a table whose contents are defined by a SELECT. Snowflake refreshes it automatically so it stays within a <b>TARGET_LAG</b> of its base tables, using the <b>WAREHOUSE</b> you specify. Unlike a regular table, you can't INSERT, UPDATE or DELETE into it: Snowflake owns the contents. It's still a real table on disk (micro-partitions, clonable, queryable with normal performance), not a view.</p>`],
+  ['Dynamic tables', 'b', `What does TARGET_LAG = DOWNSTREAM mean?`, `<p>The DT has no freshness target of its own; it refreshes only when a dynamic table that depends on it needs to refresh. It's the usual setting for intermediate layers. If <i>nothing</i> with a time-based lag depends on it (e.g. the leaf of the graph is DOWNSTREAM too), it won't refresh on a schedule at all, only manually.</p>`],
+  ['Dynamic tables', 't', `Target lag is 10 minutes. Does that mean it refreshes every 10 minutes?`, `<p>Not exactly. Target lag is a <b>freshness goal</b>: the content should be no more than 10 minutes behind the base tables. Snowflake chooses the refresh times, usually refreshing more often than the lag value so that refresh duration fits inside the target. Refreshes across a graph are aligned on a common <b>data timestamp</b>, so joined DTs are consistent. Lag is measured against base tables, which is why a downstream DT can't be fresher than its upstream DTs.</p>`],
+  ['Dynamic tables', 's', `A dynamic table chain's refreshes are getting slower and the target lag is being missed. How do you investigate?`, `<p>(1) <code>DYNAMIC_TABLE_REFRESH_HISTORY</code>: which DT is slow, is refresh_action FULL where you expected INCREMENTAL, are there failures? (2) <code>SHOW DYNAMIC TABLES</code>: refresh_mode and refresh_mode_reason. (3) Open the refresh's query_id in the Query Profile, looking for spilling, a large join, or poor pruning. (4) Check change volume: a backfill or upstream rewrite can make incremental refreshes huge. Fixes: right-size the refresh warehouse, reshape the query into incremental-friendly steps, cluster the DT on the change column, relax lag where the business allows, or switch an unavoidable heavy step to FULL.</p>`],
+  ['Refresh', 'b', `Explain the three refresh modes.`, `<p><b>INCREMENTAL</b>: uses change tracking on the sources to compute only how the result changes, then merges that delta in. <b>FULL</b>: re-runs the whole query and replaces the contents. <b>AUTO</b>: Snowflake picks one of them <b>at creation time</b> based on whether the query supports incremental refresh; the decision is shown in SHOW DYNAMIC TABLES. Snowflake advises setting the mode explicitly for production pipelines.</p>`],
+  ['Refresh', 't', `Is incremental refresh always cheaper than full?`, `<p>No. Incremental cost scales with how much changed and how scattered the changes are; full cost scales with input size. If a large share of the source changes each cycle, or updates hit nearly every micro-partition, computing and applying the delta can cost more than recomputing. Small, append-heavy changes on big tables are where incremental shines. Also note: AUTO won't switch modes per refresh.</p>`],
+  ['Refresh', 't', `What kinds of query constructs typically prevent incremental refresh?`, `<p>The classic examples are <b>non-deterministic functions</b> (e.g. <code>RANDOM()</code>, or time functions like <code>CURRENT_TIMESTAMP()</code> in the logic), external functions, sampling, and some set operators and complex nested constructs. Support keeps expanding, so I'd say: check the current docs and, more importantly, check <code>refresh_mode</code> / <code>refresh_mode_reason</code> after creating the DT, or pin <code>REFRESH_MODE = INCREMENTAL</code> so unsupported queries fail at deploy time.</p>`],
+  ['Choosing', 't', `Dynamic table vs materialized view: when would you pick each?`, `<p><b>Materialized view</b>: single table, no joins, restricted SQL (no window functions, limited aggregates), maintained by Snowflake's serverless service, results always current, and the optimizer can rewrite queries on the base table to use it. Enterprise edition. Pick it for a hot, expensive single-table aggregate. <b>Dynamic table</b>: joins, windows, unions, multi-step chains, refreshed on your warehouse within a target lag. Pick it for pipelines where slight staleness is fine.</p>`],
+  ['Choosing', 's', `When would you still use streams and tasks instead of dynamic tables?`, `<p>When the result is not simply "table = SELECT": SCD Type 2 history, conditional or soft deletes, applying CDC with business rules, calling stored procedures or external services, sending notifications, writing several targets from one change set, or when you need exact run times (CRON) rather than a freshness target. A common architecture uses streams + tasks at the edges and dynamic tables for the bulk of the transformation layers.</p>`],
+  ['MERGE/SCD', 'b', `SCD Type 1 vs Type 2?`, `<p><b>Type 1</b> overwrites attributes in place, so only the latest value is kept. Simple and small, but history is lost. <b>Type 2</b> keeps every version: the current row is closed (effective_to set, is_current = FALSE) and a new row inserted with effective_from = change time. It's needed when facts must be reported by the attribute value <i>at the time</i>. Usually with a surrogate key, so facts reference the exact version.</p>`],
+  ['MERGE/SCD', 't', `What is the "nondeterministic merge" error and how do you avoid it?`, `<p>It's raised when more than one source row matches the same target row in a MERGE that updates or deletes, because Snowflake can't know which update should win. It's controlled by <code>ERROR_ON_NONDETERMINISTIC_MERGE</code> (default TRUE; turning it off just hides the bug). Fix it by deduplicating the source, e.g. <code>QUALIFY ROW_NUMBER() OVER (PARTITION BY key ORDER BY version DESC) = 1</code>.</p>`],
+  ['MERGE/SCD', 's', `Walk me through implementing SCD2 in Snowflake.`, `<p>Stage and deduplicate the incoming batch, computing a NULL-safe <code>hash_diff</code> over tracked columns. Then either (a) one MERGE whose source is a UNION ALL: the batch with the real key (closes changed rows / inserts new keys) plus changed rows again with a NULL merge key (always inserted as new versions); or (b) an explicit transaction with an UPDATE that closes changed current rows, then an INSERT of new versions and new keys. Use effective dates from the source change time, a surrogate key, a '9999-12-31' open end, and a test that each business key has exactly one current row. Feed it from a stream + task for incremental runs.</p>`],
+  ['Dedup', 'b', `How do you deduplicate in Snowflake?`, `<p><code>SELECT … QUALIFY ROW_NUMBER() OVER (PARTITION BY business_key ORDER BY version_col DESC, tie_breaker DESC) = 1</code>. QUALIFY filters on window results without a subquery. Use ROW_NUMBER, not RANK/DENSE_RANK, because ties under RANK keep multiple rows. For exact duplicate rows, <code>SELECT DISTINCT</code> also works, but real-world duplicates usually differ in metadata columns.</p>`],
+  ['Dedup', 't', `Your dedup query returns different rows on different runs. Why?`, `<p>The ORDER BY inside the window isn't a <b>total order</b>: two rows for the same key tie on the sort columns, and Snowflake doesn't guarantee which tied row gets number 1 (it depends on parallel execution). Add tie-breakers (ingest timestamp, file name and row number, CDC sequence) until every row is uniquely ordered.</p>`],
+  ['Dedup', 's', `How do you make a daily load idempotent, and how do you handle late-arriving data?`, `<p>Idempotent: MERGE on the business key, or DELETE-for-date + INSERT inside one explicit transaction, never blind append. Re-runs and retries then produce the same state. Late data: order versions by the source's change timestamp or sequence (not arrival), guard updates with <code>WHEN MATCHED AND s.version &gt; t.version</code>, and reprocess a lookback window (e.g. last 3 days) on each run. Add a duplicate-key check that fails the job if it ever finds one.</p>`],
+  ['UDFs', 'b', `UDF vs UDTF vs stored procedure?`, `<p><b>UDF</b>: called inside a query, returns one value per row, read-only. <b>UDTF</b>: called in the FROM clause with TABLE(...), returns zero or more rows per input row or partition (handler methods process / end_partition). <b>Stored procedure</b>: run with CALL, can execute DML/DDL and control flow, returns a single value or table (Module 02).</p>`],
+  ['UDFs', 't', `Why might a Python UDF be slow, and what do you do about it?`, `<p>Rows are serialized into a Python sandbox and the handler is called once per row, so per-call overhead dominates for simple logic, and expensive setup done inside the handler repeats per row. Fixes: use a SQL expression or SQL UDF if possible (these are inlined); otherwise use a <b>vectorized</b> UDF (pandas batches), do setup at module level, avoid per-row external calls, and consider a Snowpark-optimized warehouse for memory-heavy libraries.</p>`],
+  ['UDFs', 't', `What is a secure UDF and what's the trade-off?`, `<p><code>CREATE SECURE FUNCTION</code> hides the function body from non-owners (e.g. in SHOW FUNCTIONS and GET_DDL) and prevents optimizations that might reveal underlying data through side channels. It's used for sensitive logic and for objects exposed through data sharing. The trade-off is performance: some optimizations are disabled, so use it where privacy matters, not everywhere.</p>`],
+  ['Transactions', 't', `Two tasks MERGE into the same table at the same time. What happens?`, `<p>They don't run truly in parallel: UPDATE, DELETE and MERGE on the same table generally take locks that serialize them, so the second waits until the first commits (or until its <code>LOCK_TIMEOUT</code> expires, default 12 hours). Readers are unaffected thanks to versioning. If the waits grow, you get intermittent timeouts. Design fix: a single writer per table, fan-in through INSERT/COPY into staging, stagger schedules, and keep explicit transactions short.</p>`],
+  ['Transactions', 'b', `How do autocommit and explicit transactions work in Snowflake?`, `<p>With <code>AUTOCOMMIT = TRUE</code> (the default) each DML statement is its own transaction. <code>BEGIN TRANSACTION</code> (or START TRANSACTION) … <code>COMMIT</code>/<code>ROLLBACK</code> groups statements atomically. DDL statements commit any open transaction implicitly. Isolation for standard tables is READ COMMITTED; a statement sees data committed before it began. Tools: SHOW TRANSACTIONS, SHOW LOCKS, SYSTEM$ABORT_TRANSACTION.</p>`]
+];
+const LV = { b: 'FUNDAMENTAL', t: 'TRICKY', s: 'SCENARIO' };
+function qa(f) { $('#qaList').innerHTML = QA.filter(q => f === 'all' || q[0] === f).map(([tp, l, q, a]) => `<details class="qa"><summary><span class="lv ${l}">${LV[l]}</span><span class="tp">${tp.toUpperCase()}</span>${q}</summary><div class="ans">${a}</div></details>`).join(''); }
+tabs('#qaTabs', d => qa(d.f));
+qa('all');
+
+/* ===== 10 quiz ===== */
+const QZ = [
+  [`A dynamic table's TARGET_LAG is measured relative to…`, [`The DT directly upstream of it`, `The base tables at the start of the graph`, `The last manual refresh`, `The warehouse's auto-suspend time`], 1, `Lag is how far the DT's content trails the base (source) tables, which is why a downstream DT can never be fresher than its upstream DTs.`],
+  [`Every DT in a chain, including the last one, is set to TARGET_LAG = DOWNSTREAM. What happens?`, [`They refresh every minute`, `They don't refresh on a schedule; only manual refreshes update them`, `Snowflake picks a 1-hour default`, `CREATE fails`], 1, `DOWNSTREAM means "refresh when a consumer needs it". With no time-based consumer, nothing triggers scheduled refreshes.`],
+  [`With REFRESH_MODE = AUTO, when is the refresh mode decided?`, [`Before every refresh, based on change volume`, `At creation (or re-creation) time`, `Once a day`, `When the warehouse resumes`], 1, `AUTO resolves to INCREMENTAL or FULL when the DT is created and keeps that mode. It doesn't adapt per refresh.`],
+  [`You create a DT with REFRESH_MODE = INCREMENTAL, but the query uses a construct incremental refresh doesn't support. Result?`, [`It silently runs FULL refreshes`, `The CREATE fails with an error`, `It refreshes incrementally but returns wrong results`, `It becomes a view`], 1, `Pinning INCREMENTAL makes unsupported queries fail at deploy time. AUTO would silently pick FULL instead.`],
+  [`A refresh runs but none of the sources changed. What does refresh history show?`, [`FULL`, `INCREMENTAL with 0 rows`, `NO_DATA`, `FAILED`], 2, `refresh_action = NO_DATA: change detection found nothing to do, and the data timestamp still advances.`],
+  [`Which statement about Snowflake materialized views is TRUE?`, [`They can join several tables`, `They can be stale until their next refresh`, `They're single-table, always current, and maintained by a serverless background service`, `They run on the warehouse you specify`], 2, `MVs are restricted to one table, always return current results, and are maintained by Snowflake-managed compute (Enterprise edition).`],
+  [`You need SCD Type 2 history plus an alert e-mail when a VIP customer changes tier. Best fit?`, [`Dynamic table`, `Materialized view`, `Streams + tasks (with a procedure)`, `Secure view`], 2, `Custom write logic and side effects aren't expressible as "table = SELECT", so this is procedural territory.`],
+  [`A MERGE fails with a nondeterministic merge error. Most likely cause?`, [`The target table is clustered`, `Multiple source rows match the same target row`, `The warehouse is too small`, `The MERGE has no INSERT clause`], 1, `Two or more source rows for one key want to update or delete the same target row. Deduplicate the source with QUALIFY ROW_NUMBER().`],
+  [`In SCD Type 2, a customer's city changes. What does the load do?`, [`Updates the city in place`, `Closes the current row and inserts a new current version`, `Deletes the old row`, `Inserts a duplicate with the same surrogate key`], 1, `Set effective_to and is_current = FALSE on the old row, then insert a new row with effective_from = change time and is_current = TRUE.`],
+  [`Why use RANK() instead of ROW_NUMBER() for dedup?`, [`RANK is faster`, `You shouldn't: RANK gives ties the same number, so duplicates can survive`, `RANK breaks ties deterministically`, `ROW_NUMBER isn't supported with QUALIFY`], 1, `Dedup needs exactly one survivor per key. ROW_NUMBER guarantees that; RANK and DENSE_RANK keep ties.`],
+  [`INSERT OVERWRITE INTO fact_sales SELECT * FROM stg WHERE sale_date = '2024-06-01' does what?`, [`Replaces only the 2024-06-01 rows`, `Replaces the entire table with just that day's rows`, `Appends that day`, `Fails because of the WHERE clause`], 1, `INSERT OVERWRITE truncates the whole target and inserts the SELECT result, atomically. It's not a per-partition overwrite.`],
+  [`A vectorized Python UDF handler receives…`, [`One row at a time as a tuple`, `A pandas DataFrame containing a batch of rows`, `The whole table at once`, `A Snowpark Session`], 1, `Vectorized UDFs get batches as pandas DataFrames (columns = arguments) and return a Series or array of the same length.`],
+  [`In a Python UDTF, which method is called after the last row of each partition?`, [`__init__`, `process`, `end_partition`, `finalize`], 2, `__init__ runs once per partition, process per row, and the optional end_partition after the partition's last row.`],
+  [`Session A is inside BEGIN TRANSACTION … and has MERGEd into FACT_SALES but not committed. Session B runs SELECT on FACT_SALES. What happens?`, [`B waits for A to commit`, `B sees A's uncommitted changes`, `B immediately sees the last committed version`, `B fails with a lock timeout`], 2, `Readers never block: B reads the latest committed version (READ COMMITTED). Only conflicting writers (UPDATE/DELETE/MERGE) would wait.`]
+];
+let qi = 0; const qAns = Array(QZ.length).fill(null);
+QZ.forEach((_, i) => { const s = document.createElement('span'); s.onclick = () => qShow(i); $('#qzBar').appendChild(s); });
+function qShow(i) {
+  qi = i; const [q, opts, ok, ex] = QZ[i], a = qAns[i];
+  $('#qzN').textContent = i + 1;
+  [...$('#qzBar').children].forEach((s, k) => { s.classList.toggle('on', qAns[k] !== null); s.style.outline = k === i ? '2px solid var(--ice)' : ''; });
+  $('#qzBody').innerHTML = `<h3 style="margin-top:6px">${q}</h3>` + opts.map((o, k) => `<button class="opt ${a !== null ? (k === ok ? 'ok' : (k === a ? 'bad' : '')) : ''}" data-k="${k}">${String.fromCharCode(65 + k)}. ${o}</button>`).join('') + (a !== null ? `<div class="qexp"><b>${a === ok ? 'Correct.' : 'Not quite.'}</b> ${ex}</div>` : '');
+  $$('#qzBody .opt').forEach(b => b.onclick = () => { if (qAns[qi] !== null) return; qAns[qi] = +b.dataset.k; qShow(qi); $('#qzS').textContent = qAns.filter((x, j) => x === QZ[j][2]).length; });
+  $('#qzNext').textContent = i === QZ.length - 1 ? 'See result' : 'Next';
+}
+function qResult() {
+  const s = qAns.filter((x, j) => x === QZ[j][2]).length;
+  const msg = s >= QZ.length - 2 ? 'Interview-ready on dynamic tables and transforms.' : s >= Math.round(QZ.length * 0.6) ? 'Solid. Replay the DT graph and SCD simulators, then retry.' : 'Walk through the DT graph, the incremental simulator and the SCD stepper again, then retry.';
+  $('#qzBody').innerHTML = `<div class="score">${s} / ${QZ.length}</div><p style="margin-top:8px">${msg}</p><button class="btn pri" id="qzAgain" style="margin-top:10px">Retry quiz</button>`;
+  $('#qzAgain').onclick = () => { qAns.fill(null); $('#qzS').textContent = 0; qShow(0); };
+}
+$('#qzNext').onclick = () => qi === QZ.length - 1 ? qResult() : qShow(qi + 1);
+$('#qzPrev').onclick = () => qShow(Math.max(0, qi - 1));
+qShow(0);
+</script>
+<div class="toast" id="toast"></div>
+<script>
+(() => {
+  const t = document.getElementById('toast'); let h;
+  document.querySelectorAll('.road a.soon').forEach(a => a.addEventListener('click', e => {
+    e.preventDefault();
+    t.textContent = `Module ${a.dataset.m} isn't built yet. Ask for it in chat and it will be added here.`;
+    t.classList.add('on'); clearTimeout(h); h = setTimeout(() => t.classList.remove('on'), 2800);
+  }));
+})();
+</script>
+</body>
+</html>

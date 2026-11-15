@@ -1,0 +1,1605 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Snowflake Interview Lab · Module 04 · Data Ingestion: Stages, COPY, Snowpipe, Streaming &amp; Iceberg</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/space-grotesk@5/300.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/space-grotesk@5/700.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/ibm-plex-sans@5/300.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/ibm-plex-sans@5/400.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/ibm-plex-sans@5/600.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/jetbrains-mono@5/400.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/jetbrains-mono@5/700.css">
+<style>
+:root{
+  --bg:#F2F6FA; --card:#FFFFFF; --card2:#E9EFF5; --ink:#0B1B2B; --ink2:#46596B; --ink3:#7F90A2;
+  --line:rgba(11,27,43,.12); --line2:rgba(11,27,43,.22);
+  --ice:#0A86C2; --ice-s:#DCEFF9; --amber:#B86F00; --amber-s:#FFF0D4; --teal:#0B8A6A; --teal-s:#DAF3EB;
+  --red:#C93C3C; --red-s:#FCE4E4; --grid:rgba(10,134,194,.06);
+  --f-head:"Space Grotesk",sans-serif; --f-body:"IBM Plex Sans",sans-serif; --f-mono:"JetBrains Mono",monospace;
+  --r:10px;
+}
+[data-theme="dark"]{
+  --bg:#08121D; --card:#0F1D2C; --card2:#16293B; --ink:#E5EDF5; --ink2:#9DB0C3; --ink3:#687D91;
+  --line:rgba(229,237,245,.10); --line2:rgba(229,237,245,.22);
+  --ice:#4CC3F0; --ice-s:rgba(76,195,240,.13); --amber:#FFB938; --amber-s:rgba(255,185,56,.13); --teal:#3FD3A8; --teal-s:rgba(63,211,168,.13);
+  --red:#FF7070; --red-s:rgba(255,112,112,.14); --grid:rgba(76,195,240,.05);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:var(--f-body);color:var(--ink);line-height:1.7;font-size:16px;
+  background:radial-gradient(1200px 600px at 85% -10%, var(--ice-s), transparent 60%),radial-gradient(900px 500px at -10% 30%, var(--teal-s), transparent 60%),
+  linear-gradient(var(--grid) 1px, transparent 1px) 0 0/32px 32px,linear-gradient(90deg, var(--grid) 1px, transparent 1px) 0 0/32px 32px,var(--bg);background-attachment:fixed}
+code,.mono{font-family:var(--f-mono);font-size:.88em}
+p code,li code,td code{background:var(--card2);padding:1px 6px;border-radius:5px}
+button{font-family:var(--f-body);cursor:pointer}
+.top{position:sticky;top:0;z-index:30;display:flex;align-items:center;gap:16px;padding:12px 28px;border-bottom:1px solid var(--line);background:color-mix(in srgb,var(--bg) 82%,transparent);backdrop-filter:saturate(1.4) blur(8px)}
+.brand{font-family:var(--f-mono);font-weight:700;letter-spacing:.06em;font-size:13px}.brand b{color:var(--ice)}
+.pill{font-family:var(--f-mono);font-size:12px;padding:3px 10px;border-radius:99px;border:1px solid var(--line2);color:var(--ink2)}
+.prog{flex:1;height:4px;background:var(--card2);border-radius:4px;overflow:hidden;max-width:360px;margin-left:auto}
+.prog i{display:block;height:100%;width:0;background:var(--ice);transition:width .4s}
+.prog-l{font-family:var(--f-mono);font-size:12px;color:var(--ink2);min-width:84px}
+.theme{border:1px solid var(--line2);background:var(--card);color:var(--ink);border-radius:8px;padding:5px 10px;font-size:13px}
+.wrap{display:grid;grid-template-columns:270px minmax(0,1fr);gap:36px;max-width:1340px;margin:0 auto;padding:28px}
+nav.side{position:sticky;top:76px;align-self:start;max-height:calc(100vh - 96px);overflow:auto;padding-right:6px}
+.side h4{font-family:var(--f-mono);font-size:11px;letter-spacing:.14em;color:var(--ink3);margin:6px 0 10px;font-weight:400}
+.side a{display:flex;gap:10px;align-items:baseline;padding:6px 10px;border-radius:8px;color:var(--ink2);text-decoration:none;font-size:14px;border-left:2px solid transparent}
+.side a span{font-family:var(--f-mono);font-size:11px;color:var(--ink3)}
+.side a:hover{background:var(--card)}
+.side a.act{color:var(--ink);background:var(--card);border-left-color:var(--ice);border-radius:0 8px 8px 0}
+.side a.seen span{color:var(--teal)}
+.road{margin-top:22px;border-top:1px solid var(--line);padding-top:14px}
+.road div{font-size:13px;color:var(--ink3);padding:3px 10px;display:flex;gap:8px}
+.road div.now{color:var(--ink);font-weight:600}.road div.done{color:var(--teal)}
+.road div em{font-style:normal;font-family:var(--f-mono);font-size:11px;min-width:20px}
+main{min-width:0}
+section{padding:36px 0 44px;border-bottom:1px dashed var(--line2);scroll-margin-top:70px}
+.eyebrow{font-family:var(--f-mono);font-size:12px;letter-spacing:.16em;color:var(--ice);margin-bottom:6px}
+h1{font-family:var(--f-head);font-weight:700;font-size:clamp(40px,6vw,76px);line-height:1;letter-spacing:-.03em}
+h1 .thin,h2 .thin{font-weight:300;color:var(--ink2)}
+h2{font-family:var(--f-head);font-weight:700;font-size:clamp(28px,3.4vw,40px);letter-spacing:-.02em;line-height:1.1;margin-bottom:12px}
+h3{font-family:var(--f-head);font-weight:700;font-size:20px;margin:26px 0 10px;letter-spacing:-.01em}
+.lead{font-size:18px;font-weight:300;color:var(--ink2);max-width:820px}
+p{margin:8px 0}
+ul.dots{margin:8px 0 8px 20px}ul.dots li{margin:4px 0}
+.wwh{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:20px 0}
+.wwh .box{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:18px 20px;position:relative;overflow:hidden}
+.wwh .box.how{grid-column:1/-1}
+.wwh .tag{font-family:var(--f-mono);font-size:11px;letter-spacing:.14em;display:inline-block;padding:2px 8px;border-radius:5px;margin-bottom:8px}
+.box.what .tag{background:var(--ice-s);color:var(--ice)}.box.why .tag{background:var(--amber-s);color:var(--amber)}.box.how .tag{background:var(--teal-s);color:var(--teal)}
+.box::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px}
+.box.what::before{background:var(--ice)}.box.why::before{background:var(--amber)}.box.how::before{background:var(--teal)}
+.call{display:flex;gap:14px;padding:14px 18px;border-radius:var(--r);margin:14px 0;border:1px solid var(--line)}
+.call b.k{font-family:var(--f-mono);font-size:11px;letter-spacing:.12em;white-space:nowrap;padding-top:3px}
+.call.analogy{background:var(--ice-s)}.call.analogy b.k{color:var(--ice)}
+.call.trap{background:var(--red-s)}.call.trap b.k{color:var(--red)}
+.call.pro{background:var(--teal-s)}.call.pro b.k{color:var(--teal)}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px;margin:18px 0}
+.panel-h{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+.panel-h .t{font-family:var(--f-mono);font-size:12px;letter-spacing:.12em;color:var(--ink2)}.panel-h .t b{color:var(--ink)}
+.btn{border:1px solid var(--line2);background:var(--card);color:var(--ink);padding:7px 14px;border-radius:8px;font-size:14px;transition:all .15s}
+.btn:hover{border-color:var(--ice);color:var(--ice)}
+.btn.pri{background:var(--ice);color:var(--card);border-color:var(--ice)}.btn.pri:hover{color:var(--card);filter:brightness(1.08)}
+.btn.warn{border-color:var(--red);color:var(--red)}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.ctl{display:flex;align-items:center;gap:12px;font-size:14px;color:var(--ink2);margin:8px 0}
+.ctl label{min-width:150px}.ctl input[type=range]{flex:1;accent-color:var(--ice)}
+.ctl .v{font-family:var(--f-mono);font-size:13px;color:var(--ink);min-width:110px;text-align:right}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:14px 0}
+.stat{background:var(--card2);border-radius:10px;padding:12px 14px}
+.stat .k{font-family:var(--f-mono);font-size:11px;color:var(--ink3);letter-spacing:.08em}
+.stat .n{font-family:var(--f-head);font-weight:700;font-size:28px;line-height:1.2}
+.stat .s{font-size:12px;color:var(--ink2)}
+.sqlbox{font-family:var(--f-mono);font-size:13px;background:var(--card2);border-radius:8px;padding:10px 14px;white-space:pre-wrap;color:var(--ink);border-left:3px solid var(--ice);overflow:auto}
+.insight{font-size:14px;padding:10px 14px;border-radius:8px;background:var(--amber-s);color:var(--ink);margin-top:10px}.insight b{color:var(--amber)}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+.tabs button{border:1px solid var(--line2);background:transparent;color:var(--ink2);padding:6px 12px;border-radius:99px;font-size:13px}
+.tabs button.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}.grid2>div{min-width:0}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.mini{background:var(--card2);border-radius:10px;padding:14px}
+.mini h5{font-family:var(--f-head);font-size:15px;margin-bottom:4px}
+.mini p{font-size:14px;color:var(--ink2);margin:0}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:13px;color:var(--ink2);margin:8px 0}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:-1px;margin-right:6px}
+table.t{width:100%;border-collapse:collapse;font-size:14px}
+table.t th,table.t td{padding:7px 10px;border-bottom:1px solid var(--line);text-align:left}
+table.t th{font-family:var(--f-mono);font-size:11px;letter-spacing:.1em;color:var(--ink3);font-weight:400}
+table.t td.m{font-family:var(--f-mono);font-size:12px}
+svg{width:100%;height:auto;display:block}
+svg .t{font-family:var(--f-body);font-size:14px;fill:var(--ink)}
+svg .ts{font-family:var(--f-body);font-size:12px;fill:var(--ink2)}
+svg .th{font-family:var(--f-head);font-size:14px;font-weight:700;fill:var(--ink)}
+svg .tm{font-family:var(--f-mono);font-size:11px;fill:var(--ink2)}
+.L-cs{fill:var(--amber-s);stroke:var(--amber)}.L-cp{fill:var(--ice-s);stroke:var(--ice)}.L-st{fill:var(--teal-s);stroke:var(--teal)}
+.neutral{fill:var(--card);stroke:var(--line2)}
+.arr{stroke:var(--ink3);stroke-width:1.2;fill:none}
+.fn{transition:opacity .3s}
+.flow.playing .fn{opacity:.25}
+.flow.playing .fn.on{opacity:1}
+.fn.on rect{stroke-width:2.4}
+.edge{stroke:var(--ink3);stroke-width:1.4;fill:none;transition:opacity .3s}
+.flow.playing .edge{opacity:.2}
+.flow.playing .edge.on{opacity:1;stroke:var(--ice);stroke-width:2.4;stroke-dasharray:7 5}
+@media (prefers-reduced-motion:no-preference){
+  .flow.playing .edge.on{animation:dash .8s linear infinite}
+  @keyframes dash{to{stroke-dashoffset:-24}}
+  .pulse{animation:pulse 1.2s ease-in-out infinite}
+  @keyframes pulse{0%,100%{opacity:.35}50%{opacity:1}}
+  .rise{animation:rise .5s both}
+  @keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+  .grow{transform-box:fill-box;transform-origin:left center;animation:grow .6s both}
+  @keyframes grow{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+}
+.stepbar{display:flex;gap:6px;margin:12px 0}
+.stepbar span{flex:1;height:4px;border-radius:4px;background:var(--card2);cursor:pointer}
+.stepbar span.on{background:var(--ice)}
+.stepdesc{min-height:120px;background:var(--card2);border-radius:10px;padding:14px 16px}
+.stepdesc h4{font-family:var(--f-head);font-size:17px;margin-bottom:6px}
+.stepdesc .two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.stepdesc .two div{font-size:14px;color:var(--ink2)}
+.stepdesc .two b.l{display:block;font-family:var(--f-mono);font-size:11px;letter-spacing:.12em;margin-bottom:4px}
+.stepdesc .two .you b.l{color:var(--ice)}.stepdesc .two .be b.l{color:var(--teal)}
+.term{background:#0A141F;color:#D6E2EE;font-family:var(--f-mono);font-size:12.5px;border-radius:12px;padding:14px 16px;height:340px;overflow:auto;border:1px solid #1E3247}
+.term div{white-space:pre;line-height:1.5}
+.term .tin{color:#FFB938}.term .terr{color:#FF7A7A}.term .tok{color:#3FD3A8}.term .tdim{color:#6F8499}
+.tbar{display:flex;gap:6px;align-items:center;margin-bottom:8px}
+.tbar i{width:10px;height:10px;border-radius:50%;display:inline-block}
+.tinput{display:flex;gap:8px;margin-top:8px}
+.tinput input{flex:1;font-family:var(--f-mono);font-size:13px;padding:8px 10px;border-radius:8px;border:1px solid var(--line2);background:var(--card);color:var(--ink)}
+.cmds{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}
+.cmds button{font-family:var(--f-mono);font-size:11.5px;border:1px solid var(--line2);background:var(--card);color:var(--ink);padding:5px 9px;border-radius:7px;text-align:left}
+.cmds button:hover{border-color:var(--amber);color:var(--amber)}
+.cmds button small{display:block;font-family:var(--f-body);font-size:11px;color:var(--ink3)}
+.explain{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 16px;min-height:90px;font-size:14.5px}
+.explain b.h{font-family:var(--f-mono);font-size:12px;color:var(--ice);letter-spacing:.1em;display:block;margin-bottom:4px}
+.gantt-l{font-family:var(--f-mono);font-size:11px;fill:var(--ink2)}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font-family:var(--f-mono);font-size:12px;border:1px solid var(--line2);padding:5px 10px;border-radius:99px;cursor:pointer;user-select:none;background:var(--card);color:var(--ink2)}
+.chip.on{background:var(--ice-s);border-color:var(--ice);color:var(--ice)}
+.chip.now{outline:2px solid var(--amber);outline-offset:2px}
+.fcard{border:1px solid var(--line2);border-radius:10px;padding:10px 12px;cursor:pointer;background:var(--card);text-align:left;color:var(--ink)}
+.fcard.on{border-color:var(--ice);background:var(--ice-s)}
+.fcard b{display:block;font-family:var(--f-mono);font-size:12px}
+.fcard small{color:var(--ink3);font-size:12px}
+.out{font-family:var(--f-mono);font-size:12px;background:var(--card2);border-radius:8px;padding:10px 14px;white-space:pre-wrap;border-left:3px solid var(--teal);max-height:260px;overflow:auto}
+.chunk{border:1px solid var(--line2);border-radius:8px;padding:8px 10px;font-size:13px;margin:6px 0;background:var(--card)}
+.chunk em{font-style:normal;background:var(--amber-s);color:var(--ink);border-bottom:2px solid var(--amber)}
+.chunk b{font-family:var(--f-mono);font-size:11px;color:var(--ice);margin-right:8px}
+.act-i{color:var(--teal);font-family:var(--f-mono);font-size:12px;font-weight:700}
+.act-d{color:var(--red);font-family:var(--f-mono);font-size:12px;font-weight:700}
+.badge{font-family:var(--f-mono);font-size:11px;padding:2px 8px;border-radius:99px;white-space:nowrap}
+.badge.ok{background:var(--teal-s);color:var(--teal)}.badge.bad{background:var(--red-s);color:var(--red)}.badge.mid{background:var(--amber-s);color:var(--amber)}.badge.off{background:var(--card2);color:var(--ink3)}
+.flash{animation:flash 1s}
+@keyframes flash{0%{box-shadow:0 0 0 3px var(--amber)}100%{box-shadow:0 0 0 0 transparent}}
+.tn rect{fill:var(--card);stroke:var(--line2);transition:all .3s}
+.tn.run rect{fill:var(--amber-s);stroke:var(--amber);stroke-width:2.4}
+.tn.ok rect{fill:var(--teal-s);stroke:var(--teal);stroke-width:2}
+.tn.skip rect{fill:var(--card2);stroke:var(--ink3);stroke-dasharray:5 4}
+.tn.fail rect{fill:var(--red-s);stroke:var(--red);stroke-width:2}
+.tn .st{font-family:var(--f-mono);font-size:10px;fill:var(--ink3)}
+.log{max-height:240px;overflow:auto}
+.pk{transition:transform .8s cubic-bezier(.5,.05,.3,1)}
+.code{font-family:var(--f-mono);font-size:13px;background:var(--card2);border-radius:10px;padding:10px 0;overflow:auto}
+.code div{padding:2px 16px 2px 0;cursor:pointer;white-space:pre;display:block}
+.code div em{font-style:normal;color:var(--ink3);width:40px;text-align:right;padding-right:14px;display:inline-block;user-select:none}
+.code div:hover{background:var(--ice-s)}
+.code div.on{background:var(--ice-s);box-shadow:inset 3px 0 var(--ice)}
+.kw{color:var(--ice);font-weight:700}.str{color:var(--teal)}.num{color:var(--amber)}
+.qa{border:1px solid var(--line);border-radius:10px;margin:8px 0;background:var(--card);overflow:hidden}
+.qa summary{list-style:none;cursor:pointer;padding:14px 18px;display:flex;gap:12px;align-items:baseline;font-weight:600}
+.qa summary::-webkit-details-marker{display:none}
+.qa summary .lv{font-family:var(--f-mono);font-size:10px;letter-spacing:.1em;padding:2px 8px;border-radius:99px;flex:none;font-weight:400}
+.lv.b{background:var(--teal-s);color:var(--teal)}.lv.t{background:var(--red-s);color:var(--red)}.lv.s{background:var(--amber-s);color:var(--amber)}
+.qa summary .tp{font-family:var(--f-mono);font-size:10px;color:var(--ink3);flex:none;font-weight:400}
+.qa summary::after{content:"+";margin-left:auto;font-family:var(--f-mono);color:var(--ink3)}
+.qa[open] summary::after{content:"−"}
+.qa .ans{padding:0 18px 16px;color:var(--ink2);font-size:15px;border-top:1px solid var(--line)}
+.qa .ans p:first-child{margin-top:12px}
+.opt{display:block;width:100%;text-align:left;padding:12px 14px;margin:8px 0;border:1px solid var(--line2);border-radius:10px;background:var(--card);color:var(--ink);font-size:15px}
+.opt:hover{border-color:var(--ice)}
+.opt.ok{border-color:var(--teal);background:var(--teal-s)}.opt.bad{border-color:var(--red);background:var(--red-s)}
+.qexp{margin-top:10px;padding:12px 14px;border-radius:10px;background:var(--card2);font-size:14px;color:var(--ink2)}
+.score{font-family:var(--f-head);font-weight:700;font-size:56px;line-height:1}
+.cheat{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+.cheat div{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 16px;font-size:14px}
+.cheat div em{font-style:normal;font-family:var(--f-mono);font-size:20px;font-weight:700;color:var(--ice);display:block;line-height:1.1;margin-bottom:4px}
+.analogy-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:18px}
+.ag{border-radius:12px;padding:16px;border:1px solid var(--line);background:var(--card)}
+.ag .k{font-family:var(--f-mono);font-size:11px;letter-spacing:.12em}
+.ag h5{font-family:var(--f-head);font-size:18px;margin:2px 0 4px}
+.ag p{font-size:14px;color:var(--ink2);margin:0}
+.ag.a1{border-top:3px solid var(--amber)}.ag.a1 .k{color:var(--amber)}
+.ag.a2{border-top:3px solid var(--ice)}.ag.a2 .k{color:var(--ice)}
+.ag.a3{border-top:3px solid var(--teal)}.ag.a3 .k{color:var(--teal)}
+.ag.a4{border-top:3px solid var(--red)}.ag.a4 .k{color:var(--red)}
+footer{padding:40px 0;color:var(--ink3);font-size:13px;font-family:var(--f-mono)}
+.note-s{font-size:12px;color:var(--ink3);font-style:italic}
+@media (max-width:1000px){
+  .wrap{grid-template-columns:1fr;padding:16px}
+  nav.side{display:none}
+  .wwh,.grid2,.stepdesc .two{grid-template-columns:1fr}
+  .grid3,.analogy-grid{grid-template-columns:1fr}
+  .prog{display:none}
+}
+.road a.rm{display:flex;gap:8px;align-items:baseline;font-size:13px;padding:5px 10px;border-radius:8px;text-decoration:none;color:var(--ink2);border-left:2px solid transparent}
+.road a.rm:hover{background:var(--card);color:var(--ink)}
+.road a.rm em{font-style:normal;font-family:var(--f-mono);font-size:11px;min-width:20px}
+.road a.rm i{font-style:normal;font-family:var(--f-mono);font-size:9.5px;margin-left:auto;border:1px solid var(--line2);border-radius:99px;padding:0 6px;white-space:nowrap;color:var(--ink3)}
+.road a.rm.now{color:var(--ink);font-weight:600;border-left-color:var(--ice);background:var(--card);border-radius:0 8px 8px 0}
+.road a.rm.now i{border-color:var(--ice);color:var(--ice)}
+.road a.rm.ready em,.road a.rm.ready i{color:var(--teal)}.road a.rm.ready i{border-color:var(--teal)}
+.road a.rm.soon{color:var(--ink3)}
+.toast{position:fixed;bottom:24px;left:50%;transform:translate(-50%,20px);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;font-size:14px;opacity:0;transition:all .3s;z-index:60;pointer-events:none;max-width:90vw}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+.code div.pdone{box-shadow:inset 3px 0 var(--teal)}
+#pcCode{max-height:600px;position:relative}
+/* ===== module 04 additions ===== */
+.stagecard{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:10px 0}
+.kv{display:grid;grid-template-columns:150px minmax(0,1fr);gap:4px 12px;font-size:14px}
+.kv b{font-family:var(--f-mono);font-size:11px;letter-spacing:.08em;color:var(--ink3);font-weight:400;padding-top:3px}
+.ftable{max-height:300px;overflow:auto}
+.ftable table.t td{vertical-align:top}
+.fchips{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0}
+.fchip{font-family:var(--f-mono);font-size:12px;border:1px solid var(--line2);border-radius:8px;padding:6px 10px;background:var(--card);color:var(--ink)}
+.fchip small{display:block;font-family:var(--f-body);font-size:11px;color:var(--ink3)}
+.fchip.gone{opacity:.35;text-decoration:line-through}
+.fchip.bad{border-color:var(--red)}
+.ctl select{font-family:var(--f-mono);font-size:13px;padding:5px 8px;border-radius:8px;border:1px solid var(--line2);background:var(--card);color:var(--ink)}
+.evlog{font-family:var(--f-mono);font-size:12px;background:var(--card2);border-radius:8px;padding:10px 14px;height:220px;overflow:auto;border-left:3px solid var(--ice)}
+.evlog div{padding:2px 0;border-bottom:1px dashed var(--line)}
+.evlog .ok{color:var(--teal)}.evlog .bad{color:var(--red)}.evlog .mid{color:var(--amber)}
+.fn.bad rect{stroke:var(--red)!important;fill:var(--red-s)!important;stroke-width:2.4}
+.fn.skip rect{stroke-dasharray:5 4}
+.bub{transition:all .4s}
+.bub.dim{opacity:.25}
+.bub.pick circle{stroke-width:3.2}
+.pathbox{font-family:var(--f-mono);font-size:12px;background:var(--card2);border-radius:8px;padding:10px 14px;white-space:pre;overflow:auto;max-height:200px;border-left:3px solid var(--amber)}
+.colnew{background:var(--teal-s)}
+.colchg{background:var(--amber-s)}
+.tw{overflow-x:auto;max-width:100%}
+.call>div,.mini p,.explain,.stepdesc{min-width:0;overflow-wrap:anywhere}
+@media (max-width:1000px){.stagecard{grid-template-columns:1fr 1fr}.kv{grid-template-columns:1fr}.ctl{flex-wrap:wrap}.ctl label{min-width:0;width:100%}.ctl .v{min-width:0}.top{flex-wrap:wrap;padding:10px 16px}}
+/* course-wide phone layout */
+@media (max-width:560px){
+  .top{flex-wrap:wrap;gap:8px;padding:10px 14px}
+  .top .pill,.top .prog-l,.top .prog{display:none}
+  .brand{flex:1}
+  .ctl{flex-wrap:wrap}.ctl label{min-width:0;flex:1 1 100%}.ctl .v{min-width:0;text-align:left}
+  table{display:block;overflow-x:auto;max-width:100%}
+  .grid2,.grid3,.analogy-grid,[style*="grid-template-columns"]{grid-template-columns:1fr!important}
+  .grid2>*,.grid3>*,.call>div{min-width:0}
+  p code,li code,td code{word-break:break-word}
+  .code,.sqlbox,.out,.term,pre{max-width:100%;overflow-x:auto}
+  .call{flex-direction:column;gap:6px}
+  main,section,.panel,.wwh .box,.mini{min-width:0;max-width:100%}
+}
+</style>
+</head>
+<body>
+<div class="top">
+  <div class="brand">SNOWFLAKE<b>//</b>INTERVIEW LAB</div>
+  <span class="pill">Module 04 · Data ingestion</span>
+  <div class="prog"><i id="progBar"></i></div>
+  <span class="prog-l" id="progLbl">0% explored</span>
+  <button class="theme" id="themeBtn">Dark / light</button>
+</div>
+<div class="wrap">
+<nav class="side">
+  <h4>MODULE 04 · CHAPTERS</h4>
+  <a href="#intro"><span>00</span>Start here</a>
+  <a href="#patterns"><span>01</span>Ingestion patterns map</a>
+  <a href="#stages"><span>02</span>Stages &amp; integrations</a>
+  <a href="#copy"><span>03</span>COPY INTO deep dive</a>
+  <a href="#sizing"><span>04</span>File sizing &amp; parallelism</a>
+  <a href="#snowpipe"><span>05</span>Snowpipe</a>
+  <a href="#streaming"><span>06</span>Snowpipe Streaming</a>
+  <a href="#lake"><span>07</span>External &amp; Iceberg tables</a>
+  <a href="#schema"><span>08</span>Schema evolution &amp; unload</a>
+  <a href="#sql"><span>09</span>SQL lab</a>
+  <a href="#qa"><span>10</span>Interview Q&amp;A</a>
+  <a href="#quiz"><span>11</span>Quiz</a>
+  <a href="#cheat"><span>12</span>Cheat sheet</a>
+  <div class="road">
+    <h4>COURSE ROADMAP · CLICK TO OPEN</h4>
+    <a class="rm ready" href="../module01/"><em>01</em>Architecture<i>open</i></a>
+    <a class="rm ready" href="../module02/"><em>02</em>SnowSQL · unstructured · streams, tasks &amp; procedures<i>open</i></a>
+    <a class="rm ready" href="../module03/"><em>03</em>Performance tuning<i>open</i></a>
+    <a class="rm now" href="../module04/"><em>04</em>Data ingestion (Snowpipe)<i>you are here</i></a>
+    <a class="rm ready" href="../module05/"><em>05</em>Dynamic tables &amp; transforms<i>open</i></a>
+    <a class="rm ready" href="../module06/"><em>06</em>Semi-structured data<i>open</i></a>
+    <a class="rm ready" href="../module07/"><em>07</em>Data protection<i>open</i></a>
+    <a class="rm ready" href="../module08/"><em>08</em>Security &amp; governance<i>open</i></a>
+    <a class="rm ready" href="../module09/"><em>09</em>Cost optimization<i>open</i></a>
+    <a class="rm ready" href="../module10/"><em>10</em>Data sharing<i>open</i></a>
+    <a class="rm ready" href="../module11/"><em>11</em>Snowpark &amp; Cortex AI<i>open</i></a>
+    <a class="rm ready" href="../module12/"><em>12</em>Advanced SQL<i>open</i></a>
+    <a class="rm ready" href="../module13/"><em>13</em>Modeling &amp; tooling<i>open</i></a>
+    <a class="rm ready" href="../module14/"><em>14</em>System design &amp; behavioral<i>open</i></a>
+  </div>
+</nav>
+<main>
+
+<section id="intro">
+  <div class="eyebrow">MODULE 04 · DATA INGESTION</div>
+  <h1>Land it once.<br><span class="thin">Land it right.</span></h1>
+  <p class="lead" style="margin-top:18px">Module 02 showed the basics: <code>PUT</code> a file to a stage, then <code>COPY INTO</code> a table. Real platforms go much further. Files arrive every few seconds from hundreds of systems, some rows are broken, some files are duplicates, some data must stay in the lake for Spark, and the business wants dashboards that are minutes (or seconds) old. This module goes deep on every way data gets into Snowflake and what really happens in the backend.</p>
+  <p style="margin-top:14px">We keep the restaurant from earlier modules. Today we meet the people who deal with <b>deliveries</b>:</p>
+  <div class="analogy-grid">
+    <div class="ag a1 rise"><div class="k">STAGE</div><h5>The loading dock</h5><p>Boxes (files) are dropped here first. Nobody cooks on the dock: it's just a safe place to keep boxes until a chef unpacks them into the pantry (a table).</p></div>
+    <div class="ag a2 rise" style="animation-delay:.1s"><div class="k">COPY INTO</div><h5>The weekly truck</h5><p>One big delivery on a schedule. A team of chefs (the warehouse) unpacks every box at once, then goes home. Cheap per box, but food is only as fresh as the last truck.</p></div>
+    <div class="ag a3 rise" style="animation-delay:.2s"><div class="k">SNOWPIPE</div><h5>The doorbell courier</h5><p>Every time a parcel lands, the doorbell rings (an event notification) and a concierge (serverless compute) unpacks it within a minute or so. No chef has to wait at the door.</p></div>
+    <div class="ag a4 rise" style="animation-delay:.3s"><div class="k">STREAMING</div><h5>The conveyor belt</h5><p>No boxes at all: items roll straight from the farm onto the kitchen counter, one by one, in seconds. Snowpipe Streaming writes rows without staging files.</p></div>
+  </div>
+  <div class="call analogy" style="margin-top:18px"><b class="k">AND ONE MORE</b><div><b>External and Iceberg tables</b> are like cooking with ingredients that stay in the <b>shared community fridge</b> (your own data lake). Snowflake reads them where they are, and other kitchens (Spark, Trino) can use the same fridge.</div></div>
+</section>
+
+<section id="patterns">
+  <div class="eyebrow">CHAPTER 01</div>
+  <h2>Ingestion patterns map <span class="thin">· latency vs cost vs complexity</span></h2>
+  <div class="wwh">
+    <div class="box what"><span class="tag">01 · WHAT IS IT</span>
+      <p>There are four main ways to get data into (or in front of) Snowflake:</p>
+      <ul class="dots">
+        <li><b>Batch</b>: <code>COPY INTO</code> on your own warehouse, usually run by a task, Airflow or dbt every hour or every night.</li>
+        <li><b>Continuous micro-batch</b>: <b>Snowpipe</b>. A COPY statement wrapped in a <code>PIPE</code> object that Snowflake runs automatically on <b>serverless</b> compute whenever new files land.</li>
+        <li><b>Streaming</b>: <b>Snowpipe Streaming</b> (Ingest SDK, Kafka connector). Rows go straight into tables with no files in between.</li>
+        <li><b>Query in place</b>: <b>external tables</b> and <b>Apache Iceberg tables</b>. The data stays in your cloud storage; Snowflake reads it there.</li>
+      </ul>
+    </div>
+    <div class="box why"><span class="tag">02 · WHY IT MATTERS</span>
+      <p>Interviewers love "how would you ingest X?" because there's no single right answer. Each pattern trades three things:</p>
+      <ul class="dots"><li><b>Latency</b>: how old the data is when people query it.</li><li><b>Cost</b>: idle warehouse time, per-file overhead, or always-on clients.</li><li><b>Complexity</b>: cloud notifications, IAM, SDK code, offset handling.</li></ul>
+      <p>A senior answer names the requirement first ("dashboards need data within 5 minutes"), then picks the cheapest pattern that meets it.</p>
+    </div>
+    <div class="box how"><span class="tag">03 · HOW TO CHOOSE · TRY THE PATTERN PICKER</span>
+      <p>Pick the requirement. The map highlights the pattern that fits, and explains what runs in the backend. Bubble size = relative cost at moderate volume (<b>illustrative model, not a benchmark</b>).</p>
+      <div class="row" style="margin:8px 0"><span class="note-s" style="min-width:140px">Freshness needed:</span><div class="tabs" id="pmLat" style="margin:0"><button data-v="h" class="on">Hours (daily/hourly)</button><button data-v="m">Minutes</button><button data-v="s">Seconds</button></div></div>
+      <div class="row" style="margin:8px 0"><span class="note-s" style="min-width:140px">Where data comes from:</span><div class="tabs" id="pmSrc" style="margin:0"><button data-v="files" class="on">Files in S3 / ADLS / GCS</button><button data-v="events">Events (Kafka, app SDK)</button><button data-v="lake">Must stay in the data lake</button></div></div>
+      <div class="grid2" style="grid-template-columns:1.2fr 1fr;margin-top:10px">
+        <div><svg viewBox="0 0 560 300" id="pmSvg"></svg></div>
+        <div class="explain" id="pmOut"></div>
+      </div>
+      <div class="insight" id="pmIns"></div>
+    </div>
+  </div>
+  <div class="tw"><table class="t" style="margin-top:6px">
+    <tr><th>PATTERN</th><th>TYPICAL LATENCY</th><th>COMPUTE</th><th>YOU MANAGE</th><th>BEST FOR</th></tr>
+    <tr><td><b>COPY INTO (batch)</b></td><td>hours / scheduled</td><td>your warehouse</td><td>schedule, warehouse size, error handling</td><td>nightly loads, big backfills, migrations</td></tr>
+    <tr><td><b>Snowpipe</b></td><td>about a minute after the file lands (not guaranteed)</td><td>serverless</td><td>event notifications, file sizing</td><td>files arriving all day from many sources</td></tr>
+    <tr><td><b>Snowpipe Streaming</b></td><td>seconds</td><td>serverless + your client</td><td>SDK / Kafka connector, channels, offsets</td><td>clickstream, IoT, CDC events, Kafka topics</td></tr>
+    <tr><td><b>External / Iceberg table</b></td><td>as fresh as the files (after metadata refresh)</td><td>your warehouse at query time</td><td>catalog, refresh, partitions</td><td>lakehouse, sharing data with Spark/Trino</td></tr>
+  </table></div>
+  <div class="call trap"><b class="k">INTERVIEW TRAP</b><div>"Snowpipe is real-time." <b>No.</b> Snowpipe is <b>continuous micro-batch</b>: it loads <i>files</i>, usually within a minute or so of the notification, but Snowflake does not guarantee a latency or a load order. If someone needs seconds, the answer is <b>Snowpipe Streaming</b>.</div></div>
+  <div class="call pro"><b class="k">SENIOR ANGLE</b><div>Most real platforms use <b>several</b> patterns at once: Snowpipe for vendor files, Streaming via Kafka for app events, Iceberg for data shared with a Spark team, and plain COPY for one-off backfills. Show you know where each one ends and the next begins.</div></div>
+</section>
+
+<section id="stages">
+  <div class="eyebrow">CHAPTER 02</div>
+  <h2>Stages &amp; storage integrations <span class="thin">· the loading dock and its key card</span></h2>
+  <div class="wwh">
+    <div class="box what"><span class="tag">01 · WHAT IS IT</span>
+      <p>A <b>stage</b> is a named pointer to a place where files live. <b>Internal stages</b> keep the files in Snowflake-managed storage. <b>External stages</b> point at <i>your</i> bucket or container (S3, Azure Blob/ADLS Gen2, GCS).</p>
+      <p>A <b>storage integration</b> is an account-level object that holds the <b>identity</b> Snowflake uses to reach your cloud storage, plus a list of allowed locations. Stages reference it, so <b>no access keys ever appear in SQL</b>.</p>
+      <p>A <b>file format</b> tells COPY how to parse the bytes: CSV, JSON, Parquet, Avro, ORC or XML.</p>
+    </div>
+    <div class="box why"><span class="tag">02 · WHY WE USE IT</span>
+      <ul class="dots">
+        <li><b>Security:</b> with <code>CREDENTIALS=(AWS_KEY_ID=…)</code> in a CREATE STAGE, the secret sits in DDL, history and scripts. An integration uses role assumption with short-lived credentials instead.</li>
+        <li><b>Separation of duties:</b> a cloud admin creates the IAM role, an ACCOUNTADMIN creates the integration once, and engineers just get <code>USAGE</code> on it.</li>
+        <li><b>Guard rails:</b> <code>STORAGE_ALLOWED_LOCATIONS</code> stops anyone pointing a stage at a bucket they shouldn't.</li>
+        <li><b>Reuse:</b> named file formats and stages keep parsing rules in one place instead of repeating them in every COPY.</li>
+      </ul>
+    </div>
+    <div class="box how"><span class="tag">03 · HOW IT WORKS · PICK A STAGE TYPE</span>
+      <div class="tabs" id="stTabs"><button class="on" data-s="user">User stage @~</button><button data-s="table">Table stage @%orders</button><button data-s="named">Named internal @raw_stage</button><button data-s="ext">External @s3_orders</button></div>
+      <div class="mini" id="stOut"></div>
+    </div>
+  </div>
+
+  <h3>How Snowflake gets into your S3 bucket without a password</h3>
+  <p>This is the most-asked "backend" question on external stages. Choose a scenario and step through it. Each step shows <b style="color:var(--ice)">what you do</b> and <b style="color:var(--teal)">what happens in the backend</b>.</p>
+  <div class="panel">
+    <div class="panel-h"><div class="t">ANIMATED FLOW · <b>STORAGE INTEGRATION → IAM ROLE → S3</b></div><div class="tabs" id="iamScen" style="margin:0"><button class="on" data-s="ok">Happy path</button><button data-s="trust">Trust policy not updated</button><button data-s="loc">Path not in allowed locations</button></div></div>
+    <svg viewBox="0 0 680 290" class="flow" id="iamFlow">
+      <path class="edge" id="ie1" d="M165 62 L185 62"/><path class="edge" id="ie2" d="M330 62 L350 62"/><path class="edge" id="ie3" d="M495 62 L515 62"/>
+      <path class="edge" id="ie4" d="M587 94 L587 196"/><path class="edge" id="ie5" d="M515 228 L495 228"/><path class="edge" id="ie6" d="M350 228 L330 228"/><path class="edge" id="ie7" d="M185 228 L165 228"/>
+      <g class="fn" id="i1"><rect class="neutral" x="20" y="30" width="145" height="64" rx="10" stroke-width="1"/><text class="th" x="92" y="52" text-anchor="middle" dominant-baseline="central">1 · You run SQL</text><text class="tm" x="92" y="73" text-anchor="middle" dominant-baseline="central">LIST @s3_orders</text></g>
+      <g class="fn" id="i2"><rect class="L-cs" x="185" y="30" width="145" height="64" rx="10" stroke-width="1"/><text class="th" x="257" y="52" text-anchor="middle" dominant-baseline="central">2 · Cloud services</text><text class="ts" x="257" y="73" text-anchor="middle" dominant-baseline="central">stage → integration</text></g>
+      <g class="fn" id="i3"><rect class="L-cs" x="350" y="30" width="145" height="64" rx="10" stroke-width="1"/><text class="th" x="422" y="52" text-anchor="middle" dominant-baseline="central">3 · Snowflake IAM user</text><text class="ts" x="422" y="73" text-anchor="middle" dominant-baseline="central">in Snowflake's AWS acct</text></g>
+      <g class="fn" id="i4"><rect class="neutral" x="515" y="30" width="145" height="64" rx="10" stroke-width="1"/><text class="th" x="587" y="52" text-anchor="middle" dominant-baseline="central">4 · AWS STS</text><text class="ts" x="587" y="73" text-anchor="middle" dominant-baseline="central">AssumeRole + ExternalId</text></g>
+      <g class="fn" id="i5"><rect class="neutral" x="515" y="196" width="145" height="64" rx="10" stroke-width="1"/><text class="th" x="587" y="218" text-anchor="middle" dominant-baseline="central">5 · Your IAM role</text><text class="ts" x="587" y="239" text-anchor="middle" dominant-baseline="central">trust + S3 policy</text></g>
+      <g class="fn" id="i6"><rect class="L-st" x="350" y="196" width="145" height="64" rx="10" stroke-width="1"/><text class="th" x="422" y="218" text-anchor="middle" dominant-baseline="central">6 · Temp credentials</text><text class="ts" x="422" y="239" text-anchor="middle" dominant-baseline="central">short-lived, scoped</text></g>
+      <g class="fn" id="i7"><rect class="L-cp" x="185" y="196" width="145" height="64" rx="10" stroke-width="1"/><text class="th" x="257" y="218" text-anchor="middle" dominant-baseline="central">7 · Read the bucket</text><text class="tm" x="257" y="239" text-anchor="middle" dominant-baseline="central">s3://acme-raw/orders/</text></g>
+      <g class="fn" id="i8"><rect class="L-st" x="20" y="196" width="145" height="64" rx="10" stroke-width="1"/><text class="th" x="92" y="218" text-anchor="middle" dominant-baseline="central">8 · Result</text><text class="ts" x="92" y="239" text-anchor="middle" dominant-baseline="central" id="iamRes">file list / rows</text></g>
+      <text class="tm" x="340" y="148" text-anchor="middle">Snowflake side ↑ (top) · your AWS account ↓ (bottom right)</text>
+    </svg>
+    <div class="stepbar" id="iamBar"></div>
+    <div class="stepdesc" id="iamDesc"></div>
+    <div class="row" style="margin-top:12px"><button class="btn" id="iamPrev">Back</button><button class="btn pri" id="iamNext">Start</button><button class="btn" id="iamReset">Reset</button></div>
+  </div>
+  <div class="grid3">
+    <div class="mini"><h5>Azure</h5><p>The integration has an <code>AZURE_TENANT_ID</code>. You open the <b>consent URL</b> from <code>DESC INTEGRATION</code>, which registers Snowflake's multi-tenant app in your tenant, then grant that app a role such as <i>Storage Blob Data Reader</i> on the container.</p></div>
+    <div class="mini"><h5>Google Cloud</h5><p>Snowflake creates a <b>service account</b> for the integration (shown in <code>DESC INTEGRATION</code> as <code>STORAGE_GCP_SERVICE_ACCOUNT</code>). You grant that service account read (and, for unload, write) permissions on the bucket.</p></div>
+    <div class="mini"><h5>Who can create one?</h5><p><code>ACCOUNTADMIN</code>, or a role granted the global <code>CREATE INTEGRATION</code> privilege. Engineers then get <code>USAGE</code> on the integration to create stages that use it.</p></div>
+  </div>
+
+  <h3>File formats: the parsing rules</h3>
+  <div class="grid3">
+    <div class="mini"><h5>CSV</h5><p><code>FIELD_DELIMITER</code>, <code>SKIP_HEADER=1</code> or <code>PARSE_HEADER=TRUE</code> (use column names, needed for INFER_SCHEMA and MATCH_BY_COLUMN_NAME), <code>FIELD_OPTIONALLY_ENCLOSED_BY='"'</code>, <code>NULL_IF=('','NULL')</code>, <code>EMPTY_FIELD_AS_NULL</code>, <code>ERROR_ON_COLUMN_COUNT_MISMATCH</code>, <code>TRIM_SPACE</code>, <code>DATE_FORMAT</code>, <code>ENCODING</code>, <code>COMPRESSION=AUTO</code>.</p></div>
+    <div class="mini"><h5>JSON</h5><p>Loads into a <code>VARIANT</code> column (or columns via MATCH_BY_COLUMN_NAME). <code>STRIP_OUTER_ARRAY=TRUE</code> turns one big <code>[ {...}, {...} ]</code> into one row per element, which also avoids the per-value size limit on VARIANT. <code>STRIP_NULL_VALUES</code> drops null keys.</p></div>
+    <div class="mini"><h5>Parquet · Avro · ORC</h5><p>Self-describing binary formats with a schema inside the file. Query fields as <code>$1:col_name</code>, load by name with <code>MATCH_BY_COLUMN_NAME</code>, or detect columns with <code>INFER_SCHEMA</code>. Parquet is the usual lake format.</p></div>
+    <div class="mini"><h5>XML</h5><p>Loads into VARIANT. Options like <code>STRIP_OUTER_ELEMENT</code> help split a big root element into rows. XML is load-only: you can't unload to XML.</p></div>
+    <div class="mini"><h5>Unload formats</h5><p><code>COPY INTO @stage</code> writes <b>CSV, JSON or Parquet</b> only.</p></div>
+    <div class="mini"><h5>Directory tables (recap)</h5><p>From Module 02: <code>DIRECTORY=(ENABLE=TRUE)</code> adds a file catalog to a stage. Useful for listing and auditing files, and for streams on new files, not just for unstructured data.</p></div>
+  </div>
+  <div class="call trap"><b class="k">INTERVIEW TRAP</b><div>"Why does <code>LIST @s3_orders</code> fail with an access-denied error right after you created the integration?" Usually the IAM role's <b>trust policy</b> was never updated with the <code>STORAGE_AWS_IAM_USER_ARN</code> and <code>STORAGE_AWS_EXTERNAL_ID</code> from <code>DESC INTEGRATION</code>. Also: running <code>CREATE OR REPLACE STORAGE INTEGRATION</code> can generate a <b>new external ID</b>, which breaks the trust policy again.</div></div>
+  <div class="call pro"><b class="k">SENIOR ANGLE</b><div>Give the IAM role <b>least privilege</b>: <code>s3:GetObject</code>, <code>s3:GetObjectVersion</code> and <code>s3:ListBucket</code> on one prefix for loading; add <code>s3:PutObject</code> / <code>s3:DeleteObject</code> only if you unload or use PURGE. Use one integration per environment (dev / prod buckets) so dev can never read prod.</div></div>
+</section>
+
+<section id="copy">
+  <div class="eyebrow">CHAPTER 03</div>
+  <h2>COPY INTO deep dive <span class="thin">· errors, validation, reloads, transforms</span></h2>
+  <p class="lead">Module 02 covered the happy path (<code>PUT</code> then <code>COPY INTO</code>, and the 64-day load metadata). Here we look at what senior engineers actually tune: what happens when rows are bad, how to test a load without loading, and how to reshape data on the way in.</p>
+  <div class="wwh">
+    <div class="box what"><span class="tag">01 · WHAT IS IT</span>
+      <p><code>COPY INTO &lt;table&gt;</code> is a bulk load statement: it reads staged files, parses them with a file format, optionally transforms columns with a <code>SELECT</code>, and writes micro-partitions to the table <b>in one transaction</b>. Its copy options decide what happens with bad data and with files that were loaded before:</p>
+      <ul class="dots">
+        <li><code>ON_ERROR</code>: <code>ABORT_STATEMENT</code> (<b>default for bulk COPY</b>), <code>CONTINUE</code>, <code>SKIP_FILE</code> (<b>default for Snowpipe</b>), <code>SKIP_FILE_n</code>, <code>'SKIP_FILE_n%'</code>.</li>
+        <li><code>VALIDATION_MODE</code>: <code>RETURN_n_ROWS</code>, <code>RETURN_ERRORS</code>, <code>RETURN_ALL_ERRORS</code>. A dry run: nothing is loaded.</li>
+        <li><code>FORCE</code>, <code>LOAD_UNCERTAIN_FILES</code>, <code>PURGE</code>, <code>PATTERN</code>, <code>FILES</code>, <code>MATCH_BY_COLUMN_NAME</code>.</li>
+      </ul>
+    </div>
+    <div class="box why"><span class="tag">02 · WHY THESE OPTIONS MATTER</span>
+      <ul class="dots">
+        <li><b>Bad rows are normal.</b> A vendor sends <code>"N/A"</code> in an amount column. Do you fail the whole night's load, drop that file, or keep the good rows and log the bad ones? That is a business decision, and <code>ON_ERROR</code> encodes it.</li>
+        <li><b>Idempotency.</b> Load metadata makes reruns safe. <code>FORCE</code> breaks that on purpose, so you need to know when it's appropriate.</li>
+        <li><b>Fewer moving parts.</b> Light transformations during load (cast, reorder, add the file name) save a whole staging step.</li>
+      </ul>
+    </div>
+    <div class="box how"><span class="tag">03 · HOW IT WORKS · BACKEND</span>
+      <p><b>1. List and filter:</b> cloud services lists the stage path, applies <code>PATTERN</code> / <code>FILES</code>, then removes files already in the table's <b>load metadata</b> (file name + ETag/checksum, kept 64 days) unless <code>FORCE=TRUE</code>. <b>2. Distribute:</b> remaining files are spread across the warehouse's threads; one file is read by one thread. <b>3. Parse and convert:</b> each row is parsed and cast to the column types; failures are counted per file. <b>4. Decide:</b> ON_ERROR rules decide, per file, whether to keep its good rows, drop the file or abort everything. <b>5. Commit:</b> new micro-partitions are registered atomically and load metadata is updated for every file that loaded (fully or partly). Files that failed are <b>not</b> recorded as loaded, so the next COPY tries them again.</p>
+    </div>
+  </div>
+
+  <div class="panel" id="cpPanel">
+    <div class="panel-h"><div class="t">SIMULATOR · <b>COPY PLAYGROUND</b> · @raw_stage/orders/ → ORDERS</div><span class="note-s">Sample data · illustrative output</span></div>
+    <div class="note-s">Staged files (red border = contains bad rows):</div>
+    <div class="fchips" id="cpFiles"></div>
+    <div class="row" style="margin:6px 0"><span class="note-s" style="min-width:140px">ON_ERROR</span><div class="tabs" id="cpOE" style="margin:0"><button class="on" data-v="ABORT_STATEMENT">ABORT_STATEMENT</button><button data-v="CONTINUE">CONTINUE</button><button data-v="SKIP_FILE">SKIP_FILE</button><button data-v="SKIP_FILE_2">SKIP_FILE_2</button><button data-v="'SKIP_FILE_30%'">'SKIP_FILE_30%'</button></div></div>
+    <div class="row" style="margin:6px 0"><span class="note-s" style="min-width:140px">VALIDATION_MODE</span><div class="tabs" id="cpVM" style="margin:0"><button class="on" data-v="">(none: really load)</button><button data-v="RETURN_ERRORS">RETURN_ERRORS</button><button data-v="RETURN_5_ROWS">RETURN_5_ROWS</button></div></div>
+    <div class="row" style="margin:6px 0"><span class="note-s" style="min-width:140px">FORCE</span><div class="tabs" id="cpForce" style="margin:0"><button class="on" data-v="0">FALSE</button><button data-v="1">TRUE</button></div><span class="note-s" style="min-width:70px;margin-left:16px">PURGE</span><div class="tabs" id="cpPurge" style="margin:0"><button class="on" data-v="0">FALSE</button><button data-v="1">TRUE</button></div></div>
+    <div class="row" style="margin:10px 0"><button class="btn pri" id="cpRun">Run COPY</button><button class="btn" id="cpAdd">Stage a new file (orders_05.csv)</button><button class="btn" id="cpReset">Reset everything</button></div>
+    <div class="sqlbox" id="cpSql"></div>
+    <div class="grid2" style="margin-top:12px">
+      <div class="ftable"><div class="note-s">COPY result (one row per file)</div><table class="t" id="cpRes"></table></div>
+      <div class="ftable"><div class="note-s">SELECT * FROM orders (latest rows)</div><table class="t" id="cpTbl"></table></div>
+    </div>
+    <div class="stats">
+      <div class="stat"><div class="k">ROWS IN TABLE</div><div class="n" id="cpN">0</div></div>
+      <div class="stat"><div class="k">LOADED THIS RUN</div><div class="n" id="cpL">0</div></div>
+      <div class="stat"><div class="k">REJECTED THIS RUN</div><div class="n" id="cpR">0</div></div>
+      <div class="stat"><div class="k">FILES IN LOAD METADATA</div><div class="n" id="cpM">0</div><div class="s">remembered for 64 days</div></div>
+    </div>
+    <div class="insight" id="cpIns">Start with the default: run COPY with <b>ABORT_STATEMENT</b> and see what one bad row does.</div>
+  </div>
+
+  <h3>Transforming during load</h3>
+  <div class="grid2">
+    <div>
+      <div class="sqlbox">COPY INTO orders (order_id, amount, order_ts, src_file, src_row)
+FROM (
+  SELECT $1::NUMBER,
+         TRY_TO_DECIMAL($2, 10, 2),
+         TO_TIMESTAMP_NTZ($3, 'YYYY-MM-DD HH24:MI:SS'),
+         METADATA$FILENAME,
+         METADATA$FILE_ROW_NUMBER
+  FROM @raw_stage/orders/
+)
+FILE_FORMAT = (FORMAT_NAME = 'csv_std')
+PATTERN = '.*orders_[0-9]+[.]csv[.]gz';</div>
+    </div>
+    <div>
+      <ul class="dots">
+        <li><code>$1, $2…</code> are the positional fields of the file (for Parquet/JSON: <code>$1:field</code>).</li>
+        <li>Allowed: column reorder, omit columns, casts, simple functions such as <code>TRY_TO_DECIMAL</code> or <code>CURRENT_TIMESTAMP()</code>. Not allowed: joins, <code>WHERE</code> filters, <code>GROUP BY</code>, <code>FLATTEN</code>.</li>
+        <li><code>METADATA$FILENAME</code> and <code>METADATA$FILE_ROW_NUMBER</code> give you <b>lineage</b>: every row knows which file and line it came from. Also available: <code>METADATA$FILE_LAST_MODIFIED</code>, <code>METADATA$START_SCAN_TIME</code>, <code>METADATA$FILE_CONTENT_KEY</code>.</li>
+        <li><code>PATTERN</code> is a <b>regular expression</b> matched against the path, not a shell glob.</li>
+      </ul>
+    </div>
+  </div>
+  <div class="grid3" style="margin-top:12px">
+    <div class="mini"><h5>VALIDATION_MODE vs VALIDATE()</h5><p><code>VALIDATION_MODE</code> checks files <b>before</b> loading and loads nothing. <code>SELECT * FROM TABLE(VALIDATE(orders, JOB_ID =&gt; '_last'))</code> returns the rows rejected by a COPY that <b>already ran</b> (for example with CONTINUE). Neither works with COPY statements that transform data.</p></div>
+    <div class="mini"><h5>FORCE vs LOAD_UNCERTAIN_FILES</h5><p><code>FORCE=TRUE</code> reloads <b>everything</b> matched, even files loaded yesterday, so it creates duplicates. <code>LOAD_UNCERTAIN_FILES=TRUE</code> only adds files whose status is <b>unknown</b> because they are older than the 64-day metadata window; files known to be loaded are still skipped.</p></div>
+    <div class="mini"><h5>MATCH_BY_COLUMN_NAME</h5><p><code>CASE_INSENSITIVE</code> / <code>CASE_SENSITIVE</code>: map file columns to table columns <b>by name</b> instead of position. Works for Parquet, Avro, ORC and JSON, and for CSV when the file format has <code>PARSE_HEADER=TRUE</code>. Required for schema evolution (chapter 08).</p></div>
+  </div>
+  <div class="call trap"><b class="k">INTERVIEW TRAP</b><div>"The COPY used <code>ON_ERROR = CONTINUE</code> and returned success, so the data is complete, right?" <b>Not necessarily.</b> Check the result columns <code>ERRORS_SEEN</code> and <code>STATUS = PARTIALLY_LOADED</code>, or query <code>VALIDATE()</code> / <code>COPY_HISTORY</code>. Silent row loss is the classic production bug with CONTINUE.</div></div>
+  <div class="call pro"><b class="k">SENIOR ANGLE</b><div>A robust pattern: load raw files into a <b>landing table</b> with every column as <code>VARCHAR</code> (or one <code>VARIANT</code>) plus <code>METADATA$FILENAME</code>, so the load practically never fails. Then cast with <code>TRY_CAST</code> in the next layer, and route rows that fail the cast to a quarantine table. You keep 100% of the evidence and the load never pages anyone at 3 a.m.</div></div>
+</section>
+
+<section id="sizing">
+  <div class="eyebrow">CHAPTER 04</div>
+  <h2>File sizing &amp; parallelism <span class="thin">· why 100–250 MB?</span></h2>
+  <div class="wwh">
+    <div class="box what"><span class="tag">01 · WHAT IS IT</span>
+      <p>Snowflake's guidance is to aim for data files of roughly <b>100–250 MB compressed</b> for loading (with COPY or Snowpipe). The size and number of files decide how well the warehouse's parallel threads are used and how much fixed per-file overhead you pay.</p>
+    </div>
+    <div class="box why"><span class="tag">02 · WHY IT MATTERS</span>
+      <ul class="dots">
+        <li><b>Tiny files</b> (a few KB each, often from streaming jobs that flush every second): each file has fixed costs (listing, opening, metadata, commit bookkeeping). With Snowpipe, file count has historically also affected the bill.</li>
+        <li><b>Giant files</b> (10 GB+): one thread works while the others sit idle, a single bad row with ABORT_STATEMENT throws away hours of work, and retries are expensive.</li>
+      </ul>
+    </div>
+    <div class="box how"><span class="tag">03 · HOW IT WORKS · BACKEND</span>
+      <p>A warehouse is a cluster of nodes, and each node runs several load threads. During COPY, files are the unit of work: <b>each file is handed to one thread</b> (a gzip stream can't be split in the middle). So a load can never run with more parallel threads than it has files. With 1 file, an X-Large warehouse is as fast as an X-Small for that load, while you pay X-Large rates. Split big exports into many medium files, and merge tiny ones before loading.</p>
+    </div>
+  </div>
+  <div class="panel">
+    <div class="panel-h"><div class="t">SIMULATOR · <b>FILES → LOAD THREADS</b></div><span class="note-s">Illustrative model, not a benchmark: 8 threads per node, 0.4 s fixed cost per file, 20 MB/s per thread</span></div>
+    <div class="ctl"><label>Total data (compressed)</label><input type="range" id="fzVol" min="1" max="200" value="20"><span class="v" id="fzVolV"></span></div>
+    <div class="ctl"><label>Size of each file</label><input type="range" id="fzSize" min="0" max="12" value="7"><span class="v" id="fzSizeV"></span></div>
+    <div class="row" style="margin:6px 0"><span class="note-s" style="min-width:150px">Warehouse:</span><div class="tabs" id="fzWh" style="margin:0"><button data-n="1" class="on">X-Small (1 node)</button><button data-n="2">Small (2)</button><button data-n="4">Medium (4)</button><button data-n="8">Large (8)</button></div></div>
+    <svg viewBox="0 0 680 210" id="fzSvg"></svg>
+    <div class="legend"><span><i style="background:var(--teal)"></i>reading &amp; parsing data</span><span><i style="background:var(--amber)"></i>fixed per-file overhead</span><span><i style="background:var(--card2);border:1px solid var(--line2)"></i>idle thread (you still pay for it)</span></div>
+    <div class="stats">
+      <div class="stat"><div class="k">FILES</div><div class="n" id="fzFiles">–</div></div>
+      <div class="stat"><div class="k">LOAD TIME</div><div class="n" id="fzTime">–</div></div>
+      <div class="stat"><div class="k">THREAD USE</div><div class="n" id="fzUtil">–</div><div class="s">busy threads / all threads</div></div>
+      <div class="stat"><div class="k">OVERHEAD SHARE</div><div class="n" id="fzOver">–</div><div class="s">time spent on per-file costs</div></div>
+      <div class="stat"><div class="k">CREDITS (ILLUSTR.)</div><div class="n" id="fzCred">–</div><div class="s">min 60 s billing</div></div>
+    </div>
+    <div class="insight" id="fzIns"></div>
+  </div>
+  <div class="call trap"><b class="k">INTERVIEW TRAP</b><div>"Loads are slow, so let's use a bigger warehouse." If the load is <b>one 20 GB file</b>, a bigger warehouse changes nothing: one file = one thread. Fix the files first (split to ~100–250 MB), then size the warehouse to the number of files.</div></div>
+  <div class="call pro"><b class="k">SENIOR ANGLE</b><div>Upstream fixes beat Snowflake tuning: configure Spark (<code>maxRecordsPerFile</code> / repartition), Firehose buffering (size and interval), or the Kafka connector flush settings so files arrive at a sensible size. For Snowpipe, Snowflake suggests staging files about once a minute rather than every second.</div></div>
+</section>
+
+<section id="snowpipe">
+  <div class="eyebrow">CHAPTER 05</div>
+  <h2>Snowpipe <span class="thin">· continuous, serverless file loading</span></h2>
+  <div class="wwh">
+    <div class="box what"><span class="tag">01 · WHAT IS IT</span>
+      <p>A <b>pipe</b> is a named object that wraps <b>one COPY INTO statement</b>. Snowflake runs that COPY for you, on <b>serverless compute</b>, every time new files are reported. Two ways to report files:</p>
+      <ul class="dots">
+        <li><b>Auto-ingest</b> (<code>AUTO_INGEST=TRUE</code>): cloud storage sends event notifications. S3 → <b>SQS</b> queue (Snowflake provides it; you can also route through SNS), Azure → <b>Event Grid</b> → storage queue (via a notification integration), GCS → <b>Pub/Sub</b> subscription (via a notification integration).</li>
+        <li><b>REST API</b>: your application calls the <code>insertFiles</code> endpoint with the list of file names (key-pair auth), and can check <code>insertReport</code> / <code>loadHistoryScan</code>.</li>
+      </ul>
+    </div>
+    <div class="box why"><span class="tag">02 · WHY WE USE IT</span>
+      <ul class="dots">
+        <li><b>Freshness without babysitting:</b> data is usually queryable about a minute after the file lands, without a scheduler.</li>
+        <li><b>No warehouse to manage:</b> no idle time, no 60-second minimum per resume. Snowflake sizes the compute.</li>
+        <li><b>Built-in deduplication:</b> each pipe remembers which files it loaded, so the same notification twice doesn't duplicate data.</li>
+      </ul>
+    </div>
+    <div class="box how"><span class="tag">03 · HOW IT WORKS · BACKEND</span>
+      <p>Each notification adds the file path to the pipe's <b>internal queue</b>. Snowflake batches queued files and runs the pipe's COPY on Snowflake-managed compute. Before loading, it checks the pipe's <b>load history</b> (kept per pipe, about <b>14 days</b>; check docs for current details) and skips file names it has already loaded. The default <code>ON_ERROR</code> for pipes is <b>SKIP_FILE</b>, so a bad file is dropped and reported, not loaded half-way. Billing: serverless compute charged to the account (historically compute time plus a small per-file overhead; Snowflake has been moving pipes to a simpler volume-based price, so check the current pricing guide).</p>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-h"><div class="t">ANIMATED FLOW · <b>FILE LANDS → TABLE</b></div><div class="tabs" id="spMode" style="margin:0"><button class="on" data-v="auto">AUTO_INGEST (S3 → SQS)</button><button data-v="rest">REST insertFiles</button></div></div>
+    <div class="row" style="margin-bottom:10px"><button class="btn pri" id="spNew">Drop a new file</button><button class="btn" id="spDup">Re-send the same file</button><button class="btn warn" id="spBad">Drop a bad file</button><button class="btn" id="spPause">Pause pipe</button><button class="btn" id="spReset">Reset</button></div>
+    <div class="grid2" style="grid-template-columns:1.4fr 1fr">
+      <svg viewBox="0 0 680 320" class="flow" id="spFlow">
+        <path class="edge" id="se1" d="M140 50 L170 50"/><path class="edge" id="se2" d="M290 50 L320 50"/><path class="edge" id="se3" d="M470 50 L500 50"/>
+        <path class="edge" id="se4" d="M580 80 L580 130"/><path class="edge" id="se5" d="M580 190 L580 240"/><path class="edge" id="se6" d="M500 270 L470 270"/>
+        <path class="edge" id="se7" d="M500 250 L470 175"/><path class="edge" id="se8" d="M320 270 L290 270"/>
+        <g class="fn" id="sp1"><rect class="neutral" x="20" y="20" width="120" height="60" rx="10" stroke-width="1"/><text class="th" x="80" y="42" text-anchor="middle" dominant-baseline="central">Producer</text><text class="ts" x="80" y="62" text-anchor="middle" dominant-baseline="central">app / Firehose</text></g>
+        <g class="fn" id="sp2"><rect class="L-st" x="170" y="20" width="120" height="60" rx="10" stroke-width="1"/><text class="th" x="230" y="42" text-anchor="middle" dominant-baseline="central">S3 bucket</text><text class="tm" x="230" y="62" text-anchor="middle" dominant-baseline="central">/orders/</text></g>
+        <g class="fn" id="sp3"><rect class="L-cs" x="320" y="20" width="150" height="60" rx="10" stroke-width="1"/><text class="th" x="395" y="42" text-anchor="middle" dominant-baseline="central" id="spN3a">Event → SQS</text><text class="ts" x="395" y="62" text-anchor="middle" dominant-baseline="central" id="spN3b">ObjectCreated</text></g>
+        <g class="fn" id="sp4"><rect class="L-cs" x="500" y="20" width="160" height="60" rx="10" stroke-width="1"/><text class="th" x="580" y="42" text-anchor="middle" dominant-baseline="central">Pipe queue</text><text class="ts" x="580" y="62" text-anchor="middle" dominant-baseline="central" id="spQ">0 pending</text></g>
+        <g class="fn" id="sp5"><rect class="L-cs" x="500" y="130" width="160" height="60" rx="10" stroke-width="1"/><text class="th" x="580" y="152" text-anchor="middle" dominant-baseline="central">Load history check</text><text class="ts" x="580" y="172" text-anchor="middle" dominant-baseline="central">seen this file name?</text></g>
+        <g class="fn" id="sp6"><rect class="L-cp" x="500" y="240" width="160" height="60" rx="10" stroke-width="1"/><text class="th" x="580" y="262" text-anchor="middle" dominant-baseline="central">Serverless COPY</text><text class="ts" x="580" y="282" text-anchor="middle" dominant-baseline="central">ON_ERROR = SKIP_FILE</text></g>
+        <g class="fn" id="sp7"><rect class="L-st" x="320" y="240" width="150" height="60" rx="10" stroke-width="1"/><text class="th" x="395" y="262" text-anchor="middle" dominant-baseline="central">ORDERS table</text><text class="ts" x="395" y="282" text-anchor="middle" dominant-baseline="central" id="spT">0 rows</text></g>
+        <g class="fn" id="sp8"><rect class="neutral" x="320" y="130" width="150" height="60" rx="10" stroke-width="1"/><text class="th" x="395" y="152" text-anchor="middle" dominant-baseline="central">Error notification</text><text class="ts" x="395" y="172" text-anchor="middle" dominant-baseline="central">ERROR_INTEGRATION</text></g>
+        <g class="fn" id="sp9"><rect class="neutral" x="20" y="240" width="270" height="60" rx="10" stroke-width="1"/><text class="th" x="155" y="262" text-anchor="middle" dominant-baseline="central">Monitoring</text><text class="tm" x="155" y="282" text-anchor="middle" dominant-baseline="central">SYSTEM$PIPE_STATUS · COPY_HISTORY</text></g>
+      </svg>
+      <div><div class="note-s">Event log</div><div class="evlog" id="spLog"></div></div>
+    </div>
+    <div class="stats">
+      <div class="stat"><div class="k">FILES LOADED</div><div class="n" id="spL">0</div></div>
+      <div class="stat"><div class="k">DUPLICATES SKIPPED</div><div class="n" id="spD">0</div></div>
+      <div class="stat"><div class="k">FILES FAILED</div><div class="n" id="spF">0</div></div>
+      <div class="stat"><div class="k">PIPE STATE</div><div class="n" id="spS" style="font-size:20px">RUNNING</div><div class="s">executionState</div></div>
+    </div>
+    <div class="insight" id="spIns">Click <b>Drop a new file</b> and watch the event travel. Then try the duplicate and the bad file.</div>
+  </div>
+
+  <h3>Operating a pipe</h3>
+  <div class="grid3">
+    <div class="mini"><h5>SYSTEM$PIPE_STATUS</h5><p>Returns JSON with <code>executionState</code> (RUNNING, PAUSED, …), <code>pendingFileCount</code>, <code>lastIngestedTimestamp</code>, <code>lastIngestedFilePath</code>, plus notification-channel info and recent errors. First thing to check when "data stopped arriving".</p></div>
+    <div class="mini"><h5>COPY_HISTORY</h5><p><code>INFORMATION_SCHEMA.COPY_HISTORY()</code> (last 14 days, per table) and <code>ACCOUNT_USAGE.COPY_HISTORY</code> (up to a year, some latency) show <b>both bulk COPY and Snowpipe</b> loads: file, status, rows, first error. The older <code>LOAD_HISTORY</code> view covers bulk COPY only, <b>not</b> Snowpipe.</p></div>
+    <div class="mini"><h5>Pause, resume, refresh</h5><p><code>ALTER PIPE p SET PIPE_EXECUTION_PAUSED = TRUE</code> stops loading (notifications keep queueing). <code>ALTER PIPE p REFRESH</code> queues files already in the stage that were staged within the last <b>7 days</b>, for example after creating the pipe or after an outage.</p></div>
+    <div class="mini"><h5>Changing the COPY</h5><p>You can't edit a pipe's COPY statement in place; you recreate the pipe. A recreated pipe has <b>fresh load history</b>, so pause, recreate, then use <code>REFRESH</code> carefully (or the table's own load metadata) to avoid reloading files.</p></div>
+    <div class="mini"><h5>Error notifications</h5><p>Set <code>ERROR_INTEGRATION = my_notif_int</code> on an auto-ingest pipe to push failures to SNS, Event Grid or Pub/Sub, instead of polling COPY_HISTORY.</p></div>
+    <div class="mini"><h5>Cost views</h5><p><code>ACCOUNT_USAGE.PIPE_USAGE_HISTORY</code> (or the <code>PIPE_USAGE_HISTORY()</code> table function) shows credits and bytes / files per pipe.</p></div>
+  </div>
+  <div class="call trap"><b class="k">INTERVIEW TRAP</b><div><b>Order and replays.</b> Snowpipe does <b>not</b> guarantee files load in the order they arrived. And if a producer <b>overwrites</b> a file with the same name, the pipe treats it as already loaded and skips it (within its load history window). Use unique file names (timestamp or UUID in the path) and never rely on arrival order; deduplicate or order downstream (for example with a MERGE on a business key and event timestamp).</div></div>
+  <div class="call pro"><b class="k">SENIOR ANGLE</b><div>One S3 bucket can only send a given event type for overlapping prefixes to one destination. If several pipes (or other consumers) need the same bucket, route S3 events through an <b>SNS topic</b> and subscribe each SQS queue, or split pipes by prefix. Mention this when designing multi-tenant ingestion.</div></div>
+</section>
+
+<section id="streaming">
+  <div class="eyebrow">CHAPTER 06</div>
+  <h2>Snowpipe Streaming <span class="thin">· rows in seconds, no files</span></h2>
+  <div class="wwh">
+    <div class="box what"><span class="tag">01 · WHAT IS IT</span>
+      <p><b>Snowpipe Streaming</b> lets a client write <b>rows</b> straight into Snowflake tables. There are no staged files and no COPY. You use it through:</p>
+      <ul class="dots">
+        <li>the <b>Snowflake Ingest SDK</b> (Java; newer SDKs add more languages), called from your own app, or</li>
+        <li>the <b>Snowflake Connector for Kafka</b> with <code>snowflake.ingestion.method = SNOWPIPE_STREAMING</code> (the older default mode writes files and uses Snowpipe).</li>
+      </ul>
+      <p>The client opens a <b>channel</b> to a table and sends rows, each batch tagged with an <b>offset token</b>. Rows are usually queryable within seconds.</p>
+    </div>
+    <div class="box why"><span class="tag">02 · WHY WE USE IT</span>
+      <ul class="dots">
+        <li><b>Latency:</b> seconds instead of the minute-plus of file-based Snowpipe.</li>
+        <li><b>No tiny-file problem:</b> a Kafka topic with steady traffic would otherwise produce thousands of small files.</li>
+        <li><b>Exactly-once</b> delivery when combined with a replayable source such as Kafka, thanks to offset tokens.</li>
+        <li>Often <b>cheaper</b> than file-based Snowpipe at high event rates, because there is no per-file work (check current pricing).</li>
+      </ul>
+    </div>
+    <div class="box how"><span class="tag">03 · HOW IT WORKS · BACKEND</span>
+      <p><b>Client</b> → opens a channel (one channel per Kafka partition in the connector) → buffers rows in memory → flushes compressed batches to Snowflake every second or so, with the <b>latest offset token</b>. <b>Snowflake</b> → writes the batch to Snowflake-managed storage, registers it with the table and stores the channel's <b>committed offset token</b> atomically with the data. In the classic architecture, a background process later optimizes these batches into regular micro-partitions. Ordering is guaranteed <b>within a channel</b>, not across channels. Snowflake has also introduced a newer <b>high-performance architecture</b> (it uses a <code>PIPE</code> object as the entry point and has its own SDKs and throughput-based pricing). Treat feature and pricing details as version-specific and check the docs.</p>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-h"><div class="t">SIMULATOR · <b>OFFSET TOKENS = EXACTLY ONCE</b> · Kafka partition 0 → channel ORDERS_P0</div><div class="tabs" id="osMode" style="margin:0"><button class="on" data-v="tok">On restart: read committed offset token</button><button data-v="naive">On restart: start from offset 0</button></div></div>
+    <div class="row" style="margin-bottom:10px"><button class="btn pri" id="osSend">Send 4 events</button><button class="btn" id="osFlush">SDK flush (commit)</button><button class="btn warn" id="osCrash">Crash the client</button><button class="btn" id="osRestart">Restart client</button><button class="btn" id="osReset">Reset</button></div>
+    <div class="note-s">Kafka partition offsets: <span class="badge off">in Kafka only</span> <span class="badge mid">buffered in client</span> <span class="badge ok">committed in Snowflake</span> <span class="badge bad">duplicate row</span></div>
+    <div class="fchips" id="osChips"></div>
+    <div class="stats">
+      <div class="stat"><div class="k">ROWS IN TABLE</div><div class="n" id="osRows">0</div></div>
+      <div class="stat"><div class="k">COMMITTED OFFSET TOKEN</div><div class="n" id="osTok">null</div><div class="s">getLatestCommittedOffsetToken()</div></div>
+      <div class="stat"><div class="k">DUPLICATES</div><div class="n" id="osDup">0</div></div>
+      <div class="stat"><div class="k">CLIENT</div><div class="n" id="osCli" style="font-size:20px">RUNNING</div></div>
+    </div>
+    <div class="insight" id="osIns">Send events, flush, then <b>crash</b> with some events still buffered. Restart and see what the offset token does.</div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-h"><div class="t">SIMULATOR · <b>BATCH COPY vs SNOWPIPE vs STREAMING</b></div><span class="note-s">Illustrative model, not a benchmark or a price quote. 1 KB events.</span></div>
+    <div class="ctl"><label>Event rate</label><input type="range" id="scRate" min="0" max="5" value="2"><span class="v" id="scRateV"></span></div>
+    <div class="ctl"><label>COPY batch every</label><input type="range" id="scInt" min="1" max="8" value="3"><span class="v" id="scIntV"></span></div>
+    <svg viewBox="0 0 680 230" id="scSvg"></svg>
+    <div class="stats" id="scStats"></div>
+    <div class="insight" id="scIns"></div>
+  </div>
+  <div class="tw"><table class="t">
+    <tr><th></th><th>SNOWPIPE (FILES)</th><th>SNOWPIPE STREAMING (ROWS)</th></tr>
+    <tr><td>Unit of ingest</td><td>files in a stage</td><td>rows over a channel</td></tr>
+    <tr><td>Trigger</td><td>cloud event notification or REST insertFiles</td><td>your client / Kafka connector calls the SDK</td></tr>
+    <tr><td>Typical latency</td><td>about a minute (not guaranteed)</td><td>seconds</td></tr>
+    <tr><td>Dedup mechanism</td><td>pipe load history (file names)</td><td>offset token per channel</td></tr>
+    <tr><td>Transformations</td><td>COPY with a SELECT (light)</td><td>none in classic (rows land as sent); transform downstream</td></tr>
+    <tr><td>Best for</td><td>vendor drops, exports, Firehose to S3</td><td>Kafka, CDC, IoT, clickstream</td></tr>
+  </table></div>
+  <div class="call trap"><b class="k">INTERVIEW TRAP</b><div>"Exactly-once is automatic." Only if <b>your client uses the token correctly</b>: on start-up it must call <code>getLatestCommittedOffsetToken()</code> for the channel and resume the source from the next offset. If it simply replays from the beginning, or from its own unsaved bookmark, you get duplicates or gaps. The Kafka connector does this for you.</div></div>
+  <div class="call pro"><b class="k">SENIOR ANGLE</b><div>A common modern design is <b>Kafka → Snowpipe Streaming → raw table → dynamic tables</b> (Module 05) for the transformation layers. The streaming part gives seconds of latency; the dynamic tables give declarative, incremental modelling with a target lag that matches what the business actually needs.</div></div>
+</section>
+
+<section id="lake">
+  <div class="eyebrow">CHAPTER 07</div>
+  <h2>External tables vs Apache Iceberg tables <span class="thin">· query the lake in place</span></h2>
+  <div class="wwh">
+    <div class="box what"><span class="tag">01 · WHAT IS IT</span>
+      <p><b>External table</b>: a read-only table over files in an external stage. Snowflake stores only <b>metadata</b> about the files; each row has a <code>VALUE</code> VARIANT column plus <code>METADATA$FILENAME</code>, and you define virtual columns and <b>partition columns derived from the file path</b>.</p>
+      <p><b>Apache Iceberg table</b>: a table in the open <b>Iceberg format</b> (Parquet data files + Iceberg metadata/manifest files) stored in <b>your</b> cloud storage through an <code>EXTERNAL VOLUME</code>. The <b>catalog</b> (who tracks the current snapshot) is either <b>Snowflake</b> or an <b>external catalog</b> (AWS Glue, an Iceberg REST catalog such as Snowflake Open Catalog / Apache Polaris, or object storage) via a <code>CATALOG INTEGRATION</code>.</p>
+    </div>
+    <div class="box why"><span class="tag">02 · WHY WE USE IT</span>
+      <ul class="dots">
+        <li><b>One copy of data</b> shared by Snowflake, Spark, Trino, Flink: no duplicate pipelines, no vendor lock-in on the storage format.</li>
+        <li><b>Data that must stay in your account</b> for legal or cost reasons: you pay your cloud provider for storage, not Snowflake.</li>
+        <li><b>External tables</b> are a quick way to explore or occasionally query raw files without loading them.</li>
+        <li><b>Snowflake-managed Iceberg</b> gives near-native features (full DML, Time Travel, clustering) on open files.</li>
+      </ul>
+    </div>
+    <div class="box how"><span class="tag">03 · HOW IT WORKS · BACKEND</span>
+      <p><b>External table:</b> Snowflake keeps a file list. It's updated by <code>AUTO_REFRESH=TRUE</code> (cloud event notifications, like Snowpipe) or <code>ALTER EXTERNAL TABLE … REFRESH</code>. At query time the warehouse reads the raw files; filters on <b>partition columns</b> skip whole folders. No micro-partition statistics, so it's slower than native tables. Materialized views on external tables can speed up hot queries. <b>Iceberg (Snowflake catalog):</b> Snowflake writes Parquet data files and Iceberg metadata into your bucket and commits each snapshot itself; Spark and other engines can <b>read</b> the same table through a catalog API (for example Snowflake Horizon's Iceberg REST endpoint or a sync to Open Catalog). <b>Iceberg (external catalog):</b> another engine owns the writes; Snowflake reads the snapshot that the catalog points to, refreshed manually or automatically. Write support from Snowflake into externally managed catalogs has been expanding; check current docs before promising it.</p>
+    </div>
+  </div>
+  <div class="tw"><table class="t">
+    <tr><th></th><th>EXTERNAL TABLE</th><th>ICEBERG · SNOWFLAKE CATALOG</th><th>ICEBERG · EXTERNAL CATALOG</th><th>NATIVE TABLE</th></tr>
+    <tr><td>Storage</td><td>your bucket (any supported format)</td><td>your bucket (Parquet + Iceberg metadata)</td><td>your bucket</td><td>Snowflake-managed</td></tr>
+    <tr><td>Who writes</td><td>outside tools only</td><td>Snowflake (full DML)</td><td>other engine (e.g. Spark)</td><td>Snowflake</td></tr>
+    <tr><td>Snowflake writes?</td><td>no, read-only</td><td>yes</td><td>historically read-only; expanding</td><td>yes</td></tr>
+    <tr><td>Freshness</td><td>after metadata refresh</td><td>immediate</td><td>after catalog refresh</td><td>immediate</td></tr>
+    <tr><td>Performance</td><td>slowest</td><td>close to native</td><td>good (depends on file layout)</td><td>best</td></tr>
+    <tr><td>Storage billed by</td><td>cloud provider</td><td>cloud provider</td><td>cloud provider</td><td>Snowflake</td></tr>
+  </table></div>
+  <div class="panel">
+    <div class="panel-h"><div class="t">DECISION HELPER · <b>WHICH TABLE TYPE?</b></div></div>
+    <div class="tabs" id="lkTabs"><button class="on" data-v="0">Spark team writes, BI reads in Snowflake</button><button data-v="1">New lakehouse, Snowflake does the ETL</button><button data-v="2">Rarely-queried raw logs, 2 PB</button><button data-v="3">Hot dashboard tables, sub-second</button><button data-v="4">Vendor drops CSVs to S3 hourly</button></div>
+    <div class="explain" id="lkOut"></div>
+  </div>
+  <div class="call trap"><b class="k">INTERVIEW TRAP</b><div>"External tables and Iceberg tables are the same thing." No. External tables are <b>read-only views over raw files</b> with only a file list as metadata. Iceberg tables have a <b>real table format</b> (snapshots, schema, manifests with column statistics), so they support pruning, ACID commits and, when Snowflake is the catalog, full DML.</div></div>
+  <div class="call pro"><b class="k">SENIOR ANGLE</b><div>For an Iceberg-based lakehouse, decide the <b>catalog first</b>: who commits writes, how other engines discover the table, and how access control is enforced across engines. File layout (target file size, partitioning, compaction) matters just as much as for native tables.</div></div>
+</section>
+
+<section id="schema">
+  <div class="eyebrow">CHAPTER 08</div>
+  <h2>Schema detection, evolution &amp; unloading <span class="thin">· when the file changes shape</span></h2>
+  <div class="wwh">
+    <div class="box what"><span class="tag">01 · WHAT IS IT</span>
+      <ul class="dots">
+        <li><code>INFER_SCHEMA</code>: a table function that reads staged files (Parquet, Avro, ORC, JSON, CSV) and returns column names, types and nullability.</li>
+        <li><code>CREATE TABLE … USING TEMPLATE</code>: creates a table from that output in one statement.</li>
+        <li><code>ENABLE_SCHEMA_EVOLUTION = TRUE</code>: a table property that lets loads <b>add new columns</b> and <b>drop NOT NULL</b> on columns missing from new files.</li>
+        <li><code>COPY INTO @stage</code>: the reverse of loading. It <b>unloads</b> query results to files (CSV, JSON, Parquet).</li>
+      </ul>
+    </div>
+    <div class="box why"><span class="tag">02 · WHY WE USE IT</span>
+      <p>Sources change: a product team adds <code>coupon_code</code> to an event, or a vendor drops a column. Without detection and evolution, someone writes DDL by hand for 200 columns, and every upstream change breaks the pipeline. Unloading is how you hand data to partners, other systems or the lake.</p>
+    </div>
+    <div class="box how"><span class="tag">03 · HOW IT WORKS · BACKEND</span>
+      <p><b>INFER_SCHEMA</b> runs on your warehouse: it reads file footers (Parquet/ORC), embedded schemas (Avro) or samples records (JSON, CSV with <code>PARSE_HEADER=TRUE</code>) and merges types across files. <b>Schema evolution</b> works with loads that map <b>by name</b> (<code>MATCH_BY_COLUMN_NAME</code> in COPY or Snowpipe, and Snowpipe Streaming / Kafka). The role needs ownership or the <code>EVOLVE SCHEMA</code> privilege on the table. Snowflake limits how many columns one load can add, so check the docs for the current limit. <b>Unload</b> runs the query on your warehouse; each thread writes its own files in parallel (default target size about 16 MB each), unless you ask for <code>SINGLE=TRUE</code>.</p>
+    </div>
+  </div>
+  <div class="panel">
+    <div class="panel-h"><div class="t">SIMULATOR · <b>INFER_SCHEMA → TEMPLATE → EVOLVE</b></div><div class="row"><span class="note-s">ENABLE_SCHEMA_EVOLUTION:</span><div class="tabs" id="seEvo" style="margin:0"><button class="on" data-v="1">TRUE</button><button data-v="0">FALSE</button></div></div></div>
+    <div class="row" style="margin-bottom:10px"><button class="btn pri" id="seInfer">1 · INFER_SCHEMA on orders_v1.parquet</button><button class="btn" id="seCreate">2 · CREATE TABLE … USING TEMPLATE</button><button class="btn" id="seLoad">3 · COPY orders_v2.parquet (shape changed)</button><button class="btn" id="seReset">Reset</button></div>
+    <div class="sqlbox" id="seSql"></div>
+    <div class="grid2" style="margin-top:12px">
+      <div style="overflow-x:auto"><div class="note-s" id="seFileH">Staged file</div><table class="t" id="seFile"></table></div>
+      <div style="overflow-x:auto"><div class="note-s">Table ORDERS_RAW columns</div><table class="t" id="seCols"></table></div>
+    </div>
+    <div class="insight" id="seIns">Start with step 1.</div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-h"><div class="t">SIMULATOR · <b>UNLOAD: HOW MANY FILES WILL I GET?</b></div><span class="note-s">Illustrative: compressed output, Medium warehouse</span></div>
+    <div class="ctl"><label>Result size (compressed)</label><input type="range" id="ulSize" min="1" max="100" value="4"><span class="v" id="ulSizeV"></span></div>
+    <div class="ctl"><label>MAX_FILE_SIZE</label><input type="range" id="ulMax" min="0" max="5" value="0"><span class="v" id="ulMaxV"></span></div>
+    <div class="row" style="margin:6px 0"><span class="note-s" style="min-width:150px">SINGLE</span><div class="tabs" id="ulSingle" style="margin:0"><button class="on" data-v="0">FALSE</button><button data-v="1">TRUE</button></div><span class="note-s" style="margin-left:16px">PARTITION BY</span><div class="tabs" id="ulPart" style="margin:0"><button class="on" data-v="0">none</button><button data-v="1">order_date (30 days)</button></div></div>
+    <div class="grid2"><div class="sqlbox" id="ulSql"></div><div class="pathbox" id="ulPaths"></div></div>
+    <div class="stats"><div class="stat"><div class="k">FILES WRITTEN</div><div class="n" id="ulFiles">–</div></div><div class="stat"><div class="k">AVG FILE SIZE</div><div class="n" id="ulAvg">–</div></div><div class="stat"><div class="k">PARALLEL WRITERS</div><div class="n" id="ulPar">–</div></div></div>
+    <div class="insight" id="ulIns"></div>
+  </div>
+
+  <h3>Data quality at the door</h3>
+  <div class="grid3">
+    <div class="mini"><h5>Land raw, validate next</h5><p>Load into a permissive landing table (VARCHAR / VARIANT + file name + load time), then cast with <code>TRY_CAST</code> and send failures to a quarantine table.</p></div>
+    <div class="mini"><h5>Reconcile counts</h5><p>Compare rows in the file (or a manifest / control file from the source) with <code>ROWS_LOADED</code> from COPY_HISTORY. Alert on any gap.</p></div>
+    <div class="mini"><h5>Data metric functions</h5><p>Attach system DMFs such as <code>NULL_COUNT</code>, <code>DUPLICATE_COUNT</code> or <code>FRESHNESS</code> (or your own) to tables on a schedule to catch quality drift (availability depends on edition).</p></div>
+    <div class="mini"><h5>Dry runs</h5><p>Use <code>VALIDATION_MODE = RETURN_ERRORS</code> on new vendor files before turning on the pipe.</p></div>
+    <div class="mini"><h5>Idempotent keys</h5><p>Keep a business key + event time so downstream MERGE logic can drop duplicates from FORCE reloads, replays or at-least-once producers.</p></div>
+    <div class="mini"><h5>Alert, don't poll</h5><p>Error integrations on pipes, Snowflake alerts on COPY_HISTORY failures, and a freshness check on <code>MAX(load_ts)</code>.</p></div>
+  </div>
+  <div class="call trap"><b class="k">INTERVIEW TRAP</b><div>"Schema evolution will fix type changes too." <b>No.</b> It adds columns and relaxes NOT NULL. If <code>amount</code> changes from a number to text like <code>"12.50 USD"</code>, the load fails (or rows are rejected) just like before. Type drift needs a landing layer or a deliberate migration.</div></div>
+  <div class="call pro"><b class="k">SENIOR ANGLE</b><div>Unload with <code>PARTITION BY</code> to Parquet in date folders, a sensible <code>MAX_FILE_SIZE</code>, and <code>HEADER=TRUE</code> for Parquet so column names are kept. For recurring partner feeds, consider <b>Secure Data Sharing</b> (Module 10) instead: no files, no copies, always fresh.</div></div>
+</section>
+
+<section id="sql">
+  <div class="eyebrow">CHAPTER 09</div>
+  <h2>SQL lab <span class="thin">· click any line for an explanation</span></h2>
+  <div class="panel">
+    <div class="tabs" id="sqlTabs"></div>
+    <div class="grid2" style="grid-template-columns:1.35fr 1fr">
+      <div class="code" id="sqlCode"></div>
+      <div class="explain" id="sqlExp"><b class="h">CLICK A LINE</b>Each line is explained in plain English.</div>
+    </div>
+  </div>
+</section>
+
+<section id="qa">
+  <div class="eyebrow">CHAPTER 10</div>
+  <h2>Interview Q&amp;A <span class="thin">· answer out loud first, then open</span></h2>
+  <div class="tabs" id="qaTabs"><button class="on" data-f="all">All</button><button data-f="Patterns">Patterns</button><button data-f="Stages">Stages</button><button data-f="COPY">COPY</button><button data-f="Snowpipe">Snowpipe</button><button data-f="Streaming">Streaming</button><button data-f="Lakehouse">Lakehouse</button><button data-f="Schema">Schema &amp; unload</button></div>
+  <div id="qaList"></div>
+</section>
+
+<section id="quiz">
+  <div class="eyebrow">CHAPTER 11</div>
+  <h2>Quiz <span class="thin">· 14 questions</span></h2>
+  <div class="panel">
+    <div class="panel-h"><div class="t">QUESTION <b id="qzN">1</b> / 14</div><div class="t">SCORE <b id="qzS">0</b></div></div>
+    <div class="stepbar" id="qzBar"></div>
+    <div id="qzBody"></div>
+    <div class="row" style="margin-top:12px"><button class="btn" id="qzPrev">Back</button><button class="btn pri" id="qzNext">Next</button></div>
+  </div>
+</section>
+
+<section id="cheat">
+  <div class="eyebrow">CHAPTER 12</div>
+  <h2>Cheat sheet <span class="thin">· if you remember only these</span></h2>
+  <div class="cheat">
+    <div><em>4 patterns</em>COPY (batch) · Snowpipe (files, ~1 min) · Streaming (rows, seconds) · External/Iceberg (query in place).</div>
+    <div><em>Integration</em>Snowflake's IAM user assumes <i>your</i> IAM role with an external ID. No keys in SQL. Update the trust policy from DESC INTEGRATION.</div>
+    <div><em>@~ @%t @s</em>User stage, table stage, named stage. Named (internal or external) is the production choice.</div>
+    <div><em>ON_ERROR</em>ABORT_STATEMENT = bulk default. SKIP_FILE = Snowpipe default. CONTINUE can lose rows silently.</div>
+    <div><em>VALIDATION_MODE</em>Dry run, loads nothing. VALIDATE(t, JOB_ID=&gt;'_last') = errors of a COPY that already ran.</div>
+    <div><em>64 days</em>COPY load metadata per table. FORCE reloads (duplicates). LOAD_UNCERTAIN_FILES only for unknown-status files.</div>
+    <div><em>100–250 MB</em>Compressed file size sweet spot. 1 file = 1 thread. Bigger warehouse can't speed up one file.</div>
+    <div><em>Pipe = COPY</em>Serverless, AUTO_INGEST via SQS / Event Grid / Pub/Sub, or REST insertFiles. Load history ~14 days per pipe.</div>
+    <div><em>Pipe ops</em>SYSTEM$PIPE_STATUS · COPY_HISTORY (includes Snowpipe; LOAD_HISTORY doesn't) · PIPE_EXECUTION_PAUSED · REFRESH (7 days).</div>
+    <div><em>Offset token</em>Per channel. Resume from getLatestCommittedOffsetToken() for exactly-once. Order only within a channel.</div>
+    <div><em>Iceberg</em>Open format in your bucket. Snowflake catalog = full DML. External catalog = another engine writes.</div>
+    <div><em>Evolve</em>INFER_SCHEMA + USING TEMPLATE; ENABLE_SCHEMA_EVOLUTION adds columns (needs MATCH_BY_COLUMN_NAME). Unload: PARTITION BY, MAX_FILE_SIZE, SINGLE, HEADER.</div>
+  </div>
+  <div class="call analogy" style="margin-top:20px"><b class="k">NEXT MODULE</b><div><b>Module 05: Dynamic tables &amp; transforms.</b> Once data has landed, how do you transform it continuously? Target lag, incremental vs full refresh, and when to pick dynamic tables over streams and tasks. <a href="../module05/" style="color:var(--ice);font-weight:600">Open Module 05 →</a></div></div>
+</section>
+<footer>Snowflake Interview Lab · Module 04 · Data Ingestion: Stages, COPY, Snowpipe, Streaming &amp; Iceberg · Prepared for Saurav Patel</footer>
+</main>
+</div>
+
+<script>
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+const fmt = (n, d = 0) => Number(n).toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d });
+const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+const tabs = (sel, cb) => $$(sel + ' button').forEach(b => b.addEventListener('click', () => { $$(sel + ' button').forEach(x => x.classList.remove('on')); b.classList.add('on'); cb(b.dataset); }));
+const dur = s => s < 60 ? fmt(s, s < 10 ? 1 : 0) + ' s' : s < 3600 ? fmt(s / 60, 1) + ' min' : fmt(s / 3600, 1) + ' h';
+
+/* theme + progress */
+const root = document.documentElement;
+root.dataset.theme = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+$('#themeBtn').onclick = () => { root.dataset.theme = root.dataset.theme === 'dark' ? 'light' : 'dark'; };
+const secs = $$('main section'), seen = new Set();
+const io = new IntersectionObserver(es => es.forEach(e => {
+  if (!e.isIntersecting) return;
+  seen.add(e.target.id);
+  $$('.side a').forEach(a => { const id = a.getAttribute('href').slice(1); a.classList.toggle('act', id === e.target.id); if (seen.has(id)) a.classList.add('seen'); });
+  const pct = Math.round(seen.size / secs.length * 100);
+  $('#progBar').style.width = pct + '%'; $('#progLbl').textContent = pct + '% explored';
+}), { rootMargin: '-40% 0px -55% 0px' });
+secs.forEach(s => io.observe(s));
+
+/* ===== 01 pattern picker ===== */
+const PM = { lat: 'h', src: 'files' };
+const PAT = {
+  copy: { x: 120, y: 235, r: 24, name: 'COPY INTO (batch)', c: 'var(--amber)' },
+  lake: { x: 215, y: 150, r: 20, name: 'External / Iceberg', c: 'var(--teal)' },
+  pipe: { x: 340, y: 170, r: 30, name: 'Snowpipe', c: 'var(--ice)' },
+  stream: { x: 480, y: 85, r: 34, name: 'Snowpipe Streaming', c: 'var(--red)' }
+};
+function pmPick() {
+  const { lat, src } = PM;
+  if (src === 'lake') return ['lake', `<b class="h">QUERY IN PLACE · ICEBERG OR EXTERNAL TABLE</b>The data stays in your bucket. For a lake that other engines also write, use an <b>Iceberg table with a catalog integration</b> (Glue, Iceberg REST / Open Catalog). For occasional reads of raw files, an <b>external table</b> with partition columns is enough. ${lat === 's' ? '<br><br><b>Seconds of freshness</b> from a lake is hard: each refresh reads new metadata. If you truly need seconds, stream into Snowflake (Snowflake-managed Iceberg tables can be the target) and let other engines read that.' : 'Freshness = how often the metadata is refreshed (event notifications or scheduled refresh).'}`];
+  if (src === 'files') {
+    if (lat === 'h') return ['copy', `<b class="h">BATCH · COPY INTO ON A SCHEDULE</b>A task (or Airflow / dbt) runs <code>COPY INTO</code> every hour or night on a warehouse. Load metadata makes reruns safe. Cheapest per GB when files are big and the warehouse runs only for the load. Backend: cloud services lists files, skips loaded ones, and the warehouse parses files in parallel.`];
+    if (lat === 'm') return ['pipe', `<b class="h">CONTINUOUS · SNOWPIPE WITH AUTO_INGEST</b>S3 sends an event to the pipe's SQS queue for every new file; Snowflake runs the pipe's COPY on <b>serverless</b> compute, typically about a minute after the file lands. No warehouse, no scheduler. Watch file sizes (aim for ~100–250 MB, or at least not thousands of tiny files).`];
+    return ['stream', `<b class="h">FILES CAN'T GIVE YOU SECONDS</b>Anything file-based adds buffering + notification + load time. For seconds, change the producer to send <b>rows</b>: Snowpipe Streaming via the Ingest SDK or the Kafka connector in streaming mode. If you're stuck with files, Snowpipe is the floor (about a minute, not guaranteed).`];
+  }
+  if (lat === 'h') return ['copy', `<b class="h">EVENTS, BUT HOURLY IS FINE</b>Let a delivery service buffer events to S3 as big files (e.g. Firehose, Kafka sink to S3), then <code>COPY INTO</code> on a schedule. Few big files = cheap loads. Many teams still choose streaming here to avoid running two systems, so mention both.`];
+  return ['stream', `<b class="h">STREAMING · SNOWPIPE STREAMING</b>The Kafka connector (<code>snowflake.ingestion.method = SNOWPIPE_STREAMING</code>) or your app using the Ingest SDK opens a <b>channel</b> per partition and writes rows directly, with offset tokens for exactly-once. Rows are typically queryable within seconds. ${lat === 'm' ? 'For minutes of freshness it’s still a strong choice: it avoids the tiny-file overhead that file-based Snowpipe would have with a busy topic.' : ''}`];
+}
+function pmDraw() {
+  const [k, html] = pmPick();
+  let s = `<line x1="60" y1="270" x2="545" y2="270" stroke="var(--line2)"/><line x1="60" y1="270" x2="60" y2="20" stroke="var(--line2)"/>
+  <text class="tm" x="545" y="290" text-anchor="end">fresher data (lower latency) →</text><text class="tm" x="66" y="290">hours</text>
+  <text class="tm" x="20" y="150" transform="rotate(-90 20 150)" text-anchor="middle">more moving parts →</text>`;
+  Object.entries(PAT).forEach(([id, p]) => {
+    s += `<g class="bub ${id === k ? 'pick' : 'dim'}"><circle cx="${p.x}" cy="${p.y}" r="${p.r}" fill="color-mix(in srgb, ${p.c} 22%, transparent)" stroke="${p.c}" stroke-width="1.5"/><text class="th" x="${p.x}" y="${p.y - p.r - 8}" text-anchor="middle">${p.name}</text></g>`;
+  });
+  $('#pmSvg').innerHTML = s;
+  $('#pmOut').innerHTML = html;
+  const ins = { copy: '<b>Cheapest when latency allows.</b> A warehouse that runs 5 minutes a night costs far less than anything always-on.', pipe: '<b>Pay per file and per GB, not per idle minute.</b> Great for steady file drops; poor with millions of tiny files.', stream: '<b>Lowest latency, most code.</b> You own a client (or the Kafka connector) and must handle offsets correctly.', lake: '<b>No load at all.</b> You trade load cost for query-time cost and catalog complexity.' };
+  $('#pmIns').innerHTML = ins[k];
+}
+tabs('#pmLat', d => { PM.lat = d.v; pmDraw(); });
+tabs('#pmSrc', d => { PM.src = d.v; pmDraw(); });
+pmDraw();
+
+/* ===== 02 stage chooser ===== */
+const STG = {
+  user: { ref: '@~ (or @~/path/)', cr: 'Created automatically for every user.', acc: 'Only that user. Can’t be granted to anyone else.', put: 'Yes: PUT / GET from SnowSQL or a connector.', ff: 'You can’t attach a file format to it; specify one in each COPY.', lim: 'Can’t be altered or dropped. Not shareable.', use: 'Personal scratch files, quick one-off loads.', sql: "PUT file:///tmp/orders.csv @~/staged/;\nCOPY INTO orders FROM @~/staged/ FILE_FORMAT = (TYPE = CSV SKIP_HEADER = 1);" },
+  table: { ref: '@%orders', cr: 'Created automatically with every table, same name.', acc: 'Roles with privileges on that table (typically the owner).', put: 'Yes: PUT / GET.', ff: 'File format options can be set on the table stage, but it is limited.', lim: 'Can’t be altered or dropped. Loads only into its own table. Doesn’t support transforming data during load (no SELECT in COPY).', use: 'Files that only ever go into one table, owned by one team.', sql: "PUT file:///tmp/orders.csv @%orders;\nCOPY INTO orders FILE_FORMAT = (TYPE = CSV SKIP_HEADER = 1);" },
+  named: { ref: '@raw_stage (or @db.schema.raw_stage)', cr: 'CREATE STAGE raw_stage …', acc: 'Any role you grant READ / WRITE to (internal stages).', put: 'Yes: PUT / GET.', ff: 'Yes: FILE_FORMAT, DIRECTORY table, ENCRYPTION type, COPY options.', lim: 'Data stored in Snowflake-managed storage, billed as Snowflake storage.', use: 'Shared, governed internal loading area for a team or pipeline.', sql: "CREATE STAGE raw_stage\n  FILE_FORMAT = csv_std\n  DIRECTORY = (ENABLE = TRUE);\nGRANT READ, WRITE ON STAGE raw_stage TO ROLE etl_role;" },
+  ext: { ref: '@s3_orders', cr: "CREATE STAGE s3_orders URL = 's3://acme-raw/orders/' STORAGE_INTEGRATION = s3_int …", acc: 'Roles granted USAGE on the stage.', put: 'No PUT / GET: upload with cloud tools (aws s3 cp, Firehose, Spark…).', ff: 'Yes: FILE_FORMAT, DIRECTORY with AUTO_REFRESH via event notifications.', lim: 'Files stay in your bucket (billed by your cloud provider). Needs IAM setup.', use: 'Production: data lakes, vendor drops, Snowpipe auto-ingest, unloading to partners.', sql: "CREATE STAGE s3_orders\n  URL = 's3://acme-raw/orders/'\n  STORAGE_INTEGRATION = s3_int\n  FILE_FORMAT = parquet_std;\nGRANT USAGE ON STAGE s3_orders TO ROLE etl_role;" }
+};
+function stDraw(k) {
+  const s = STG[k];
+  $('#stOut').innerHTML = `<div class="kv"><b>REFERENCE</b><div><code>${esc(s.ref)}</code></div><b>CREATED</b><div>${esc(s.cr)}</div><b>WHO CAN ACCESS</b><div>${esc(s.acc)}</div><b>PUT / GET</b><div>${esc(s.put)}</div><b>FILE FORMAT</b><div>${esc(s.ff)}</div><b>LIMITS</b><div>${esc(s.lim)}</div><b>USE IT FOR</b><div>${esc(s.use)}</div></div><div class="sqlbox" style="margin-top:10px">${esc(s.sql)}</div>`;
+}
+tabs('#stTabs', d => stDraw(d.s));
+stDraw('user');
+
+/* ===== 02 IAM role assumption stepper ===== */
+const IAM_BASE = [
+  { n: ['i1'], e: [], h: '1 · You run a statement that touches the bucket', you: '<code>LIST @s3_orders;</code> (or COPY, or a pipe fires). You never typed an AWS key anywhere.', be: 'The parser resolves <code>s3_orders</code> to its URL <code>s3://acme-raw/orders/</code> and its <code>STORAGE_INTEGRATION = s3_int</code>.' },
+  { n: ['i1', 'i2'], e: ['ie1'], h: '2 · Cloud services checks Snowflake-side rules', you: 'Nothing: this is automatic.', be: 'Checks your role has <b>USAGE</b> on the stage, and that the URL is inside the integration’s <code>STORAGE_ALLOWED_LOCATIONS</code> (and not in <code>STORAGE_BLOCKED_LOCATIONS</code>).' },
+  { n: ['i2', 'i3'], e: ['ie2'], h: '3 · Snowflake picks its own AWS identity', you: 'Earlier, you ran <code>DESC INTEGRATION s3_int</code> and copied <code>STORAGE_AWS_IAM_USER_ARN</code> and <code>STORAGE_AWS_EXTERNAL_ID</code>.', be: 'Snowflake uses an <b>IAM user that lives in Snowflake’s AWS account</b> (one per Snowflake account). That user has no rights in your account on its own.' },
+  { n: ['i3', 'i4'], e: ['ie3'], h: '4 · AssumeRole with an external ID', you: 'Nothing.', be: 'Snowflake calls <b>AWS STS AssumeRole</b> for <code>STORAGE_AWS_ROLE_ARN</code> (your role), passing <code>sts:ExternalId</code>. The external ID protects against the <i>confused deputy</i> problem: another Snowflake customer can’t trick Snowflake into assuming <i>your</i> role.' }
+];
+const IAM_OK = [
+  ...IAM_BASE,
+  { n: ['i4', 'i5'], e: ['ie4'], h: '5 · AWS checks your role’s trust policy', you: 'Your cloud admin put this in the role’s trust policy: <code>Principal: { AWS: "&lt;STORAGE_AWS_IAM_USER_ARN&gt;" }</code> and <code>Condition: { StringEquals: { "sts:ExternalId": "&lt;STORAGE_AWS_EXTERNAL_ID&gt;" } }</code>.', be: 'Principal and external ID match, so STS allows the AssumeRole call.' },
+  { n: ['i5', 'i6'], e: ['ie5'], h: '6 · STS returns temporary credentials', you: 'Nothing.', be: 'Short-lived credentials (access key, secret, session token) that expire automatically. What they can do is limited by the role’s <b>permissions policy</b>, e.g. <code>s3:GetObject</code>, <code>s3:GetObjectVersion</code>, <code>s3:ListBucket</code> on <code>acme-raw/orders/*</code>.' },
+  { n: ['i6', 'i7'], e: ['ie6'], h: '7 · Snowflake reads the bucket', you: 'Nothing.', be: 'Cloud services lists objects; for COPY, warehouse threads issue parallel GET requests over HTTPS with the temporary credentials. You never see them, and they never land in query history.' },
+  { n: ['i7', 'i8'], e: ['ie7'], h: '8 · Result', you: 'You get the file list (or rows are loaded).', be: 'Credentials are cached and refreshed as needed. Rotating access is a cloud-side change (trust or permissions policy); no SQL needs editing.', res: 'file list returned' }
+];
+const IAM_TRUST = [
+  ...IAM_BASE,
+  { n: ['i4', 'i5'], e: ['ie4'], bad: ['i5'], h: '5 · AWS rejects the call', you: 'The trust policy still has a placeholder principal, or an old external ID (for example after <code>CREATE OR REPLACE STORAGE INTEGRATION</code>).', be: 'STS denies <code>sts:AssumeRole</code>: the principal or the external ID doesn’t match.' },
+  { n: ['i5', 'i8'], e: [], bad: ['i5', 'i8'], h: '6 · Snowflake shows an error', you: 'You see an error along the lines of <i>"Error assuming AWS_ROLE. Please verify the role and externalId are configured correctly in your AWS policy."</i>', be: '<b>Fix:</b> run <code>DESC INTEGRATION s3_int</code>, copy <code>STORAGE_AWS_IAM_USER_ARN</code> and <code>STORAGE_AWS_EXTERNAL_ID</code> into the role’s trust policy, wait a moment for IAM to propagate, and retry. Use <code>ALTER</code> (not CREATE OR REPLACE) to change an integration later.', res: 'ERROR: assume role' }
+];
+const IAM_LOC = [
+  { n: ['i1'], e: [], h: '1 · Someone points a stage at another bucket', you: "<code>CREATE STAGE s3_fin URL = 's3://acme-finance/payroll/' STORAGE_INTEGRATION = s3_int;</code>", be: 'The integration only lists <code>STORAGE_ALLOWED_LOCATIONS = (\'s3://acme-raw/\')</code>.' },
+  { n: ['i1', 'i2'], e: ['ie1'], bad: ['i2'], h: '2 · Cloud services blocks it', you: 'The statement fails: the location isn’t allowed by the integration.', be: 'Checked <b>inside Snowflake, before any call to AWS</b>. Even if the IAM role could technically read the finance bucket, Snowflake won’t use the integration for it.' },
+  { n: ['i2', 'i8'], e: [], bad: ['i8'], h: '3 · Why this matters', you: 'Ask the integration owner to add the path with <code>ALTER STORAGE INTEGRATION s3_int SET STORAGE_ALLOWED_LOCATIONS = (…)</code>, if it is really approved.', be: 'Two layers of control: Snowflake (allowed locations + stage grants) and AWS (role permissions). Security teams like hearing that you know both.', res: 'ERROR: location not allowed' }
+];
+const IAMS = { ok: IAM_OK, trust: IAM_TRUST, loc: IAM_LOC };
+let iamS = 'ok', iamI = -1;
+function iamBarBuild() { $('#iamBar').innerHTML = ''; IAMS[iamS].forEach((_, i) => { const s = document.createElement('span'); s.onclick = () => iamGo(i); $('#iamBar').appendChild(s); }); }
+function iamGo(i) {
+  iamI = i; const L = IAMS[iamS];
+  $('#iamFlow').classList.toggle('playing', i >= 0);
+  [...$('#iamBar').children].forEach((s, k) => s.classList.toggle('on', k <= i));
+  $$('#iamFlow .fn').forEach(g => g.classList.remove('bad'));
+  if (i < 0) { $$('#iamFlow .fn,#iamFlow .edge').forEach(x => x.classList.remove('on')); $('#iamRes').textContent = 'file list / rows'; $('#iamDesc').innerHTML = '<h4>Ready</h4><div style="font-size:14px;color:var(--ink2)">Press Start to follow one LIST command from Snowflake into your AWS account and back.</div>'; $('#iamNext').textContent = 'Start'; return; }
+  const st = L[i];
+  $$('#iamFlow .fn').forEach(g => { g.classList.toggle('on', st.n.includes(g.id)); if ((st.bad || []).includes(g.id)) g.classList.add('bad'); });
+  $$('#iamFlow .edge').forEach(e => e.classList.toggle('on', st.e.includes(e.id)));
+  $('#iamRes').textContent = st.res || 'file list / rows';
+  $('#iamDesc').innerHTML = `<h4>${st.h}</h4><div class="two"><div class="you"><b class="l">WHAT YOU DO / SEE</b>${st.you}</div><div class="be"><b class="l">WHAT HAPPENS IN THE BACKEND</b>${st.be}</div></div>`;
+  $('#iamNext').textContent = i === L.length - 1 ? 'Replay' : 'Next';
+}
+$('#iamNext').onclick = () => iamGo(iamI === IAMS[iamS].length - 1 ? 0 : iamI + 1);
+$('#iamPrev').onclick = () => iamGo(Math.max(-1, iamI - 1));
+$('#iamReset').onclick = () => iamGo(-1);
+tabs('#iamScen', d => { iamS = d.s; iamBarBuild(); iamGo(-1); });
+iamBarBuild(); iamGo(-1);
+
+/* ===== 03 COPY playground ===== */
+const CP_FILES = {
+  'orders_01.csv': [[101, '25.00'], [102, '14.50'], [103, '99.90'], [104, '5.00'], [105, '42.00']],
+  'orders_02.csv': [[201, '18.00'], [202, 'N/A'], [203, '7.25'], [204, '60.00'], [205, '33.10']],
+  'orders_03.csv': [[301, '12.00'], [302, 'abc'], [303, 'twelve'], [304, '8.80'], [305, '1O.00']],
+  'orders_04.csv': [[401, '19.99'], [402, '23.40'], [403, '£5'], [404, '11.00'], [405, '6.50'], [406, '70.00'], [407, '3.30'], [408, '15.00']],
+  'orders_05.csv': [[501, '9.99'], [502, '19.00'], [503, '4.75'], [504, '30.00'], [505, '12.25']]
+};
+const isBad = v => !/^-?\d+(\.\d+)?$/.test(v);
+let CP;
+function cpInit() { CP = { staged: ['orders_01.csv', 'orders_02.csv', 'orders_03.csv', 'orders_04.csv'], meta: new Set(), table: [], oe: CP ? CP.oe : 'ABORT_STATEMENT', vm: CP ? CP.vm : '', force: CP ? CP.force : false, purge: CP ? CP.purge : false, purged: new Set() }; }
+cpInit();
+function cpSqlTxt() {
+  let s = `COPY INTO orders (order_id, amount, src_file)\nFROM (SELECT $1, $2, METADATA$FILENAME FROM @raw_stage/orders/)\nFILE_FORMAT = (FORMAT_NAME = 'csv_std')\nON_ERROR = ${CP.oe}`;
+  if (CP.vm) s = `COPY INTO orders\nFROM @raw_stage/orders/\nFILE_FORMAT = (FORMAT_NAME = 'csv_std')\nVALIDATION_MODE = ${CP.vm}   -- dry run; transforms not allowed here`;
+  if (CP.force) s += '\nFORCE = TRUE';
+  if (CP.purge) s += '\nPURGE = TRUE';
+  return s + ';';
+}
+function cpFilesDraw() {
+  $('#cpFiles').innerHTML = Object.keys(CP_FILES).filter(f => CP.staged.includes(f) || CP.purged.has(f)).map(f => {
+    const rows = CP_FILES[f], bad = rows.filter(r => isBad(r[1])).length, gone = CP.purged.has(f);
+    return `<span class="fchip ${bad ? 'bad' : ''} ${gone ? 'gone' : ''}">${f}<small>${rows.length} rows · ${bad} bad${CP.meta.has(f) ? ' · in load metadata' : ''}${gone ? ' · purged' : ''}</small></span>`;
+  }).join('');
+}
+function cpTableDraw() {
+  const cnt = {}; CP.table.forEach(r => cnt[r[0]] = (cnt[r[0]] || 0) + 1);
+  const last = CP.table.slice(-8);
+  $('#cpTbl').innerHTML = '<tr><th>ORDER_ID</th><th>AMOUNT</th><th>SRC_FILE</th></tr>' + (last.length ? last.map(r => `<tr${cnt[r[0]] > 1 ? ' style="background:var(--red-s)"' : ''}><td class="m">${r[0]}</td><td class="m">${r[1]}</td><td class="m">${r[2]}</td></tr>`).join('') : '<tr><td colspan="3" class="note-s">(table is empty)</td></tr>');
+  $('#cpN').textContent = CP.table.length; $('#cpM').textContent = CP.meta.size;
+  $('#cpSql').textContent = cpSqlTxt();
+  cpFilesDraw();
+  return Object.values(cnt).filter(c => c > 1).reduce((a, c) => a + c - 1, 0);
+}
+function cpRun() {
+  const cand = CP.staged.filter(f => CP.force || !CP.meta.has(f));
+  const skippedMeta = CP.staged.length - cand.length;
+  let loaded = 0, rejected = 0, html = '', ins = '';
+  if (!cand.length) {
+    $('#cpRes').innerHTML = '<tr><td class="note-s">Copy executed with 0 files processed.</td></tr>';
+    $('#cpL').textContent = 0; $('#cpR').textContent = 0; cpTableDraw();
+    $('#cpIns').innerHTML = CP.staged.length ? `<b>0 files processed.</b> Every staged file is already in the table's <b>load metadata</b>, so COPY skips it. That's what makes reruns safe. Try <b>FORCE = TRUE</b> to see the risk of overriding it, or <b>stage a new file</b>.` : '<b>The stage is empty</b> (everything was purged). Stage a new file or reset.';
+    return;
+  }
+  if (CP.vm === 'RETURN_ERRORS') {
+    const errs = [];
+    cand.forEach(f => CP_FILES[f].forEach((r, i) => { if (isBad(r[1])) errs.push([f, i + 2, r[1]]); }));
+    $('#cpRes').innerHTML = '<tr><th>ERROR</th><th>FILE</th><th>LINE</th></tr>' + (errs.length ? errs.map(e => `<tr><td class="m">Numeric value '${esc(e[2])}' is not recognized</td><td class="m">${e[0]}</td><td class="m">${e[1]}</td></tr>`).join('') : '<tr><td colspan="3" class="note-s">No errors found.</td></tr>');
+    $('#cpL').textContent = 0; $('#cpR').textContent = 0; cpTableDraw();
+    $('#cpIns').innerHTML = `<b>Dry run: nothing was loaded</b> and load metadata didn't change. RETURN_ERRORS lists every bad row across ${cand.length} file(s), with file and line (line 1 is the header), so you can fix the source or pick an ON_ERROR rule with your eyes open. ON_ERROR is ignored in validation mode.`;
+    return;
+  }
+  if (CP.vm === 'RETURN_5_ROWS') {
+    const f = cand[0], rows = CP_FILES[f].slice(0, 5), bi = rows.findIndex(r => isBad(r[1]));
+    if (bi >= 0) {
+      $('#cpRes').innerHTML = `<tr><td class="m" style="color:var(--red)">Numeric value '${esc(rows[bi][1])}' is not recognized · File '${f}', line ${bi + 2}</td></tr>`;
+      $('#cpIns').innerHTML = `<b>RETURN_5_ROWS fails at the first error</b> in the first rows it reads. It's a quick "does my file format parse this file?" check, not a full scan. Nothing was loaded.`;
+    } else {
+      $('#cpRes').innerHTML = '<tr><th>$1</th><th>$2</th></tr>' + rows.map(r => `<tr><td class="m">${r[0]}</td><td class="m">${r[1]}</td></tr>`).join('');
+      $('#cpIns').innerHTML = `<b>Preview of the first 5 rows</b> of ${f} as parsed by the file format. Nothing was loaded. Use it to check delimiters, quoting and header handling before a real load.`;
+    }
+    $('#cpL').textContent = 0; $('#cpR').textContent = 0; cpTableDraw();
+    return;
+  }
+  if (CP.oe === 'ABORT_STATEMENT') {
+    let first = null;
+    for (const f of cand) { const i = CP_FILES[f].findIndex(r => isBad(r[1])); if (i >= 0) { first = [f, i + 2, CP_FILES[f][i][1]]; break; } }
+    if (first) {
+      $('#cpRes').innerHTML = `<tr><td class="m" style="color:var(--red)">Numeric value '${esc(first[2])}' is not recognized<br>File '${first[0]}', line ${first[1]}</td></tr>`;
+      $('#cpL').textContent = 0; $('#cpR').textContent = 0; cpTableDraw();
+      $('#cpIns').innerHTML = `<b>ABORT_STATEMENT: one bad row stopped everything.</b> The statement failed, <b>0 rows were committed</b>, even from the perfectly good files, and none were added to load metadata. Safe for strict pipelines; painful at 3 a.m. Try <b>CONTINUE</b> or <b>SKIP_FILE</b>.`;
+      return;
+    }
+  }
+  const thr = CP.oe === 'SKIP_FILE' ? (e, n) => e > 0 : CP.oe === 'SKIP_FILE_2' ? (e, n) => e >= 2 : CP.oe.includes('%') ? (e, n) => e / n >= 0.3 : () => false;
+  html = '<tr><th>FILE</th><th>STATUS</th><th>PARSED</th><th>LOADED</th><th>ERRORS</th></tr>';
+  const wasLoaded = new Set(CP.meta);
+  cand.forEach(f => {
+    const rows = CP_FILES[f], good = rows.filter(r => !isBad(r[1])), e = rows.length - good.length;
+    let st, ld;
+    if (e && thr(e, rows.length)) { st = 'LOAD_FAILED'; ld = 0; rejected += rows.length; }
+    else { st = e ? 'PARTIALLY_LOADED' : 'LOADED'; ld = good.length; rejected += e; good.forEach(r => CP.table.push([r[0], r[1], f])); CP.meta.add(f); }
+    loaded += ld;
+    const b = st === 'LOADED' ? 'ok' : st === 'LOAD_FAILED' ? 'bad' : 'mid';
+    html += `<tr><td class="m">${f}${wasLoaded.has(f) ? ' <span class="badge bad">reloaded</span>' : ''}</td><td><span class="badge ${b}">${st}</span></td><td class="m">${rows.length}</td><td class="m">${ld}</td><td class="m">${e}</td></tr>`;
+    if (CP.purge && st === 'LOADED') { CP.staged = CP.staged.filter(x => x !== f); CP.purged.add(f); }
+  });
+  if (skippedMeta) html += `<tr><td colspan="5" class="note-s">${skippedMeta} file(s) skipped silently: already in load metadata.</td></tr>`;
+  $('#cpRes').innerHTML = html;
+  $('#cpL').textContent = loaded; $('#cpR').textContent = rejected;
+  const dups = cpTableDraw();
+  const m = {
+    CONTINUE: `<b>CONTINUE kept every good row</b> and dropped ${rejected} bad row(s). Files with errors show <b>PARTIALLY_LOADED</b> and are now in load metadata, so a rerun <b>won't</b> retry them, even after you fix the source. Find the rejects with <code>VALIDATE(orders, JOB_ID =&gt; '_last')</code>.`,
+    SKIP_FILE: `<b>SKIP_FILE dropped every file that had even one error</b> (LOAD_FAILED). Failed files are <b>not</b> in load metadata, so the next COPY will try them again, which is good once they're fixed. This is the default for Snowpipe.`,
+    SKIP_FILE_2: `<b>SKIP_FILE_2</b>: files with 2 or more bad rows were skipped; files with 1 bad row loaded their good rows (PARTIALLY_LOADED). A tolerance threshold per file.`,
+    "'SKIP_FILE_30%'": `<b>'SKIP_FILE_30%'</b>: a file is skipped when at least 30% of its rows are bad. orders_03 (60% bad) was skipped; orders_02 (20%) and orders_04 (12.5%) loaded their good rows. Percent thresholds suit files of very different sizes.`,
+    ABORT_STATEMENT: `<b>No errors in the files processed</b>, so ABORT_STATEMENT loaded everything.`
+  };
+  ins = m[CP.oe] || '';
+  if (CP.force && dups) ins = `<b>FORCE = TRUE reloaded files that were already loaded: ${dups} duplicate row(s)</b> (red in the table). Load metadata exists to stop exactly this. Use FORCE only after truncating, or when downstream logic deduplicates. ` + ins;
+  if (CP.purge) ins += ' <b>PURGE</b> removed the fully loaded files from the stage (this simulator keeps files with errors for inspection; check the docs for exact purge behaviour).';
+  $('#cpIns').innerHTML = ins;
+}
+tabs('#cpOE', d => { CP.oe = d.v; cpTableDraw(); });
+tabs('#cpVM', d => { CP.vm = d.v; cpTableDraw(); });
+tabs('#cpForce', d => { CP.force = d.v === '1'; cpTableDraw(); });
+tabs('#cpPurge', d => { CP.purge = d.v === '1'; cpTableDraw(); });
+$('#cpRun').onclick = cpRun;
+$('#cpAdd').onclick = () => { if (!CP.staged.includes('orders_05.csv') && !CP.purged.has('orders_05.csv')) CP.staged.push('orders_05.csv'); cpTableDraw(); $('#cpIns').innerHTML = '<b>orders_05.csv staged.</b> Run COPY again: only the <b>new</b> file is loaded; files already in load metadata are skipped.'; };
+$('#cpReset').onclick = () => { cpInit(); $('#cpRes').innerHTML = ''; $('#cpL').textContent = 0; $('#cpR').textContent = 0; cpTableDraw(); $('#cpIns').innerHTML = 'Reset: table truncated, load metadata cleared, original 4 files staged.'; };
+cpTableDraw();
+
+/* ===== 04 file sizing ===== */
+const FZ_SIZES = [0.1, 0.5, 1, 5, 10, 50, 100, 150, 250, 500, 1000, 5000, 20000];
+let fzNodes = 1;
+const mb = v => v >= 1000 ? fmt(v / 1000, v % 1000 ? 1 : 0) + ' GB' : v < 1 ? fmt(v * 1000) + ' KB' : fmt(v) + ' MB';
+function fzDraw() {
+  const vol = +$('#fzVol').value, size = FZ_SIZES[+$('#fzSize').value];
+  $('#fzVolV').textContent = vol + ' GB'; $('#fzSizeV').textContent = mb(size);
+  const totalMB = vol * 1000, files = Math.max(1, Math.ceil(totalMB / size)), effSize = totalMB / files;
+  const threads = 8 * fzNodes, OV = 0.4, TP = 20, tFile = OV + effSize / TP;
+  const waves = Math.ceil(files / threads), total = waves * tFile;
+  const util = files * tFile / (threads * total), over = OV / tFile;
+  const cred = fzNodes * Math.max(60, total) / 3600;
+  $('#fzFiles').textContent = fmt(files); $('#fzTime').textContent = dur(total);
+  $('#fzUtil').textContent = fmt(util * 100) + '%'; $('#fzOver').textContent = fmt(over * 100) + '%'; $('#fzCred').textContent = fmt(cred, 3);
+  const lanes = Math.min(threads, 16), X0 = 90, W = 570, H = lanes > 8 ? 17 : 22;
+  $('#fzSvg').setAttribute('viewBox', `0 0 680 ${Math.round(34 + lanes * H + (threads > lanes ? 22 : 4))}`);
+  let s = `<text class="tm" x="${X0}" y="12">time → (${dur(total)} total)</text>`;
+  for (let l = 0; l < lanes; l++) {
+    const n = Math.floor(files / threads) + (l < files % threads ? 1 : 0), y = 20 + l * H;
+    s += `<text class="gantt-l" x="${X0 - 8}" y="${y + H * 0.65}" text-anchor="end">thread ${l + 1}</text><rect x="${X0}" y="${y}" width="${W}" height="${H - 3}" rx="3" fill="var(--card2)" stroke="var(--line2)" stroke-width=".5"/>`;
+    if (n === 0) continue;
+    const busyW = W * n * tFile / total;
+    if (n <= 30) {
+      const fw = busyW / n;
+      for (let k = 0; k < n; k++) { const x = X0 + k * fw; s += `<rect class="grow" x="${x}" y="${y}" width="${Math.max(0.5, fw * over)}" height="${H - 3}" fill="var(--amber)"/><rect class="grow" x="${x + fw * over}" y="${y}" width="${Math.max(0.5, fw * (1 - over) - 0.6)}" height="${H - 3}" fill="var(--teal)"/>`; }
+    } else {
+      s += `<rect class="grow" x="${X0}" y="${y}" width="${busyW * over}" height="${H - 3}" fill="var(--amber)"/><rect class="grow" x="${X0 + busyW * over}" y="${y}" width="${busyW * (1 - over)}" height="${H - 3}" fill="var(--teal)"/><text class="tm" x="${X0 + 6}" y="${y + H * 0.65}" style="fill:var(--card)">${n} files</text>`;
+    }
+  }
+  if (threads > lanes) s += `<text class="tm" x="${X0}" y="${20 + lanes * H + 16}">… plus ${threads - lanes} more threads (not drawn)</text>`;
+  $('#fzSvg').innerHTML = s;
+  let ins;
+  if (size <= 1) ins = `<b>Tiny files: overhead dominates.</b> ${fmt(files)} files means ${fmt(over * 100)}% of thread time goes on per-file work (open, list, metadata) instead of data. With Snowpipe this also means a huge number of queued files. Merge small files upstream (Firehose buffering, Spark coalesce).`;
+  else if (files < threads) ins = `<b>Not enough files to keep the warehouse busy:</b> only ${files} of ${threads} threads work, the rest idle while you pay for them. ${size >= 1000 ? 'A single giant file can’t be split across threads, and one bad row with ABORT_STATEMENT wastes the whole run.' : ''} Split into ~100–250 MB files, or use a smaller warehouse.`;
+  else if (size >= 100 && size <= 250) ins = `<b>Sweet spot.</b> ~${mb(size)} files keep overhead at ${fmt(over * 100, 1)}% and all ${threads} threads busy (${fmt(util * 100)}%). This is why Snowflake recommends roughly 100–250 MB compressed.`;
+  else if (size > 250) ins = `<b>Workable, but coarse.</b> Big files mean the last wave can leave threads idle (use ${fmt(util * 100)}%), and retries after an error re-read a lot of data. Try 100–250 MB.`;
+  else ins = `<b>Small-ish files.</b> Overhead is ${fmt(over * 100)}% of thread time. Fine for Snowpipe at low volume; at scale, larger files are cheaper.`;
+  if (fzNodes > 1 && files < threads / 2) ins += ' <b>A bigger warehouse makes this worse</b>, not better: more idle threads.';
+  $('#fzIns').innerHTML = ins;
+}
+['#fzVol', '#fzSize'].forEach(id => $(id).addEventListener('input', fzDraw));
+tabs('#fzWh', d => { fzNodes = +d.n; fzDraw(); });
+fzDraw();
+</script>
+
+<script>
+/* ===== 05 Snowpipe event flow ===== */
+let SP;
+function spInit() { SP = { mode: SP ? SP.mode : 'auto', paused: false, hist: new Set(), n: 0, rows: 0, L: 0, D: 0, F: 0, pending: [], busy: false, last: null }; }
+spInit();
+const spBtns = ['#spNew', '#spDup', '#spBad', '#spPause', '#spReset'];
+function spLog(t, c = '') { const d = document.createElement('div'); if (c) d.className = c; d.innerHTML = t; $('#spLog').appendChild(d); $('#spLog').scrollTop = $('#spLog').scrollHeight; }
+function spStats() {
+  $('#spL').textContent = SP.L; $('#spD').textContent = SP.D; $('#spF').textContent = SP.F;
+  $('#spS').textContent = SP.paused ? 'PAUSED' : 'RUNNING'; $('#spS').style.color = SP.paused ? 'var(--amber)' : 'var(--teal)';
+  $('#spQ').textContent = SP.pending.length + ' pending'; $('#spT').textContent = fmt(SP.rows) + ' rows';
+  $('#spN3a').textContent = SP.mode === 'auto' ? 'Event → SQS' : 'REST insertFiles';
+  $('#spN3b').textContent = SP.mode === 'auto' ? 'ObjectCreated' : 'your app calls API';
+  $('#spPause').textContent = SP.paused ? 'Resume pipe' : 'Pause pipe';
+}
+function spHi(nodes, edges, bad = []) {
+  $('#spFlow').classList.add('playing');
+  $$('#spFlow .fn').forEach(g => { g.classList.toggle('on', nodes.includes(g.id)); g.classList.toggle('bad', bad.includes(g.id)); });
+  $$('#spFlow .edge').forEach(e => e.classList.toggle('on', edges.includes(e.id)));
+}
+function spPlay(steps, done) {
+  SP.busy = true; spBtns.forEach(b => $(b).disabled = true);
+  let i = 0;
+  const tick = () => {
+    if (i >= steps.length) { SP.busy = false; spBtns.forEach(b => $(b).disabled = false); spStats(); if (done) done(); return; }
+    const s = steps[i++]; spHi(s.n, s.e, s.bad || []); if (s.log) spLog(s.log, s.c); if (s.fx) s.fx(); spStats();
+    setTimeout(tick, 650);
+  };
+  tick();
+}
+function spArrive(f) {
+  return [
+    { n: ['sp1', 'sp2'], e: ['se1'], log: `PUT s3://acme-raw/orders/${f}` },
+    SP.mode === 'auto' ? { n: ['sp2', 'sp3'], e: ['se2'], log: 's3:ObjectCreated event → pipe SQS queue (notification_channel)' } : { n: ['sp2', 'sp3'], e: ['se2'], log: `app → POST /v1/data/pipes/…/insertFiles {"files":["${f}"]}` },
+    { n: ['sp3', 'sp4'], e: ['se3'], log: `${f} added to pipe queue`, fx: () => SP.pending.push(f) }
+  ];
+}
+function spProcess(f, kind) {
+  const take = () => { SP.pending = SP.pending.filter(x => x !== f); };
+  if (kind === 'dup') return [
+    { n: ['sp4', 'sp5'], e: ['se4'], log: `load history: ${f} already loaded by this pipe`, c: 'mid', fx: take },
+    { n: ['sp5'], e: [], log: `SKIPPED ${f}: no duplicate rows`, c: 'mid', fx: () => { SP.D++; $('#spIns').innerHTML = '<b>Duplicate skipped.</b> The pipe keeps its own load history (about 14 days) keyed on the file path, so a repeated notification or a re-sent API call doesn’t load the file twice. Careful: an <b>overwritten</b> file with the same name is skipped too.'; } }
+  ];
+  if (kind === 'bad') return [
+    { n: ['sp4', 'sp5'], e: ['se4'], log: `load history: ${f} is new`, fx: take },
+    { n: ['sp5', 'sp6'], e: ['se5'], log: 'serverless COPY: parsing…' },
+    { n: ['sp6', SP.mode === 'auto' ? 'sp8' : 'sp9'], e: [SP.mode === 'auto' ? 'se7' : ''], bad: ['sp6'], log: `LOAD_FAILED ${f}: Numeric value 'N/A' is not recognized (ON_ERROR = SKIP_FILE)`, c: 'bad', fx: () => { SP.F++; } },
+    { n: ['sp9', SP.mode === 'auto' ? 'sp8' : 'sp9'], e: [], log: SP.mode === 'auto' ? 'ERROR_INTEGRATION → SNS topic → on-call alert' : 'REST: insertReport / COPY_HISTORY shows the failure', c: 'bad', fx: () => { $('#spIns').innerHTML = `<b>Bad file: the whole file was skipped</b>, because Snowpipe's default ON_ERROR is <b>SKIP_FILE</b>. No partial data reached the table. ${SP.mode === 'auto' ? 'An <b>ERROR_INTEGRATION</b> pushes the failure to SNS / Event Grid / Pub/Sub.' : 'With the REST API, your app checks <b>insertReport</b> or COPY_HISTORY.'} Fix the file, upload it under a <b>new name</b> (or use ALTER PIPE … REFRESH), and it loads.`; } }
+  ];
+  const rows = 1000 + Math.floor(Math.random() * 4000);
+  return [
+    { n: ['sp4', 'sp5'], e: ['se4'], log: `load history: ${f} is new`, fx: take },
+    { n: ['sp5', 'sp6'], e: ['se5'], log: 'serverless COPY: Snowflake-managed compute, no warehouse' },
+    { n: ['sp6', 'sp7'], e: ['se6'], log: `LOADED ${f}: ${fmt(rows)} rows committed`, c: 'ok', fx: () => { SP.rows += rows; SP.L++; SP.hist.add(f); SP.last = f; } },
+    { n: ['sp7', 'sp9'], e: ['se8'], log: 'COPY_HISTORY row written · lastIngestedTimestamp updated', fx: () => { $('#spIns').innerHTML = `<b>Loaded in one smooth flow.</b> In real life this usually takes about a minute end to end (not guaranteed). Notice what you <b>didn't</b> run: no warehouse, no scheduler. Snowflake bills the serverless compute to the pipe.`; } }
+  ];
+}
+function spGo(kind) {
+  if (SP.busy) return;
+  let f;
+  if (kind === 'dup') { if (!SP.last) { $('#spIns').innerHTML = 'Load a file first, then re-send it.'; return; } f = SP.last; }
+  else if (kind === 'bad') f = `orders_bad_${++SP.n}.csv`;
+  else f = `orders_20261114_${String(++SP.n).padStart(3, '0')}.csv`;
+  const steps = spArrive(f);
+  if (SP.paused) {
+    steps.push({ n: ['sp4'], e: [], log: `pipe PAUSED: ${f} waits in the queue`, c: 'mid', fx: () => { SP.pending.length; $('#spIns').innerHTML = `<b>Paused pipes still accept notifications.</b> Files pile up (pendingFileCount = ${SP.pending.length}) and load when you resume. Use pausing for maintenance, or before recreating the pipe.`; } });
+    if (!SP.queueKinds) SP.queueKinds = {};
+    SP.queueKinds[f] = kind;
+    spPlay(steps); return;
+  }
+  spPlay(steps.concat(spProcess(f, kind)));
+}
+$('#spNew').onclick = () => spGo('new');
+$('#spDup').onclick = () => spGo('dup');
+$('#spBad').onclick = () => spGo('bad');
+$('#spPause').onclick = () => {
+  if (SP.busy) return;
+  SP.paused = !SP.paused;
+  spLog(SP.paused ? 'ALTER PIPE orders_pipe SET PIPE_EXECUTION_PAUSED = TRUE' : 'ALTER PIPE orders_pipe SET PIPE_EXECUTION_PAUSED = FALSE', 'mid');
+  spStats();
+  if (!SP.paused && SP.pending.length) {
+    const q = [...SP.pending]; let steps = [];
+    q.forEach(f => { const k = (SP.queueKinds || {})[f] || 'new'; steps = steps.concat(spProcess(f, k === 'dup' && !SP.hist.has(f) ? 'new' : k)); });
+    spPlay(steps, () => { $('#spIns').innerHTML = `<b>Resumed:</b> the ${q.length} queued file(s) were processed in a batch. ${$('#spIns').innerHTML}`; });
+  } else $('#spIns').innerHTML = SP.paused ? '<b>Pipe paused.</b> Now drop a file: it is queued, not loaded. <code>SYSTEM$PIPE_STATUS</code> would show executionState = PAUSED and a growing pendingFileCount.' : '<b>Pipe running again.</b>';
+};
+$('#spReset').onclick = () => { if (SP.busy) return; spInit(); $('#spLog').innerHTML = ''; $('#spFlow').classList.remove('playing'); $$('#spFlow .fn').forEach(g => g.classList.remove('on', 'bad')); $$('#spFlow .edge').forEach(e => e.classList.remove('on')); spStats(); $('#spIns').innerHTML = 'Reset. Click <b>Drop a new file</b>.'; };
+tabs('#spMode', d => { SP.mode = d.v; spStats(); $('#spIns').innerHTML = SP.mode === 'auto' ? '<b>AUTO_INGEST:</b> cloud storage tells Snowflake about new files through event notifications. No code on your side once it’s wired up.' : '<b>REST API:</b> your application uploads the file, then calls <code>insertFiles</code> (authenticated with key-pair JWT). Useful when you can’t configure bucket notifications, or want to control exactly which files load.'; });
+spStats();
+
+/* ===== 06 offset token simulator ===== */
+let OS;
+function osInit() { OS = { ev: [], committed: null, running: true, rows: 0, dup: 0, mode: OS ? OS.mode : 'tok' }; }
+osInit();
+function osDraw(msg) {
+  const cls = { kafka: 'off', buf: 'mid', ok: 'ok', rebuf: 'mid', dup: 'bad' };
+  $('#osChips').innerHTML = OS.ev.length ? OS.ev.map((e, i) => `<span class="badge ${cls[e]}" style="font-size:12px;padding:4px 10px">offset ${i}${e === 'rebuf' ? ' (re-sent)' : ''}</span>`).join('') : '<span class="note-s">(no events yet)</span>';
+  $('#osRows').textContent = OS.rows; $('#osTok').textContent = OS.committed === null ? 'null' : OS.committed; $('#osDup').textContent = OS.dup;
+  $('#osCli').textContent = OS.running ? 'RUNNING' : 'CRASHED'; $('#osCli').style.color = OS.running ? 'var(--teal)' : 'var(--red)';
+  if (msg) $('#osIns').innerHTML = msg;
+}
+$('#osSend').onclick = () => {
+  if (!OS.running) { osDraw('<b>The client is down.</b> Kafka keeps the events safe; restart the client.'); return; }
+  for (let k = 0; k < 4; k++) OS.ev.push('buf');
+  osDraw('<b>4 events read from Kafka</b> and buffered in the SDK’s memory, tagged with their Kafka offsets. Nothing is in Snowflake yet. Flush, or crash first to see what happens to buffered rows.');
+};
+$('#osFlush').onclick = () => {
+  if (!OS.running) { osDraw('<b>The client is down.</b> Restart it first.'); return; }
+  let n = 0, d = 0, hi = OS.committed;
+  OS.ev.forEach((e, i) => { if (e === 'buf') { OS.ev[i] = 'ok'; n++; hi = i; } else if (e === 'rebuf') { OS.ev[i] = 'dup'; d++; hi = Math.max(hi === null ? -1 : hi, i); } });
+  OS.rows += n + d; OS.dup += d; OS.committed = hi;
+  osDraw(n + d ? `<b>Flushed ${n + d} row(s).</b> Snowflake committed the rows <b>and</b> the channel's offset token (${hi}) in the same step, so the token always matches what is really in the table.${d ? ` <b>${d} of them are duplicates</b>: the client re-sent rows that were already committed.` : ''}` : 'Nothing buffered to flush.');
+};
+$('#osCrash').onclick = () => {
+  if (!OS.running) return;
+  OS.running = false; let lost = 0;
+  OS.ev.forEach((e, i) => { if (e === 'buf' || e === 'rebuf') { OS.ev[i] = e === 'buf' ? 'kafka' : 'ok'; lost++; } });
+  osDraw(`<b>Client crashed.</b> ${lost ? lost + ' buffered row(s) were lost from memory, but they are still in Kafka (grey).' : 'Nothing was buffered, so nothing was lost.'} Committed rows are safe in Snowflake. Now restart.`);
+};
+$('#osRestart').onclick = () => {
+  if (OS.running) { osDraw('The client is already running. Crash it first.'); return; }
+  OS.running = true;
+  if (OS.mode === 'tok') {
+    const from = OS.committed === null ? 0 : OS.committed + 1; let n = 0;
+    OS.ev.forEach((e, i) => { if (i >= from && e === 'kafka') { OS.ev[i] = 'buf'; n++; } });
+    osDraw(`<b>Restarted correctly:</b> the client called <code>getLatestCommittedOffsetToken()</code> → <b>${OS.committed === null ? 'null' : OS.committed}</b>, so it seeks Kafka to offset <b>${from}</b> and re-reads ${n} event(s). Flush now: no gaps, no duplicates. That's exactly-once.`);
+  } else {
+    let n = 0;
+    OS.ev.forEach((e, i) => { if (e === 'kafka') { OS.ev[i] = 'buf'; n++; } else if (e === 'ok' || e === 'dup') { OS.ev[i] = 'rebuf'; n++; } });
+    osDraw(`<b>Restarted from offset 0</b> without checking the token: ${n} event(s) re-read, including ones Snowflake already has. Flush and watch the duplicate count. (Starting from "latest" instead would skip the lost events, which is a gap.)`);
+  }
+};
+$('#osReset').onclick = () => { osInit(); osDraw('Reset. Send some events.'); };
+tabs('#osMode', d => { OS.mode = d.v; osDraw(OS.mode === 'tok' ? '<b>Correct recovery:</b> resume from the committed offset token.' : '<b>Naive recovery:</b> ignore the token and replay from the start.'); });
+osDraw();
+
+/* ===== 06 latency / cost comparison ===== */
+const SC_R = [1, 10, 100, 1000, 10000, 100000], SC_I = [5, 15, 30, 60, 120, 240, 720, 1440];
+function scModel() {
+  const rate = SC_R[+$('#scRate').value], iv = SC_I[+$('#scInt').value - 1], gb = rate * 0.0864;
+  const batches = 1440 / iv, perGB = gb / batches, load = 10 + perGB * 1000 / 160, billed = Math.max(60, load) + 60;
+  const copy = { lat: iv * 60 + load, cr: batches * billed / 3600 };
+  const files = 1440 + gb * 10;
+  const pipe = { lat: 60 + 60, cr: gb * 0.006 + files / 1000 * 0.06 };
+  const strm = { lat: 8, cr: gb * 0.004 + 0.24 };
+  return { rate, iv, gb, copy, pipe, strm };
+}
+function scDraw() {
+  const M = scModel();
+  $('#scRateV').textContent = fmt(M.rate) + ' events/s'; $('#scIntV').textContent = M.iv >= 60 ? (M.iv / 60) + ' h' : M.iv + ' min';
+  const items = [['COPY batch (XS warehouse)', M.copy, 'var(--amber)'], ['Snowpipe (1 file / min)', M.pipe, 'var(--ice)'], ['Snowpipe Streaming', M.strm, 'var(--red)']];
+  const lg = (v, lo, hi) => Math.max(0.02, (Math.log10(v) - lo) / (hi - lo));
+  let s = `<text class="tm" x="10" y="16">WORST-CASE LATENCY (log scale)</text><text class="tm" x="350" y="16">CREDITS PER DAY (log scale)</text>`;
+  items.forEach(([n, v, c], i) => {
+    const y = 34 + i * 62;
+    const lw = 300 * lg(v.lat, 0, 5.2), cw = 300 * lg(v.cr, -2, 2.5);
+    s += `<text class="t" x="10" y="${y + 4}">${n}</text><rect class="grow" x="10" y="${y + 12}" width="${lw}" height="18" rx="4" fill="${c}"/><text class="tm" x="${14 + lw}" y="${y + 26}">${dur(v.lat)}</text>`;
+    s += `<rect class="grow" x="350" y="${y + 12}" width="${cw}" height="18" rx="4" fill="${c}" opacity=".75"/><text class="tm" x="${354 + cw}" y="${y + 26}">${fmt(v.cr, v.cr < 1 ? 3 : 1)}</text>`;
+  });
+  $('#scSvg').innerHTML = s;
+  $('#scStats').innerHTML = `<div class="stat"><div class="k">DATA PER DAY</div><div class="n">${M.gb >= 1 ? fmt(M.gb, 1) + ' GB' : fmt(M.gb * 1000) + ' MB'}</div></div>` + items.map(([n, v]) => `<div class="stat"><div class="k">${n.split(' (')[0].toUpperCase()}</div><div class="n" style="font-size:22px">${dur(v.lat)}</div><div class="s">${fmt(v.cr, v.cr < 1 ? 3 : 1)} credits/day (illustrative)</div></div>`).join('');
+  const cheapest = items.slice().sort((a, b) => a[1].cr - b[1].cr)[0][0].split(' (')[0];
+  let ins = `<b>Cheapest here: ${cheapest}.</b> `;
+  if (M.rate <= 10) ins += `At low volume, a batch warehouse pays mostly for its <b>60-second minimum and idle time</b> on every run, while Snowpipe pays per file and a streaming client has a small always-on cost. ${M.iv <= 15 ? 'Frequent batches on a tiny feed are the worst of both worlds.' : ''}`;
+  else if (M.rate >= 10000) ins += `At high volume, batch COPY is usually cheapest <b>per GB</b>, but data is up to ${dur(M.copy.lat)} old. Streaming beats file-based Snowpipe here because there are no files to create, list and track.`;
+  else ins += `The middle ground: pick by <b>freshness</b> first. If dashboards need seconds, only streaming qualifies; if minutes are fine, Snowpipe or Streaming; if hours are fine, batch.`;
+  $('#scIns').innerHTML = ins + ' <span class="note-s">Illustrative model, not a benchmark or a price quote.</span>';
+}
+['#scRate', '#scInt'].forEach(id => $(id).addEventListener('input', scDraw));
+scDraw();
+
+/* ===== 07 lake decision helper ===== */
+const LK = [
+  `<b class="h">ICEBERG TABLE · EXTERNAL CATALOG</b>The Spark team owns the writes and commits to a catalog (Glue, or an Iceberg REST catalog such as Open Catalog / Polaris). Create a <code>CATALOG INTEGRATION</code> and an Iceberg table in Snowflake that points at it, with refresh (manual or automatic). Snowflake reads the same Parquet files, with no copy and no load job. If BI needs it faster, add a dynamic table or materialized layer in Snowflake on top.`,
+  `<b class="h">ICEBERG TABLE · SNOWFLAKE AS CATALOG</b>Snowflake does the ETL and commits snapshots, with full DML, Time Travel and clustering. Data lands as open Parquet + Iceberg metadata in <b>your</b> bucket via an <code>EXTERNAL VOLUME</code>, so Spark or Trino can read it through a catalog API. You get near-native performance and an open format.`,
+  `<b class="h">EXTERNAL TABLE (OR JUST LEAVE IT)</b>For petabytes of rarely queried raw logs, loading everything is waste. An <b>external table</b> with <b>partition columns from the path</b> (e.g. <code>dt</code> from <code>/logs/dt=2026-11-14/</code>) lets you query a day or two when needed; partition pruning skips the rest. Add a materialized view for any hot slice.`,
+  `<b class="h">NATIVE TABLE</b>For hot, heavily queried dashboard tables, native Snowflake tables still give the best performance: micro-partition statistics, result cache, clustering, search optimization. Ingest with Snowpipe or Streaming and model with dynamic tables. Use Iceberg only if another engine genuinely needs the same data.`,
+  `<b class="h">SNOWPIPE INTO A NATIVE TABLE</b>Hourly vendor CSVs are a classic Snowpipe case: an external stage over the S3 prefix, a pipe with <code>AUTO_INGEST = TRUE</code>, <code>ON_ERROR = SKIP_FILE</code>, an error integration for alerts, and <code>METADATA$FILENAME</code> for lineage. An external table would leave the CSVs unparsed and slow to query.`
+];
+tabs('#lkTabs', d => { $('#lkOut').innerHTML = LK[+d.v]; });
+$('#lkOut').innerHTML = LK[0];
+
+/* ===== 08 schema evolution ===== */
+const SE_V1 = [['ORDER_ID', 'NUMBER(38,0)', false], ['AMOUNT', 'NUMBER(10,2)', true], ['ORDER_TS', 'TIMESTAMP_NTZ', false], ['CUSTOMER_ID', 'TEXT', true]];
+let SE;
+function seInit() { SE = { step: 0, evo: SE ? SE.evo : true, cols: [], rows: 0 }; }
+seInit();
+function seColsDraw(newC = [], chg = []) {
+  $('#seCols').innerHTML = '<tr><th>COLUMN</th><th>TYPE</th><th>NULL?</th></tr>' + (SE.cols.length ? SE.cols.map(c => `<tr class="${newC.includes(c[0]) ? 'colnew' : chg.includes(c[0]) ? 'colchg' : ''}"><td class="m">${c[0]}</td><td class="m">${c[1]}</td><td class="m">${c[2] ? 'Y' : 'N (NOT NULL)'}</td></tr>`).join('') + `<tr><td colspan="3" class="note-s">${SE.rows} rows · ENABLE_SCHEMA_EVOLUTION = ${SE.evo ? 'TRUE' : 'FALSE'}</td></tr>` : '<tr><td colspan="3" class="note-s">(table doesn’t exist yet)</td></tr>');
+}
+$('#seInfer').onclick = () => {
+  if (SE.step < 1) SE.step = 1;
+  $('#seSql').textContent = "SELECT column_name, type, nullable\nFROM TABLE(INFER_SCHEMA(\n  LOCATION    => '@raw_stage/orders/v1/',\n  FILE_FORMAT => 'parquet_std'));";
+  $('#seFileH').textContent = 'INFER_SCHEMA output (read from the Parquet footer)';
+  $('#seFile').innerHTML = '<tr><th>COLUMN_NAME</th><th>TYPE</th><th>NULLABLE</th></tr>' + SE_V1.map(c => `<tr><td class="m">${c[0]}</td><td class="m">${c[1]}</td><td class="m">${c[2]}</td></tr>`).join('');
+  seColsDraw();
+  $('#seIns').innerHTML = '<b>No table yet: you just read the schema.</b> For Parquet, Snowflake reads the schema stored in each file’s footer, so it doesn’t scan the data. Column names, types and nullability come back as rows.';
+};
+$('#seCreate').onclick = () => {
+  if (SE.step < 1) { $('#seIns').innerHTML = 'Run step 1 first: the template needs INFER_SCHEMA output.'; return; }
+  SE.step = 2; SE.cols = SE_V1.map(c => [...c]); SE.rows = 3;
+  $('#seSql').textContent = `CREATE TABLE orders_raw\n  USING TEMPLATE (\n    SELECT ARRAY_AGG(OBJECT_CONSTRUCT(*))\n    FROM TABLE(INFER_SCHEMA(\n      LOCATION => '@raw_stage/orders/v1/', FILE_FORMAT => 'parquet_std')))\n  ENABLE_SCHEMA_EVOLUTION = ${SE.evo ? 'TRUE' : 'FALSE'};\n\nCOPY INTO orders_raw FROM @raw_stage/orders/v1/\n  FILE_FORMAT = (FORMAT_NAME = 'parquet_std')\n  MATCH_BY_COLUMN_NAME = CASE_INSENSITIVE;`;
+  seColsDraw();
+  $('#seIns').innerHTML = '<b>Table created from the template</b> and loaded with 3 rows by name. <code>ARRAY_AGG(OBJECT_CONSTRUCT(*))</code> turns the INFER_SCHEMA rows into the array of column definitions that USING TEMPLATE expects. Now load a file whose shape changed.';
+};
+$('#seLoad').onclick = () => {
+  if (SE.step < 2) { $('#seIns').innerHTML = 'Create the table first (step 2).'; return; }
+  SE.step = 3;
+  $('#seFileH').textContent = 'orders_v2.parquet (new shape: no ORDER_TS, two new columns)';
+  $('#seFile').innerHTML = '<tr><th>ORDER_ID</th><th>AMOUNT</th><th>CUSTOMER_ID</th><th>COUPON_CODE</th><th>CHANNEL</th></tr><tr><td class="m">9001</td><td class="m">25.00</td><td class="m">C-17</td><td class="m">BF25</td><td class="m">app</td></tr><tr><td class="m">9002</td><td class="m">12.40</td><td class="m">C-08</td><td class="m">NULL</td><td class="m">web</td></tr>';
+  $('#seSql').textContent = "COPY INTO orders_raw FROM @raw_stage/orders/v2/\n  FILE_FORMAT = (FORMAT_NAME = 'parquet_std')\n  MATCH_BY_COLUMN_NAME = CASE_INSENSITIVE;";
+  if (SE.evo) {
+    const ts = SE.cols.find(c => c[0] === 'ORDER_TS'); if (ts) ts[2] = true;
+    ['COUPON_CODE', 'CHANNEL'].forEach(n => { if (!SE.cols.find(c => c[0] === n)) SE.cols.push([n, 'TEXT', true]); });
+    SE.rows += 2; seColsDraw(['COUPON_CODE', 'CHANNEL'], ['ORDER_TS']);
+    $('#seIns').innerHTML = '<b>Schema evolved automatically.</b> Two new columns were added (green) and ORDER_TS lost its NOT NULL constraint (amber) because the new file doesn’t have it. Rows loaded: 2. Old rows show NULL in the new columns. The load role needed OWNERSHIP or the EVOLVE SCHEMA privilege on the table.';
+  } else {
+    seColsDraw();
+    $('#seIns').innerHTML = '<b>Load failed: 0 rows.</b> Without evolution, ORDER_TS is still NOT NULL and the file has no value for it, so every row errors (with the default ABORT_STATEMENT the statement fails). Even if it had loaded, COUPON_CODE and CHANNEL would be <b>silently ignored</b>, because columns in the file that don’t match the table are skipped. Switch evolution to TRUE (<code>ALTER TABLE orders_raw SET ENABLE_SCHEMA_EVOLUTION = TRUE</code>) and load again.';
+  }
+};
+$('#seReset').onclick = () => { seInit(); $('#seSql').textContent = '-- start with step 1'; $('#seFile').innerHTML = ''; $('#seFileH').textContent = 'Staged file'; seColsDraw(); $('#seIns').innerHTML = 'Reset. Start with step 1.'; };
+tabs('#seEvo', d => { SE.evo = d.v === '1'; seColsDraw(); if (SE.step >= 2) { $('#seSql').textContent = `ALTER TABLE orders_raw SET ENABLE_SCHEMA_EVOLUTION = ${SE.evo ? 'TRUE' : 'FALSE'};`; $('#seIns').innerHTML = 'Property changed on the existing table. Now run step 3 again.'; } });
+$('#seSql').textContent = '-- start with step 1'; seColsDraw();
+
+/* ===== 08 unload calculator ===== */
+const UL_MAX = [16, 64, 128, 256, 1024, 5120];
+const UL = { single: false, part: false };
+function ulDraw() {
+  const sizeMB = +$('#ulSize').value * 100, max = UL_MAX[+$('#ulMax').value], par = 32;
+  $('#ulSizeV').textContent = mb(sizeMB); $('#ulMaxV').textContent = mb(max) + (max === 16 ? ' (default)' : '');
+  let sql = `COPY INTO @unload_stage/orders/\nFROM (SELECT * FROM orders WHERE order_date >= '2026-10-15')\n${UL.part ? "PARTITION BY ('order_date=' || TO_VARCHAR(order_date))\n" : ''}FILE_FORMAT = (TYPE = PARQUET)\nHEADER = TRUE\nMAX_FILE_SIZE = ${max * 1048576}${UL.single ? '\nSINGLE = TRUE' : ''};`;
+  $('#ulSql').textContent = sql;
+  let files, paths, ins, writers;
+  if (UL.single && UL.part) {
+    files = 0; writers = 0; paths = 'ERROR: SINGLE = TRUE can’t be combined with PARTITION BY';
+    ins = '<b>Pick one.</b> A partitioned unload writes many folders, so it can’t be a single file.';
+  } else if (UL.single) {
+    writers = 1;
+    if (sizeMB > max) { files = 0; paths = `ERROR: max file size (${max * 1048576}) exceeded for unload single file mode`; ins = `<b>SINGLE = TRUE still respects MAX_FILE_SIZE.</b> The result (${mb(sizeMB)}) is bigger than ${mb(max)}. Raise MAX_FILE_SIZE (the upper limit depends on the cloud; up to 5 GB on S3), or drop SINGLE.`; }
+    else { files = 1; paths = 'orders/data_0_0_0.snappy.parquet'; ins = `<b>One file, one writer.</b> Easy for a partner to pick up, but written by a single thread, so large unloads are slow. Fine for small extracts.`; }
+  } else if (UL.part) {
+    const per = sizeMB / 30, fpp = Math.max(1, Math.ceil(per / max));
+    files = 30 * fpp; writers = Math.min(par, files);
+    paths = Array.from({ length: Math.min(5, 30) }, (_, d) => Array.from({ length: Math.min(fpp, 2) }, (_, k) => `orders/order_date=2026-10-${15 + d}/data_01b8e2c4-…_0_${k}_0.snappy.parquet`).join('\n')).join('\n') + `\n… ${30 - 5} more date folders`;
+    ins = `<b>Hive-style folders</b> (<code>order_date=…/</code>) let Spark, Athena, external tables or Iceberg tools prune by date. Each partition gets at least one file, so many small partitions make many small files: partition by a coarse key (day, not customer). Partitioned unloads usually add the query ID to file names (<code>INCLUDE_QUERY_ID</code>), which helps reruns avoid overwriting earlier files; check the docs for the exact defaults.`;
+  } else {
+    files = Math.max(Math.ceil(sizeMB / max), Math.min(par, Math.ceil(sizeMB / 16))); writers = Math.min(par, files);
+    paths = Array.from({ length: Math.min(files, 6) }, (_, k) => `orders/data_0_${k % 8}_${Math.floor(k / 8)}.snappy.parquet`).join('\n') + (files > 6 ? `\n… ${files - 6} more files` : '');
+    ins = `<b>Parallel unload:</b> warehouse threads write files side by side, each up to MAX_FILE_SIZE (a target, not exact). ${max === 16 ? 'The 16 MB default gives many small files, which is fine for loading back into Snowflake but not ideal for a data lake. Consider 128–256 MB for Parquet.' : 'Bigger files mean fewer objects to list for downstream readers.'}`;
+  }
+  $('#ulPaths').textContent = paths;
+  $('#ulFiles').textContent = files ? fmt(files) : 'error'; $('#ulAvg').textContent = files ? mb(Math.round(sizeMB / files * 10) / 10) : '–'; $('#ulPar').textContent = writers || '–';
+  $('#ulIns').innerHTML = ins + ' <span class="note-s">Illustrative counts.</span>';
+}
+['#ulSize', '#ulMax'].forEach(id => $(id).addEventListener('input', ulDraw));
+tabs('#ulSingle', d => { UL.single = d.v === '1'; ulDraw(); });
+tabs('#ulPart', d => { UL.part = d.v === '1'; ulDraw(); });
+ulDraw();
+</script>
+
+<script>
+/* ===== 09 SQL lab ===== */
+const SQL = [
+  { t: 'Storage integration + stage', l: [
+    [`USE ROLE ACCOUNTADMIN;`, `Integrations are account-level objects. Only ACCOUNTADMIN, or a role granted CREATE INTEGRATION, can create them.`],
+    [`CREATE STORAGE INTEGRATION s3_int`, `Creates the identity object Snowflake will use to reach your S3 bucket. No keys are stored in it.`],
+    [`  TYPE = EXTERNAL_STAGE`, `This integration is for external stages (loading/unloading files), as opposed to notification or API integrations.`],
+    [`  STORAGE_PROVIDER = 'S3'`, `The cloud: S3 here. Others are 'AZURE' and 'GCS'; S3 has variants for government/China regions.`],
+    [`  ENABLED = TRUE`, `The integration can be used right away. Set FALSE to cut off access in an emergency without dropping anything.`],
+    [`  STORAGE_AWS_ROLE_ARN = 'arn:aws:iam::123456789012:role/snowflake-raw-reader'`, `The IAM role in YOUR AWS account that Snowflake will assume. Its permissions policy decides what Snowflake can do in the bucket.`],
+    [`  STORAGE_ALLOWED_LOCATIONS = ('s3://acme-raw/orders/', 's3://acme-raw/events/')`, `Snowflake-side guard rail: stages using this integration can only point at these prefixes.`],
+    [`  STORAGE_BLOCKED_LOCATIONS = ('s3://acme-raw/orders/pii/');`, `Explicitly forbidden sub-paths, even though they sit under an allowed prefix.`],
+    [`DESC INTEGRATION s3_int;`, `Shows STORAGE_AWS_IAM_USER_ARN and STORAGE_AWS_EXTERNAL_ID. Give both to your cloud admin to put into the role's trust policy.`],
+    [`GRANT USAGE ON INTEGRATION s3_int TO ROLE etl_role;`, `Lets the engineering role create stages that use this integration, without being ACCOUNTADMIN.`],
+    [``, ``],
+    [`USE ROLE etl_role;`, `Everything below is done by the pipeline role, following least privilege.`],
+    [`CREATE STAGE raw.s3_orders`, `A named external stage: a reusable pointer to the bucket path.`],
+    [`  URL = 's3://acme-raw/orders/'`, `Must be inside STORAGE_ALLOWED_LOCATIONS, otherwise CREATE STAGE fails.`],
+    [`  STORAGE_INTEGRATION = s3_int`, `Use the integration's role instead of CREDENTIALS = (AWS_KEY_ID = ...). No secrets in SQL.`],
+    [`  FILE_FORMAT = (FORMAT_NAME = 'raw.csv_std')`, `Default parsing rules for COPY from this stage (the file format is created in the File formats tab, so run that first).`],
+    [`  DIRECTORY = (ENABLE = TRUE AUTO_REFRESH = TRUE);`, `Adds a directory table (file catalog). AUTO_REFRESH keeps it current from S3 event notifications, which must be configured to the SQS queue Snowflake shows.`],
+    [`LIST @raw.s3_orders PATTERN = '.*2026-11-14.*';`, `The first real test of the IAM setup: lists matching files. An access error here usually means the trust policy is wrong.`]
+  ] },
+  { t: 'File formats', l: [
+    [`CREATE OR REPLACE FILE FORMAT raw.csv_std`, `A named, reusable set of parsing rules. Change it once, every COPY that uses it picks up the change.`],
+    [`  TYPE = CSV`, `Delimited text. Also: JSON, AVRO, ORC, PARQUET, XML.`],
+    [`  FIELD_DELIMITER = ','`, `Column separator. Use '|' or '\\t' for other files.`],
+    [`  SKIP_HEADER = 1`, `Skip the first line (column names). Can't be combined with PARSE_HEADER.`],
+    [`  FIELD_OPTIONALLY_ENCLOSED_BY = '"'`, `Values may be wrapped in double quotes, so commas inside "Smith, John" don't split the field.`],
+    [`  NULL_IF = ('', 'NULL', 'null')`, `These strings become SQL NULL when loaded.`],
+    [`  EMPTY_FIELD_AS_NULL = TRUE`, `An empty field (,,) becomes NULL instead of an empty string.`],
+    [`  TRIM_SPACE = TRUE`, `Removes leading and trailing spaces from values.`],
+    [`  ERROR_ON_COLUMN_COUNT_MISMATCH = TRUE`, `A row with more or fewer columns than the table is an error, which catches shifted or broken rows early.`],
+    [`  DATE_FORMAT = 'YYYY-MM-DD'`, `How date strings are parsed. TIMESTAMP_FORMAT and TIME_FORMAT work the same way.`],
+    [`  COMPRESSION = AUTO;`, `Detects gzip, bz2, zstd, etc. from the file. Compressed files mean fewer bytes to read.`],
+    [``, ``],
+    [`CREATE OR REPLACE FILE FORMAT raw.csv_hdr`, `A second CSV format that reads column names from the header row.`],
+    [`  TYPE = CSV`, `Still CSV.`],
+    [`  PARSE_HEADER = TRUE`, `Use the first line as column names. Needed for INFER_SCHEMA on CSV and for MATCH_BY_COLUMN_NAME with CSV.`],
+    [`  FIELD_OPTIONALLY_ENCLOSED_BY = '"';`, `Same quoting rule as above.`],
+    [``, ``],
+    [`CREATE OR REPLACE FILE FORMAT raw.json_std`, `For JSON files, which load into a VARIANT column.`],
+    [`  TYPE = JSON`, `JSON documents, one per line (NDJSON) or as an array.`],
+    [`  STRIP_OUTER_ARRAY = TRUE`, `Turns one file containing [ {...}, {...} ] into one row per element, instead of one huge VARIANT.`],
+    [`  STRIP_NULL_VALUES = FALSE;`, `Keep keys whose value is null (set TRUE to drop them and save space).`],
+    [``, ``],
+    [`CREATE OR REPLACE FILE FORMAT raw.parquet_std`, `For Parquet, the most common data-lake format.`],
+    [`  TYPE = PARQUET`, `Self-describing columnar files; fields are accessed as $1:column_name.`],
+    [`  BINARY_AS_TEXT = FALSE;`, `Treat Parquet binary columns without a logical type as binary rather than text.`]
+  ] },
+  { t: 'COPY variants & validation', l: [
+    [`COPY INTO raw.orders`, `Target table.`],
+    [`  FROM @raw.s3_orders/2026/11/14/`, `Only the files under this date prefix.`],
+    [`  VALIDATION_MODE = RETURN_ERRORS;`, `Dry run: parse every file and return the error rows, but load nothing. Doesn't work with transforming COPY statements.`],
+    [`COPY INTO raw.orders`, `Now the real load.`],
+    [`  FROM @raw.s3_orders`, `The whole stage path; PATTERN filters it.`],
+    [`  PATTERN = '.*orders_.*[.]csv[.]gz'`, `A regular expression on the file path (not a shell glob). [.] matches a literal dot.`],
+    [`  ON_ERROR = 'SKIP_FILE_5%';`, `Skip any file where 5% or more of its rows fail; load the good rows of the others (they show as PARTIALLY_LOADED).`],
+    [`SELECT * FROM TABLE(VALIDATE(raw.orders, JOB_ID => '_last'));`, `Returns the rows rejected by the last COPY in this session. Use a query ID instead of '_last' for an older load.`],
+    [``, ``],
+    [`COPY INTO raw.orders_landing (order_id, amount, order_ts, src_file, src_row, loaded_at)`, `A landing table with lineage columns. The column list maps to the SELECT below by position.`],
+    [`  FROM (SELECT $1, $2, $3, METADATA$FILENAME, METADATA$FILE_ROW_NUMBER, CURRENT_TIMESTAMP()`, `Transform during load: positional fields plus the source file name, the row number in that file, and the load time.`],
+    [`        FROM @raw.s3_orders)`, `The stage is the source of the SELECT. No joins, filters or GROUP BY are allowed here.`],
+    [`  ON_ERROR = CONTINUE;`, `Keep good rows, drop bad ones. Always check ERRORS_SEEN or COPY_HISTORY afterwards.`],
+    [``, ``],
+    [`COPY INTO raw.events`, `Loading Parquet into a table with real columns.`],
+    [`  FROM @raw.s3_events`, `Another external stage.`],
+    [`  FILE_FORMAT = (FORMAT_NAME = 'raw.parquet_std')`, `Override the stage's default format for this load.`],
+    [`  MATCH_BY_COLUMN_NAME = CASE_INSENSITIVE;`, `Match Parquet field names to table column names, ignoring case. Order no longer matters, and extra file columns are ignored.`],
+    [``, ``],
+    [`COPY INTO raw.orders FROM @raw.s3_orders`, `A targeted reload after fixing data.`],
+    [`  FILES = ('2026/11/14/orders_007.csv.gz')`, `Load exactly these files (paths relative to the stage URL).`],
+    [`  FORCE = TRUE;`, `Ignore load metadata and load again. Delete that file's old rows first (e.g. WHERE src_file = ...), or you'll have duplicates.`],
+    [`COPY INTO raw.orders FROM @raw.s3_orders`, `Catching up on very old files.`],
+    [`  LOAD_UNCERTAIN_FILES = TRUE;`, `Also load files whose status is unknown because they are older than the 64-day load metadata. Files known to be loaded are still skipped.`]
+  ] },
+  { t: 'Pipe with AUTO_INGEST', l: [
+    [`CREATE OR REPLACE PIPE raw.orders_pipe`, `A pipe wraps one COPY statement that Snowflake runs on serverless compute. Recreating a pipe resets its load history, so be careful in production.`],
+    [`  AUTO_INGEST = TRUE`, `Load when cloud event notifications arrive. For S3, SHOW PIPES gives the SQS ARN (notification_channel) to configure on the bucket.`],
+    [`  ERROR_INTEGRATION = sns_errors_int`, `A notification integration: load errors are pushed to SNS (or Event Grid / Pub/Sub) so on-call gets alerted.`],
+    [`  COMMENT = 'Vendor order files to raw.orders'`, `Document every pipe: who owns it and what it feeds.`],
+    [`AS`, `Everything after AS is the COPY statement the pipe will run.`],
+    [`COPY INTO raw.orders (order_id, amount, order_ts, src_file)`, `Target table and column list.`],
+    [`  FROM (SELECT $1, $2, $3, METADATA$FILENAME FROM @raw.s3_orders)`, `Light transformations are allowed in a pipe's COPY too. Keeping the file name makes debugging much easier.`],
+    [`  FILE_FORMAT = (FORMAT_NAME = 'raw.csv_std');`, `Parsing rules. ON_ERROR isn't set, so the pipe default SKIP_FILE applies.`],
+    [`SHOW PIPES LIKE 'ORDERS_PIPE' IN SCHEMA raw;`, `Look for the notification_channel column: that SQS queue ARN goes into the S3 bucket's event notification settings.`],
+    [`DESC PIPE raw.orders_pipe;`, `Shows the pipe definition, owner, notification channel and the COPY text.`],
+    [`ALTER PIPE raw.orders_pipe REFRESH PREFIX = '2026/11/';`, `Queue files that were already in the stage before notifications were set up. Only files staged in the last 7 days are considered.`],
+    [`GRANT OPERATE, MONITOR ON PIPE raw.orders_pipe TO ROLE ops_role;`, `OPERATE lets ops pause, resume or refresh the pipe; MONITOR lets them see its status. No ownership needed.`]
+  ] },
+  { t: 'Pipe monitoring', l: [
+    [`SELECT SYSTEM$PIPE_STATUS('raw.orders_pipe');`, `JSON with executionState, pendingFileCount, lastIngestedTimestamp, lastIngestedFilePath and recent errors. The first check when data "stops arriving".`],
+    [`SELECT PARSE_JSON(SYSTEM$PIPE_STATUS('raw.orders_pipe')):pendingFileCount::INT AS pending;`, `Extract one field from the JSON. Good for an alert: a growing backlog means the pipe is paused, failing or falling behind.`],
+    [`SELECT file_name, status, row_count, row_parsed, first_error_message, last_load_time`, `Per-file load results.`],
+    [`FROM TABLE(INFORMATION_SCHEMA.COPY_HISTORY(`, `COPY_HISTORY covers both bulk COPY and Snowpipe loads (the information schema version covers the last 14 days).`],
+    [`  TABLE_NAME => 'RAW.ORDERS',`, `The target table to report on.`],
+    [`  START_TIME => DATEADD('hour', -24, CURRENT_TIMESTAMP())))`, `Last 24 hours.`],
+    [`WHERE status <> 'Loaded'`, `Only problems: 'Load failed' and 'Partially loaded'.`],
+    [`ORDER BY last_load_time DESC;`, `Newest first.`],
+    [``, ``],
+    [`SELECT pipe_name, SUM(credits_used) AS credits, SUM(files_inserted) AS files, SUM(bytes_inserted) / POWER(1024, 3) AS gb`, `Cost and volume per pipe. Many files with few GB is the tiny-file smell.`],
+    [`FROM SNOWFLAKE.ACCOUNT_USAGE.PIPE_USAGE_HISTORY`, `Account-wide history of Snowpipe usage (ACCOUNT_USAGE views have some latency).`],
+    [`WHERE start_time >= DATEADD('day', -7, CURRENT_TIMESTAMP())`, `Last 7 days.`],
+    [`GROUP BY pipe_name ORDER BY credits DESC;`, `Most expensive pipes first.`],
+    [``, ``],
+    [`ALTER PIPE raw.orders_pipe SET PIPE_EXECUTION_PAUSED = TRUE;`, `Pause loading, e.g. before changing the table. Notifications keep queueing.`],
+    [`ALTER PIPE raw.orders_pipe SET PIPE_EXECUTION_PAUSED = FALSE;`, `Resume: queued files are loaded. Check SYSTEM$PIPE_STATUS until pendingFileCount drains.`]
+  ] },
+  { t: 'INFER_SCHEMA & evolution', l: [
+    [`SELECT *`, `Look at the detected schema before creating anything.`],
+    [`FROM TABLE(INFER_SCHEMA(`, `Table function that reads staged files and returns one row per detected column.`],
+    [`  LOCATION => '@raw.s3_events/2026/11/',`, `The stage path to inspect.`],
+    [`  FILE_FORMAT => 'raw.parquet_std',`, `A named file format (required). For CSV it must have PARSE_HEADER = TRUE.`],
+    [`  MAX_FILE_COUNT => 10));`, `Inspect at most 10 files, which keeps detection fast on big prefixes.`],
+    [`CREATE TABLE raw.events`, `Create the table straight from the detected schema.`],
+    [`  USING TEMPLATE (`, `USING TEMPLATE expects an array of column definitions.`],
+    [`    SELECT ARRAY_AGG(OBJECT_CONSTRUCT(*)) WITHIN GROUP (ORDER BY order_id)`, `Turns INFER_SCHEMA rows into that array, keeping the original column order (ORDER_ID is the column position from INFER_SCHEMA).`],
+    [`    FROM TABLE(INFER_SCHEMA(`, `Same detection as above.`],
+    [`      LOCATION => '@raw.s3_events/2026/11/',`, `Same path.`],
+    [`      FILE_FORMAT => 'raw.parquet_std')))`, `Same format.`],
+    [`  ENABLE_SCHEMA_EVOLUTION = TRUE;`, `Future loads (by column name) may add new columns and drop NOT NULL for columns missing in new files.`],
+    [`GRANT EVOLVE SCHEMA ON TABLE raw.events TO ROLE etl_role;`, `The loading role needs ownership or EVOLVE SCHEMA to let loads change the table.`],
+    [`COPY INTO raw.events FROM @raw.s3_events`, `A normal load...`],
+    [`  FILE_FORMAT = (FORMAT_NAME = 'raw.parquet_std')`, `...with the Parquet format...`],
+    [`  MATCH_BY_COLUMN_NAME = CASE_INSENSITIVE;`, `...matched by name, which schema evolution requires. New fields in the files become new columns.`],
+    [`DESC TABLE raw.events;`, `Check what changed. Added columns are visible here; monitor it so surprise columns don't go unnoticed.`]
+  ] },
+  { t: 'Unload', l: [
+    [`CREATE STAGE IF NOT EXISTS export.s3_partner`, `A separate stage (and ideally a separate integration) for exports.`],
+    [`  URL = 's3://acme-exports/partner-x/'`, `The partner's drop location.`],
+    [`  STORAGE_INTEGRATION = s3_export_int;`, `Its IAM role needs s3:PutObject (and s3:DeleteObject if you overwrite).`],
+    [`COPY INTO @export.s3_partner/orders/`, `COPY INTO a stage = unload. The target is a path prefix.`],
+    [`  FROM (SELECT order_id, order_date, amount, region FROM curated.orders`, `Any query can be the source, including joins and filters (unlike loading).`],
+    [`        WHERE order_date >= DATEADD('day', -30, CURRENT_DATE()))`, `Last 30 days only.`],
+    [`  PARTITION BY ('order_date=' || TO_VARCHAR(order_date, 'YYYY-MM-DD'))`, `Writes Hive-style folders such as order_date=2026-11-14/, so lake engines can prune by date.`],
+    [`  FILE_FORMAT = (TYPE = PARQUET)`, `Unload formats: CSV, JSON or Parquet.`],
+    [`  HEADER = TRUE`, `For Parquet, keeps the real column names (otherwise generic names are used).`],
+    [`  MAX_FILE_SIZE = 268435456;`, `Target size per file in bytes (256 MB). The default is about 16 MB.`],
+    [`COPY INTO @export.s3_partner/summary/daily_summary.csv.gz`, `A path ending in a file name, used together with SINGLE = TRUE.`],
+    [`  FROM (SELECT region, SUM(amount) AS revenue FROM curated.orders GROUP BY region)`, `A small aggregated extract.`],
+    [`  FILE_FORMAT = (TYPE = CSV COMPRESSION = GZIP FIELD_OPTIONALLY_ENCLOSED_BY = '"')`, `Gzipped CSV with quoted fields.`],
+    [`  HEADER = TRUE`, `Write a header line with column names.`],
+    [`  SINGLE = TRUE`, `One file, written by one thread. It must fit in MAX_FILE_SIZE, so raise that for bigger extracts.`],
+    [`  OVERWRITE = TRUE;`, `Replace yesterday's file with the same name.`],
+    [`LIST @export.s3_partner/orders/;`, `Check what was written: file names, sizes, MD5.`]
+  ] }
+];
+const KW = /\b(CREATE|OR|REPLACE|STAGE|STORAGE|INTEGRATION|PIPE|TABLE|ON|IF|NOT|EXISTS|ALTER|SET|SELECT|FROM|WHERE|GROUP|BY|ORDER|DESC|AS|SUM|SHOW|LIKE|INTO|USING|TEMPLATE|COPY|LIST|GRANT|USAGE|USE|ROLE|TO|IN|SCHEMA|FILE|FORMAT|TRUE|FALSE|REFRESH|PARTITION|WITHIN|DATEADD|CURRENT_TIMESTAMP|CURRENT_DATE|PARSE_JSON|OPERATE|MONITOR|EVOLVE|AUTO_INGEST|VALIDATE)\b/g;
+const hl = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/('[^']*')/g, '\u0001$1\u0002').replace(KW, '<span class="kw">$1</span>').replace(/\b(\d+)\b/g, '<span class="num">$1</span>').replace(/\u0001([^\u0002]*)\u0002/g, (m, a) => '<span class="str">' + a.replace(/<[^>]+>/g, '') + '</span>');
+let sqlI = 0;
+function sqlShow(i) {
+  sqlI = i;
+  $$('#sqlTabs button').forEach((b, k) => b.classList.toggle('on', k === i));
+  $('#sqlCode').innerHTML = SQL[i].l.map(([l], k) => `<div data-k="${k}"><em>${k + 1}</em>${hl(l) || ' '}</div>`).join('');
+  $('#sqlExp').innerHTML = '<b class="h">CLICK A LINE</b>Each line is explained in plain English.';
+  $$('#sqlCode div').forEach(d => d.onclick = () => {
+    const e = SQL[sqlI].l[d.dataset.k][1]; if (!e) return;
+    $$('#sqlCode div').forEach(x => x.classList.remove('on')); d.classList.add('on');
+    $('#sqlExp').innerHTML = `<b class="h">LINE ${+d.dataset.k + 1}</b>${esc(e)}`;
+  });
+}
+$('#sqlTabs').innerHTML = SQL.map(s => `<button>${s.t}</button>`).join('');
+$$('#sqlTabs button').forEach((b, i) => b.onclick = () => sqlShow(i));
+sqlShow(0);
+
+/* ===== 10 Q&A ===== */
+const QA = [
+  ['Patterns', 'b', `What are the main ways to ingest data into Snowflake, and how do you choose?`, `<p><b>Batch COPY INTO</b> on a warehouse (scheduled), <b>Snowpipe</b> (continuous, file-based, serverless), <b>Snowpipe Streaming</b> (row-based via SDK or Kafka connector, seconds of latency), and <b>query in place</b> with external or Iceberg tables. Also partner tools and connectors (Fivetran, Openflow, native connectors) that use these underneath. Choose by required freshness first, then source shape (files vs events vs lake), then cost and operational complexity.</p>`],
+  ['Patterns', 's', `Design ingestion for: 300 vendors drop CSVs to S3 at random times, plus a Kafka clickstream at 20k events/s. Dashboards need 5-minute freshness.`, `<p><b>Vendors:</b> external stage per prefix via one storage integration, one Snowpipe with AUTO_INGEST (or a few, split by prefix or format), ON_ERROR = SKIP_FILE, ERROR_INTEGRATION to alert, METADATA$FILENAME for lineage, a landing table with permissive types, then typed models downstream. <b>Clickstream:</b> Kafka connector in SNOWPIPE_STREAMING mode into a raw VARIANT or typed table, one channel per partition, exactly-once via offset tokens. <b>Transform:</b> dynamic tables with a target lag of a few minutes. <b>Ops:</b> SYSTEM$PIPE_STATUS and COPY_HISTORY alerts, PIPE_USAGE_HISTORY for cost, file-size checks on the vendor side.</p>`],
+  ['Stages', 'b', `What types of stages exist, and when do you use each?`, `<p><b>User stage</b> (<code>@~</code>): personal, automatic, can't be shared or altered. <b>Table stage</b> (<code>@%t</code>): automatic per table, loads only into that table, no transformations during load. <b>Named internal stage</b>: created explicitly, grantable (READ/WRITE), can hold a file format and directory table. <b>External stage</b>: points at S3/Azure/GCS, usually through a storage integration; files stay in your bucket, no PUT/GET. Production pipelines use named stages.</p>`],
+  ['Stages', 't', `How does a storage integration let Snowflake read S3 without keys? Walk through the backend.`, `<p>The integration stores your IAM role ARN and allowed locations. Snowflake has an IAM user (in its AWS account) for your Snowflake account; <code>DESC INTEGRATION</code> shows that user ARN and an external ID. Your role's <b>trust policy</b> allows that principal with that external ID. At runtime Snowflake calls <b>STS AssumeRole</b>, receives <b>temporary credentials</b> limited by the role's permissions policy, and uses them to list and read objects. The external ID prevents the confused-deputy problem. Recreating the integration can change the external ID, so use ALTER for changes.</p>`],
+  ['COPY', 'b', `What does ON_ERROR control, and what are the defaults?`, `<p>What COPY does when rows fail to parse or convert. <b>ABORT_STATEMENT</b> (default for bulk COPY): fail the whole statement, nothing loaded. <b>CONTINUE</b>: load good rows, skip bad ones. <b>SKIP_FILE</b> (default for Snowpipe): skip any file that has errors. <b>SKIP_FILE_n</b> / <b>'SKIP_FILE_n%'</b>: skip a file when its error count or percentage reaches the threshold. Files with skipped rows show PARTIALLY_LOADED; skipped files show LOAD_FAILED.</p>`],
+  ['COPY', 't', `VALIDATION_MODE vs VALIDATE(): what's the difference?`, `<p><b>VALIDATION_MODE</b> (RETURN_n_ROWS, RETURN_ERRORS, RETURN_ALL_ERRORS) is a COPY option that parses files <b>without loading</b>: a dry run before the load. <b>VALIDATE(table, JOB_ID =&gt; '_last' | query_id)</b> is a table function that returns the errors from a COPY that <b>already ran</b>, typically with ON_ERROR = CONTINUE. Neither supports COPY statements that transform data during load.</p>`],
+  ['COPY', 't', `A file was loaded with errors using CONTINUE. The vendor fixed it and re-uploaded it with the same name. You rerun COPY and nothing happens. Why, and what do you do?`, `<p>A PARTIALLY_LOADED file is recorded in the table's <b>load metadata</b>. If the re-uploaded file has the same name <i>and</i> the same checksum it is skipped; with different contents it may load again, which would duplicate the rows that loaded the first time. Safest fix: delete the rows from that file (<code>WHERE src_file = '…'</code>, which is why METADATA$FILENAME matters), then <code>COPY … FILES = ('…') FORCE = TRUE</code>. Better process: ask vendors for new file names per delivery.</p>`],
+  ['COPY', 't', `FORCE = TRUE vs LOAD_UNCERTAIN_FILES = TRUE?`, `<p><b>FORCE</b> ignores load metadata and reloads every matched file, which creates duplicates for files already loaded. <b>LOAD_UNCERTAIN_FILES</b> only adds files whose load status is unknown because they fall outside the 64-day metadata window (for example, old files you never loaded); files known to be loaded are still skipped. For files older than 64 days whose status is unknown, COPY skips them by default.</p>`],
+  ['COPY', 's', `Loads are slow. The team proposes moving from a Medium to an X-Large warehouse. What do you check first?`, `<p>The <b>files</b>. One file is processed by one thread, so check count and size in COPY_HISTORY or LIST. If it's a handful of multi-GB files, a bigger warehouse adds idle threads and cost, not speed: split them into ~100–250 MB compressed files. If it's hundreds of thousands of tiny files, per-file overhead dominates: merge upstream. Also check compression, heavy transformations in the COPY SELECT, and whether the warehouse is queued by other work. Size the warehouse to the number of files only after that.</p>`],
+  ['Snowpipe', 'b', `What is Snowpipe and how does auto-ingest work on AWS?`, `<p>A pipe is an object wrapping one COPY statement, run by Snowflake on serverless compute when new files are reported. With <code>AUTO_INGEST = TRUE</code>, Snowflake provides an SQS queue (the pipe's notification_channel). You configure S3 event notifications (ObjectCreated) on the bucket or prefix to send to it, directly or via SNS. Each event queues the file; Snowflake batches queued files and loads them, usually within a minute or so. Azure uses Event Grid with a notification integration; GCS uses Pub/Sub.</p>`],
+  ['Snowpipe', 't', `How does Snowpipe avoid loading the same file twice, and where can that go wrong?`, `<p>Each pipe keeps <b>load history</b> of the files it has loaded (retained about 14 days), and skips repeats, so duplicate notifications are harmless. Pitfalls: (1) a file <b>overwritten with the same name</b> is treated as already loaded and skipped; (2) <b>recreating the pipe</b> resets its history, so a REFRESH can reload files; (3) the pipe's history is separate from bulk COPY's 64-day table metadata, so mixing manual COPY and the pipe on the same files can duplicate. Use unique file names and keep a dedup key downstream.</p>`],
+  ['Snowpipe', 's', `Business says "data stopped arriving an hour ago". The source is a Snowpipe. How do you troubleshoot?`, `<p>1) <code>SYSTEM$PIPE_STATUS</code>: is executionState RUNNING or PAUSED? Is pendingFileCount growing? When was lastIngestedTimestamp? Any error fields? 2) <b>COPY_HISTORY</b> for the table: are files failing (LOAD_FAILED and first_error_message)? 3) If nothing arrives at all: are files actually landing in S3? Is the S3 event notification still pointing at the pipe's SQS ARN (a recreated pipe or a changed bucket config breaks this)? Has the IAM trust broken? 4) Fix, then <code>ALTER PIPE … REFRESH</code> to queue files staged in the last 7 days. 5) Prevent: ERROR_INTEGRATION, a freshness alert on MAX(load time), monitoring of pendingFileCount.</p>`],
+  ['Snowpipe', 't', `COPY_HISTORY vs LOAD_HISTORY: which one shows Snowpipe loads?`, `<p><b>COPY_HISTORY</b> (the INFORMATION_SCHEMA table function for 14 days, or the ACCOUNT_USAGE view for up to a year) shows <b>both</b> bulk COPY and Snowpipe loads. <b>LOAD_HISTORY</b> covers bulk COPY only and does <b>not</b> include Snowpipe. For pipe credits use PIPE_USAGE_HISTORY.</p>`],
+  ['Streaming', 'b', `What is Snowpipe Streaming and how is it different from Snowpipe?`, `<p>Snowpipe Streaming writes <b>rows</b> directly into tables via the Ingest SDK or the Kafka connector (SNOWPIPE_STREAMING mode), with no staged files and no COPY. Latency is seconds instead of about a minute. The client opens <b>channels</b> to a table and sends rows with <b>offset tokens</b>. Snowpipe loads <b>files</b> triggered by events or REST calls, dedups by file name, and supports light COPY transformations. Snowflake also has a newer high-performance streaming architecture built around a PIPE object; details and pricing are version-specific.</p>`],
+  ['Streaming', 't', `How do channels and offset tokens give exactly-once delivery?`, `<p>A channel is an ordered stream of rows from one client into one table; the Kafka connector uses one channel per topic partition. With each batch the client passes an <b>offset token</b> (e.g. the Kafka offset). Snowflake commits the rows <b>and</b> the token together. After a crash, the client calls <code>getLatestCommittedOffsetToken()</code> and resumes the source from the next offset, so there are no gaps (the source still has unacked events) and no duplicates (committed ones are skipped). This needs a replayable source, and order is guaranteed only within a channel.</p>`],
+  ['Lakehouse', 'b', `External table vs Iceberg table vs native table?`, `<p><b>External table</b>: read-only over raw files in your bucket, metadata is a file list (refreshed by event notifications or manually), partitions from the path, slowest. <b>Iceberg table</b>: open table format (Parquet + Iceberg metadata) in your bucket via an external volume. With <b>Snowflake as catalog</b>: full DML and near-native performance, and other engines can read it. With an <b>external catalog</b> (Glue, REST/Open Catalog): another engine writes, Snowflake reads after refresh. <b>Native</b>: Snowflake-managed storage, best performance and all features. Storage for external/Iceberg is billed by your cloud provider.</p>`],
+  ['Lakehouse', 's', `The data science team uses Spark on S3 and wants to share tables with BI in Snowflake without copying. What do you propose?`, `<p>Apache Iceberg. If Spark owns the writes: keep the catalog where Spark commits (Glue or an Iceberg REST catalog such as Snowflake Open Catalog), create a <b>catalog integration</b> and Iceberg tables in Snowflake that reference it, with automatic or scheduled refresh. If Snowflake should own transformations: use Snowflake-managed Iceberg tables, which Spark reads through a catalog API. Add governance (RBAC, masking) on the Snowflake side, and plan file layout and compaction. External tables are a weaker fallback: read-only and slower.</p>`],
+  ['Schema', 't', `How do you handle a source that keeps adding columns?`, `<p>Create the table with <code>INFER_SCHEMA</code> + <code>CREATE TABLE … USING TEMPLATE</code>, set <code>ENABLE_SCHEMA_EVOLUTION = TRUE</code>, and load with <code>MATCH_BY_COLUMN_NAME</code> (COPY or Snowpipe; streaming and Kafka support it too). The loading role needs ownership or EVOLVE SCHEMA. New columns are added automatically and NOT NULL is dropped for columns missing from new files. It doesn't handle <b>type changes</b>, and there is a per-load limit on added columns, so many teams also keep a raw VARIANT landing layer and monitor added columns.</p>`],
+  ['Schema', 'b', `How do you unload data from Snowflake to S3, and what options matter?`, `<p><code>COPY INTO @stage/path FROM (query)</code> with FILE_FORMAT (CSV, JSON or Parquet). Key options: <b>PARTITION BY</b> (Hive-style folders), <b>MAX_FILE_SIZE</b> (default about 16 MB per file), <b>SINGLE</b> (one file, one thread, must fit MAX_FILE_SIZE), <b>HEADER</b> (column names; for Parquet keeps real names), <b>OVERWRITE</b>. Unloads run in parallel on the warehouse and write files named like data_0_0_0. For recurring sharing with another Snowflake account, prefer Secure Data Sharing.</p>`]
+];
+const LV = { b: 'FUNDAMENTAL', t: 'TRICKY', s: 'SCENARIO' };
+function qa(f) { $('#qaList').innerHTML = QA.filter(q => f === 'all' || q[0] === f).map(([tp, l, q, a]) => `<details class="qa"><summary><span class="lv ${l}">${LV[l]}</span><span class="tp">${tp.toUpperCase()}</span>${q}</summary><div class="ans">${a}</div></details>`).join(''); }
+tabs('#qaTabs', d => qa(d.f));
+qa('all');
+
+/* ===== 11 quiz ===== */
+const QZ = [
+  [`What is the default ON_ERROR for a bulk COPY INTO statement?`, [`CONTINUE`, `SKIP_FILE`, `ABORT_STATEMENT`, `SKIP_FILE_10%`], 2, `Bulk COPY defaults to ABORT_STATEMENT: any error fails the whole statement and nothing is loaded.`],
+  [`What is the default ON_ERROR for Snowpipe?`, [`ABORT_STATEMENT`, `SKIP_FILE`, `CONTINUE`, `There is none`], 1, `Pipes default to SKIP_FILE, so one bad file doesn't block the others and isn't partly loaded.`],
+  [`With VALIDATION_MODE = RETURN_ERRORS, how many rows are loaded?`, [`Only the good rows`, `All rows`, `None: it's a dry run`, `The first 10 rows`], 2, `VALIDATION_MODE validates files and returns results without loading anything.`],
+  [`You need the rows rejected by a COPY that ran with ON_ERROR = CONTINUE. What do you use?`, [`VALIDATION_MODE = RETURN_ERRORS`, `SELECT * FROM TABLE(VALIDATE(t, JOB_ID => '_last'))`, `SYSTEM$PIPE_STATUS`, `LOAD_UNCERTAIN_FILES`], 1, `VALIDATE() returns the errors of a COPY that already ran. VALIDATION_MODE is for before the load.`],
+  [`How long does a table's COPY load metadata remember loaded files?`, [`24 hours`, `7 days`, `14 days`, `64 days`], 3, `64 days. Snowpipe's own per-pipe load history is shorter (about 14 days).`],
+  [`What does FORCE = TRUE do?`, [`Loads only files with unknown status`, `Reloads all matched files regardless of load metadata, which can create duplicates`, `Forces a bigger warehouse`, `Skips files with errors`], 1, `FORCE ignores load metadata. LOAD_UNCERTAIN_FILES is the option for unknown-status (older than 64 days) files.`],
+  [`Which values can you read during a transforming COPY to record lineage?`, [`METADATA$ACTION and METADATA$ISUPDATE`, `METADATA$FILENAME and METADATA$FILE_ROW_NUMBER`, `SYSTEM$FILE and SYSTEM$ROW`, `$FILE and $LINE`], 1, `METADATA$FILENAME and METADATA$FILE_ROW_NUMBER give the source file and line. METADATA$ACTION/ISUPDATE belong to streams.`],
+  [`A load of ONE 30 GB gzip file is slow. What helps most?`, [`Use an X-Large warehouse`, `Split it into ~100–250 MB compressed files`, `Set ON_ERROR = CONTINUE`, `Use PURGE = TRUE`], 1, `One file = one thread. Splitting enables parallelism; a bigger warehouse would just add idle threads.`],
+  [`With S3 AUTO_INGEST, where do the event notifications go?`, [`Directly to your warehouse`, `To an SQS queue provided by Snowflake (the pipe's notification_channel), optionally via SNS`, `To a Lambda function you must write`, `To the REST insertFiles endpoint`], 1, `S3 event notifications are sent to the Snowflake-provided SQS queue shown in SHOW PIPES / DESC PIPE.`],
+  [`Which view shows Snowpipe loads?`, [`LOAD_HISTORY only`, `COPY_HISTORY`, `QUERY_HISTORY only`, `None: Snowpipe has no history`], 1, `COPY_HISTORY includes both bulk and Snowpipe loads. LOAD_HISTORY doesn't include Snowpipe.`],
+  [`ALTER PIPE … REFRESH queues which files?`, [`All files ever staged`, `Files staged within the last 7 days that haven't been loaded by the pipe`, `Only files that failed`, `Files older than 64 days`], 1, `REFRESH considers files staged in the last 7 days, useful after creating a pipe or after an outage.`],
+  [`After a crash, how does a Snowpipe Streaming client avoid duplicates and gaps?`, [`It reloads the whole topic`, `It calls getLatestCommittedOffsetToken() for its channel and resumes from the next offset`, `Snowflake deletes duplicates nightly`, `It uses FORCE = FALSE`], 1, `The offset token is committed atomically with the rows, so it is the reliable restart point.`],
+  [`Which statement about external tables is TRUE?`, [`They support UPDATE and DELETE`, `They are read-only and their metadata must be refreshed (auto or manual)`, `Their data is stored in Snowflake-managed storage`, `They're always faster than native tables`], 1, `External tables are read-only over files in your bucket; Snowflake keeps only file metadata, refreshed by notifications or ALTER … REFRESH.`],
+  [`ENABLE_SCHEMA_EVOLUTION = TRUE lets a load…`, [`Change a column's data type`, `Add new columns and drop NOT NULL on missing columns, when loading by column name`, `Rename columns`, `Delete columns not present in the file`], 1, `Evolution adds columns and relaxes NOT NULL. It needs MATCH_BY_COLUMN_NAME (or streaming) and doesn't change types.`]
+];
+let qi = 0; const qAns = Array(QZ.length).fill(null);
+QZ.forEach((_, i) => { const s = document.createElement('span'); s.onclick = () => qShow(i); $('#qzBar').appendChild(s); });
+function qShow(i) {
+  qi = i; const [q, opts, ok, ex] = QZ[i], a = qAns[i];
+  $('#qzN').textContent = i + 1;
+  [...$('#qzBar').children].forEach((s, k) => { s.classList.toggle('on', qAns[k] !== null); s.style.outline = k === i ? '2px solid var(--ice)' : ''; });
+  $('#qzBody').innerHTML = `<h3 style="margin-top:6px">${q}</h3>` + opts.map((o, k) => `<button class="opt ${a !== null ? (k === ok ? 'ok' : (k === a ? 'bad' : '')) : ''}" data-k="${k}">${String.fromCharCode(65 + k)}. ${esc(o)}</button>`).join('') + (a !== null ? `<div class="qexp"><b>${a === ok ? 'Correct.' : 'Not quite.'}</b> ${esc(ex)}</div>` : '');
+  $$('#qzBody .opt').forEach(b => b.onclick = () => { if (qAns[qi] !== null) return; qAns[qi] = +b.dataset.k; qShow(qi); $('#qzS').textContent = qAns.filter((x, j) => x === QZ[j][2]).length; });
+  $('#qzNext').textContent = i === QZ.length - 1 ? 'See result' : 'Next';
+}
+function qResult() {
+  const s = qAns.filter((x, j) => x === QZ[j][2]).length;
+  const msg = s >= QZ.length - 2 ? 'Interview-ready on ingestion.' : s >= Math.round(QZ.length * 0.6) ? 'Solid. Replay the COPY playground and the Snowpipe flow, then retry.' : 'Walk through the COPY playground, the file-sizing simulator and the Snowpipe flow again, then retry.';
+  $('#qzBody').innerHTML = `<div class="score">${s} / ${QZ.length}</div><p style="margin-top:8px">${msg}</p><button class="btn pri" id="qzAgain" style="margin-top:10px">Retry quiz</button>`;
+  $('#qzAgain').onclick = () => { qAns.fill(null); $('#qzS').textContent = 0; qShow(0); };
+}
+$('#qzNext').onclick = () => qi === QZ.length - 1 ? qResult() : qShow(qi + 1);
+$('#qzPrev').onclick = () => qShow(Math.max(0, qi - 1));
+qShow(0);
+</script>
+<div class="toast" id="toast"></div>
+<script>
+(() => {
+  const t = document.getElementById('toast'); let h;
+  document.querySelectorAll('.road a.soon').forEach(a => a.addEventListener('click', e => {
+    e.preventDefault();
+    t.textContent = `Module ${a.dataset.m} isn't built yet. Ask for it in chat and it will be added here.`;
+    t.classList.add('on'); clearTimeout(h); h = setTimeout(() => t.classList.remove('on'), 2800);
+  }));
+})();
+</script>
+</body>
+</html>
