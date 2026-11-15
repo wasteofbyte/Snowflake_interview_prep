@@ -1,0 +1,1900 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Snowflake Interview Lab · Module 12 · Advanced SQL (live-coding round prep)</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/space-grotesk@5/300.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/space-grotesk@5/700.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/ibm-plex-sans@5/300.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/ibm-plex-sans@5/400.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/ibm-plex-sans@5/600.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/jetbrains-mono@5/400.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/jetbrains-mono@5/700.css">
+<style>
+:root{
+  --bg:#F2F6FA; --card:#FFFFFF; --card2:#E9EFF5; --ink:#0B1B2B; --ink2:#46596B; --ink3:#7F90A2;
+  --line:rgba(11,27,43,.12); --line2:rgba(11,27,43,.22);
+  --ice:#0A86C2; --ice-s:#DCEFF9; --amber:#B86F00; --amber-s:#FFF0D4; --teal:#0B8A6A; --teal-s:#DAF3EB;
+  --red:#C93C3C; --red-s:#FCE4E4; --grid:rgba(10,134,194,.06);
+  --f-head:"Space Grotesk",sans-serif; --f-body:"IBM Plex Sans",sans-serif; --f-mono:"JetBrains Mono",monospace;
+  --r:10px;
+}
+[data-theme="dark"]{
+  --bg:#08121D; --card:#0F1D2C; --card2:#16293B; --ink:#E5EDF5; --ink2:#9DB0C3; --ink3:#687D91;
+  --line:rgba(229,237,245,.10); --line2:rgba(229,237,245,.22);
+  --ice:#4CC3F0; --ice-s:rgba(76,195,240,.13); --amber:#FFB938; --amber-s:rgba(255,185,56,.13); --teal:#3FD3A8; --teal-s:rgba(63,211,168,.13);
+  --red:#FF7070; --red-s:rgba(255,112,112,.14); --grid:rgba(76,195,240,.05);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:var(--f-body);color:var(--ink);line-height:1.7;font-size:16px;
+  background:radial-gradient(1200px 600px at 85% -10%, var(--ice-s), transparent 60%),radial-gradient(900px 500px at -10% 30%, var(--teal-s), transparent 60%),
+  linear-gradient(var(--grid) 1px, transparent 1px) 0 0/32px 32px,linear-gradient(90deg, var(--grid) 1px, transparent 1px) 0 0/32px 32px,var(--bg);background-attachment:fixed}
+code,.mono{font-family:var(--f-mono);font-size:.88em}
+p code,li code,td code{background:var(--card2);padding:1px 6px;border-radius:5px}
+button{font-family:var(--f-body);cursor:pointer}
+.top{position:sticky;top:0;z-index:30;display:flex;align-items:center;gap:16px;padding:12px 28px;border-bottom:1px solid var(--line);background:color-mix(in srgb,var(--bg) 82%,transparent);backdrop-filter:saturate(1.4) blur(8px)}
+.brand{font-family:var(--f-mono);font-weight:700;letter-spacing:.06em;font-size:13px}.brand b{color:var(--ice)}
+.pill{font-family:var(--f-mono);font-size:12px;padding:3px 10px;border-radius:99px;border:1px solid var(--line2);color:var(--ink2)}
+.prog{flex:1;height:4px;background:var(--card2);border-radius:4px;overflow:hidden;max-width:360px;margin-left:auto}
+.prog i{display:block;height:100%;width:0;background:var(--ice);transition:width .4s}
+.prog-l{font-family:var(--f-mono);font-size:12px;color:var(--ink2);min-width:84px}
+.theme{border:1px solid var(--line2);background:var(--card);color:var(--ink);border-radius:8px;padding:5px 10px;font-size:13px}
+.wrap{display:grid;grid-template-columns:270px minmax(0,1fr);gap:36px;max-width:1340px;margin:0 auto;padding:28px}
+nav.side{position:sticky;top:76px;align-self:start;max-height:calc(100vh - 96px);overflow:auto;padding-right:6px}
+.side h4{font-family:var(--f-mono);font-size:11px;letter-spacing:.14em;color:var(--ink3);margin:6px 0 10px;font-weight:400}
+.side a{display:flex;gap:10px;align-items:baseline;padding:6px 10px;border-radius:8px;color:var(--ink2);text-decoration:none;font-size:14px;border-left:2px solid transparent}
+.side a span{font-family:var(--f-mono);font-size:11px;color:var(--ink3)}
+.side a:hover{background:var(--card)}
+.side a.act{color:var(--ink);background:var(--card);border-left-color:var(--ice);border-radius:0 8px 8px 0}
+.side a.seen span{color:var(--teal)}
+.road{margin-top:22px;border-top:1px solid var(--line);padding-top:14px}
+.road div{font-size:13px;color:var(--ink3);padding:3px 10px;display:flex;gap:8px}
+.road div.now{color:var(--ink);font-weight:600}.road div.done{color:var(--teal)}
+.road div em{font-style:normal;font-family:var(--f-mono);font-size:11px;min-width:20px}
+main{min-width:0}
+section{padding:36px 0 44px;border-bottom:1px dashed var(--line2);scroll-margin-top:70px}
+.eyebrow{font-family:var(--f-mono);font-size:12px;letter-spacing:.16em;color:var(--ice);margin-bottom:6px}
+h1{font-family:var(--f-head);font-weight:700;font-size:clamp(40px,6vw,76px);line-height:1;letter-spacing:-.03em}
+h1 .thin,h2 .thin{font-weight:300;color:var(--ink2)}
+h2{font-family:var(--f-head);font-weight:700;font-size:clamp(28px,3.4vw,40px);letter-spacing:-.02em;line-height:1.1;margin-bottom:12px}
+h3{font-family:var(--f-head);font-weight:700;font-size:20px;margin:26px 0 10px;letter-spacing:-.01em}
+.lead{font-size:18px;font-weight:300;color:var(--ink2);max-width:820px}
+p{margin:8px 0}
+ul.dots{margin:8px 0 8px 20px}ul.dots li{margin:4px 0}
+.wwh{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:20px 0}
+.wwh .box{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:18px 20px;position:relative;overflow:hidden}
+.wwh .box.how{grid-column:1/-1}
+.wwh .tag{font-family:var(--f-mono);font-size:11px;letter-spacing:.14em;display:inline-block;padding:2px 8px;border-radius:5px;margin-bottom:8px}
+.box.what .tag{background:var(--ice-s);color:var(--ice)}.box.why .tag{background:var(--amber-s);color:var(--amber)}.box.how .tag{background:var(--teal-s);color:var(--teal)}
+.box::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px}
+.box.what::before{background:var(--ice)}.box.why::before{background:var(--amber)}.box.how::before{background:var(--teal)}
+.call{display:flex;gap:14px;padding:14px 18px;border-radius:var(--r);margin:14px 0;border:1px solid var(--line)}
+.call b.k{font-family:var(--f-mono);font-size:11px;letter-spacing:.12em;white-space:nowrap;padding-top:3px}
+.call.analogy{background:var(--ice-s)}.call.analogy b.k{color:var(--ice)}
+.call.trap{background:var(--red-s)}.call.trap b.k{color:var(--red)}
+.call.pro{background:var(--teal-s)}.call.pro b.k{color:var(--teal)}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px;margin:18px 0}
+.panel-h{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+.panel-h .t{font-family:var(--f-mono);font-size:12px;letter-spacing:.12em;color:var(--ink2)}.panel-h .t b{color:var(--ink)}
+.btn{border:1px solid var(--line2);background:var(--card);color:var(--ink);padding:7px 14px;border-radius:8px;font-size:14px;transition:all .15s}
+.btn:hover{border-color:var(--ice);color:var(--ice)}
+.btn.pri{background:var(--ice);color:var(--card);border-color:var(--ice)}.btn.pri:hover{color:var(--card);filter:brightness(1.08)}
+.btn.warn{border-color:var(--red);color:var(--red)}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.ctl{display:flex;align-items:center;gap:12px;font-size:14px;color:var(--ink2);margin:8px 0}
+.ctl label{min-width:150px}.ctl input[type=range]{flex:1;accent-color:var(--ice)}
+.ctl .v{font-family:var(--f-mono);font-size:13px;color:var(--ink);min-width:110px;text-align:right}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:14px 0}
+.stat{background:var(--card2);border-radius:10px;padding:12px 14px}
+.stat .k{font-family:var(--f-mono);font-size:11px;color:var(--ink3);letter-spacing:.08em}
+.stat .n{font-family:var(--f-head);font-weight:700;font-size:28px;line-height:1.2}
+.stat .s{font-size:12px;color:var(--ink2)}
+.sqlbox{font-family:var(--f-mono);font-size:13px;background:var(--card2);border-radius:8px;padding:10px 14px;white-space:pre-wrap;color:var(--ink);border-left:3px solid var(--ice);overflow:auto}
+.insight{font-size:14px;padding:10px 14px;border-radius:8px;background:var(--amber-s);color:var(--ink);margin-top:10px}.insight b{color:var(--amber)}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+.tabs button{border:1px solid var(--line2);background:transparent;color:var(--ink2);padding:6px 12px;border-radius:99px;font-size:13px}
+.tabs button.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}.grid2>div{min-width:0}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.mini{background:var(--card2);border-radius:10px;padding:14px}
+.mini h5{font-family:var(--f-head);font-size:15px;margin-bottom:4px}
+.mini p{font-size:14px;color:var(--ink2);margin:0}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:13px;color:var(--ink2);margin:8px 0}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:-1px;margin-right:6px}
+table.t{width:100%;border-collapse:collapse;font-size:14px}
+table.t th,table.t td{padding:7px 10px;border-bottom:1px solid var(--line);text-align:left}
+table.t th{font-family:var(--f-mono);font-size:11px;letter-spacing:.1em;color:var(--ink3);font-weight:400}
+table.t td.m{font-family:var(--f-mono);font-size:12px}
+svg{width:100%;height:auto;display:block}
+svg .t{font-family:var(--f-body);font-size:14px;fill:var(--ink)}
+svg .ts{font-family:var(--f-body);font-size:12px;fill:var(--ink2)}
+svg .th{font-family:var(--f-head);font-size:14px;font-weight:700;fill:var(--ink)}
+svg .tm{font-family:var(--f-mono);font-size:11px;fill:var(--ink2)}
+.L-cs{fill:var(--amber-s);stroke:var(--amber)}.L-cp{fill:var(--ice-s);stroke:var(--ice)}.L-st{fill:var(--teal-s);stroke:var(--teal)}
+.neutral{fill:var(--card);stroke:var(--line2)}
+.arr{stroke:var(--ink3);stroke-width:1.2;fill:none}
+.fn{transition:opacity .3s}
+.flow.playing .fn{opacity:.25}
+.flow.playing .fn.on{opacity:1}
+.fn.on rect{stroke-width:2.4}
+.edge{stroke:var(--ink3);stroke-width:1.4;fill:none;transition:opacity .3s}
+.flow.playing .edge{opacity:.2}
+.flow.playing .edge.on{opacity:1;stroke:var(--ice);stroke-width:2.4;stroke-dasharray:7 5}
+@media (prefers-reduced-motion:no-preference){
+  .flow.playing .edge.on{animation:dash .8s linear infinite}
+  @keyframes dash{to{stroke-dashoffset:-24}}
+  .pulse{animation:pulse 1.2s ease-in-out infinite}
+  @keyframes pulse{0%,100%{opacity:.35}50%{opacity:1}}
+  .rise{animation:rise .5s both}
+  @keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+  .grow{transform-box:fill-box;transform-origin:left center;animation:grow .6s both}
+  @keyframes grow{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+}
+.stepbar{display:flex;gap:6px;margin:12px 0}
+.stepbar span{flex:1;height:4px;border-radius:4px;background:var(--card2);cursor:pointer}
+.stepbar span.on{background:var(--ice)}
+.stepdesc{min-height:120px;background:var(--card2);border-radius:10px;padding:14px 16px}
+.stepdesc h4{font-family:var(--f-head);font-size:17px;margin-bottom:6px}
+.stepdesc .two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.stepdesc .two div{font-size:14px;color:var(--ink2)}
+.stepdesc .two b.l{display:block;font-family:var(--f-mono);font-size:11px;letter-spacing:.12em;margin-bottom:4px}
+.stepdesc .two .you b.l{color:var(--ice)}.stepdesc .two .be b.l{color:var(--teal)}
+.term{background:#0A141F;color:#D6E2EE;font-family:var(--f-mono);font-size:12.5px;border-radius:12px;padding:14px 16px;height:340px;overflow:auto;border:1px solid #1E3247}
+.term div{white-space:pre;line-height:1.5}
+.term .tin{color:#FFB938}.term .terr{color:#FF7A7A}.term .tok{color:#3FD3A8}.term .tdim{color:#6F8499}
+.tbar{display:flex;gap:6px;align-items:center;margin-bottom:8px}
+.tbar i{width:10px;height:10px;border-radius:50%;display:inline-block}
+.tinput{display:flex;gap:8px;margin-top:8px}
+.tinput input{flex:1;font-family:var(--f-mono);font-size:13px;padding:8px 10px;border-radius:8px;border:1px solid var(--line2);background:var(--card);color:var(--ink)}
+.cmds{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}
+.cmds button{font-family:var(--f-mono);font-size:11.5px;border:1px solid var(--line2);background:var(--card);color:var(--ink);padding:5px 9px;border-radius:7px;text-align:left}
+.cmds button:hover{border-color:var(--amber);color:var(--amber)}
+.cmds button small{display:block;font-family:var(--f-body);font-size:11px;color:var(--ink3)}
+.explain{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 16px;min-height:90px;font-size:14.5px}
+.explain b.h{font-family:var(--f-mono);font-size:12px;color:var(--ice);letter-spacing:.1em;display:block;margin-bottom:4px}
+.gantt-l{font-family:var(--f-mono);font-size:11px;fill:var(--ink2)}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font-family:var(--f-mono);font-size:12px;border:1px solid var(--line2);padding:5px 10px;border-radius:99px;cursor:pointer;user-select:none;background:var(--card);color:var(--ink2)}
+.chip.on{background:var(--ice-s);border-color:var(--ice);color:var(--ice)}
+.chip.now{outline:2px solid var(--amber);outline-offset:2px}
+.fcard{border:1px solid var(--line2);border-radius:10px;padding:10px 12px;cursor:pointer;background:var(--card);text-align:left;color:var(--ink)}
+.fcard.on{border-color:var(--ice);background:var(--ice-s)}
+.fcard b{display:block;font-family:var(--f-mono);font-size:12px}
+.fcard small{color:var(--ink3);font-size:12px}
+.out{font-family:var(--f-mono);font-size:12px;background:var(--card2);border-radius:8px;padding:10px 14px;white-space:pre-wrap;border-left:3px solid var(--teal);max-height:260px;overflow:auto}
+.chunk{border:1px solid var(--line2);border-radius:8px;padding:8px 10px;font-size:13px;margin:6px 0;background:var(--card)}
+.chunk em{font-style:normal;background:var(--amber-s);color:var(--ink);border-bottom:2px solid var(--amber)}
+.chunk b{font-family:var(--f-mono);font-size:11px;color:var(--ice);margin-right:8px}
+.act-i{color:var(--teal);font-family:var(--f-mono);font-size:12px;font-weight:700}
+.act-d{color:var(--red);font-family:var(--f-mono);font-size:12px;font-weight:700}
+.badge{font-family:var(--f-mono);font-size:11px;padding:2px 8px;border-radius:99px;white-space:nowrap}
+.badge.ok{background:var(--teal-s);color:var(--teal)}.badge.bad{background:var(--red-s);color:var(--red)}.badge.mid{background:var(--amber-s);color:var(--amber)}.badge.off{background:var(--card2);color:var(--ink3)}
+.flash{animation:flash 1s}
+@keyframes flash{0%{box-shadow:0 0 0 3px var(--amber)}100%{box-shadow:0 0 0 0 transparent}}
+.tn rect{fill:var(--card);stroke:var(--line2);transition:all .3s}
+.tn.run rect{fill:var(--amber-s);stroke:var(--amber);stroke-width:2.4}
+.tn.ok rect{fill:var(--teal-s);stroke:var(--teal);stroke-width:2}
+.tn.skip rect{fill:var(--card2);stroke:var(--ink3);stroke-dasharray:5 4}
+.tn.fail rect{fill:var(--red-s);stroke:var(--red);stroke-width:2}
+.tn .st{font-family:var(--f-mono);font-size:10px;fill:var(--ink3)}
+.log{max-height:240px;overflow:auto}
+.pk{transition:transform .8s cubic-bezier(.5,.05,.3,1)}
+.code{font-family:var(--f-mono);font-size:13px;background:var(--card2);border-radius:10px;padding:10px 0;overflow:auto}
+.code div{padding:2px 16px 2px 0;cursor:pointer;white-space:pre;display:block}
+.code div em{font-style:normal;color:var(--ink3);width:40px;text-align:right;padding-right:14px;display:inline-block;user-select:none}
+.code div:hover{background:var(--ice-s)}
+.code div.on{background:var(--ice-s);box-shadow:inset 3px 0 var(--ice)}
+.kw{color:var(--ice);font-weight:700}.str{color:var(--teal)}.num{color:var(--amber)}
+.qa{border:1px solid var(--line);border-radius:10px;margin:8px 0;background:var(--card);overflow:hidden}
+.qa summary{list-style:none;cursor:pointer;padding:14px 18px;display:flex;gap:12px;align-items:baseline;font-weight:600}
+.qa summary::-webkit-details-marker{display:none}
+.qa summary .lv{font-family:var(--f-mono);font-size:10px;letter-spacing:.1em;padding:2px 8px;border-radius:99px;flex:none;font-weight:400}
+.lv.b{background:var(--teal-s);color:var(--teal)}.lv.t{background:var(--red-s);color:var(--red)}.lv.s{background:var(--amber-s);color:var(--amber)}
+.qa summary .tp{font-family:var(--f-mono);font-size:10px;color:var(--ink3);flex:none;font-weight:400}
+.qa summary::after{content:"+";margin-left:auto;font-family:var(--f-mono);color:var(--ink3)}
+.qa[open] summary::after{content:"−"}
+.qa .ans{padding:0 18px 16px;color:var(--ink2);font-size:15px;border-top:1px solid var(--line)}
+.qa .ans p:first-child{margin-top:12px}
+.opt{display:block;width:100%;text-align:left;padding:12px 14px;margin:8px 0;border:1px solid var(--line2);border-radius:10px;background:var(--card);color:var(--ink);font-size:15px}
+.opt:hover{border-color:var(--ice)}
+.opt.ok{border-color:var(--teal);background:var(--teal-s)}.opt.bad{border-color:var(--red);background:var(--red-s)}
+.qexp{margin-top:10px;padding:12px 14px;border-radius:10px;background:var(--card2);font-size:14px;color:var(--ink2)}
+.score{font-family:var(--f-head);font-weight:700;font-size:56px;line-height:1}
+.cheat{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+.cheat div{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 16px;font-size:14px}
+.cheat div em{font-style:normal;font-family:var(--f-mono);font-size:20px;font-weight:700;color:var(--ice);display:block;line-height:1.1;margin-bottom:4px}
+.analogy-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:18px}
+.ag{border-radius:12px;padding:16px;border:1px solid var(--line);background:var(--card)}
+.ag .k{font-family:var(--f-mono);font-size:11px;letter-spacing:.12em}
+.ag h5{font-family:var(--f-head);font-size:18px;margin:2px 0 4px}
+.ag p{font-size:14px;color:var(--ink2);margin:0}
+.ag.a1{border-top:3px solid var(--amber)}.ag.a1 .k{color:var(--amber)}
+.ag.a2{border-top:3px solid var(--ice)}.ag.a2 .k{color:var(--ice)}
+.ag.a3{border-top:3px solid var(--teal)}.ag.a3 .k{color:var(--teal)}
+.ag.a4{border-top:3px solid var(--red)}.ag.a4 .k{color:var(--red)}
+footer{padding:40px 0;color:var(--ink3);font-size:13px;font-family:var(--f-mono)}
+.note-s{font-size:12px;color:var(--ink3);font-style:italic}
+@media (max-width:1000px){
+  .wrap{grid-template-columns:1fr;padding:16px}
+  nav.side{display:none}
+  .wwh,.grid2,.stepdesc .two{grid-template-columns:1fr}
+  .grid3,.analogy-grid{grid-template-columns:1fr}
+  .prog{display:none}
+}
+.road a.rm{display:flex;gap:8px;align-items:baseline;font-size:13px;padding:5px 10px;border-radius:8px;text-decoration:none;color:var(--ink2);border-left:2px solid transparent}
+.road a.rm:hover{background:var(--card);color:var(--ink)}
+.road a.rm em{font-style:normal;font-family:var(--f-mono);font-size:11px;min-width:20px}
+.road a.rm i{font-style:normal;font-family:var(--f-mono);font-size:9.5px;margin-left:auto;border:1px solid var(--line2);border-radius:99px;padding:0 6px;white-space:nowrap;color:var(--ink3)}
+.road a.rm.now{color:var(--ink);font-weight:600;border-left-color:var(--ice);background:var(--card);border-radius:0 8px 8px 0}
+.road a.rm.now i{border-color:var(--ice);color:var(--ice)}
+.road a.rm.ready em,.road a.rm.ready i{color:var(--teal)}.road a.rm.ready i{border-color:var(--teal)}
+.road a.rm.soon{color:var(--ink3)}
+.toast{position:fixed;bottom:24px;left:50%;transform:translate(-50%,20px);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;font-size:14px;opacity:0;transition:all .3s;z-index:60;pointer-events:none;max-width:90vw}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+.code div.pdone{box-shadow:inset 3px 0 var(--teal)}
+#pcCode{max-height:600px;position:relative}
+/* ===== Module 12 additions ===== */
+table.t.sm{font-size:13px}
+table.t.sm th,table.t.sm td{padding:5px 9px;white-space:nowrap}
+table.t tr.hlA td{background:var(--ice-s)}
+table.t tr.hlB td{background:var(--amber-s)}
+table.t tr.hlC td{background:var(--teal-s)}
+table.t tr.cur td{background:var(--amber-s);box-shadow:inset 0 -2px 0 var(--amber)}
+table.t tr.dim td{opacity:.3}
+table.t tr.gone td{opacity:.45;text-decoration:line-through;text-decoration-color:var(--red)}
+table.t th.newc{color:var(--teal);font-weight:700}
+table.t td.newc{color:var(--teal);font-weight:700;font-family:var(--f-mono);font-size:12px}
+table.t tr.click{cursor:pointer}
+table.t tr.click:hover td{outline:1px solid var(--line2)}
+.nul{font-family:var(--f-mono);font-size:11px;color:var(--ink3);font-style:italic}
+.tw{overflow:auto;min-width:0;max-width:100%}
+.tcap{font-family:var(--f-mono);font-size:11px;letter-spacing:.1em;color:var(--ink3);margin:10px 0 4px}
+.cm{color:var(--ink3);font-style:italic}
+.lochips{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 10px;align-items:center}
+.lochips span{font-family:var(--f-mono);font-size:11.5px;padding:4px 9px;border-radius:7px;border:1px solid var(--line2);color:var(--ink3);background:var(--card);cursor:pointer}
+.lochips span.done{color:var(--teal);border-color:var(--teal)}
+.lochips span.now{color:var(--card);background:var(--ice);border-color:var(--ice)}
+.lochips i{font-style:normal;color:var(--ink3);font-size:11px}
+.pb-h{font-family:var(--f-head);font-size:22px;font-weight:700;margin:4px 0 6px;letter-spacing:-.01em}
+.pb-sol{margin-top:14px;border-top:1px dashed var(--line2);padding-top:12px}
+.pb-sol ol{margin:6px 0 6px 22px}.pb-sol ol li{margin:4px 0;font-size:14.5px}
+.hint{background:var(--ice-s);border-radius:10px;padding:12px 14px;font-size:14.5px;margin-top:10px}
+.code.ro div{cursor:default}
+.code.ro div:hover{background:transparent}
+.cx{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:10px}.cx>div{min-width:0}
+.tabs.small button{font-size:12px;padding:4px 10px}
+svg .pt{cursor:pointer}
+svg .lane{fill:var(--card2)}
+svg .gl{stroke:var(--line);stroke-width:1}
+.mono-s{font-family:var(--f-mono);font-size:12px}
+.anat{font-family:var(--f-mono);font-size:13.5px;background:var(--card2);border-radius:10px;padding:14px 16px;line-height:2.1;overflow:auto;white-space:nowrap}
+.anat span{padding:3px 6px;border-radius:6px}
+.anat .a1{background:var(--ice-s);color:var(--ice)}.anat .a2{background:var(--amber-s);color:var(--amber)}.anat .a3{background:var(--teal-s);color:var(--teal)}.anat .a4{background:var(--red-s);color:var(--red)}
+.trace{font-family:var(--f-mono);font-size:12.5px;background:var(--card2);border-radius:8px;padding:10px 14px;white-space:pre-wrap;border-left:3px solid var(--amber);margin-top:8px}
+@media (max-width:1000px){.cx,.cx[style],.grid2[style],.stats[style]{grid-template-columns:1fr!important}}
+/* course-wide phone layout */
+@media (max-width:560px){
+  .top{flex-wrap:wrap;gap:8px;padding:10px 14px}
+  .top .pill,.top .prog-l,.top .prog{display:none}
+  .brand{flex:1}
+  .ctl{flex-wrap:wrap}.ctl label{min-width:0;flex:1 1 100%}.ctl .v{min-width:0;text-align:left}
+  table{display:block;overflow-x:auto;max-width:100%}
+  .grid2,.grid3,.analogy-grid,[style*="grid-template-columns"]{grid-template-columns:1fr!important}
+  .grid2>*,.grid3>*,.call>div{min-width:0}
+  p code,li code,td code{word-break:break-word}
+  .code,.sqlbox,.out,.term,pre{max-width:100%;overflow-x:auto}
+  .call{flex-direction:column;gap:6px}
+  main,section,.panel,.wwh .box,.mini{min-width:0;max-width:100%}
+}
+</style>
+</head>
+<body>
+<div class="top">
+  <div class="brand">SNOWFLAKE<b>//</b>INTERVIEW LAB</div>
+  <span class="pill">Module 12 · Advanced SQL</span>
+  <div class="prog"><i id="progBar"></i></div>
+  <span class="prog-l" id="progLbl">0% explored</span>
+  <button class="theme" id="themeBtn">Dark / light</button>
+</div>
+<div class="wrap">
+<nav class="side">
+  <h4>MODULE 12 · CHAPTERS</h4>
+  <a href="#intro"><span>00</span>Start here</a>
+  <a href="#order"><span>01</span>How SQL executes</a>
+  <a href="#window"><span>02</span>Window functions</a>
+  <a href="#qualify"><span>03</span>QUALIFY &amp; top-N</a>
+  <a href="#cte"><span>04</span>CTEs &amp; recursion</a>
+  <a href="#grouping"><span>05</span>Grouping power</a>
+  <a href="#joins"><span>06</span>Special joins</a>
+  <a href="#mr"><span>07</span>MATCH_RECOGNIZE</a>
+  <a href="#problems"><span>08</span>Problem bank</a>
+  <a href="#sql"><span>09</span>SQL lab</a>
+  <a href="#qa"><span>10</span>Interview Q&amp;A</a>
+  <a href="#quiz"><span>11</span>Quiz</a>
+  <a href="#cheat"><span>12</span>Cheat sheet</a>
+  <div class="road">
+    <h4>COURSE ROADMAP · CLICK TO OPEN</h4>
+    <a class="rm ready" href="../module01/"><em>01</em>Architecture<i>open</i></a>
+    <a class="rm ready" href="../module02/"><em>02</em>SnowSQL · unstructured · streams, tasks &amp; procedures<i>open</i></a>
+    <a class="rm ready" href="../module03/"><em>03</em>Performance tuning<i>open</i></a>
+    <a class="rm ready" href="../module04/"><em>04</em>Data ingestion (Snowpipe)<i>open</i></a>
+    <a class="rm ready" href="../module05/"><em>05</em>Dynamic tables &amp; transforms<i>open</i></a>
+    <a class="rm ready" href="../module06/"><em>06</em>Semi-structured data<i>open</i></a>
+    <a class="rm ready" href="../module07/"><em>07</em>Data protection<i>open</i></a>
+    <a class="rm ready" href="../module08/"><em>08</em>Security &amp; governance<i>open</i></a>
+    <a class="rm ready" href="../module09/"><em>09</em>Cost optimization<i>open</i></a>
+    <a class="rm ready" href="../module10/"><em>10</em>Data sharing<i>open</i></a>
+    <a class="rm ready" href="../module11/"><em>11</em>Snowpark &amp; Cortex AI<i>open</i></a>
+    <a class="rm now" href="../module12/"><em>12</em>Advanced SQL<i>you are here</i></a>
+    <a class="rm ready" href="../module13/"><em>13</em>Modeling &amp; tooling<i>open</i></a>
+    <a class="rm ready" href="../module14/"><em>14</em>System design &amp; behavioral<i>open</i></a>
+  </div>
+</nav>
+<main>
+
+<section id="intro">
+  <div class="eyebrow">MODULE 12 · ADVANCED SQL · LIVE-CODING ROUND PREP</div>
+  <h1>Think in sets.<br><span class="thin">Code it live.</span></h1>
+  <p class="lead" style="margin-top:18px">Every Snowflake interview for a senior developer has a live SQL round. They aren't testing whether you remember syntax. They're testing whether you can turn a business question ("top 3 products per region", "users active 5 days in a row", "who never ordered?") into correct, readable SQL that handles ties, NULLs and duplicates, and then explain why it works. This module builds that skill from the ground up: how a query really executes, window functions, QUALIFY, recursive CTEs, ROLLUP and PIVOT, ASOF and anti-joins, MATCH_RECOGNIZE, and finally a bank of 11 classic interview problems with hints and full solutions.</p>
+  <p style="margin-top:14px">Four mental pictures we'll use all the way through:</p>
+  <div class="analogy-grid">
+    <div class="ag a1 rise"><div class="k">LOGICAL ORDER</div><h5>An assembly line</h5><p>A query is a line of stations: first fetch the rows (FROM), then filter, then group, then rank, then pick columns, then sort. Each station only sees what the previous one handed over.</p></div>
+    <div class="ag a2 rise" style="animation-delay:.1s"><div class="k">WINDOW FUNCTION</div><h5>A train window</h5><p>Each row is a passenger looking out of a window at its neighbours. It can count, sum or rank what it sees, but it <b>stays in its seat</b>: no rows are merged away, unlike GROUP BY.</p></div>
+    <div class="ag a3 rise" style="animation-delay:.2s"><div class="k">CTE / RECURSION</div><h5>Named scratch notes</h5><p>A CTE is a labelled note you write before the final answer. A recursive CTE is a family tree: start with the grandparent, then repeatedly add "children of the people I just found".</p></div>
+    <div class="ag a4 rise" style="animation-delay:.3s"><div class="k">QUALIFY</div><h5>The bouncer after the ranking</h5><p>WHERE checks tickets at the door, before anyone is ranked. QUALIFY stands <b>after</b> the ranking and only lets in "rank = 1". That's why you can't filter a window function in WHERE.</p></div>
+  </div>
+  <h3>How a live-coding round is scored</h3>
+  <div class="grid3">
+    <div class="mini"><h5>1 · Clarify before typing</h5><p>Ask: ties? NULLs? duplicates in the source? what if a group is empty? "Top 3" with ties means RANK, without ties means ROW_NUMBER. These questions earn points by themselves.</p></div>
+    <div class="mini"><h5>2 · Say the shape out loud</h5><p>"I'll partition by customer, order by date, then use LAG to compare with the previous row." Name the grain of each CTE. Interviewers follow your reasoning, not just the final query.</p></div>
+    <div class="mini"><h5>3 · Test with a tiny table</h5><p>Walk two or three rows through your query by hand, including one edge case (a tie, a NULL, a single-row group). Then mention cost: one pass vs a self-join, sort size, and alternatives.</p></div>
+  </div>
+</section>
+
+<section id="order">
+  <div class="eyebrow">CHAPTER 01</div>
+  <h2>How SQL executes <span class="thin">· the logical order of a query</span></h2>
+  <div class="wwh">
+    <div class="box what"><span class="tag">01 · WHAT IS IT</span>
+      <p>You <b>write</b> a query starting with SELECT, but the database <b>evaluates</b> it in a different order. The logical order is:</p>
+      <p class="mono-s" style="margin-top:6px"><b>FROM / JOIN → WHERE → GROUP BY → HAVING → WINDOW functions → QUALIFY → SELECT (projection) → DISTINCT → ORDER BY → LIMIT</b></p>
+      <p>Each clause receives a row set, transforms it, and hands the result to the next one. This is the <i>logical</i> meaning of the query: it defines what the answer must be.</p>
+    </div>
+    <div class="box why"><span class="tag">02 · WHY IT MATTERS</span>
+      <ul class="dots">
+        <li>It explains almost every "why does this error?" question: you can't use a window function in WHERE (windows haven't been computed yet), and you can't use an aggregate in WHERE (groups don't exist yet).</li>
+        <li>It tells you <b>where to filter</b>: filter rows in WHERE (cheap, early), groups in HAVING, window results in QUALIFY.</li>
+        <li>It's the foundation for reading other people's SQL and for debugging wrong counts in an interview.</li>
+      </ul>
+    </div>
+    <div class="box how"><span class="tag">03 · HOW IT WORKS · LOGICAL vs PHYSICAL</span>
+      <p>The logical order is a <b>contract</b>, not a recipe. Snowflake's optimizer (in cloud services) is free to execute things physically in any order that gives the same answer: it pushes filters down into the table scan so that micro-partitions are <b>pruned</b> using min/max metadata, reorders joins, and may aggregate before a join. In the Query Profile you'll see operators like <code>TableScan</code>, <code>Filter</code>, <code>Join</code>, <code>Aggregate</code>, <code>WindowFunction</code>, <code>Sort</code> and <code>Limit</code>, often not in the order you wrote them.</p>
+      <p>Step through the query below and watch the <b>intermediate row set</b> after every clause. Struck-through rows are the ones the clause removes.</p>
+    </div>
+  </div>
+  <div class="panel">
+    <div class="panel-h"><div class="t">SIMULATOR · <b>LOGICAL-ORDER STEPPER</b> · table ORDERS (12 sample rows)</div>
+      <div class="row"><button class="btn" id="loPrev">Back</button><button class="btn pri" id="loNext">Start</button><button class="btn" id="loPlay">▶ Play</button><button class="btn" id="loReset">Reset</button></div></div>
+    <div class="lochips" id="loChips"></div>
+    <div class="grid2" style="grid-template-columns:1.2fr 1fr">
+      <div>
+        <div class="code ro" id="loCode"></div>
+        <div class="stepdesc" id="loDesc" style="margin-top:10px"></div>
+      </div>
+      <div>
+        <div class="tcap" id="loCap">ROW SET</div>
+        <div class="tw" id="loTbl"></div>
+        <div class="stats" style="grid-template-columns:repeat(2,1fr)">
+          <div class="stat"><div class="k">ROWS IN</div><div class="n" id="loIn">–</div></div>
+          <div class="stat"><div class="k">ROWS OUT</div><div class="n" id="loOut">–</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="insight" id="loIns">Press <b>Start</b>. The first clause evaluated is <b>FROM</b>, not SELECT.</div>
+  </div>
+  <div class="grid2">
+    <div class="call trap" style="margin:0"><b class="k">INTERVIEW TRAP</b><div>"Why does <code>WHERE ROW_NUMBER() OVER (...) = 1</code> fail?" Because WHERE runs <b>before</b> window functions exist. In most databases you wrap the query in a subquery and filter outside. In Snowflake you simply write <code>QUALIFY ROW_NUMBER() OVER (...) = 1</code>.</div></div>
+    <div class="call pro" style="margin:0"><b class="k">SENIOR ANGLE</b><div>Snowflake is lenient: it lets you reference a SELECT-list <b>alias</b> in WHERE, GROUP BY, HAVING and QUALIFY (and in later expressions of the same SELECT list). That's a Snowflake convenience, not standard SQL. If an alias has the same name as a real column, the column usually wins in WHERE, so avoid alias names that shadow columns.</div></div>
+  </div>
+  <h3>Which clause can see what?</h3>
+  <div class="tw"><table class="t">
+    <tr><th>CLAUSE</th><th>RUNS ON</th><th>CAN USE AGGREGATES?</th><th>CAN USE WINDOW FUNCTIONS?</th><th>TYPICAL USE</th></tr>
+    <tr><td><b>WHERE</b></td><td>individual rows</td><td>No</td><td>No</td><td>status = 'PAID', date ranges (enables pruning)</td></tr>
+    <tr><td><b>HAVING</b></td><td>groups</td><td>Yes</td><td>No</td><td>SUM(amount) &gt;= 100, COUNT(*) &gt; 1</td></tr>
+    <tr><td><b>QUALIFY</b></td><td>rows after windows</td><td>Yes (inside windows)</td><td>Yes</td><td>top-N per group, dedup, compare to group average</td></tr>
+    <tr><td><b>ORDER BY</b></td><td>final rows</td><td>Yes</td><td>Yes</td><td>presentation only; required for deterministic LIMIT</td></tr>
+  </table></div>
+</section>
+
+<section id="window">
+  <div class="eyebrow">CHAPTER 02</div>
+  <h2>Window functions <span class="thin">· calculations across related rows</span></h2>
+  <div class="wwh">
+    <div class="box what"><span class="tag">01 · WHAT IS IT</span>
+      <p>A <b>window function</b> computes a value for each row using a set of related rows, its <b>window</b>, without collapsing the rows. You recognise it by the <code>OVER (...)</code> clause.</p>
+      <div class="anat" style="margin-top:8px"><span class="a4">SUM(amount)</span> OVER ( <span class="a1">PARTITION BY region</span> <span class="a2">ORDER BY sale_date</span> <span class="a3">ROWS BETWEEN 2 PRECEDING AND CURRENT ROW</span> )</div>
+      <ul class="dots" style="margin-top:8px">
+        <li><b style="color:var(--red)">function</b>: what to compute (SUM, ROW_NUMBER, LAG…)</li>
+        <li><b style="color:var(--ice)">PARTITION BY</b>: split rows into independent groups (like GROUP BY, but rows survive)</li>
+        <li><b style="color:var(--amber)">ORDER BY</b>: the order of rows inside each partition</li>
+        <li><b style="color:var(--teal)">frame</b>: which rows around the current row are included</li>
+      </ul>
+    </div>
+    <div class="box why"><span class="tag">02 · WHY WE USE IT</span>
+      <p>GROUP BY answers "total per region" but loses the detail rows. Window functions give you <b>detail and context together</b>: each sale <i>and</i> its region's running total, each employee <i>and</i> their rank in the department, each day <i>and</i> yesterday's value.</p>
+      <ul class="dots"><li>Running totals and moving averages</li><li>Ranking, top-N and deduplication</li><li>Comparing with the previous or next row (LAG/LEAD)</li><li>Share of total (RATIO_TO_REPORT), buckets (NTILE)</li></ul>
+      <p>Without them you'd need self-joins, which are slower and harder to read.</p>
+    </div>
+    <div class="box how"><span class="tag">03 · HOW IT WORKS · IN THE ENGINE</span>
+      <p>Window functions run <b>after</b> WHERE, GROUP BY and HAVING. The engine <b>redistributes rows by the PARTITION BY key</b> so each partition lands on one worker, <b>sorts</b> each partition by the ORDER BY key, then streams through the sorted rows computing the function, keeping a running state (for a running SUM) or a small buffer (for a 3-row moving average). In the Query Profile this shows as a <code>WindowFunction</code> operator, usually fed by a sort. Several window functions with the <b>same</b> PARTITION BY and ORDER BY can typically share one sort.</p>
+      <p>Cost drivers: the size of the <b>biggest partition</b> (one huge partition can't be split across workers and may spill to disk), the sort, and frames like "UNBOUNDED FOLLOWING" that need the whole partition buffered. No PARTITION BY at all means one global partition, which is the slowest case on big tables.</p>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-h"><div class="t">SIMULATOR · <b>WINDOW VISUALIZER</b> · table SALES (10 sample rows) · click any row</div><span class="note-s">Ice = rows in the frame · amber = current row · faded = other partitions</span></div>
+    <div class="row" style="margin-bottom:6px"><span class="note-s" style="min-width:90px">Function:</span><div class="tabs small" id="wFn" style="margin:0">
+      <button class="on" data-v="SUM">SUM</button><button data-v="AVG">AVG</button><button data-v="COUNT">COUNT(*)</button><button data-v="ROW_NUMBER">ROW_NUMBER</button><button data-v="RANK">RANK</button><button data-v="DENSE_RANK">DENSE_RANK</button><button data-v="LAG">LAG</button><button data-v="LEAD">LEAD</button><button data-v="FIRST_VALUE">FIRST_VALUE</button><button data-v="LAST_VALUE">LAST_VALUE</button><button data-v="NTILE">NTILE(3)</button><button data-v="RATIO_TO_REPORT">RATIO_TO_REPORT</button></div></div>
+    <div class="row" style="margin-bottom:6px"><span class="note-s" style="min-width:90px">PARTITION BY:</span><div class="tabs small" id="wPart" style="margin:0"><button class="on" data-v="region">region</button><button data-v="none">(none: one partition)</button></div>
+      <span class="note-s" style="margin-left:10px">ORDER BY:</span><div class="tabs small" id="wOrd" style="margin:0"><button class="on" data-v="date">sale_date</button><button data-v="amt">amount DESC</button><button data-v="none">(none)</button></div></div>
+    <div class="row" style="margin-bottom:10px"><span class="note-s" style="min-width:90px">Frame:</span><div class="tabs small" id="wFrame" style="margin:0">
+      <button class="on" data-v="def">(not written)</button><button data-v="up">ROWS UNBOUNDED PRECEDING → CURRENT ROW</button><button data-v="p2">ROWS 2 PRECEDING → CURRENT ROW</button><button data-v="p1f1">ROWS 1 PRECEDING → 1 FOLLOWING</button><button data-v="all">ROWS UNBOUNDED PRECEDING → UNBOUNDED FOLLOWING</button></div></div>
+    <div class="sqlbox" id="wSql"></div>
+    <div class="grid2" style="grid-template-columns:1.4fr 1fr;margin-top:10px">
+      <div class="tw" id="wTbl"></div>
+      <div><div class="explain" id="wExp"></div></div>
+    </div>
+    <div class="insight" id="wIns"></div>
+  </div>
+
+  <h3>ROW_NUMBER vs RANK vs DENSE_RANK</h3>
+  <div class="grid2">
+    <div class="tw"><table class="t sm">
+      <tr><th>PLAYER</th><th>SCORE</th><th>ROW_NUMBER</th><th>RANK</th><th>DENSE_RANK</th></tr>
+      <tr><td>Asha</td><td>100</td><td>1</td><td>1</td><td>1</td></tr>
+      <tr class="hlB"><td>Ben</td><td>90</td><td>2</td><td>2</td><td>2</td></tr>
+      <tr class="hlB"><td>Chen</td><td>90</td><td>3</td><td>2</td><td>2</td></tr>
+      <tr><td>Dev</td><td>80</td><td>4</td><td><b>4</b></td><td><b>3</b></td></tr>
+    </table><p class="note-s">ORDER BY score DESC. Ben and Chen tie.</p></div>
+    <div>
+      <ul class="dots">
+        <li><b>ROW_NUMBER</b>: always unique 1, 2, 3… Ties are broken <b>arbitrarily</b> (non-deterministic) unless you add a tie-breaker column.</li>
+        <li><b>RANK</b>: ties share a rank, then it <b>skips</b> (1, 2, 2, 4), like Olympic medals.</li>
+        <li><b>DENSE_RANK</b>: ties share a rank, <b>no gaps</b> (1, 2, 2, 3). Use it for "Nth highest distinct value".</li>
+      </ul>
+      <p>None of these accept a frame, and all of them need ORDER BY inside OVER.</p>
+    </div>
+  </div>
+
+  <h3>ROWS vs RANGE: the frame that bites</h3>
+  <div class="grid2">
+    <div class="mini"><h5>ROWS = physical rows</h5><p><code>ROWS BETWEEN 2 PRECEDING AND CURRENT ROW</code> means "this row and the 2 rows physically before it in sort order", no matter what values they have. Use it for moving averages and running balances.</p></div>
+    <div class="mini"><h5>RANGE = logical peers</h5><p><code>RANGE BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW</code> includes <b>every row with the same ORDER BY value</b> as the current row (its peers). Two sales on the same date both get the <i>same</i> running total. Try it in the simulator: SUM, ORDER BY sale_date, frame "not written".</p></div>
+  </div>
+  <div class="call trap"><b class="k">INTERVIEW TRAP</b><div><b>LAST_VALUE "doesn't work".</b> In ANSI SQL, when you write ORDER BY but no frame, the default frame is <code>RANGE BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW</code>. The frame stops at the current row, so <code>LAST_VALUE(x)</code> returns the current row's value (or its last peer), not the partition's last value. Defaults for FIRST_VALUE/LAST_VALUE have differed between engines and versions, so check Snowflake's docs for its exact default; the interview-safe answer is to <b>always write the frame</b>: <code>ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING</code>. Even simpler: use <code>FIRST_VALUE(x) OVER (... ORDER BY d DESC)</code>.</div></div>
+  <div class="grid3">
+    <div class="mini"><h5>LAG / LEAD</h5><p><code>LAG(amount, 1, 0) OVER (PARTITION BY rep ORDER BY sale_date)</code>: the value 1 row back, defaulting to 0 instead of NULL. LEAD looks forward. Snowflake supports <code>IGNORE NULLS</code> to skip NULL values (handy to "carry forward" the last known value).</p></div>
+    <div class="mini"><h5>NTILE(n)</h5><p>Splits each ordered partition into n buckets as evenly as possible; earlier buckets get the extra row. <code>NTILE(4)</code> = quartiles. Buckets are by <b>row count</b>, not by value, so ties can straddle buckets.</p></div>
+    <div class="mini"><h5>RATIO_TO_REPORT</h5><p><code>RATIO_TO_REPORT(amount) OVER (PARTITION BY region)</code> = amount ÷ SUM(amount) of the partition, i.e. share of total. It takes no ORDER BY or frame. Equivalent to <code>amount / SUM(amount) OVER (PARTITION BY region)</code>.</p></div>
+  </div>
+  <div class="call pro"><b class="k">SENIOR ANGLE</b><div><b>Determinism.</b> If ORDER BY in a window has ties, ROW_NUMBER, LAG, FIRST_VALUE and ROWS frames can return different results on different runs, because rows with equal keys may arrive in any order across parallel workers. Always add a unique tie-breaker (<code>ORDER BY sale_date, sale_id</code>). Flaky results in a pipeline are a classic production bug that interviewers like to probe.</div></div>
+</section>
+
+<section id="qualify">
+  <div class="eyebrow">CHAPTER 03</div>
+  <h2>QUALIFY <span class="thin">· top-N per group and deduplication</span></h2>
+  <div class="wwh">
+    <div class="box what"><span class="tag">01 · WHAT IS IT</span>
+      <p><code>QUALIFY</code> is a filter clause that runs <b>after window functions are computed</b>. It does for window functions what HAVING does for aggregates.</p>
+      <div class="sqlbox" style="margin-top:8px">SELECT dept, emp, salary
+FROM employees
+QUALIFY ROW_NUMBER() OVER (PARTITION BY dept ORDER BY salary DESC) &lt;= 2;</div>
+      <p class="note-s">QUALIFY isn't in the ANSI standard. Snowflake, BigQuery, Databricks and Teradata support it; in Postgres or SQL Server you'd use a subquery.</p>
+    </div>
+    <div class="box why"><span class="tag">02 · WHY WE USE IT</span>
+      <p>Without QUALIFY you write the window in a subquery or CTE, then filter it outside. QUALIFY removes that nesting:</p>
+      <ul class="dots"><li><b>Top-N per group</b>: best 3 products per region</li><li><b>Dedup / latest row per key</b>: keep the newest version of each customer</li><li><b>Compare to the group</b>: orders above twice the customer's average</li></ul>
+      <p>It's shorter, easier to read in an interview, and the window column doesn't have to appear in the output.</p>
+    </div>
+    <div class="box how"><span class="tag">03 · HOW IT WORKS</span>
+      <p>QUALIFY sits between the window step and the final projection in the logical order (Chapter 01). Physically it becomes a <code>Filter</code> operator right after the <code>WindowFunction</code> operator. It can't reduce how much data is scanned: the window needs all rows of each partition first. So <b>filter rows in WHERE first</b> (dates, status), then rank with QUALIFY. The choice of ranking function decides what happens with <b>ties</b>, which is exactly what the simulator shows.</p>
+    </div>
+  </div>
+  <div class="panel">
+    <div class="panel-h"><div class="t">INTERACTIVE · <b>QUALIFY PLAYGROUND</b></div>
+      <div class="tabs" id="qMode" style="margin:0"><button class="on" data-v="top">Top-N per department</button><button data-v="dedup">Dedup: latest row per customer</button></div></div>
+    <div class="row" style="margin-bottom:6px"><span class="note-s" style="min-width:110px">Ranking function:</span><div class="tabs small" id="qFn" style="margin:0"><button class="on" data-v="ROW_NUMBER">ROW_NUMBER</button><button data-v="RANK">RANK</button><button data-v="DENSE_RANK">DENSE_RANK</button></div></div>
+    <div class="ctl" id="qNRow"><label>Keep N per group (&lt;= N)</label><input type="range" id="qN" min="1" max="4" value="2"><span class="v" id="qNV">2</span></div>
+    <div class="sqlbox" id="qSql"></div>
+    <div class="grid2" style="grid-template-columns:1.3fr 1fr;margin-top:10px">
+      <div class="tw" id="qTbl"></div>
+      <div>
+        <div class="stats" style="grid-template-columns:1fr 1fr">
+          <div class="stat"><div class="k">ROWS IN</div><div class="n" id="qIn">–</div></div>
+          <div class="stat"><div class="k">ROWS KEPT</div><div class="n" id="qOut">–</div></div>
+        </div>
+        <div class="explain" id="qExp"></div>
+      </div>
+    </div>
+    <div class="insight" id="qIns"></div>
+  </div>
+  <div class="grid2">
+    <div class="call trap" style="margin:0"><b class="k">INTERVIEW TRAP</b><div><b>Dedup with RANK keeps duplicates.</b> Two rows that are exact copies (same key, same timestamp) tie, so <code>RANK() = 1</code> keeps <i>both</i>. Use <code>ROW_NUMBER()</code> for dedup, and add a tie-breaker (e.g. <code>load_id DESC</code>) so the chosen row is deterministic.</div></div>
+    <div class="call pro" style="margin:0"><b class="k">SENIOR ANGLE</b><div>QUALIFY can use <b>any</b> window expression, not just ranks: <code>QUALIFY amount &gt; 2 * AVG(amount) OVER (PARTITION BY customer_id)</code> finds unusually large orders, and <code>QUALIFY COUNT(*) OVER (PARTITION BY email) &gt; 1</code> lists every row of a duplicated key (handy for data-quality checks before a MERGE).</div></div>
+  </div>
+</section>
+
+<section id="cte">
+  <div class="eyebrow">CHAPTER 04</div>
+  <h2>CTEs &amp; recursive CTEs <span class="thin">· named steps and hierarchies</span></h2>
+  <div class="wwh">
+    <div class="box what"><span class="tag">01 · WHAT IS IT</span>
+      <p>A <b>CTE</b> (common table expression) is a named, temporary result defined with <code>WITH name AS (SELECT …)</code> that exists only for one statement. A <b>recursive CTE</b> refers to <b>itself</b>: it starts with an <b>anchor</b> query and repeatedly applies a <b>recursive</b> query to the rows found in the previous round until no new rows appear.</p>
+      <p>Classic uses: employee → manager hierarchies, bill of materials (parts within parts), folder trees, graph paths, and generating series of dates or numbers.</p>
+    </div>
+    <div class="box why"><span class="tag">02 · WHY WE USE IT</span>
+      <ul class="dots">
+        <li><b>Readability</b>: break a hard query into named steps (<code>daily</code>, <code>ranked</code>, <code>final</code>), each with a clear grain. In interviews this is the single best habit.</li>
+        <li><b>Reuse</b>: reference the same CTE several times in one statement.</li>
+        <li><b>Hierarchies of unknown depth</b>: a fixed number of self-joins only handles a fixed number of levels; recursion handles any depth.</li>
+      </ul>
+    </div>
+    <div class="box how"><span class="tag">03 · HOW IT WORKS</span>
+      <p><b>Plain CTE:</b> the optimizer decides whether to compute it once and reuse it, or inline it like a subquery. In the Query Profile, a reused CTE shows up as <code>WithClause</code> / <code>WithReference</code> operators. A CTE is not a temp table: it isn't stored or indexed and disappears when the statement ends.</p>
+      <p><b>Recursive CTE:</b> iteration 0 runs the anchor. Each later iteration runs the recursive member <b>only against the rows produced by the previous iteration</b> (the "working table"), and all iterations are combined with <code>UNION ALL</code>. It stops when an iteration returns zero rows. Snowflake caps recursion depth by default (the limit can be raised through Snowflake support; check the docs for the current value), so a cycle in the data ends in an error rather than running forever, but you should still guard against cycles yourself.</p>
+    </div>
+  </div>
+  <div class="panel">
+    <div class="panel-h"><div class="t">SIMULATOR · <b>RECURSIVE CTE STEPPER</b></div>
+      <div class="row"><div class="tabs" id="rcMode" style="margin:0"><button class="on" data-v="down">Top-down: org chart from the CEO</button><button data-v="up">Bottom-up: Ian's chain (bad data: cycle)</button></div></div></div>
+    <div class="row" id="rcGuardRow" style="margin-bottom:8px;display:none"><span class="note-s" style="min-width:110px">Cycle protection:</span><div class="tabs small" id="rcGuard" style="margin:0"><button class="on" data-v="1">ON: NOT CONTAINS(path, id)</button><button data-v="0">OFF</button></div></div>
+    <div class="grid2" style="grid-template-columns:1fr 1fr">
+      <div>
+        <div class="code ro" id="rcCode"></div>
+        <svg viewBox="0 0 680 300" id="rcSvg" style="margin-top:10px"></svg>
+      </div>
+      <div>
+        <div class="stepdesc" id="rcDesc"></div>
+        <div class="tcap">RESULT SO FAR (new rows of this iteration in teal)</div>
+        <div class="tw" id="rcTbl" style="max-height:330px"></div>
+      </div>
+    </div>
+    <div class="row" style="margin-top:12px"><button class="btn" id="rcPrev">Back</button><button class="btn pri" id="rcNext">Run anchor</button><button class="btn" id="rcReset">Reset</button></div>
+    <div class="insight" id="rcIns">Press <b>Run anchor</b>. Iteration 0 is the anchor query: it finds the starting row(s).</div>
+  </div>
+  <div class="grid3">
+    <div class="mini"><h5>Anchor</h5><p>Non-recursive SELECT that seeds the result: <code>WHERE manager_id IS NULL</code>. It also fixes the column list and types, so <b>cast</b> path columns wide enough (e.g. <code>::VARCHAR</code>).</p></div>
+    <div class="mini"><h5>Recursive member</h5><p>Joins the base table to the CTE itself: <code>JOIN org o ON e.manager_id = o.emp_id</code>. Adds <code>lvl + 1</code> and extends the path. Combined with <code>UNION ALL</code>.</p></div>
+    <div class="mini"><h5>Termination</h5><p>Stops when an iteration adds no rows. Add a guard anyway: a depth limit (<code>WHERE o.lvl &lt; 20</code>) and/or a visited check on the path to break cycles in dirty data.</p></div>
+  </div>
+  <div class="call pro"><b class="k">SENIOR ANGLE</b><div>Snowflake also supports Oracle-style <code>CONNECT BY</code> (<code>START WITH manager_id IS NULL CONNECT BY PRIOR emp_id = manager_id</code>, with <code>LEVEL</code> and <code>SYS_CONNECT_BY_PATH</code>). Recursive CTEs are more portable and more flexible (e.g. multiple joins in the recursive step). For very deep or wide graphs, recursion runs serially iteration by iteration, so consider materialising a closure table (ancestor, descendant, depth) refreshed by a task or dynamic table.</div></div>
+  <div class="call trap"><b class="k">INTERVIEW TRAP</b><div>"Generate every date in 2024" with a recursive CTE works, but in Snowflake the idiomatic answer is <code>SELECT DATEADD('day', SEQ4(), '2024-01-01'::DATE) FROM TABLE(GENERATOR(ROWCOUNT =&gt; 366))</code>. Caution: <code>SEQ4()</code> can have gaps in theory; <code>ROW_NUMBER() OVER (ORDER BY SEQ4()) - 1</code> is gap-free. A date spine like this is the standard fix for "missing days" in reports.</div></div>
+</section>
+
+<section id="grouping">
+  <div class="eyebrow">CHAPTER 05</div>
+  <h2>Grouping power <span class="thin">· ROLLUP, CUBE, GROUPING SETS, PIVOT</span></h2>
+  <div class="wwh">
+    <div class="box what"><span class="tag">01 · WHAT IS IT</span>
+      <p>Extensions to GROUP BY that compute <b>several groupings in one query</b>:</p>
+      <ul class="dots">
+        <li><code>ROLLUP(region, product)</code>: detail, subtotal per region, grand total (a hierarchy)</li>
+        <li><code>CUBE(region, product)</code>: every combination: per region, per product, both, and total</li>
+        <li><code>GROUPING SETS ((region), (product), ())</code>: exactly the groupings you list</li>
+        <li><code>GROUPING(col)</code>: 1 when that column was rolled up in this row, 0 otherwise</li>
+      </ul>
+      <p>Plus <b>PIVOT</b> (rows → columns), <b>UNPIVOT</b> (columns → rows), and handy aggregates: <code>COUNT_IF</code>, <code>LISTAGG</code>, <code>ARRAY_AGG</code>.</p>
+    </div>
+    <div class="box why"><span class="tag">02 · WHY WE USE IT</span>
+      <p>Reports need subtotals and totals. Without ROLLUP you'd write three GROUP BY queries and <code>UNION ALL</code> them, which means three scans of the table and three places to keep in sync. ROLLUP/CUBE do it in <b>one pass</b>. PIVOT turns "one row per quarter" into "one column per quarter", the shape a spreadsheet or dashboard wants.</p>
+    </div>
+    <div class="box how"><span class="tag">03 · HOW IT WORKS</span>
+      <p>The engine expands the grouping specification into a list of grouping sets and aggregates the input once per set (it can reuse the finest-grained aggregate to compute coarser ones). Columns that are not part of a row's grouping set are returned as <b>NULL</b>. That's why <code>GROUPING()</code> exists: it tells a "subtotal NULL" apart from a <b>real NULL</b> value in the data. Output order is <b>not guaranteed</b>; add ORDER BY.</p>
+    </div>
+  </div>
+  <div class="panel">
+    <div class="panel-h"><div class="t">INTERACTIVE · <b>ONE TABLE, SIX SHAPES</b> · SALES_Q (8 sample rows)</div></div>
+    <div class="tabs" id="gMode"><button class="on" data-v="plain">GROUP BY region, product</button><button data-v="rollup">ROLLUP</button><button data-v="cube">CUBE</button><button data-v="sets">GROUPING SETS</button><button data-v="pivot">PIVOT</button><button data-v="unpivot">UNPIVOT</button></div>
+    <div class="grid2" style="grid-template-columns:.9fr 1.3fr">
+      <div><div class="tcap" id="gInCap">INPUT · SALES_Q</div><div class="tw" id="gIn"></div></div>
+      <div><div class="sqlbox" id="gSql"></div><div class="tcap">OUTPUT</div><div class="tw" id="gOut"></div></div>
+    </div>
+    <div class="legend"><span><i style="background:var(--amber-s);border:1px solid var(--amber)"></i>subtotal row</span><span><i style="background:var(--ice-s);border:1px solid var(--ice)"></i>grand total row</span></div>
+    <div class="insight" id="gIns"></div>
+  </div>
+  <h3>Conditional aggregation &amp; list aggregates</h3>
+  <div class="grid2">
+    <div><div class="sqlbox">SELECT region,
+  COUNT(*) AS orders,
+  COUNT_IF(status = 'RETURNED') AS returned,
+  SUM(IFF(quarter = 'Q1', amount, 0)) AS q1_amount,
+  SUM(CASE WHEN quarter = 'Q2'
+           THEN amount ELSE 0 END) AS q2_amount,
+  LISTAGG(DISTINCT product, ', ')
+    WITHIN GROUP (ORDER BY product) AS products,
+  ARRAY_AGG(amount)
+    WITHIN GROUP (ORDER BY amount DESC) AS amounts
+FROM sales_q
+GROUP BY region;</div></div>
+    <div>
+      <ul class="dots">
+        <li><b>Conditional aggregation</b> (<code>SUM(IFF(...))</code> or <code>SUM(CASE …)</code>) is the portable, manual PIVOT. Interviewers often ask for it explicitly because it works everywhere and handles many conditions at once.</li>
+        <li><code>COUNT_IF(cond)</code> is Snowflake shorthand for <code>SUM(IFF(cond, 1, 0))</code>.</li>
+        <li><code>LISTAGG(col, ', ')</code> concatenates values into one string; <code>ARRAY_AGG</code> builds an ARRAY (VARIANT). Both ignore NULLs and accept <code>DISTINCT</code> and <code>WITHIN GROUP (ORDER BY …)</code>.</li>
+        <li>Watch output size: LISTAGG/ARRAY_AGG results are limited by Snowflake's maximum value size (check docs for the current limit), so don't aggregate millions of values into one cell.</li>
+      </ul>
+    </div>
+  </div>
+  <div class="call trap"><b class="k">INTERVIEW TRAP</b><div><b>PIVOT groups by every column you didn't mention.</b> <code>PIVOT</code> implicitly groups by all input columns except the pivot column and the aggregated column. If the source has an <code>order_id</code> column, you get one row per order instead of one per region. Always feed PIVOT a subquery that selects <b>only</b> the grouping column, the pivot column and the value column.</div></div>
+  <div class="call pro"><b class="k">SENIOR ANGLE</b><div><b>Dynamic pivot.</b> Classic PIVOT needs a hard-coded list (<code>IN ('Q1','Q2')</code>). Snowflake also accepts <code>IN (ANY ORDER BY quarter)</code> or <code>IN (SELECT DISTINCT quarter FROM …)</code>, so new quarters become new columns automatically, and <code>DEFAULT ON NULL (0)</code> replaces missing cells. Trade-off: the output schema now changes with the data, which can break downstream views and BI tools that expect fixed columns.</div></div>
+</section>
+
+<section id="joins">
+  <div class="eyebrow">CHAPTER 06</div>
+  <h2>Special joins <span class="thin">· ASOF, semi/anti, self, range, lateral</span></h2>
+  <div class="wwh">
+    <div class="box what"><span class="tag">01 · WHAT IS IT</span>
+      <ul class="dots">
+        <li><b>Semi join</b>: "rows of A that <i>have</i> a match in B" (<code>EXISTS</code> / <code>IN</code>). Each A row appears at most once.</li>
+        <li><b>Anti join</b>: "rows of A with <i>no</i> match in B" (<code>NOT EXISTS</code>, <code>LEFT JOIN … WHERE b.key IS NULL</code>, or <code>NOT IN</code>, which has a NULL trap).</li>
+        <li><b>ASOF JOIN</b>: for each row of A, the <b>closest earlier (or later)</b> row of B by time, e.g. each trade with the latest quote at that moment.</li>
+        <li><b>Self join</b>: a table joined to itself (employee to manager).</li>
+        <li><b>Range join</b>: join on an interval (<code>e.ts BETWEEN p.start_ts AND p.end_ts</code>) instead of equality.</li>
+        <li><b>Lateral join</b>: the right side can reference columns of the left row; in Snowflake mostly <code>LATERAL FLATTEN</code> over arrays and table functions.</li>
+      </ul>
+    </div>
+    <div class="box why"><span class="tag">02 · WHY WE USE IT</span>
+      <p>Real questions are rarely plain equi-joins: "customers who never ordered" (anti), "orders that had at least one return" (semi, without duplicating orders), "price at the time of the trade" (ASOF), "sessions during a promotion" (range).</p>
+      <p>Choosing the right form avoids <b>wrong answers</b> (the NOT IN + NULL trap, duplicate rows from a plain join used as a filter) and <b>slow plans</b> (range joins without an equality key can explode).</p>
+    </div>
+    <div class="box how"><span class="tag">03 · HOW IT WORKS</span>
+      <p>Equality joins in Snowflake usually run as <b>hash joins</b>: build a hash table on the smaller side, probe it with the bigger side; the profile can show <b>join filters</b> that skip probe-side micro-partitions. <code>EXISTS</code>/<code>IN</code>/<code>NOT EXISTS</code> are typically rewritten to semi/anti hash joins, which stop at the first match. A pure range condition can't be hashed, so the engine compares many row pairs (close to a cartesian product + filter): always add an equality key if you can (same symbol, same day bucket). <b>ASOF JOIN</b> is a dedicated operator: it partitions both sides by the ON keys, orders by time, and picks one best match per left row in a single pass, much cheaper than the classic "join all earlier quotes, then rank with ROW_NUMBER" workaround.</p>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-h"><div class="t">INTERACTIVE · <b>THE NOT IN + NULL TRAP</b> · "customers who never ordered"</div>
+      <div class="row"><span class="note-s">ORDERS.customer_id contains a NULL?</span><div class="tabs" id="niNull" style="margin:0"><button class="on" data-v="0">No</button><button data-v="1">Yes: one order with customer_id = NULL</button></div></div></div>
+    <div class="grid2" style="grid-template-columns:1fr 1.2fr">
+      <div class="cx" style="grid-template-columns:1fr 1fr;margin:0">
+        <div><div class="tcap">CUSTOMERS · click one</div><div class="tw" id="niC"></div></div>
+        <div><div class="tcap">ORDERS</div><div class="tw" id="niO"></div></div>
+      </div>
+      <div>
+        <div class="tcap">TRACE · how NOT IN evaluates for the selected customer</div>
+        <div class="trace" id="niTrace"></div>
+      </div>
+    </div>
+    <div class="cx" id="niRes" style="grid-template-columns:repeat(3,1fr)"></div>
+    <div class="insight" id="niIns"></div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-h"><div class="t">INTERACTIVE · <b>ASOF JOIN</b> · trades matched to quotes</div>
+      <div class="row"><span class="note-s">MATCH_CONDITION:</span><div class="tabs" id="asCond" style="margin:0"><button class="on" data-v="ge">t.trade_ts &gt;= q.quote_ts</button><button data-v="gt">t.trade_ts &gt; q.quote_ts</button><button data-v="le">t.trade_ts &lt;= q.quote_ts</button></div></div></div>
+    <div class="sqlbox" id="asSql"></div>
+    <svg viewBox="0 0 680 190" id="asSvg" style="margin-top:10px"></svg>
+    <div class="legend"><span><i style="background:var(--ice)"></i>quote</span><span><i style="background:var(--amber)"></i>trade</span><span><i style="background:var(--teal)"></i>matched pair</span></div>
+    <div class="grid2" style="grid-template-columns:1fr 1.4fr">
+      <div><div class="tcap">QUOTES</div><div class="tw" id="asQ"></div></div>
+      <div><div class="tcap">RESULT (one row per trade)</div><div class="tw" id="asOut"></div></div>
+    </div>
+    <div class="insight" id="asIns"></div>
+  </div>
+
+  <div class="grid2">
+    <div class="mini"><h5>Self join: earning more than their manager</h5><div class="sqlbox" style="margin-top:6px">SELECT e.name, e.salary, m.name AS manager, m.salary AS mgr_salary
+FROM employees e
+JOIN employees m ON e.manager_id = m.emp_id
+WHERE e.salary &gt; m.salary;</div><p style="margin-top:6px">Two aliases of the same table, joined on the hierarchy key. Use <code>LEFT JOIN</code> if employees without a manager must stay.</p></div>
+    <div class="mini"><h5>Range join: sales during a promotion</h5><div class="sqlbox" style="margin-top:6px">SELECT s.sale_id, p.promo_name
+FROM sales s
+JOIN promos p
+  ON  s.store_id = p.store_id            -- equality key first
+  AND s.sale_ts &gt;= p.start_ts
+  AND s.sale_ts &lt;  p.end_ts;             -- half-open interval</div><p style="margin-top:6px">The equality key keeps the join hashable; the range filters within each store. Half-open intervals avoid double-counting at boundaries.</p></div>
+  </div>
+  <div class="grid2" style="margin-top:16px">
+    <div class="mini"><h5>Lateral: explode an array per row</h5><div class="sqlbox" style="margin-top:6px">SELECT o.order_id, f.value:sku::STRING AS sku
+FROM orders o,
+     LATERAL FLATTEN(INPUT =&gt; o.items) f;</div><p style="margin-top:6px">FLATTEN runs once per order row and can see <code>o.items</code>. That "right side sees the left row" property is what LATERAL means. (Semi-structured details are in Module 06.)</p></div>
+    <div class="mini"><h5>Semi join: orders with at least one return</h5><div class="sqlbox" style="margin-top:6px">SELECT o.*
+FROM orders o
+WHERE EXISTS (SELECT 1 FROM returns r
+              WHERE r.order_id = o.order_id);</div><p style="margin-top:6px">A plain <code>JOIN returns</code> would repeat an order once per returned item. EXISTS returns each order once.</p></div>
+  </div>
+  <div class="call trap"><b class="k">INTERVIEW TRAP</b><div><b>Join explosion.</b> Joining two tables on a key that is not unique on either side multiplies rows (3 order lines × 2 shipments = 6 rows), and then SUM(amount) is silently inflated. Before any join, ask "what is the grain of each side?" Aggregate to the join grain first, or check with <code>QUALIFY COUNT(*) OVER (PARTITION BY key) &gt; 1</code>.</div></div>
+  <div class="call pro"><b class="k">SENIOR ANGLE</b><div>ASOF JOIN behaves like a <b>left outer</b> join: trades with no qualifying quote are kept with NULLs. The match condition takes one comparison (<code>&gt;=</code>, <code>&gt;</code>, <code>&lt;=</code>, <code>&lt;</code>), and the ON clause holds equality keys such as the symbol. Before ASOF existed, the pattern was a range join plus <code>QUALIFY ROW_NUMBER() OVER (PARTITION BY trade_id ORDER BY quote_ts DESC) = 1</code>, which still works on any engine but can be far more expensive on large tick tables.</div></div>
+</section>
+
+<section id="mr">
+  <div class="eyebrow">CHAPTER 07</div>
+  <h2>MATCH_RECOGNIZE <span class="thin">· regular expressions over rows</span></h2>
+  <div class="wwh">
+    <div class="box what"><span class="tag">01 · WHAT IS IT</span>
+      <p><code>MATCH_RECOGNIZE</code> finds <b>sequences of rows</b> that match a pattern, the way a regular expression finds sequences of characters. You classify each row with a symbol (<code>DOWN</code> if the price fell, <code>UP</code> if it rose), then search for a pattern like <code>STRT DOWN+ UP+</code>: a V-shape.</p>
+      <p>It's part of the SQL:2016 standard (row pattern recognition); Snowflake and Oracle implement it.</p>
+    </div>
+    <div class="box why"><span class="tag">02 · WHY WE USE IT</span>
+      <p>Sequence questions are painful with LAG and self-joins: "V-shaped price recoveries", "3 failed logins followed by a success", "funnel: view → cart → purchase within 1 hour", "sessions split by 30 minutes of inactivity". MATCH_RECOGNIZE expresses them <b>declaratively</b> in one clause and processes each partition in a single ordered pass.</p>
+    </div>
+    <div class="box how"><span class="tag">03 · HOW IT WORKS</span>
+      <div class="grid2">
+        <div class="mini"><h5>The clauses, in order</h5><p><code>PARTITION BY</code> / <code>ORDER BY</code>: like a window. <code>MEASURES</code>: output columns (<code>MATCH_NUMBER()</code>, <code>CLASSIFIER()</code>, <code>FIRST(...)</code>, <code>LAST(...)</code>). <code>ONE ROW PER MATCH</code> or <code>ALL ROWS PER MATCH</code>. <code>AFTER MATCH SKIP …</code>: where to resume. <code>PATTERN</code>: the regex over symbols. <code>DEFINE</code>: the condition for each symbol.</p></div>
+        <div class="mini"><h5>What the engine does</h5><p>Rows are partitioned and sorted, then a pattern-matching state machine walks each partition. A symbol without a DEFINE (like <code>STRT</code>) matches any row. Quantifiers <code>+ * ? {n,m}</code> are greedy by default. After a match, AFTER MATCH SKIP decides whether matches may <b>share rows</b>: <code>SKIP PAST LAST ROW</code> (no overlap, default) or <code>SKIP TO LAST UP</code> (the last row of one V can start the next).</p></div>
+      </div>
+    </div>
+  </div>
+  <div class="panel">
+    <div class="panel-h"><div class="t">SIMULATOR · <b>V-SHAPE PATTERN FINDER</b> · STOCK_PRICE, one symbol, 14 days</div>
+      <div class="row"><div class="tabs small" id="mrSet" style="margin:0"><button class="on" data-v="a">Two V's and a W</button><button data-v="b">Steady climb</button><button data-v="c">Choppy</button></div><button class="btn" id="mrRand">Randomize</button></div></div>
+    <div class="row" style="margin-bottom:8px"><span class="note-s" style="min-width:110px">AFTER MATCH:</span><div class="tabs small" id="mrSkip" style="margin:0"><button class="on" data-v="last">SKIP TO LAST UP</button><button data-v="past">SKIP PAST LAST ROW</button></div>
+      <span class="note-s" style="margin-left:10px">Output:</span><div class="tabs small" id="mrRows" style="margin:0"><button class="on" data-v="one">ONE ROW PER MATCH</button><button data-v="all">ALL ROWS PER MATCH</button></div></div>
+    <svg viewBox="0 0 680 230" id="mrSvg"></svg>
+    <div class="legend"><span><i style="background:var(--ink3)"></i>STRT (any row)</span><span><i style="background:var(--red)"></i>DOWN: price &lt; LAG(price)</span><span><i style="background:var(--teal)"></i>UP: price &gt; LAG(price)</span><span><i style="background:var(--ice-s);border:1px solid var(--ice)"></i>matched span</span><span class="note-s">Click a point to raise its price by 1 (shift-click lowers it).</span></div>
+    <div class="grid2" style="grid-template-columns:1fr 1.1fr">
+      <div class="sqlbox" id="mrSql"></div>
+      <div><div class="tcap" id="mrCap">OUTPUT</div><div class="tw" id="mrOut" style="max-height:300px"></div></div>
+    </div>
+    <div class="insight" id="mrIns"></div>
+  </div>
+
+  <h3>Sessionization: two ways to split clicks by inactivity</h3>
+  <div class="panel">
+    <div class="panel-h"><div class="t">SIMULATOR · <b>SESSION GAP</b> · 12 click events for one user, starting 09:00</div></div>
+    <div class="ctl"><label>Inactivity gap (minutes)</label><input type="range" id="ssGap" min="5" max="60" step="5" value="30"><span class="v" id="ssGapV">30 min</span></div>
+    <svg viewBox="0 0 680 120" id="ssSvg"></svg>
+    <div class="grid2" style="grid-template-columns:1fr 1fr">
+      <div><div class="tabs small" id="ssWay"><button class="on" data-v="lag">LAG + running SUM</button><button data-v="mr">MATCH_RECOGNIZE</button></div><div class="sqlbox" id="ssSql"></div></div>
+      <div><div class="tcap">SESSIONS</div><div class="tw" id="ssOut"></div></div>
+    </div>
+    <div class="insight" id="ssIns"></div>
+  </div>
+  <div class="call trap"><b class="k">INTERVIEW TRAP</b><div><b>DATEDIFF counts boundaries, not elapsed time.</b> <code>DATEDIFF('minute', '09:00:59', '09:01:00')</code> is 1 even though only one second passed, and <code>DATEDIFF('hour', '09:59', '10:00')</code> is 1. For precise gaps, compare in a smaller unit: <code>DATEDIFF('second', prev_ts, ts) &gt; 1800</code>.</div></div>
+</section>
+
+<section id="problems">
+  <div class="eyebrow">CHAPTER 08 · THE MOST IMPORTANT ONE</div>
+  <h2>Classic interview problem bank <span class="thin">· 11 problems, hints and full solutions</span></h2>
+  <div class="wwh">
+    <div class="box what"><span class="tag">01 · WHAT IS IT</span>
+      <p>The 11 SQL problems that come up again and again in data engineering live-coding rounds. Each one has a <b>problem statement</b>, a small <b>sample input</b>, a <b>hint</b>, and a full <b>Snowflake solution</b> with a step-by-step explanation, the <b>output table</b>, and complexity notes with alternative approaches.</p>
+    </div>
+    <div class="box why"><span class="tag">02 · WHY PRACTISE THESE</span>
+      <p>Almost every live SQL question is a variation of these patterns: rank within groups, compare with the previous row, find consecutive runs, divide sets, or detect overlaps. If you can produce these fluently <b>and explain the edge cases</b>, unfamiliar questions become "which pattern is this?".</p>
+    </div>
+    <div class="box how"><span class="tag">03 · HOW TO USE THIS BANK</span>
+      <p>Pick a problem, read it, and <b>write your own answer first</b> (on paper or in a worksheet). Stuck after 3 minutes? Open the hint. Then compare with the solution, read the steps, and check the output table against the input by hand. Finally, say the complexity and one alternative out loud, which is what a senior candidate is expected to add unprompted.</p>
+    </div>
+  </div>
+  <div class="panel">
+    <div class="panel-h"><div class="t">PROBLEM BANK · <b id="pbCount">0 / 11 solutions opened</b></div><span class="note-s">All sample data is illustrative.</span></div>
+    <div class="tabs small" id="pbTabs"></div>
+    <div id="pbBody"></div>
+  </div>
+  <div class="call pro"><b class="k">SENIOR ANGLE</b><div><b>The 5 patterns behind the 11 problems:</b> (1) <i>rank within a group</i> → ROW_NUMBER/RANK/DENSE_RANK + QUALIFY; (2) <i>compare with neighbour</i> → LAG/LEAD; (3) <i>consecutive runs</i> → "value minus ROW_NUMBER" or "flag + running SUM"; (4) <i>all-of / none-of</i> → HAVING COUNT(DISTINCT) or NOT EXISTS; (5) <i>intervals</i> → <code>a.start &lt; b.end AND b.start &lt; a.end</code>. Name the pattern first, then write the SQL.</div></div>
+</section>
+
+<section id="sql">
+  <div class="eyebrow">CHAPTER 09</div>
+  <h2>SQL lab <span class="thin">· click any line for an explanation</span></h2>
+  <div class="panel">
+    <div class="tabs" id="sqlTabs"></div>
+    <div class="grid2" style="grid-template-columns:1.35fr 1fr">
+      <div class="code" id="sqlCode"></div>
+      <div class="explain" id="sqlExp"><b class="h">CLICK A LINE</b>Each line is explained in plain English.</div>
+    </div>
+  </div>
+</section>
+
+<section id="qa">
+  <div class="eyebrow">CHAPTER 10</div>
+  <h2>Interview Q&amp;A <span class="thin">· answer out loud first, then open</span></h2>
+  <div class="tabs" id="qaTabs"><button class="on" data-f="all">All</button><button data-f="Basics">Basics &amp; NULLs</button><button data-f="Windows">Windows &amp; QUALIFY</button><button data-f="CTE">CTEs</button><button data-f="Grouping">Grouping</button><button data-f="Joins">Joins</button><button data-f="Patterns">Patterns &amp; problems</button></div>
+  <div id="qaList"></div>
+</section>
+
+<section id="quiz">
+  <div class="eyebrow">CHAPTER 11</div>
+  <h2>Quiz <span class="thin">· 14 questions</span></h2>
+  <div class="panel">
+    <div class="panel-h"><div class="t">QUESTION <b id="qzN">1</b> / 14</div><div class="t">SCORE <b id="qzS">0</b></div></div>
+    <div class="stepbar" id="qzBar"></div>
+    <div id="qzBody"></div>
+    <div class="row" style="margin-top:12px"><button class="btn" id="qzPrev">Back</button><button class="btn pri" id="qzNext">Next</button></div>
+  </div>
+</section>
+
+<section id="cheat">
+  <div class="eyebrow">CHAPTER 12</div>
+  <h2>Cheat sheet <span class="thin">· if you remember only these</span></h2>
+  <div class="cheat">
+    <div><em>Logical order</em>FROM → WHERE → GROUP BY → HAVING → WINDOW → QUALIFY → SELECT → DISTINCT → ORDER BY → LIMIT.</div>
+    <div><em>WHERE / HAVING / QUALIFY</em>Rows before grouping / groups after aggregation / rows after window functions.</div>
+    <div><em>OVER (P · O · F)</em>PARTITION BY splits, ORDER BY sorts, the frame picks neighbours. Rows are never collapsed.</div>
+    <div><em>ROWS vs RANGE</em>ROWS = physical rows. RANGE = all peers with the same ORDER BY value. Write frames explicitly.</div>
+    <div><em>1-2-3-4 / 1-2-2-4 / 1-2-2-3</em>ROW_NUMBER / RANK / DENSE_RANK. Dedup → ROW_NUMBER. Nth distinct value → DENSE_RANK.</div>
+    <div><em>LAST_VALUE</em>Add ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING, or use FIRST_VALUE with ORDER BY … DESC.</div>
+    <div><em>Recursive CTE</em>Anchor UNION ALL recursive member; each round sees only the previous round's rows. Guard with depth + path.</div>
+    <div><em>GROUPING()</em>1 = rolled-up (subtotal NULL), 0 = real value. ROLLUP = hierarchy, CUBE = all combos, GROUPING SETS = your list.</div>
+    <div><em>PIVOT</em>Feed it only key + pivot column + value. IN (ANY ORDER BY …) for dynamic columns. Manual pivot = SUM(IFF()).</div>
+    <div><em>NOT IN + NULL = ∅</em>One NULL in the subquery makes NOT IN return nothing. Use NOT EXISTS for anti-joins.</div>
+    <div><em>ASOF JOIN</em>MATCH_CONDITION (t.ts &gt;= q.ts) ON t.sym = q.sym → latest quote at trade time; unmatched rows kept with NULLs.</div>
+    <div><em>Islands</em>date − ROW_NUMBER() = constant per consecutive run. Sessions: LAG gap flag + running SUM.</div>
+  </div>
+  <div class="call analogy" style="margin-top:20px"><b class="k">NEXT MODULE</b><div><b><a href="../module13/" style="color:inherit">Module 13: Modeling &amp; tooling →</a></b> Dimensional modeling (star schemas, SCD Type 2), Data Vault, dbt on Snowflake, CI/CD and environment strategy. Everything you just practised becomes the building blocks of models.</div></div>
+</section>
+<footer>Snowflake Interview Lab · Module 12 · Advanced SQL (live-coding round prep) · Prepared for Saurav Patel</footer>
+</main>
+</div>
+
+<script>
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+const fmt = (n, d = 0) => Number(n).toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d });
+const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+const tabs = (sel, cb) => $$(sel + ' button').forEach(b => b.addEventListener('click', () => { $$(sel + ' button').forEach(x => x.classList.remove('on')); b.classList.add('on'); cb(b.dataset); }));
+
+/* theme + progress */
+const root = document.documentElement;
+root.dataset.theme = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+$('#themeBtn').onclick = () => { root.dataset.theme = root.dataset.theme === 'dark' ? 'light' : 'dark'; };
+const secs = $$('main section'), seen = new Set();
+const io = new IntersectionObserver(es => es.forEach(e => {
+  if (!e.isIntersecting) return;
+  seen.add(e.target.id);
+  $$('.side a').forEach(a => { const id = a.getAttribute('href').slice(1); a.classList.toggle('act', id === e.target.id); if (seen.has(id)) a.classList.add('seen'); });
+  const pct = Math.round(seen.size / secs.length * 100);
+  $('#progBar').style.width = pct + '%'; $('#progLbl').textContent = pct + '% explored';
+}), { rootMargin: '-40% 0px -55% 0px' });
+secs.forEach(s => io.observe(s));
+
+/* ===== shared: tables + SQL highlighting ===== */
+const cell = v => v === null || v === undefined ? '<span class="nul">NULL</span>' : esc(v);
+function tbl(cols, rows, o = {}) {
+  const nc = o.newc || [];
+  return `<table class="t sm"><tr>${cols.map((c, j) => `<th class="${nc.includes(j) ? 'newc' : ''}">${esc(c)}</th>`).join('')}</tr>` +
+    rows.map((r, i) => `<tr data-i="${i}" class="${o.cls ? o.cls(i, r) : ''}${o.click ? ' click' : ''}">${r.map((v, j) => `<td class="${nc.includes(j) ? 'newc' : ''}">${o.raw && o.raw.includes(j) ? v : cell(v)}</td>`).join('')}</tr>`).join('') + '</table>';
+}
+const KW = /\b(SELECT|DISTINCT|FROM|WHERE|GROUP|BY|HAVING|QUALIFY|ORDER|LIMIT|OFFSET|AS|AND|OR|NOT|IN|IS|NULL|EXISTS|JOIN|LEFT|INNER|ON|OVER|PARTITION|ROWS|RANGE|BETWEEN|UNBOUNDED|PRECEDING|FOLLOWING|CURRENT|ROW|WITH|RECURSIVE|UNION|ALL|CASE|WHEN|THEN|ELSE|END|DESC|ASC|ROLLUP|CUBE|GROUPING|SETS|PIVOT|UNPIVOT|FOR|ANY|ASOF|MATCH_CONDITION|MATCH_RECOGNIZE|MEASURES|ONE|PER|MATCH|AFTER|SKIP|TO|PAST|PATTERN|DEFINE|CREATE|REPLACE|TABLE|INSERT|INTO|VALUES|OVERWRITE|LATERAL|USING|WITHIN|DEFAULT|NULLS|IGNORE|INCLUDE|TRUE|FALSE|VIEW|DELETE)\b/g;
+const hl = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/('[^']*')/g, '\u0001$1\u0002').replace(KW, '<span class="kw">$1</span>').replace(/\b(\d+)\b/g, '<span class="num">$1</span>').replace(/\u0001([^\u0002]*)\u0002/g, (m, a) => '<span class="str">' + a.replace(/<[^>]+>/g, '') + '</span>');
+function hlLine(l) {
+  let q = 0, idx = -1;
+  for (let i = 0; i < l.length - 1; i++) { if (l[i] === "'") q ^= 1; else if (!q && l[i] === '-' && l[i + 1] === '-') { idx = i; break; } }
+  if (idx < 0) return hl(l);
+  return hl(l.slice(0, idx)) + '<span class="cm">' + esc(l.slice(idx)) + '</span>';
+}
+const codeHTML = (text, on = []) => text.split('\n').map((l, k) => `<div class="${on.includes(k + 1) ? 'on' : ''}"><em>${k + 1}</em>${hlLine(l) || ' '}</div>`).join('');
+
+/* ===== 01 logical order stepper ===== */
+const LO_COLS = ['order_id', 'customer', 'region', 'amount', 'status'];
+const LO = [[1, 'Asha', 'EAST', 120, 'PAID'], [2, 'Asha', 'EAST', 80, 'PAID'], [3, 'Ben', 'EAST', 150, 'PAID'], [4, 'Ben', 'EAST', 40, 'REFUND'], [5, 'Chen', 'WEST', 60, 'PAID'], [6, 'Chen', 'WEST', 30, 'PAID'], [7, 'Dev', 'WEST', 220, 'PAID'], [8, 'Eva', 'WEST', 90, 'PAID'], [9, 'Eva', 'WEST', 70, 'PENDING'], [10, 'Farah', 'NORTH', 300, 'PAID'], [11, 'Gus', 'NORTH', 50, 'PAID'], [12, 'Gus', 'NORTH', 45, 'REFUND']];
+const LO_SQL = `SELECT DISTINCT region, customer,
+       SUM(amount) AS total,
+       RANK() OVER (PARTITION BY region ORDER BY SUM(amount) DESC) AS rnk
+FROM orders
+WHERE status = 'PAID'
+GROUP BY region, customer
+HAVING SUM(amount) >= 100
+QUALIFY rnk = 1
+ORDER BY total DESC
+LIMIT 2;`;
+const loPaid = LO.filter(r => r[4] === 'PAID');
+const loGroups = [];
+loPaid.forEach(r => { let g = loGroups.find(x => x.region === r[2] && x.customer === r[1]); if (!g) { g = { region: r[2], customer: r[1], n: 0, total: 0 }; loGroups.push(g); } g.n++; g.total += r[3]; });
+const loHav = loGroups.filter(g => g.total >= 100);
+loHav.forEach(g => { g.rnk = 1 + loHav.filter(x => x.region === g.region && x.total > g.total).length; });
+const loWin = [...loHav].sort((a, b) => a.region < b.region ? -1 : a.region > b.region ? 1 : b.total - a.total);
+const loQual = loWin.filter(g => g.rnk === 1);
+const loSorted = [...loQual].sort((a, b) => b.total - a.total);
+const gRow = g => [g.region, g.customer, g.total, g.rnk];
+const LO_STEPS = [
+  { k: 'FROM', ln: [4], t: 'FROM orders', inN: 12, outN: 12, cols: LO_COLS, rows: LO, d: `FROM (and any JOINs) runs first and builds the working row set: all 12 rows. Physically, Snowflake reads only the columns the query references (columnar storage) and skips micro-partitions that the WHERE filter rules out (pruning).`, ins: `<b>FROM is step 1, not SELECT.</b> Nothing in the SELECT list exists yet.` },
+  { k: 'WHERE', ln: [5], t: "WHERE status = 'PAID'", inN: 12, outN: 9, cols: LO_COLS, rows: LO, cls: (i, r) => r[4] !== 'PAID' ? 'gone' : '', d: `WHERE tests each <b>individual row</b>. The REFUND and PENDING rows are dropped. WHERE can't see <code>SUM(amount)</code> or <code>rnk</code>: groups and windows don't exist yet. Filtering here is the cheapest place, because every later step handles fewer rows.`, ins: `<b>3 rows removed.</b> Put row-level filters in WHERE, never in HAVING, so less data flows into grouping.` },
+  { k: 'GROUP BY', ln: [6], t: 'GROUP BY region, customer', inN: 9, outN: 7, cols: ['region', 'customer', 'rows_in_group', 'SUM(amount)'], rows: loGroups.map(g => [g.region, g.customer, g.n, g.total]), newc: [3], d: `GROUP BY collapses the 9 rows into one row per (region, customer) and computes the aggregates. From now on, only grouping columns and aggregates can be referenced: <code>order_id</code> is gone.`, ins: `<b>9 rows → 7 groups.</b> Asha had 2 paid orders (120 + 80), so her group total is 200.` },
+  { k: 'HAVING', ln: [7], t: 'HAVING SUM(amount) >= 100', inN: 7, outN: 4, cols: ['region', 'customer', 'rows_in_group', 'SUM(amount)'], rows: loGroups.map(g => [g.region, g.customer, g.n, g.total]), cls: (i, r) => r[3] < 100 ? 'gone' : '', d: `HAVING filters <b>groups</b>, using aggregates. Chen (90), Eva (90) and Gus (50) are below 100 and disappear.`, ins: `<b>HAVING = WHERE for groups.</b> It's the first place an aggregate can be used as a filter.` },
+  { k: 'WINDOW', ln: [3], t: 'RANK() OVER (PARTITION BY region ORDER BY SUM(amount) DESC)', inN: 4, outN: 4, cols: ['region', 'customer', 'total', 'rnk'], rows: loWin.map(gRow), newc: [3], d: `Window functions run <b>after</b> grouping, on the 4 surviving groups. That's why <code>ORDER BY SUM(amount)</code> is legal inside OVER: the aggregate is already computed. Each region is ranked separately; no rows are removed.`, ins: `<b>Windows add a column, they don't remove rows.</b> EAST has two groups, so Ben gets rank 2.` },
+  { k: 'QUALIFY', ln: [8], t: 'QUALIFY rnk = 1', inN: 4, outN: 3, cols: ['region', 'customer', 'total', 'rnk'], rows: loWin.map(gRow), cls: (i, r) => r[3] !== 1 ? 'gone' : '', d: `QUALIFY filters on window results. Only the top customer of each region stays. (Using the alias <code>rnk</code> here is a Snowflake convenience; you could also repeat the full RANK() expression.)`, ins: `<b>QUALIFY = WHERE for window functions.</b> Without it you'd need a subquery around the whole statement.` },
+  { k: 'SELECT', ln: [1, 2, 3], t: 'SELECT region, customer, total, rnk', inN: 3, outN: 3, cols: ['region', 'customer', 'total', 'rnk'], rows: loQual.map(gRow), d: `Projection: the final columns and aliases are produced. In standard SQL, aliases officially exist only from this point on, which is why most databases reject aliases in WHERE or GROUP BY.`, ins: `<b>SELECT is step 7 of 10.</b> Writing order and evaluation order are very different.` },
+  { k: 'DISTINCT', ln: [1], t: 'DISTINCT', inN: 3, outN: 3, cols: ['region', 'customer', 'total', 'rnk'], rows: loQual.map(gRow), d: `DISTINCT removes duplicate output rows. Here every row is already unique (GROUP BY guaranteed that), so it's a no-op that still costs a hash step. Don't add DISTINCT "just in case": it often hides a join that multiplies rows.`, ins: `<b>No-op here.</b> If you need DISTINCT to fix your counts, look for a fan-out join first.` },
+  { k: 'ORDER BY', ln: [9], t: 'ORDER BY total DESC', inN: 3, outN: 3, cols: ['region', 'customer', 'total', 'rnk'], rows: loSorted.map(gRow), d: `ORDER BY sorts the final rows. Without it, Snowflake returns rows in whatever order the parallel workers finish: <b>never rely on implicit order</b>.`, ins: `<b>Sorting happens near the very end</b>, on the smallest possible row set.` },
+  { k: 'LIMIT', ln: [10], t: 'LIMIT 2', inN: 3, outN: 2, cols: ['region', 'customer', 'total', 'rnk'], rows: loSorted.map(gRow), cls: i => i >= 2 ? 'gone' : '', d: `LIMIT keeps the first 2 rows of the sorted result. LIMIT without ORDER BY returns an arbitrary 2 rows. With ORDER BY + LIMIT, Snowflake can use a top-K sort instead of sorting everything.`, ins: `<b>Done: 12 rows in, 2 rows out.</b> Farah (NORTH, 300) and Dev (WEST, 220).` }
+];
+let loI = -1, loT = null;
+$('#loChips').innerHTML = LO_STEPS.map((s, i) => `${i ? '<i>→</i>' : ''}<span data-i="${i}">${s.k}</span>`).join('');
+$$('#loChips span').forEach(c => c.onclick = () => { loStop(); loI = +c.dataset.i; loRender(); });
+function loRender() {
+  const s = loI >= 0 ? LO_STEPS[loI] : null;
+  $$('#loChips span').forEach((c, i) => { c.classList.toggle('now', i === loI); c.classList.toggle('done', i < loI); });
+  $('#loCode').innerHTML = codeHTML(LO_SQL, s ? s.ln : []);
+  if (!s) {
+    $('#loDesc').innerHTML = `<h4>Ready</h4><div style="font-size:14.5px;color:var(--ink2)">This query finds, for each region, the customer with the highest paid total (only totals of at least 100), then returns the top 2 overall. Press <b>Start</b> to evaluate it clause by clause.</div>`;
+    $('#loCap').textContent = 'ROW SET'; $('#loTbl').innerHTML = tbl(LO_COLS, LO); $('#loIn').textContent = '–'; $('#loOut').textContent = '–';
+    $('#loIns').innerHTML = 'Press <b>Start</b>. The first clause evaluated is <b>FROM</b>, not SELECT.';
+  } else {
+    $('#loDesc').innerHTML = `<h4>Step ${loI + 1} / ${LO_STEPS.length} · ${esc(s.k)}</h4><div style="font-size:14.5px;color:var(--ink2)">${s.d}</div>`;
+    $('#loCap').textContent = `AFTER ${s.k}: ${s.t}`;
+    $('#loTbl').innerHTML = tbl(s.cols, s.rows, { cls: s.cls, newc: s.newc });
+    $('#loIn').textContent = s.inN; $('#loOut').textContent = s.outN;
+    $('#loIns').innerHTML = s.ins;
+  }
+  $('#loNext').textContent = loI < 0 ? 'Start' : 'Next';
+  $('#loNext').disabled = loI === LO_STEPS.length - 1;
+  $('#loPrev').disabled = loI < 0;
+}
+const loStop = () => { clearInterval(loT); loT = null; $('#loPlay').textContent = '▶ Play'; };
+$('#loNext').onclick = () => { loStop(); if (loI < LO_STEPS.length - 1) { loI++; loRender(); } };
+$('#loPrev').onclick = () => { loStop(); if (loI >= 0) { loI--; loRender(); } };
+$('#loReset').onclick = () => { loStop(); loI = -1; loRender(); };
+$('#loPlay').onclick = () => {
+  if (loT) { loStop(); return; }
+  if (loI === LO_STEPS.length - 1) loI = -1;
+  $('#loPlay').textContent = '❚❚ Pause';
+  loT = setInterval(() => { if (loI >= LO_STEPS.length - 1) { loStop(); return; } loI++; loRender(); }, 1600);
+};
+loRender();
+
+/* ===== 02 window visualizer ===== */
+const W = [
+  { id: 1, region: 'EAST', d: '2024-01-01', rep: 'Asha', amt: 100 }, { id: 2, region: 'EAST', d: '2024-01-02', rep: 'Asha', amt: 150 },
+  { id: 3, region: 'EAST', d: '2024-01-02', rep: 'Ben', amt: 150 }, { id: 4, region: 'EAST', d: '2024-01-03', rep: 'Ben', amt: 80 },
+  { id: 5, region: 'EAST', d: '2024-01-04', rep: 'Asha', amt: 120 }, { id: 6, region: 'WEST', d: '2024-01-01', rep: 'Chen', amt: 200 },
+  { id: 7, region: 'WEST', d: '2024-01-02', rep: 'Dev', amt: 90 }, { id: 8, region: 'WEST', d: '2024-01-03', rep: 'Chen', amt: 90 },
+  { id: 9, region: 'WEST', d: '2024-01-03', rep: 'Dev', amt: 60 }, { id: 10, region: 'WEST', d: '2024-01-05', rep: 'Chen', amt: 140 }];
+const WS = { fn: 'SUM', part: 'region', ord: 'date', frame: 'def', sel: 3 };
+const W_RANK = ['ROW_NUMBER', 'RANK', 'DENSE_RANK', 'NTILE', 'LAG', 'LEAD'], W_VAL = ['FIRST_VALUE', 'LAST_VALUE'], W_AGG = ['SUM', 'AVG', 'COUNT'];
+const W_FR = { up: 'ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW', p2: 'ROWS BETWEEN 2 PRECEDING AND CURRENT ROW', p1f1: 'ROWS BETWEEN 1 PRECEDING AND 1 FOLLOWING', all: 'ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING' };
+const wKey = r => WS.ord === 'date' ? r.d : WS.ord === 'amt' ? -r.amt : 0;
+const wPart = r => WS.part === 'region' ? r.region : 'ALL';
+function wCmp(a, b) {
+  if (wPart(a) !== wPart(b)) return wPart(a) < wPart(b) ? -1 : 1;
+  const ka = wKey(a), kb = wKey(b);
+  if (ka < kb) return -1; if (ka > kb) return 1; return a.id - b.id;
+}
+function ntileOf(k, n, b) { const base = Math.floor(n / b), rem = n % b; let start = 0; for (let t = 0; t < b; t++) { const sz = base + (t < rem ? 1 : 0); if (k < start + sz) return t + 1; start += sz; } return b; }
+function wCompute() {
+  const rows = [...W].sort(wCmp), parts = {}, out = {}, hi = {}, info = {};
+  rows.forEach(r => { (parts[wPart(r)] = parts[wPart(r)] || []).push(r); });
+  const fn = WS.fn;
+  const err = (W_RANK.includes(fn) || W_VAL.includes(fn)) && WS.ord === 'none' ? `${fn} requires ORDER BY inside OVER (...). Pick an ORDER BY.` : '';
+  Object.values(parts).forEach(P => {
+    const tot = P.reduce((s, r) => s + r.amt, 0);
+    P.forEach((r, k) => {
+      const key = wKey(r), peerIdx = P.map((x, i) => i).filter(i => wKey(P[i]) === key);
+      let fr;
+      if (WS.ord === 'none' || WS.frame === 'all') fr = [0, P.length - 1];
+      else if (WS.frame === 'def') fr = [0, Math.max(...peerIdx)];
+      else if (WS.frame === 'up') fr = [0, k];
+      else if (WS.frame === 'p2') fr = [Math.max(0, k - 2), k];
+      else fr = [Math.max(0, k - 1), Math.min(P.length - 1, k + 1)];
+      const F = P.slice(fr[0], fr[1] + 1);
+      let v = null, h = [], how = '';
+      if (fn === 'SUM') { v = F.reduce((s, x) => s + x.amt, 0); h = F; how = F.map(x => x.amt).join(' + ') + ' = ' + v; }
+      else if (fn === 'AVG') { v = +(F.reduce((s, x) => s + x.amt, 0) / F.length).toFixed(2); h = F; how = '(' + F.map(x => x.amt).join(' + ') + ') / ' + F.length + ' = ' + v; }
+      else if (fn === 'COUNT') { v = F.length; h = F; how = F.length + ' rows in frame'; }
+      else if (fn === 'FIRST_VALUE') { v = F[0].amt; h = F; how = 'first row of frame → ' + v; }
+      else if (fn === 'LAST_VALUE') { v = F[F.length - 1].amt; h = F; how = 'last row of frame → ' + v; }
+      else if (fn === 'ROW_NUMBER') { v = k + 1; h = P.slice(0, k + 1); how = 'position ' + v + ' in the sorted partition'; }
+      else if (fn === 'RANK') { const better = P.filter(x => wKey(x) < key).length; v = 1 + better; h = P.filter(x => wKey(x) <= key); how = '1 + ' + better + ' rows strictly ahead = ' + v; }
+      else if (fn === 'DENSE_RANK') { const dv = new Set(P.filter(x => wKey(x) < key).map(wKey)).size; v = 1 + dv; h = P.filter(x => wKey(x) <= key); how = '1 + ' + dv + ' distinct values ahead = ' + v; }
+      else if (fn === 'NTILE') { v = ntileOf(k, P.length, 3); h = P.filter((x, i) => ntileOf(i, P.length, 3) === v); how = P.length + ' rows split into 3 buckets → bucket ' + v; }
+      else if (fn === 'LAG') { v = k > 0 ? P[k - 1].amt : null; h = k > 0 ? [P[k - 1]] : []; how = k > 0 ? 'amount of the previous row = ' + v : 'no previous row → NULL'; }
+      else if (fn === 'LEAD') { v = k < P.length - 1 ? P[k + 1].amt : null; h = k < P.length - 1 ? [P[k + 1]] : []; how = k < P.length - 1 ? 'amount of the next row = ' + v : 'no next row → NULL'; }
+      else if (fn === 'RATIO_TO_REPORT') { v = +(r.amt / tot).toFixed(3); h = P; how = r.amt + ' / ' + tot + ' = ' + v; }
+      out[r.id] = err ? 'error' : v; hi[r.id] = h.map(x => x.id); info[r.id] = { how, part: wPart(r), n: P.length, fr: F.length };
+    });
+  });
+  return { rows, out, hi, info, err };
+}
+function wExpr() {
+  const fn = WS.fn; let f;
+  if (fn === 'NTILE') f = 'NTILE(3)'; else if (['ROW_NUMBER', 'RANK', 'DENSE_RANK'].includes(fn)) f = fn + '()'; else if (fn === 'COUNT') f = 'COUNT(*)'; else f = fn + '(amount)';
+  const p = [];
+  if (WS.part === 'region') p.push('PARTITION BY region');
+  if (WS.ord !== 'none' && fn !== 'RATIO_TO_REPORT') p.push(WS.ord === 'date' ? 'ORDER BY sale_date' : 'ORDER BY amount DESC');
+  if ((W_AGG.includes(fn) || W_VAL.includes(fn)) && WS.ord !== 'none' && WS.frame !== 'def') p.push(W_FR[WS.frame]);
+  return `${f} OVER (${p.join(' ')})`;
+}
+function wInsight(c) {
+  const fn = WS.fn;
+  if (c.err) return `<b>Error.</b> ${c.err} Ranking and offset functions (and FIRST/LAST_VALUE) are defined relative to an order; without one, "previous row" or "rank" has no meaning.`;
+  if (W_RANK.includes(fn) && WS.frame !== 'def') return `<b>Frame ignored.</b> ${fn} doesn't accept a window frame: it always works on the whole ordered partition. Snowflake rejects a frame clause here.`;
+  if (fn === 'RATIO_TO_REPORT') return `<b>Share of total.</b> RATIO_TO_REPORT takes no ORDER BY and no frame, so ORDER BY and frame settings are ignored. Each row is divided by its partition's SUM; the values in a partition add up to 1.`;
+  if (WS.ord === 'none') return `<b>No ORDER BY → the frame is the whole partition.</b> Every row gets the ${WS.part === 'region' ? "region's" : 'overall'} ${fn === 'SUM' ? 'total' : fn === 'AVG' ? 'average' : 'count'}, like GROUP BY but without collapsing rows. Great for "each sale and its share of the region".`;
+  if (fn === 'LAST_VALUE' && WS.frame === 'def') return `<b>The LAST_VALUE gotcha.</b> With ORDER BY and the ANSI default frame (RANGE BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW), the frame ends at the current row, so LAST_VALUE returns the current row (or its last peer). Defaults differ between engines and versions, so check Snowflake's docs; the safe fix is to write ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING. Try it.`;
+  if (W_AGG.includes(fn) && WS.frame === 'def') return `<b>No frame written + ORDER BY → RANGE BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW</b> (the ANSI default). RANGE includes <b>peers</b>: rows with the same ${WS.ord === 'date' ? 'sale_date' : 'amount'} get the same running value. Click Asha's or Ben's row on ${WS.ord === 'date' ? '2024-01-02' : 'amount 150'}: both frames end at the same place. Switch to "ROWS UNBOUNDED PRECEDING → CURRENT ROW" to see them differ.`;
+  if (WS.frame === 'up') return `<b>A true running total (ROWS).</b> Peers now get different values, decided by the physical order of tied rows. Here ties are ordered by sale id, but in a real query you must add a tie-breaker (ORDER BY sale_date, sale_id) or the result can change between runs.`;
+  if (WS.frame === 'p2') return `<b>Moving window of up to 3 rows.</b> ${fn === 'AVG' ? 'A 3-row moving average.' : ''} The first rows of each partition have fewer than 3 rows available, so the window is smaller there: a common "why is my 7-day average wrong at the start?" question. Note: ROWS counts rows, not days; for calendar windows, fill missing dates first (date spine).`;
+  if (WS.frame === 'p1f1') return `<b>Centred window.</b> 1 row before, the current row and 1 row after: used for smoothing. The frame can look forward, so the last row of each partition only has 2 rows.`;
+  if (WS.frame === 'all') return `<b>Whole partition.</b> Every row sees all rows of its partition regardless of ORDER BY. This is the frame you want for LAST_VALUE. It needs the whole partition buffered before the first row can be emitted.`;
+  if (fn === 'ROW_NUMBER') return `<b>Unique numbers, arbitrary among ties.</b> ${WS.ord === 'date' ? 'Asha and Ben both sold on 2024-01-02' : 'Two rows have the same amount'}: which one gets the smaller number is not guaranteed. Add a tie-breaker column.`;
+  if (fn === 'RANK') return `<b>Ties share a rank, then a gap.</b> Compare with DENSE_RANK on the same settings.`;
+  if (fn === 'DENSE_RANK') return `<b>Ties share a rank, no gap.</b> Use DENSE_RANK for "Nth highest distinct value".`;
+  if (fn === 'NTILE') return `<b>Buckets by row count.</b> A partition of 5 rows splits into 2 + 2 + 1: the first buckets get the extra rows. Tied values can land in different buckets.`;
+  if (fn === 'LAG' || fn === 'LEAD') return `<b>${fn} looks ${fn === 'LAG' ? 'back' : 'forward'} one row.</b> The ${fn === 'LAG' ? 'first' : 'last'} row of each partition has no neighbour, so it gets NULL. Use ${fn}(amount, 1, 0) to default to 0. Typical uses: day-over-day change, time since previous event.`;
+  return `<b>${fn}</b> computed over the highlighted frame.`;
+}
+function wDraw() {
+  const c = wCompute(), lab = WS.fn === 'COUNT' ? 'count' : WS.fn.toLowerCase();
+  const selR = W.find(r => r.id === WS.sel), selP = wPart(selR);
+  $('#wSql').textContent = `SELECT region, sale_date, rep, amount,\n       ${wExpr()} AS ${lab}\nFROM sales;`;
+  $('#wTbl').innerHTML = tbl(['region', 'sale_date', 'rep', 'amount', lab], c.rows.map(r => [r.region, r.d, r.rep, r.amt, c.out[r.id]]), {
+    newc: [4], click: true,
+    cls: (i, row) => { const r = c.rows[i]; if (wPart(r) !== selP) return 'dim'; if (r.id === WS.sel) return 'cur'; return c.hi[WS.sel].includes(r.id) ? 'hlA' : ''; }
+  });
+  $$('#wTbl tr.click').forEach(tr => tr.onclick = () => { WS.sel = c.rows[+tr.dataset.i].id; wDraw(); });
+  const inf = c.info[WS.sel];
+  $('#wExp').innerHTML = c.err ? `<b class="h">ERROR</b>${esc(c.err)}` : `<b class="h">SELECTED ROW</b>${selR.rep} · ${selR.d} · amount ${selR.amt}<br>Partition: <b>${inf.part === 'ALL' ? 'all rows' : inf.part}</b> (${inf.n} rows)<br>${W_AGG.includes(WS.fn) || W_VAL.includes(WS.fn) ? 'Frame: <b>' + inf.fr + ' row' + (inf.fr === 1 ? '' : 's') + '</b><br>' : ''}Computation: <code>${esc(inf.how)}</code><br>Result: <b>${cell(c.out[WS.sel])}</b>`;
+  $('#wIns').innerHTML = wInsight(c);
+}
+tabs('#wFn', d => { WS.fn = d.v; wDraw(); });
+tabs('#wPart', d => { WS.part = d.v; wDraw(); });
+tabs('#wOrd', d => { WS.ord = d.v; wDraw(); });
+tabs('#wFrame', d => { WS.frame = d.v; wDraw(); });
+wDraw();
+</script>
+
+<script>
+/* ===== 03 QUALIFY playground ===== */
+const QE = [['ENG', 'Ana', 150], ['ENG', 'Raj', 150], ['ENG', 'Li', 130], ['ENG', 'Tom', 120], ['ENG', 'Kim', 110], ['DATA', 'Sam', 140], ['DATA', 'Zoe', 125], ['DATA', 'Ivy', 125], ['DATA', 'Max', 100], ['OPS', 'Ola', 90], ['OPS', 'Jon', 85], ['OPS', 'Pia', 70]];
+const QD = [[1, 'asha@x.com', 'Pune', '2024-03-01 09:00', 1], [1, 'asha@x.com', 'Mumbai', '2024-03-05 10:00', 2], [2, 'ben@x.com', 'Delhi', '2024-03-02 08:00', 1], [3, 'chen@x.com', 'Pune', '2024-03-01 12:00', 1], [3, 'chen@x.com', 'Pune', '2024-03-01 12:00', 2], [3, 'chen@old.com', 'Pune', '2024-02-20 07:00', 1], [4, 'dev@x.com', 'Goa', '2024-03-03 11:00', 1], [4, 'dev@x.com', 'Goa', '2024-03-04 11:00', 2], [5, 'eva@x.com', 'Agra', '2024-03-04 15:00', 1]];
+const QS = { mode: 'top', fn: 'ROW_NUMBER', n: 2 };
+function qRank(rows, gk, vk) {
+  // rows sorted by group then value desc (string compare works for timestamps)
+  const out = rows.map(() => ({}));
+  rows.forEach((r, i) => {
+    const grp = rows.filter(x => x[gk] === r[gk]);
+    const pos = grp.indexOf(r);
+    const better = grp.filter(x => x[vk] > r[vk]);
+    const tie = grp.filter(x => x[vk] === r[vk]).length > 1;
+    out[i] = { rn: pos + 1, rk: better.length + 1, dr: new Set(better.map(x => x[vk])).size + 1, tie };
+  });
+  return out;
+}
+function qDraw() {
+  const top = QS.mode === 'top', n = top ? QS.n : 1, fn = QS.fn;
+  $('#qNRow').style.display = top ? '' : 'none';
+  $('#qNV').textContent = QS.n;
+  const src = top ? [...QE].sort((a, b) => a[0] === b[0] ? b[2] - a[2] : (a[0] < b[0] ? -1 : 1)) : [...QD].sort((a, b) => a[0] - b[0] || (a[3] < b[3] ? 1 : a[3] > b[3] ? -1 : 0));
+  const gk = 0, vk = top ? 2 : 3;
+  const R = qRank(src, gk, vk);
+  const val = i => fn === 'ROW_NUMBER' ? R[i].rn : fn === 'RANK' ? R[i].rk : R[i].dr;
+  const keep = src.map((r, i) => val(i) <= n);
+  const lab = fn.toLowerCase();
+  const cols = top ? ['dept', 'emp', 'salary', lab] : ['cust_id', 'email', 'city', 'updated_at', 'load_id', lab];
+  const rows = src.map((r, i) => [...r, val(i) + (fn === 'ROW_NUMBER' && R[i].tie ? ' (tie)' : '')]);
+  $('#qTbl').innerHTML = tbl(cols, rows, { newc: [cols.length - 1], cls: i => keep[i] ? 'hlC' : 'gone' });
+  $('#qSql').textContent = top
+    ? `SELECT dept, emp, salary\nFROM employees\nQUALIFY ${fn}() OVER (PARTITION BY dept ORDER BY salary DESC) <= ${n};`
+    : `SELECT *\nFROM customer_raw\nQUALIFY ${fn}() OVER (PARTITION BY cust_id ORDER BY updated_at DESC) = 1;`;
+  const kept = keep.filter(Boolean).length;
+  $('#qIn').textContent = src.length; $('#qOut').textContent = kept;
+  const groups = [...new Set(src.map(r => r[0]))];
+  const per = groups.map(g => `${top ? g : 'cust ' + g}: ${src.filter((r, i) => r[0] === g && keep[i]).length}`).join(' · ');
+  $('#qExp').innerHTML = `<b class="h">KEPT PER GROUP</b>${per}`;
+  let ins;
+  if (top) {
+    if (fn === 'ROW_NUMBER') ins = `<b>ROW_NUMBER keeps exactly ${n} per department.</b> But Ana and Raj tie at 150 (and Zoe/Ivy at 125): which one gets the lower number is <b>arbitrary</b>. If "top ${n}" must be fair to ties, use RANK or DENSE_RANK; if exactly ${n} rows are required, add a tie-breaker like <code>ORDER BY salary DESC, emp_id</code>.`;
+    else if (fn === 'RANK') ins = `<b>RANK keeps ties and skips.</b> In ENG, Ana and Raj share rank 1 and Li jumps to rank 3. With N = ${n}, ENG keeps ${src.filter((r, i) => r[0] === 'ENG' && keep[i]).length} row(s). "Top ${n} with ties" can return more than ${n} rows per group.`;
+    else ins = `<b>DENSE_RANK keeps the top ${n} distinct salaries.</b> Ties share a rank with no gaps, so ENG keeps Ana, Raj (150) and Li (130) when N = 2. Use it when the question says "top ${n} salary <i>levels</i>".`;
+  } else {
+    if (fn === 'ROW_NUMBER') ins = `<b>Correct dedup: one row per customer.</b> Customer 3 has two identical rows at the latest timestamp; ROW_NUMBER keeps exactly one (arbitrarily). Add <code>load_id DESC</code> to the ORDER BY to make the choice deterministic.`;
+    else ins = `<b>Broken dedup!</b> ${fn} gives both identical customer-3 rows rank 1, so the "deduplicated" output still contains a duplicate (${kept} rows for 5 customers). This is the classic reason to dedup with ROW_NUMBER.`;
+  }
+  $('#qIns').innerHTML = ins;
+}
+tabs('#qMode', d => { QS.mode = d.v; qDraw(); });
+tabs('#qFn', d => { QS.fn = d.v; qDraw(); });
+$('#qN').oninput = e => { QS.n = +e.target.value; qDraw(); };
+qDraw();
+
+/* ===== 04 recursive CTE stepper ===== */
+const RE = [[1, 'Meera', null], [2, 'Arjun', 1], [3, 'Bella', 1], [4, 'Carlos', 2], [5, 'Dana', 2], [6, 'Eli', 3], [7, 'Fatima', 4], [8, 'Gita', 4], [9, 'Hugo', 6], [10, 'Ian', 9]];
+const RPOS = { 1: [340, 24], 2: [190, 86], 3: [480, 86], 4: [120, 148], 5: [262, 148], 6: [480, 148], 7: [56, 210], 8: [184, 210], 9: [480, 210], 10: [480, 272] };
+const RC_DOWN = `WITH RECURSIVE org AS (
+  -- anchor: the CEO (no manager)
+  SELECT emp_id, name, manager_id, 1 AS lvl,
+         name::VARCHAR AS path
+  FROM employees
+  WHERE manager_id IS NULL
+  UNION ALL
+  -- recursive member: reports of the previous level
+  SELECT e.emp_id, e.name, e.manager_id, o.lvl + 1,
+         o.path || ' > ' || e.name
+  FROM employees e
+  JOIN org o ON e.manager_id = o.emp_id
+)
+SELECT * FROM org ORDER BY lvl, emp_id;`;
+const rcUpSql = g => `WITH RECURSIVE chain AS (
+  -- anchor: start at Ian
+  SELECT emp_id, name, manager_id, 1 AS lvl,
+         '/' || emp_id || '/' AS path
+  FROM employees
+  WHERE emp_id = 10
+  UNION ALL
+  -- recursive member: one step UP to the manager
+  SELECT m.emp_id, m.name, m.manager_id, c.lvl + 1,
+         c.path || m.emp_id || '/'
+  FROM employees m
+  JOIN chain c ON m.emp_id = c.manager_id
+  ${g ? "WHERE NOT CONTAINS(c.path, '/' || m.emp_id || '/')  -- guard" : '-- (no cycle guard)'}
+)
+SELECT * FROM chain ORDER BY lvl;`;
+const RS = { mode: 'down', guard: true, i: -1 };
+function rcBuild() {
+  const its = []; let error = false;
+  if (RS.mode === 'down') {
+    let cur = RE.filter(e => e[2] === null).map(e => ({ id: e[0], name: e[1], mgr: e[2], lvl: 1, path: e[1] }));
+    while (cur.length) {
+      its.push(cur);
+      const prev = cur;
+      cur = RE.filter(e => prev.some(c => c.id === e[2])).map(e => { const p = prev.find(c => c.id === e[2]); return { id: e[0], name: e[1], mgr: e[2], lvl: p.lvl + 1, path: p.path + ' > ' + e[1] }; });
+    }
+    its.push([]);
+  } else {
+    const data = RE.map(e => e[0] === 1 ? [1, 'Meera', 10] : e);
+    let cur = [{ id: 10, name: 'Ian', mgr: 9, lvl: 1, path: '/10/' }];
+    while (cur.length && its.length < 13) {
+      its.push(cur);
+      cur = cur.map(c => { const m = data.find(e => e[0] === c.mgr); if (!m) return null; if (RS.guard && c.path.includes('/' + m[0] + '/')) return null; return { id: m[0], name: m[1], mgr: m[2], lvl: c.lvl + 1, path: c.path + m[0] + '/' }; }).filter(Boolean);
+    }
+    if (cur.length) error = true; else its.push([]);
+  }
+  return { its, error };
+}
+function rcSvg(its, upto) {
+  const visits = {}, curIds = upto >= 0 && its[upto] ? its[upto].map(r => r.id) : [];
+  its.slice(0, upto + 1).forEach(it => it.forEach(r => { visits[r.id] = (visits[r.id] || 0) + 1; }));
+  let s = '';
+  RE.forEach(e => { if (e[2] !== null) { const [x1, y1] = RPOS[e[2]], [x2, y2] = RPOS[e[0]]; s += `<path class="arr" d="M${x1} ${y1 + 17} L${x2} ${y2 - 17}"/>`; } });
+  if (RS.mode === 'up') s += `<path d="M532 272 C 660 272, 660 24, 392 24" fill="none" stroke="var(--red)" stroke-width="1.6" stroke-dasharray="6 4"/><text class="tm" x="610" y="140" text-anchor="middle" style="fill:var(--red)">bad data:</text><text class="tm" x="610" y="154" text-anchor="middle" style="fill:var(--red)">Meera.manager = Ian</text>`;
+  RE.forEach(e => {
+    const [x, y] = RPOS[e[0]], v = visits[e[0]] || 0, on = curIds.includes(e[0]);
+    const cls = on ? 'L-cs' : v ? 'L-st' : 'neutral';
+    s += `<g><rect class="${cls}" x="${x - 52}" y="${y - 17}" width="104" height="34" rx="8" stroke-width="${on ? 2.4 : 1}"/><text class="t" x="${x}" y="${y}" text-anchor="middle" dominant-baseline="central" style="font-size:18px;font-weight:600">${e[1]}</text>${v > 1 ? `<text class="tm" x="${x + 56}" y="${y - 12}" style="fill:var(--red)">×${v}</text>` : ''}</g>`;
+  });
+  $('#rcSvg').innerHTML = s;
+}
+function rcDraw() {
+  const { its, error } = rcBuild(), last = its.length - 1 + (error ? 1 : 0), i = RS.i;
+  const sql = RS.mode === 'down' ? RC_DOWN : rcUpSql(RS.guard);
+  const anchorLn = [2, 3, 4, 5, 6], recLn = RS.mode === 'down' ? [8, 9, 10, 11, 12] : [8, 9, 10, 11, 12, 13];
+  const finalLn = RS.mode === 'down' ? [14] : [15];
+  const isErr = error && i === last, isEnd = !error && i === last;
+  $('#rcCode').innerHTML = codeHTML(sql, i < 0 ? [] : i === 0 ? anchorLn : (isEnd || isErr) ? finalLn : recLn);
+  rcSvg(its, isErr ? its.length - 1 : i);
+  const shown = its.slice(0, Math.min(i, its.length - 1) + 1);
+  const rows = [], cls = [];
+  shown.forEach((it, k) => it.forEach(r => { rows.push([k, r.id, r.name, r.lvl, r.path]); cls.push(k === i ? 'hlC' : ''); }));
+  $('#rcTbl').innerHTML = i < 0 ? '<p class="note-s">No rows yet.</p>' : tbl(['iteration', 'emp_id', 'name', 'lvl', 'path'], rows, { cls: k => cls[k] });
+  let h, d, ins;
+  if (i < 0) { h = 'Ready'; d = RS.mode === 'down' ? 'Goal: list everyone under the CEO with their level and reporting path.' : "Goal: walk from Ian <b>up</b> to the top. The data has a bug: Meera (the CEO) was given Ian as her manager, which creates a cycle."; ins = 'Press <b>Run anchor</b>. Iteration 0 is the anchor query: it finds the starting row(s).'; }
+  else if (i === 0) { h = 'Iteration 0 · anchor'; d = `The anchor runs <b>once</b>. It returns ${its[0].length} row: ${its[0].map(r => r.name).join(', ')}. These rows become the "working table" for the next iteration.`; ins = '<b>The anchor fixes the column list and types.</b> That is why <code>path</code> is cast or built as a string here.'; }
+  else if (isErr) { h = `Iteration ${its.length}+ · ERROR`; d = `Without a guard, Ian → Hugo → Eli → Bella → Meera → Ian → … repeats forever. Each lap adds the same 5 people again (see ×N on the chart). Snowflake stops the query with an error once it hits its recursion limit (illustrative: the exact limit and message depend on your account settings).`; ins = '<b>Cycle detected the hard way.</b> Switch cycle protection ON: the path column remembers who has been visited, and the WHERE clause refuses to revisit them.'; }
+  else if (isEnd) { const total = its.reduce((s, it) => s + it.length, 0); h = `Iteration ${i} · no new rows → stop`; d = `The recursive member found <b>0 rows</b>, so recursion ends. The result is the UNION ALL of all iterations: <b>${total} rows</b>.${RS.mode === 'up' ? ' The guard blocked the step from Meera back to Ian, because /10/ was already in the path.' : ''}`; ins = RS.mode === 'down' ? `<b>${its.length - 1} iterations for ${its.length - 1} levels.</b> The depth was never hard-coded: the same query works for 5 levels or 50.` : '<b>Guard worked.</b> In production also add a depth limit (e.g. <code>AND c.lvl &lt; 50</code>) and a data-quality check that flags cycles.'; }
+  else { const prev = its[i - 1]; h = `Iteration ${i} · recursive member`; d = `The recursive member joins <code>employees</code> to <b>only the ${prev.length} row(s) from iteration ${i - 1}</b> (${prev.map(r => r.name).join(', ')}), not the whole result so far. It finds ${its[i].length} new row(s): ${its[i].map(r => r.name).join(', ')}.`; ins = `<b>Working table = previous iteration only.</b> This is why recursion doesn't re-find the same people at every step, unless the data has a cycle.`; }
+  $('#rcDesc').innerHTML = `<h4>${h}</h4><div style="font-size:14.5px;color:var(--ink2)">${d}</div>`;
+  $('#rcIns').innerHTML = ins;
+  $('#rcNext').textContent = i < 0 ? 'Run anchor' : 'Next iteration';
+  $('#rcNext').disabled = i >= last; $('#rcPrev').disabled = i < 0;
+  $('#rcGuardRow').style.display = RS.mode === 'up' ? '' : 'none';
+}
+$('#rcNext').onclick = () => { RS.i++; rcDraw(); };
+$('#rcPrev').onclick = () => { if (RS.i >= 0) RS.i--; rcDraw(); };
+$('#rcReset').onclick = () => { RS.i = -1; rcDraw(); };
+tabs('#rcMode', d => { RS.mode = d.v; RS.i = -1; rcDraw(); });
+tabs('#rcGuard', d => { RS.guard = d.v === '1'; RS.i = -1; rcDraw(); });
+rcDraw();
+
+/* ===== 05 grouping: ROLLUP / CUBE / SETS / PIVOT ===== */
+const GSQ = [['EAST', 'Laptop', 'Q1', 100], ['EAST', 'Laptop', 'Q2', 150], ['EAST', 'Phone', 'Q1', 80], ['EAST', 'Phone', 'Q2', 70], ['WEST', 'Laptop', 'Q1', 200], ['WEST', 'Laptop', 'Q2', 120], ['WEST', 'Phone', 'Q1', 60], ['WEST', 'Phone', 'Q2', 90]];
+const G_WIDE = [['EAST', 180, 220], ['NORTH', 50, null], ['WEST', 260, 210]];
+const G_SETS = { plain: [['r', 'p']], rollup: [['r', 'p'], ['r'], []], cube: [['r', 'p'], ['r'], ['p'], []], sets: [['r'], ['p'], []] };
+const G_SQL = {
+  plain: `SELECT region, product, SUM(amount) AS total\nFROM sales_q\nGROUP BY region, product\nORDER BY region, product;`,
+  rollup: `SELECT region, product, SUM(amount) AS total,\n       GROUPING(region) AS g_region,\n       GROUPING(product) AS g_product\nFROM sales_q\nGROUP BY ROLLUP (region, product)\nORDER BY region NULLS LAST, product NULLS LAST;`,
+  cube: `SELECT region, product, SUM(amount) AS total,\n       GROUPING(region) AS g_region,\n       GROUPING(product) AS g_product\nFROM sales_q\nGROUP BY CUBE (region, product)\nORDER BY region NULLS LAST, product NULLS LAST;`,
+  sets: `SELECT region, product, SUM(amount) AS total,\n       GROUPING(region) AS g_region,\n       GROUPING(product) AS g_product\nFROM sales_q\nGROUP BY GROUPING SETS ((region), (product), ())\nORDER BY region NULLS LAST, product NULLS LAST;`,
+  pivot: `SELECT *\nFROM (SELECT region, quarter, amount FROM sales_q)\nPIVOT (SUM(amount) FOR quarter IN ('Q1', 'Q2'))\n  AS p (region, q1, q2)\nORDER BY region;\n\n-- dynamic: FOR quarter IN (ANY ORDER BY quarter)`,
+  unpivot: `SELECT region, quarter, amount\nFROM region_q\nUNPIVOT (amount FOR quarter IN (q1, q2))\nORDER BY region, quarter;\n\n-- NULL cells are dropped by default`
+};
+const G_INS = {
+  plain: '<b>Plain GROUP BY: 4 rows, detail only.</b> To add region subtotals and a grand total you would need two more queries glued with UNION ALL.',
+  rollup: '<b>ROLLUP (region, product) = 3 grouping sets:</b> (region, product), (region), (). It follows the hierarchy left to right, so you get region subtotals but <i>no</i> product subtotals. Column order matters: ROLLUP(product, region) gives product subtotals instead.',
+  cube: '<b>CUBE = every combination: 2² = 4 grouping sets.</b> Region subtotals, product subtotals and the grand total. With n columns CUBE produces 2ⁿ sets, so it grows fast; use GROUPING SETS when you need only some of them.',
+  sets: '<b>GROUPING SETS = exactly what you list.</b> Here: per region, per product, and the grand total, but no region × product detail. ROLLUP and CUBE are just shorthands for particular lists of grouping sets.',
+  pivot: '<b>Rows → columns.</b> Each quarter value becomes a column. The subquery keeps only region, quarter and amount, so PIVOT groups by region alone. The <code>AS p (region, q1, q2)</code> alias renames the generated columns, which would otherwise be named after the quoted values.',
+  unpivot: "<b>Columns → rows.</b> Each (q1, q2) column becomes a row with the column name in <code>quarter</code>. NORTH's NULL Q2 cell disappears: UNPIVOT excludes NULLs by default (newer Snowflake releases offer an INCLUDE NULLS option; check the docs for your version)."
+};
+function gDraw(m) {
+  const sql = G_SQL[m];
+  $('#gSql').innerHTML = sql.split('\n').map(hlLine).join('\n');
+  if (m === 'unpivot') {
+    $('#gInCap').textContent = 'INPUT · REGION_Q (wide)';
+    $('#gIn').innerHTML = tbl(['region', 'q1', 'q2'], G_WIDE);
+    const out = [];
+    G_WIDE.forEach(r => { if (r[1] !== null) out.push([r[0], 'Q1', r[1]]); if (r[2] !== null) out.push([r[0], 'Q2', r[2]]); });
+    $('#gOut').innerHTML = tbl(['region', 'quarter', 'amount'], out);
+  } else {
+    $('#gInCap').textContent = 'INPUT · SALES_Q';
+    $('#gIn').innerHTML = tbl(['region', 'product', 'quarter', 'amount'], GSQ);
+    if (m === 'pivot') {
+      const regs = [...new Set(GSQ.map(r => r[0]))];
+      $('#gOut').innerHTML = tbl(['region', 'q1', 'q2'], regs.map(rg => [rg, ...['Q1', 'Q2'].map(q => GSQ.filter(r => r[0] === rg && r[2] === q).reduce((s, r) => s + r[3], 0))]));
+    } else {
+      const out = [];
+      G_SETS[m].forEach(set => {
+        const keys = {};
+        GSQ.forEach(r => { const k = (set.includes('r') ? r[0] : '∅') + '|' + (set.includes('p') ? r[1] : '∅'); keys[k] = (keys[k] || 0) + r[3]; });
+        Object.entries(keys).forEach(([k, v]) => { const [rg, pr] = k.split('|'); out.push([rg === '∅' ? null : rg, pr === '∅' ? null : pr, v, set.includes('r') ? 0 : 1, set.includes('p') ? 0 : 1]); });
+      });
+      const nk = v => v === null ? '~' : v;
+      out.sort((a, b) => nk(a[0]) < nk(b[0]) ? -1 : nk(a[0]) > nk(b[0]) ? 1 : nk(a[1]) < nk(b[1]) ? -1 : nk(a[1]) > nk(b[1]) ? 1 : 0);
+      const plain = m === 'plain';
+      $('#gOut').innerHTML = tbl(plain ? ['region', 'product', 'total'] : ['region', 'product', 'total', 'g_region', 'g_product'], out.map(r => plain ? r.slice(0, 3) : r), {
+        newc: plain ? [] : [3, 4], cls: (i, r) => r[0] === null && r[1] === null ? 'hlA' : (r[0] === null || r[1] === null) ? 'hlB' : ''
+      });
+    }
+  }
+  $('#gIns').innerHTML = G_INS[m];
+}
+tabs('#gMode', d => gDraw(d.v));
+gDraw('plain');
+
+/* ===== 06 NOT IN + NULL trap ===== */
+const NI_C = [[1, 'Asha'], [2, 'Ben'], [3, 'Chen'], [4, 'Dev'], [5, 'Eva'], [6, 'Farah']];
+const NI_O = [[101, 1], [102, 1], [103, 3], [104, 5]];
+const NS = { nul: false, sel: 2 };
+function niDraw() {
+  const ords = NS.nul ? [...NI_O, [105, null]] : NI_O;
+  const ids = ords.map(o => o[1]);
+  $('#niC').innerHTML = tbl(['id', 'name'], NI_C, { click: true, cls: (i, r) => r[0] === NS.sel ? 'cur' : '' });
+  $$('#niC tr.click').forEach(tr => tr.onclick = () => { NS.sel = NI_C[+tr.dataset.i][0]; niDraw(); });
+  $('#niO').innerHTML = tbl(['order_id', 'customer_id'], ords, { cls: (i, r) => r[1] === null ? 'hlB' : '' });
+  const never = NI_C.filter(c => !ids.includes(c[0]));
+  const notIn = NS.nul ? [] : never;
+  const box = (title, sql, rows, bad) => `<div><div class="tcap" style="color:${bad ? 'var(--red)' : 'var(--teal)'}">${title} · ${rows.length} rows</div><div class="sqlbox" style="font-size:12px;white-space:pre">${sql}</div>${rows.length ? tbl(['id', 'name'], rows) : '<p class="note-s" style="color:var(--red)">(empty result)</p>'}</div>`;
+  $('#niRes').innerHTML =
+    box('NOT IN', `WHERE c.id NOT IN (\n  SELECT customer_id\n  FROM orders)`, notIn, NS.nul) +
+    box('NOT EXISTS', `WHERE NOT EXISTS (\n  SELECT 1 FROM orders o\n  WHERE o.customer_id = c.id)`, never, false) +
+    box('LEFT JOIN … IS NULL', `LEFT JOIN orders o\n  ON o.customer_id = c.id\nWHERE o.order_id IS NULL`, never, false);
+  const x = NS.sel, parts = ids.map(v => `${x} <> ${v === null ? 'NULL' : v}`), vals = ids.map(v => v === null ? 'UNKNOWN' : (x !== v ? 'TRUE' : 'FALSE'));
+  const res = vals.includes('FALSE') ? 'FALSE' : vals.includes('UNKNOWN') ? 'UNKNOWN' : 'TRUE';
+  $('#niTrace').textContent = `${x} NOT IN (${ids.map(v => v === null ? 'NULL' : v).join(', ')})\n= ${parts.join(' AND ')}\n= ${vals.join(' AND ')}\n= ${res}  →  ${res === 'TRUE' ? 'row KEPT' : 'row FILTERED OUT'}`;
+  $('#niIns').innerHTML = NS.nul
+    ? '<b>One NULL wipes out NOT IN.</b> <code>x NOT IN (…, NULL)</code> expands to <code>… AND x &lt;&gt; NULL</code>, and any comparison with NULL is UNKNOWN. TRUE AND UNKNOWN = UNKNOWN, and WHERE keeps only TRUE. So NOT IN returns nothing, silently. NOT EXISTS and LEFT JOIN … IS NULL still return Ben, Dev and Farah.'
+    : '<b>All three agree when there are no NULLs.</b> Now switch on the NULL customer_id (an order from a guest checkout, say) and watch NOT IN collapse. Click a customer to trace the three-valued logic.';
+}
+tabs('#niNull', d => { NS.nul = d.v === '1'; niDraw(); });
+niDraw();
+
+/* ===== 06 ASOF JOIN ===== */
+const AQ = [['AAPL', '09:30:00', 189.10], ['AAPL', '09:30:05', 189.20], ['AAPL', '09:30:12', 189.15], ['AAPL', '09:30:20', 189.40], ['MSFT', '09:30:02', 410.00], ['MSFT', '09:30:09', 410.40]];
+const AT = [['T1', 'AAPL', '09:30:03', 100], ['T2', 'AAPL', '09:30:12', 50], ['T3', 'MSFT', '09:30:01', 200], ['T4', 'MSFT', '09:30:10', 80], ['T5', 'AAPL', '09:30:25', 30]];
+const sec = t => +t.slice(-2);
+const AS_TXT = { ge: 't.trade_ts >= q.quote_ts', gt: 't.trade_ts > q.quote_ts', le: 't.trade_ts <= q.quote_ts' };
+function asMatch(t, c) {
+  const qs = AQ.filter(q => q[0] === t[1] && (c === 'ge' ? sec(q[1]) <= sec(t[2]) : c === 'gt' ? sec(q[1]) < sec(t[2]) : sec(q[1]) >= sec(t[2])));
+  if (!qs.length) return null;
+  return qs.reduce((b, q) => (c === 'le' ? sec(q[1]) < sec(b[1]) : sec(q[1]) > sec(b[1])) ? q : b);
+}
+function asDraw(c) {
+  $('#asSql').innerHTML = `SELECT t.trade_id, t.symbol, t.trade_ts, t.qty, q.quote_ts, q.price\nFROM trades t\nASOF JOIN quotes q\n  MATCH_CONDITION (${AS_TXT[c]})\n  ON t.symbol = q.symbol\nORDER BY t.trade_id;`.split('\n').map(hlLine).join('\n');
+  const X = s => 70 + s * 22.5, lanes = { AAPL: 60, MSFT: 140 };
+  let s = '';
+  Object.entries(lanes).forEach(([k, y]) => { s += `<rect class="lane" x="60" y="${y - 26}" width="600" height="52" rx="8"/><text class="th" x="12" y="${y}" dominant-baseline="central" style="font-size:12px">${k}</text>`; });
+  for (let t = 0; t <= 25; t += 5) s += `<line class="gl" x1="${X(t)}" y1="30" x2="${X(t)}" y2="170"/><text class="tm" x="${X(t)}" y="184" text-anchor="middle">09:30:${String(t).padStart(2, '0')}</text>`;
+  AT.forEach(t => { const m = asMatch(t, c); if (m) s += `<line x1="${X(sec(t[2]))}" y1="${lanes[t[1]] + 10}" x2="${X(sec(m[1]))}" y2="${lanes[t[1]] - 10}" stroke="var(--teal)" stroke-width="2.4"/>`; });
+  AQ.forEach(q => { s += `<circle cx="${X(sec(q[1]))}" cy="${lanes[q[0]] - 12}" r="6" fill="var(--ice)"/><text class="tm" x="${X(sec(q[1]))}" y="${lanes[q[0]] - 21}" text-anchor="middle">${q[2].toFixed(2)}</text>`; });
+  AT.forEach(t => { const x = X(sec(t[2])), y = lanes[t[1]] + 12; s += `<path d="M${x} ${y - 6} L${x + 6} ${y} L${x} ${y + 6} L${x - 6} ${y} Z" fill="var(--amber)"/><text class="tm" x="${x}" y="${y + 18}" text-anchor="middle">${t[0]}</text>`; });
+  $('#asSvg').innerHTML = s;
+  $('#asQ').innerHTML = tbl(['symbol', 'quote_ts', 'price'], AQ.map(q => [q[0], q[1], q[2].toFixed(2)]));
+  const out = AT.map(t => { const m = asMatch(t, c); return [t[0], t[1], t[2], t[3], m ? m[1] : null, m ? m[2].toFixed(2) : null]; });
+  $('#asOut').innerHTML = tbl(['trade_id', 'symbol', 'trade_ts', 'qty', 'quote_ts', 'price'], out, { cls: (i, r) => r[4] === null ? 'hlB' : '' });
+  $('#asIns').innerHTML = c === 'ge'
+    ? '<b>Latest quote at or before each trade.</b> T2 at 09:30:12 matches the quote at exactly 09:30:12 because the condition is <code>&gt;=</code>. T3 trades at 09:30:01, before any MSFT quote, so it keeps NULLs: ASOF JOIN is outer on the left side.'
+    : c === 'gt'
+      ? '<b>Strictly before.</b> T2 now ignores the quote stamped at exactly 09:30:12 and takes 09:30:05 instead. Choosing <code>&gt;</code> vs <code>&gt;=</code> is a business rule (can a quote and a trade share a timestamp?), so ask the interviewer.'
+      : '<b>Next quote at or after each trade.</b> Flipping the comparison looks forward in time. T5 at 09:30:25 has no later AAPL quote, so it gets NULLs. Forward matching is useful for "first response after a ticket was opened".';
+}
+tabs('#asCond', d => asDraw(d.v));
+asDraw('ge');
+</script>
+
+<script>
+/* ===== 07 MATCH_RECOGNIZE V-shape ===== */
+const MR_SETS = { a: [10, 9, 8, 9, 11, 12, 11, 10, 12, 13, 13, 12, 11, 12], b: [10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23], c: [20, 18, 19, 17, 15, 16, 18, 18, 17, 19, 21, 20, 22, 19] };
+let MRP = [...MR_SETS.a];
+const MS = { skip: 'last', rows: 'one' };
+const mrDay = i => '2024-04-' + String(i + 1).padStart(2, '0');
+function mrMatch(p) {
+  const out = []; let i = 0;
+  while (i < p.length - 2) {
+    let j = i + 1, d = 0, u = 0;
+    while (j < p.length && p[j] < p[j - 1]) { d++; j++; }
+    if (!d) { i++; continue; }
+    while (j < p.length && p[j] > p[j - 1]) { u++; j++; }
+    if (!u) { i++; continue; }
+    out.push({ s: i, b: i + d, e: j - 1 });
+    i = MS.skip === 'last' ? j - 1 : j;
+  }
+  return out;
+}
+const mrCls = (m, k) => k === m.s ? 'STRT' : k <= m.b ? 'DOWN' : 'UP';
+function mrDraw() {
+  const p = MRP, M = mrMatch(p), lo = Math.min(...p) - 1, hi = Math.max(...p) + 1;
+  const X = i => 50 + i * (600 / (p.length - 1)), Y = v => 195 - (v - lo) / (hi - lo) * 170;
+  let s = '';
+  for (let v = Math.ceil(lo); v <= hi; v += Math.max(1, Math.round((hi - lo) / 5))) s += `<line class="gl" x1="40" y1="${Y(v)}" x2="660" y2="${Y(v)}"/><text class="tm" x="34" y="${Y(v)}" text-anchor="end" dominant-baseline="central">${v}</text>`;
+  M.forEach((m, k) => { s += `<rect x="${X(m.s) - 8}" y="${14 + (k % 2) * 6}" width="${X(m.e) - X(m.s) + 16}" height="${186 - (k % 2) * 6}" rx="8" fill="var(--ice-s)" stroke="var(--ice)" stroke-width="1" opacity=".9"/><text class="tm" x="${(X(m.s) + X(m.e)) / 2}" y="${26 + (k % 2) * 6}" text-anchor="middle" style="fill:var(--ice)">match ${k + 1}</text>`; });
+  s += `<polyline points="${p.map((v, i) => X(i) + ',' + Y(v)).join(' ')}" fill="none" stroke="var(--ink2)" stroke-width="1.8"/>`;
+  p.forEach((v, i) => {
+    const ms = M.filter(m => i >= m.s && i <= m.e), c = ms.length ? mrCls(ms[ms.length - 1], i) : null;
+    const col = c === 'DOWN' ? 'var(--red)' : c === 'UP' ? 'var(--teal)' : c === 'STRT' ? 'var(--ink3)' : 'var(--card)';
+    s += `<g class="pt" data-i="${i}"><circle cx="${X(i)}" cy="${Y(v)}" r="15" fill="transparent"/><circle cx="${X(i)}" cy="${Y(v)}" r="${ms.length > 1 ? 9 : 7}" fill="${col}" stroke="${ms.length > 1 ? 'var(--amber)' : 'var(--ink3)'}" stroke-width="${ms.length > 1 ? 3 : 1}"/><text class="tm" x="${X(i)}" y="218" text-anchor="middle">${i + 1}</text></g>`;
+  });
+  $('#mrSvg').innerHTML = s;
+  $$('#mrSvg .pt').forEach(g => g.addEventListener('click', e => { const i = +g.dataset.i; MRP[i] = Math.max(1, MRP[i] + (e.shiftKey ? -1 : 1)); mrDraw(); }));
+  const one = MS.rows === 'one';
+  const sql = `SELECT ${one ? '*' : 'price_date, price, match_no, cls'}
+FROM stock_price
+MATCH_RECOGNIZE (
+  PARTITION BY symbol
+  ORDER BY price_date
+  MEASURES
+    MATCH_NUMBER()   AS match_no,
+${one ? `    FIRST(price_date) AS start_date,
+    LAST(price_date)  AS end_date,
+    COUNT(down.*)     AS days_down,
+    COUNT(up.*)       AS days_up
+  ONE ROW PER MATCH` : `    CLASSIFIER()     AS cls
+  ALL ROWS PER MATCH`}
+  AFTER MATCH ${MS.skip === 'last' ? 'SKIP TO LAST up' : 'SKIP PAST LAST ROW'}
+  PATTERN (strt down+ up+)
+  DEFINE
+    down AS price < LAG(price),
+    up   AS price > LAG(price)
+)
+ORDER BY match_no;`;
+  $('#mrSql').innerHTML = sql.split('\n').map(hlLine).join('\n');
+  if (one) {
+    $('#mrCap').textContent = `OUTPUT · ONE ROW PER MATCH · ${M.length} rows`;
+    $('#mrOut').innerHTML = M.length ? tbl(['match_no', 'start_date', 'end_date', 'days_down', 'days_up'], M.map((m, k) => [k + 1, mrDay(m.s), mrDay(m.e), m.b - m.s, m.e - m.b])) : '<p class="note-s">No rows: the pattern never matched.</p>';
+  } else {
+    const rows = [];
+    M.forEach((m, k) => { for (let i = m.s; i <= m.e; i++) rows.push([mrDay(i), p[i], k + 1, mrCls(m, i)]); });
+    $('#mrCap').textContent = `OUTPUT · ALL ROWS PER MATCH · ${rows.length} rows`;
+    $('#mrOut').innerHTML = rows.length ? tbl(['price_date', 'price', 'match_no', 'cls'], rows, { cls: (i, r) => r[3] === 'DOWN' ? 'hlB' : r[3] === 'UP' ? 'hlC' : '' }) : '<p class="note-s">No rows: the pattern never matched.</p>';
+  }
+  const shared = M.length > 1 && M.some((m, k) => k && m.s === M[k - 1].e);
+  $('#mrIns').innerHTML = !M.length
+    ? '<b>No match.</b> A steady climb never has a DOWN row, so <code>down+</code> (one or more) can never be satisfied. Click some points to create a dip.'
+    : `<b>${M.length} V-shape${M.length > 1 ? 's' : ''} found.</b> ${MS.skip === 'last' ? (shared ? 'With SKIP TO LAST up, the last UP row of one match is reused as the STRT row of the next (points with an amber ring belong to two matches), so a W-shape counts as two V\'s.' : 'With SKIP TO LAST up, a match may restart from its own last UP row.') : 'With SKIP PAST LAST ROW (the default), matching resumes after the last row of a match, so matches never share rows. Compare where match 2 starts with the other setting.'} ${one ? 'ONE ROW PER MATCH collapses each match into a summary row built from MEASURES.' : 'ALL ROWS PER MATCH returns every matched row with CLASSIFIER() telling you which symbol it matched.'}`;
+}
+tabs('#mrSet', d => { MRP = [...MR_SETS[d.v]]; mrDraw(); });
+tabs('#mrSkip', d => { MS.skip = d.v; mrDraw(); });
+tabs('#mrRows', d => { MS.rows = d.v; mrDraw(); });
+$('#mrRand').onclick = () => { let v = 15; MRP = MRP.map(() => { v = Math.max(3, v + Math.round(Math.random() * 6 - 3)); return v; }); mrDraw(); };
+mrDraw();
+
+/* ===== 07 sessionization ===== */
+const SS_EV = [0, 4, 11, 19, 47, 52, 95, 99, 104, 160, 171, 230];
+const SSW = { way: 'lag', gap: 30 };
+const hm = m => { const t = 9 * 60 + m; return String(Math.floor(t / 60)).padStart(2, '0') + ':' + String(t % 60).padStart(2, '0'); };
+const SS_COL = ['var(--ice)', 'var(--teal)', 'var(--amber)', 'var(--red)'];
+function ssDraw() {
+  const g = SSW.gap, sess = [];
+  SS_EV.forEach((m, i) => { if (!i || m - SS_EV[i - 1] > g) sess.push([m]); else sess[sess.length - 1].push(m); });
+  $('#ssGapV').textContent = g + ' min';
+  const X = m => 40 + m * 2.6;
+  let s = `<line x1="30" y1="60" x2="650" y2="60" stroke="var(--line2)"/>`;
+  for (let t = 0; t <= 240; t += 30) s += `<text class="tm" x="${X(t)}" y="108" text-anchor="middle">${hm(t)}</text><line class="gl" x1="${X(t)}" y1="40" x2="${X(t)}" y2="94"/>`;
+  sess.forEach((ss, k) => {
+    const c = SS_COL[k % 4];
+    s += `<rect x="${X(ss[0]) - 6}" y="44" width="${X(ss[ss.length - 1]) - X(ss[0]) + 12}" height="32" rx="8" fill="${c}" opacity=".18"/><text class="tm" x="${X(ss[0]) - 4}" y="38" style="fill:${c}">S${k + 1}</text>`;
+    ss.forEach(m => { s += `<circle cx="${X(m)}" cy="60" r="5.5" fill="${c}"/>`; });
+  });
+  SS_EV.forEach((m, i) => { if (i && m - SS_EV[i - 1] > g) s += `<text class="tm" x="${(X(m) + X(SS_EV[i - 1])) / 2}" y="88" text-anchor="middle" style="fill:var(--red)">${m - SS_EV[i - 1]}m</text>`; });
+  $('#ssSvg').innerHTML = s;
+  $('#ssOut').innerHTML = tbl(['session_no', 'session_start', 'session_end', 'events', 'minutes'], sess.map((ss, k) => [k + 1, hm(ss[0]), hm(ss[ss.length - 1]), ss.length, ss[ss.length - 1] - ss[0]]));
+  const sql = SSW.way === 'lag' ? `WITH flagged AS (
+  SELECT user_id, event_ts,
+         CASE WHEN DATEDIFF('minute',
+                LAG(event_ts) OVER (PARTITION BY user_id
+                                    ORDER BY event_ts),
+                event_ts) <= ${g}
+              THEN 0 ELSE 1 END AS is_new   -- first row: NULL → 1
+  FROM clicks
+)
+SELECT user_id, event_ts,
+       SUM(is_new) OVER (PARTITION BY user_id ORDER BY event_ts
+         ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW)
+         AS session_no
+FROM flagged;` : `SELECT *
+FROM clicks
+MATCH_RECOGNIZE (
+  PARTITION BY user_id
+  ORDER BY event_ts
+  MEASURES MATCH_NUMBER()  AS session_no,
+           FIRST(event_ts) AS session_start,
+           LAST(event_ts)  AS session_end,
+           COUNT(*)        AS events
+  ONE ROW PER MATCH
+  PATTERN (first_ev nxt*)
+  DEFINE nxt AS DATEDIFF('minute', LAG(event_ts), event_ts) <= ${g}
+);`;
+  $('#ssSql').innerHTML = sql.split('\n').map(hlLine).join('\n');
+  $('#ssIns').innerHTML = `<b>${sess.length} session${sess.length > 1 ? 's' : ''} with a ${g}-minute gap.</b> ` + (SSW.way === 'lag'
+    ? 'Pattern: flag a row as "new session" when the gap to the previous row is larger than the threshold (or there is no previous row), then a running SUM of the flags numbers the sessions. This "flag + running sum" trick also solves gaps-and-islands.'
+    : 'Pattern: a session is one row of any kind (<code>first_ev</code>) followed by zero or more rows that arrive within the gap (<code>nxt*</code>). The engine starts a new match as soon as a row breaks the DEFINE condition.');
+}
+$('#ssGap').oninput = e => { SSW.gap = +e.target.value; ssDraw(); };
+tabs('#ssWay', d => { SSW.way = d.v; ssDraw(); });
+ssDraw();
+
+/* ===== 08 problem bank ===== */
+const PB = [
+  { t: 'Remove duplicates', lv: 'Easy',
+    st: `A retrying pipeline loaded <code>raw_orders</code> twice, and some orders were also re-sent with corrected amounts. Return <b>exactly one row per order_id: the most recently loaded version</b>. Then make the cleanup permanent.`,
+    inp: [{ n: 'RAW_ORDERS', c: ['order_id', 'customer', 'amount', 'loaded_at'], r: [[101, 'Asha', 50, '2024-03-01 10:00'], [101, 'Asha', 50, '2024-03-01 10:05'], [102, 'Ben', 75, '2024-03-01 10:00'], [103, 'Chen', 20, '2024-03-01 10:00'], [103, 'Chen', 25, '2024-03-02 09:00'], [103, 'Chen', 25, '2024-03-02 09:00'], [104, 'Dev', 90, '2024-03-02 11:00'], [105, 'Eva', 40, '2024-03-02 12:00'], [105, 'Eva', 40, '2024-03-02 12:00']] }],
+    hint: `"One row per key, pick the best one" is always <b>ROW_NUMBER() + QUALIFY</b>. What should the partition be, and what order makes the row you want number 1? SELECT DISTINCT alone won't do: 103 has two <i>different</i> versions.`,
+    sql: `-- 1) Read-side dedup: latest load per order wins
+SELECT *
+FROM raw_orders
+QUALIFY ROW_NUMBER() OVER (
+          PARTITION BY order_id
+          ORDER BY loaded_at DESC) = 1;
+
+-- 2) Make it permanent: replace the table contents atomically
+INSERT OVERWRITE INTO raw_orders
+SELECT *
+FROM raw_orders
+QUALIFY ROW_NUMBER() OVER (PARTITION BY order_id
+                           ORDER BY loaded_at DESC) = 1;`,
+    steps: [`<code>PARTITION BY order_id</code> makes one group per order (5 groups).`, `<code>ORDER BY loaded_at DESC</code> puts the newest load first in each group, so it gets row number 1.`, `<code>QUALIFY … = 1</code> keeps only that row. For 103, the two identical 09:00 rows tie; ROW_NUMBER keeps exactly one of them (RANK would keep both).`, `Snowflake tables have no ROWID, so you can't DELETE "one of two identical rows". Instead rebuild the contents: <code>INSERT OVERWRITE</code> truncates and inserts in one transaction and keeps the table's grants and properties.`],
+    out: { c: ['order_id', 'customer', 'amount', 'loaded_at'], r: [[101, 'Asha', 50, '2024-03-01 10:05'], [102, 'Ben', 75, '2024-03-01 10:00'], [103, 'Chen', 25, '2024-03-02 09:00'], [104, 'Dev', 90, '2024-03-02 11:00'], [105, 'Eva', 40, '2024-03-02 12:00']] },
+    cx: `<b>Cost:</b> one hash-partition + sort by key: O(n log n), single pass. <b>Alternatives:</b> <code>SELECT DISTINCT *</code> removes only exact duplicates (wrong here for 101 and 103); <code>DELETE FROM t USING (SELECT order_id, MAX(loaded_at) mx …) d WHERE t.order_id = d.order_id AND t.loaded_at &lt; d.mx</code> works when versions differ but leaves exact copies. <b>Senior fix:</b> stop duplicates at the source: MERGE on the business key instead of INSERT, and add a tie-breaker (load_id) so the choice is deterministic.` },
+  { t: 'Nth highest salary', lv: 'Easy',
+    st: `Return the employee(s) with the <b>3rd highest distinct salary</b>. Also show how to return just the value, or NULL if there are fewer than 3 distinct salaries.`,
+    inp: [{ n: 'EMPLOYEES', c: ['emp_id', 'name', 'salary'], r: [[1, 'Ana', 150], [2, 'Raj', 150], [3, 'Sam', 140], [4, 'Li', 130], [5, 'Zoe', 125], [6, 'Ivy', 125], [7, 'Tom', 120], [8, 'Max', 100], [9, 'Ola', 90]] }],
+    hint: `Ana and Raj share the top salary. Which ranking function treats them as "one level" and doesn't leave a gap after them?`,
+    sql: `-- Everyone at the 3rd highest distinct salary
+SELECT emp_id, name, salary
+FROM employees
+QUALIFY DENSE_RANK() OVER (ORDER BY salary DESC) = 3;
+
+-- Just the value; NULL when fewer than 3 distinct salaries
+SELECT MAX(salary) AS third_highest
+FROM (SELECT DISTINCT salary
+      FROM employees
+      ORDER BY salary DESC
+      LIMIT 1 OFFSET 2);`,
+    steps: [`Distinct salaries in descending order: 150, 140, 130, 125, …`, `DENSE_RANK gives 150 → 1 (Ana and Raj), 140 → 2, 130 → 3. So rank 3 is Li.`, `With <b>RANK</b>, Sam (140) would get rank 3 because RANK skips after the tie (1, 1, 3); with <b>ROW_NUMBER</b> rank 3 is also Sam. Both are wrong for "3rd highest distinct".`, `The second query skips 2 distinct values and takes the next. Wrapping it in MAX() turns "no row" into a single NULL row, which is what most interviewers want for the edge case.`],
+    out: { c: ['emp_id', 'name', 'salary'], r: [[4, 'Li', 130]] },
+    cx: `<b>Cost:</b> one global sort, O(n log n). With no PARTITION BY the window runs as a single partition, which is fine for a salary table but slow on billions of rows (the LIMIT/OFFSET version can use a top-K sort). <b>Alternatives:</b> classic correlated subquery <code>WHERE 2 = (SELECT COUNT(DISTINCT salary) FROM employees e2 WHERE e2.salary &gt; e1.salary)</code>, which is O(n²); <code>NTH_VALUE</code>; per department, add <code>PARTITION BY dept</code>.` },
+  { t: 'Top-N per department', lv: 'Easy',
+    st: `Return the <b>two highest-paid employees in each department</b>. If employees tie, include all of them.`,
+    inp: [{ n: 'EMPLOYEES', c: ['dept', 'name', 'salary'], r: [['ENG', 'Ana', 150], ['ENG', 'Raj', 150], ['ENG', 'Li', 130], ['ENG', 'Tom', 120], ['DATA', 'Sam', 140], ['DATA', 'Zoe', 125], ['DATA', 'Ivy', 125], ['DATA', 'Max', 100], ['OPS', 'Ola', 90], ['OPS', 'Jon', 85]] }],
+    hint: `"Per department" → PARTITION BY dept. "Include ties" rules out ROW_NUMBER. RANK or DENSE_RANK? Ask what should happen to Li in ENG.`,
+    sql: `SELECT dept, name, salary,
+       RANK() OVER (PARTITION BY dept ORDER BY salary DESC) AS rnk
+FROM employees
+QUALIFY rnk <= 2
+ORDER BY dept, rnk, name;`,
+    steps: [`Each department is ranked independently by salary, highest first.`, `ENG: Ana and Raj tie at rank 1, so Li gets rank <b>3</b> (RANK skips) and is excluded. The "top 2" in ENG are already filled by the tie.`, `DATA: Sam is 1, Zoe and Ivy tie at 2, so all three are kept. "Top 2 with ties" can return more than 2 rows.`, `QUALIFY filters on the window alias; the final ORDER BY makes the output readable.`],
+    out: { c: ['dept', 'name', 'salary', 'rnk'], r: [['DATA', 'Sam', 140, 1], ['DATA', 'Ivy', 125, 2], ['DATA', 'Zoe', 125, 2], ['ENG', 'Ana', 150, 1], ['ENG', 'Raj', 150, 1], ['OPS', 'Ola', 90, 1], ['OPS', 'Jon', 85, 2]] },
+    cx: `<b>Cost:</b> partitions by dept run in parallel; each is sorted, O(n log n) overall. <b>Variants to mention:</b> exactly 2 rows → ROW_NUMBER with a tie-breaker; top 2 salary <i>levels</i> → DENSE_RANK (ENG would include Li). <b>Without QUALIFY</b> (other engines): compute the rank in a CTE and filter in the outer query.` },
+  { t: 'Gaps & islands: login streaks', lv: 'Medium',
+    st: `For each user, find every <b>streak of consecutive login days</b> with its start date, end date and length. A user can log in several times a day.`,
+    inp: [{ n: 'LOGINS', c: ['user_id', 'login_date'], r: [['u1', '2024-03-01'], ['u1', '2024-03-02'], ['u1', '2024-03-03'], ['u1', '2024-03-05'], ['u1', '2024-03-06'], ['u1', '2024-03-09'], ['u2', '2024-03-01'], ['u2', '2024-03-03'], ['u2', '2024-03-04'], ['u2', '2024-03-04'], ['u2', '2024-03-05']] }],
+    hint: `Number each user's days 1, 2, 3… with ROW_NUMBER. For consecutive days, the date and the row number both go up by 1, so <b>date − row_number</b> stays constant within a streak. Don't forget the duplicate day for u2.`,
+    sql: `WITH days AS (            -- exactly one row per user per day
+  SELECT DISTINCT user_id, login_date
+  FROM logins
+),
+grp AS (
+  SELECT user_id, login_date,
+         DATEADD('day',
+                 -ROW_NUMBER() OVER (PARTITION BY user_id
+                                     ORDER BY login_date),
+                 login_date) AS island_key
+  FROM days
+)
+SELECT user_id,
+       MIN(login_date) AS streak_start,
+       MAX(login_date) AS streak_end,
+       COUNT(*)        AS streak_days
+FROM grp
+GROUP BY user_id, island_key
+ORDER BY user_id, streak_start;`,
+    steps: [`<b>DISTINCT first.</b> u2 logged in twice on 03-04; without dedup the row numbers would advance twice on the same date and break the streak.`, `Subtract the row number from the date. Intermediate result:` + tbl(['user_id', 'login_date', 'rn', 'island_key'], [['u1', '03-01', 1, '02-29'], ['u1', '03-02', 2, '02-29'], ['u1', '03-03', 3, '02-29'], ['u1', '03-05', 4, '03-01'], ['u1', '03-06', 5, '03-01'], ['u1', '03-09', 6, '03-03'], ['u2', '03-01', 1, '02-29'], ['u2', '03-03', 2, '03-01'], ['u2', '03-04', 3, '03-01'], ['u2', '03-05', 4, '03-01']]), `The key itself is meaningless (2024 is a leap year, hence 02-29); what matters is that it's <b>constant inside a streak</b> and changes at every gap.`, `GROUP BY user_id, island_key collapses each streak into one row with MIN, MAX and COUNT.`],
+    out: { c: ['user_id', 'streak_start', 'streak_end', 'streak_days'], r: [['u1', '2024-03-01', '2024-03-03', 3], ['u1', '2024-03-05', '2024-03-06', 2], ['u1', '2024-03-09', '2024-03-09', 1], ['u2', '2024-03-01', '2024-03-01', 1], ['u2', '2024-03-03', '2024-03-05', 3]] },
+    cx: `<b>Cost:</b> one sort per user plus one aggregation: O(n log n). <b>Alternatives:</b> the "flag + running SUM" method (<code>IFF(DATEDIFF('day', LAG(d), d) = 1, 0, 1)</code> then SUM OVER) handles variants like "a gap of up to 2 days is allowed"; MATCH_RECOGNIZE with <code>PATTERN (a b*)</code>. <b>Follow-ups:</b> longest streak per user → wrap and <code>QUALIFY ROW_NUMBER() OVER (PARTITION BY user_id ORDER BY streak_days DESC) = 1</code>; current streak → filter <code>streak_end = CURRENT_DATE()</code>.` },
+  { t: 'Sessionization', lv: 'Medium',
+    st: `Split each user's clickstream into <b>sessions</b>: a new session starts when more than <b>30 minutes</b> pass since the user's previous event. Return one row per session with start, end and event count.`,
+    inp: [{ n: 'CLICKS', c: ['user_id', 'event_ts'], r: [['u1', '2024-03-01 09:00'], ['u1', '2024-03-01 09:10'], ['u1', '2024-03-01 09:35'], ['u1', '2024-03-01 10:20'], ['u1', '2024-03-01 10:25'], ['u1', '2024-03-01 11:30'], ['u2', '2024-03-01 09:05'], ['u2', '2024-03-01 09:50'], ['u2', '2024-03-01 09:55']] }],
+    hint: `Two steps: (1) LAG gives the previous event time, so you can flag "this row starts a new session"; (2) a running SUM of those flags turns into a session number. Then GROUP BY it.`,
+    sql: `WITH flagged AS (
+  SELECT user_id, event_ts,
+         CASE WHEN DATEDIFF('second',
+                LAG(event_ts) OVER (PARTITION BY user_id ORDER BY event_ts),
+                event_ts) <= 30 * 60
+              THEN 0 ELSE 1 END AS is_new_session
+  FROM clicks
+),
+numbered AS (
+  SELECT user_id, event_ts,
+         SUM(is_new_session) OVER (
+           PARTITION BY user_id ORDER BY event_ts
+           ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS session_no
+  FROM flagged
+)
+SELECT user_id, session_no,
+       MIN(event_ts) AS session_start,
+       MAX(event_ts) AS session_end,
+       COUNT(*)      AS events
+FROM numbered
+GROUP BY user_id, session_no
+ORDER BY user_id, session_no;`,
+    steps: [`LAG returns the previous event per user. For the first event it's NULL, so DATEDIFF is NULL, the CASE condition is not TRUE, and the row gets flag 1 (a new session). Good: NULL handling is deliberate here.`, `u1 gaps: 10, 25, <b>45</b>, 5, <b>65</b> minutes → flags 1, 0, 0, 1, 0, 1. u2: <b>45</b>, 5 → flags 1, 1, 0.`, `Running SUM of the flags: u1 → 1, 1, 1, 2, 2, 3; u2 → 1, 2, 2. That's the session number.`, `GROUP BY user_id, session_no gives one row per session. Comparing in seconds (≤ 1,800) avoids DATEDIFF's minute-boundary rounding.`],
+    out: { c: ['user_id', 'session_no', 'session_start', 'session_end', 'events'], r: [['u1', 1, '2024-03-01 09:00', '2024-03-01 09:35', 3], ['u1', 2, '2024-03-01 10:20', '2024-03-01 10:25', 2], ['u1', 3, '2024-03-01 11:30', '2024-03-01 11:30', 1], ['u2', 1, '2024-03-01 09:05', '2024-03-01 09:05', 1], ['u2', 2, '2024-03-01 09:50', '2024-03-01 09:55', 2]] },
+    cx: `<b>Cost:</b> two window passes that share the same PARTITION BY / ORDER BY, then an aggregate: O(n log n). <b>Alternative:</b> MATCH_RECOGNIZE with <code>PATTERN (first_ev nxt*)</code> (see Chapter 07). <b>Production angle:</b> sessions crossing midnight or late-arriving events mean incremental loads must re-process a lookback window (e.g. the last 2 hours), not just new rows.` },
+  { t: 'Running balance', lv: 'Easy',
+    st: `Show every transaction with the <b>account balance after it</b>. Deposits add, withdrawals subtract. Two transactions can happen on the same date.`,
+    inp: [{ n: 'TXNS', c: ['txn_id', 'acct', 'txn_date', 'type', 'amount'], r: [[1, 'A1', '2024-03-01', 'DEPOSIT', 500], [2, 'A1', '2024-03-03', 'WITHDRAW', 120], [3, 'A1', '2024-03-03', 'DEPOSIT', 50], [4, 'A1', '2024-03-07', 'WITHDRAW', 200], [5, 'A2', '2024-03-02', 'DEPOSIT', 1000], [6, 'A2', '2024-03-05', 'WITHDRAW', 300], [7, 'A2', '2024-03-06', 'WITHDRAW', 800]] }],
+    hint: `Turn each row into a signed amount, then use a running SUM per account. Think about the frame: what happens to txns 2 and 3, which share a date?`,
+    sql: `SELECT acct, txn_id, txn_date, type, amount,
+       SUM(IFF(type = 'DEPOSIT', amount, -amount)) OVER (
+         PARTITION BY acct
+         ORDER BY txn_date, txn_id
+         ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS balance
+FROM txns
+ORDER BY acct, txn_date, txn_id;`,
+    steps: [`<code>IFF(type = 'DEPOSIT', amount, -amount)</code> converts to signed amounts: +500, −120, +50, −200 …`, `PARTITION BY acct restarts the balance for every account.`, `<code>ORDER BY txn_date, txn_id</code> + <b>ROWS</b> frame gives a true row-by-row running total. With only <code>ORDER BY txn_date</code> and the default RANGE frame, txns 2 and 3 (same date) would both show 430, and the intermediate balance of 380 would vanish.`, `A2 ends at −100. A typical follow-up is "find the first transaction that overdraws each account": put this query in a CTE, then <code>WHERE balance &lt; 0 QUALIFY ROW_NUMBER() OVER (PARTITION BY acct ORDER BY txn_date, txn_id) = 1</code>.`],
+    out: { c: ['acct', 'txn_id', 'txn_date', 'type', 'amount', 'balance'], r: [['A1', 1, '2024-03-01', 'DEPOSIT', 500, 500], ['A1', 2, '2024-03-03', 'WITHDRAW', 120, 380], ['A1', 3, '2024-03-03', 'DEPOSIT', 50, 430], ['A1', 4, '2024-03-07', 'WITHDRAW', 200, 230], ['A2', 5, '2024-03-02', 'DEPOSIT', 1000, 1000], ['A2', 6, '2024-03-05', 'WITHDRAW', 300, 700], ['A2', 7, '2024-03-06', 'WITHDRAW', 800, -100]] },
+    cx: `<b>Cost:</b> one sort per account and a streaming sum: O(n log n). <b>Alternative:</b> self-join summing all earlier rows (<code>t2.txn_id &lt;= t1.txn_id</code>) is O(n²) per account: mention it only to reject it. <b>At scale:</b> store a daily closing balance and add only new transactions, instead of re-summing years of history every run.` },
+  { t: 'Year-over-year growth', lv: 'Easy',
+    st: `For each region, show revenue, the previous year's revenue and the <b>YoY growth %</b> (1 decimal). Handle a year with zero revenue safely.`,
+    inp: [{ n: 'YEARLY_REVENUE', c: ['region', 'year', 'revenue'], r: [['EAST', 2021, 100], ['EAST', 2022, 130], ['EAST', 2023, 117], ['EAST', 2024, 150], ['WEST', 2021, 80], ['WEST', 2022, 0], ['WEST', 2023, 60], ['WEST', 2024, 90]] }],
+    hint: `LAG(revenue) per region ordered by year gives last year's value. Dividing by zero raises an error in Snowflake; how do you turn the divisor into NULL instead?`,
+    sql: `SELECT region, year, revenue,
+       LAG(revenue) OVER (PARTITION BY region ORDER BY year) AS prev_revenue,
+       ROUND(100 * (revenue - prev_revenue)
+                 / NULLIF(prev_revenue, 0), 1)                AS yoy_pct
+FROM yearly_revenue
+ORDER BY region, year;`,
+    steps: [`LAG looks one row back within the region. The first year has no previous row, so prev_revenue and yoy_pct are NULL.`, `Snowflake lets you reuse the alias <code>prev_revenue</code> later in the same SELECT list (a Snowflake convenience; in other engines repeat the LAG expression).`, `EAST 2024: (150 − 117) / 117 = 28.2%. WEST 2022: (0 − 80) / 80 = −100%.`, `WEST 2023 divides by 0. <code>NULLIF(prev_revenue, 0)</code> turns the divisor into NULL, so the result is NULL instead of a division-by-zero error. (Snowflake also has <code>DIV0</code> and <code>DIV0NULL</code>, which return 0.)`],
+    out: { c: ['region', 'year', 'revenue', 'prev_revenue', 'yoy_pct'], r: [['EAST', 2021, 100, null, null], ['EAST', 2022, 130, 100, '30.0'], ['EAST', 2023, 117, 130, '-10.0'], ['EAST', 2024, 150, 117, '28.2'], ['WEST', 2021, 80, null, null], ['WEST', 2022, 0, 80, '-100.0'], ['WEST', 2023, 60, 0, null], ['WEST', 2024, 90, 60, '50.0']] },
+    cx: `<b>Cost:</b> one sort per region. <b>The big trap: missing years.</b> If 2023 is missing, LAG silently compares 2024 with 2022. Safer: self-join <code>ON cur.region = prev.region AND prev.year = cur.year - 1</code>, or build a year/date spine first. Monthly YoY with <code>LAG(rev, 12)</code> has the same problem. Also discuss whether 0 → 60 should be NULL, "n/a" or +∞ for the business.` },
+  { t: 'Bought every product (division)', lv: 'Medium',
+    st: `Find the customers who have bought <b>every product in the current catalog</b>. Purchases may contain repeats and products that are no longer in the catalog.`,
+    inp: [{ n: 'PRODUCTS', c: ['product_id', 'name'], r: [['P1', 'Laptop'], ['P2', 'Phone'], ['P3', 'Tablet']] }, { n: 'PURCHASES', c: ['customer', 'product_id'], r: [['Asha', 'P1'], ['Asha', 'P2'], ['Asha', 'P3'], ['Asha', 'P1'], ['Ben', 'P1'], ['Ben', 'P2'], ['Ben', 'P4'], ['Chen', 'P2'], ['Chen', 'P1'], ['Chen', 'P3'], ['Dev', 'P3']] }],
+    hint: `Count how many <b>distinct catalog products</b> each customer bought and compare with the catalog size. Watch Asha's repeat purchase and Ben's discontinued product P4.`,
+    sql: `SELECT p.customer
+FROM purchases p
+JOIN products pr
+  ON pr.product_id = p.product_id      -- ignore products not in the catalog
+GROUP BY p.customer
+HAVING COUNT(DISTINCT p.product_id) = (SELECT COUNT(*) FROM products)
+ORDER BY p.customer;`,
+    steps: [`The JOIN keeps only catalog products. Without it, Ben's P1, P2, P4 would count as 3 distinct products and he'd wrongly qualify.`, `<code>COUNT(DISTINCT …)</code> ignores Asha's second P1.`, `Distinct catalog products: Asha 3, Ben 2, Chen 3, Dev 1. The catalog has 3, so Asha and Chen qualify.`, `This is <b>relational division</b>: "customers ÷ products". Interviewers like it because it tests HAVING and set thinking rather than syntax.`],
+    out: { c: ['customer'], r: [['Asha'], ['Chen']] },
+    cx: `<b>Cost:</b> one join + one aggregation: O(n). <b>Alternative (double NOT EXISTS):</b> "there is no product this customer has not bought": <code>WHERE NOT EXISTS (SELECT 1 FROM products pr WHERE NOT EXISTS (SELECT 1 FROM purchases p WHERE p.customer = c.customer AND p.product_id = pr.product_id))</code>. It's correct even with an empty catalog (everyone qualifies), whereas the COUNT version needs that edge case discussed. Variant: "bought all products of category X" → filter products in both places.` },
+  { t: 'First & last purchase per customer', lv: 'Easy',
+    st: `For each customer, show the <b>first and last order date and product</b>, and the number of orders. Two orders can share a date; break ties by order_id.`,
+    inp: [{ n: 'ORDERS', c: ['order_id', 'customer', 'order_date', 'product'], r: [[1, 'Asha', '2024-01-05', 'Phone'], [2, 'Asha', '2024-02-10', 'Case'], [3, 'Asha', '2024-03-15', 'Laptop'], [4, 'Ben', '2024-01-20', 'Tablet'], [5, 'Ben', '2024-01-20', 'Pen'], [6, 'Ben', '2024-04-01', 'Phone'], [7, 'Chen', '2024-02-02', 'Laptop']] }],
+    hint: `Number each customer's orders twice: once oldest-first, once newest-first. Row 1 of each is what you need. Then fold them into one row per customer with conditional aggregation.`,
+    sql: `WITH ranked AS (
+  SELECT customer, order_date, product,
+         ROW_NUMBER() OVER (PARTITION BY customer
+                            ORDER BY order_date, order_id)           AS rn_first,
+         ROW_NUMBER() OVER (PARTITION BY customer
+                            ORDER BY order_date DESC, order_id DESC) AS rn_last
+  FROM orders
+)
+SELECT customer,
+       MAX(IFF(rn_first = 1, order_date, NULL)) AS first_date,
+       MAX(IFF(rn_first = 1, product, NULL))    AS first_product,
+       MAX(IFF(rn_last = 1, order_date, NULL))  AS last_date,
+       MAX(IFF(rn_last = 1, product, NULL))     AS last_product,
+       COUNT(*)                                 AS orders
+FROM ranked
+GROUP BY customer
+ORDER BY customer;`,
+    steps: [`Two ROW_NUMBERs with opposite orders mark the first (rn_first = 1) and last (rn_last = 1) order per customer. The order_id tie-breaker makes Ben's first order Tablet (id 4), deterministically.`, `<code>MAX(IFF(rn_first = 1, x, NULL))</code> picks the single non-NULL value per customer: conditional aggregation used as a "pivot".`, `Chen has one order, so it is both first and last.`, `COUNT(*) counts all orders in the group.`],
+    out: { c: ['customer', 'first_date', 'first_product', 'last_date', 'last_product', 'orders'], r: [['Asha', '2024-01-05', 'Phone', '2024-03-15', 'Laptop', 3], ['Ben', '2024-01-20', 'Tablet', '2024-04-01', 'Phone', 3], ['Chen', '2024-02-02', 'Laptop', '2024-02-02', 'Laptop', 1]] },
+    cx: `<b>Cost:</b> two sorts on the same partition, one aggregate. <b>Snowflake shortcut:</b> <code>MIN_BY(product, order_date)</code> / <code>MAX_BY(product, order_date)</code> return the product at the min/max date in a plain GROUP BY, which is shorter, but which row wins on a tied date isn't guaranteed. <b>Also valid:</b> <code>FIRST_VALUE(product) OVER (PARTITION BY customer ORDER BY order_date, order_id)</code> with SELECT DISTINCT; for LAST, remember the frame gotcha.` },
+  { t: 'Median & percentiles', lv: 'Medium',
+    st: `Per region, report the <b>median</b> delivery time, the 50th percentile as an actual observed value, the <b>90th percentile</b>, and the average. Explain why mean and median differ.`,
+    inp: [{ n: 'DELIVERIES', c: ['order_id', 'region', 'days'], r: [[1, 'EAST', 2], [2, 'EAST', 9], [3, 'WEST', 4], [4, 'EAST', 3], [5, 'WEST', 1], [6, 'EAST', 5], [7, 'WEST', 10], [8, 'EAST', 3], [9, 'WEST', 6]] }],
+    hint: `Snowflake has MEDIAN plus the ordered-set aggregates PERCENTILE_CONT (interpolates) and PERCENTILE_DISC (returns a real value), both written with <code>WITHIN GROUP (ORDER BY …)</code>.`,
+    sql: `SELECT region,
+       MEDIAN(days)                                      AS median_days,
+       PERCENTILE_DISC(0.5) WITHIN GROUP (ORDER BY days) AS p50_disc,
+       PERCENTILE_CONT(0.9) WITHIN GROUP (ORDER BY days) AS p90_days,
+       AVG(days)                                         AS avg_days
+FROM deliveries
+GROUP BY region
+ORDER BY region;`,
+    steps: [`EAST sorted: 2, 3, 3, 5, 9 (odd count) → median = middle value <b>3</b>. WEST sorted: 1, 4, 6, 10 (even) → median = (4 + 6) / 2 = <b>5</b>.`, `PERCENTILE_DISC(0.5) returns the first value whose cumulative share reaches 50%: WEST → 4 (2 of 4 rows). It never invents a value; CONT/MEDIAN can return 5, which no order actually took.`, `PERCENTILE_CONT(0.9) interpolates at position 1 + 0.9 × (n − 1). EAST: 4.6 → 5 + 0.6 × (9 − 5) = <b>7.4</b>. WEST: 3.7 → 6 + 0.7 × (10 − 6) = <b>8.8</b>.`, `EAST mean 4.4 vs median 3: one slow delivery (9 days) pulls the mean up. Medians and percentiles are robust to outliers, which is why SLAs use p90/p95.`],
+    out: { c: ['region', 'median_days', 'p50_disc', 'p90_days', 'avg_days'], r: [['EAST', 3, 3, 7.4, 4.4], ['WEST', 5, 4, 8.8, 5.25]] },
+    cx: `<b>Cost:</b> exact percentiles need every value of a group sorted (memory-heavy for huge groups). For big data, <code>APPROX_PERCENTILE(days, 0.9)</code> uses a compact sketch with a small error. <b>As a window:</b> <code>MEDIAN(days) OVER (PARTITION BY region)</code> attaches the median to every row (e.g. to flag orders slower than their region's median). <b>No MEDIAN function?</b> Use ROW_NUMBER and COUNT per group and average the middle one or two rows.` },
+  { t: 'Overlapping date ranges', lv: 'Medium',
+    st: `Find every pair of bookings for the <b>same room</b> whose stays overlap, and the overlapping period. Check-out day is free for the next guest (half-open interval [start, end)).`,
+    inp: [{ n: 'BOOKINGS', c: ['booking_id', 'room', 'start_date', 'end_date'], r: [['B1', 'R1', '2024-03-01', '2024-03-04'], ['B2', 'R1', '2024-03-03', '2024-03-06'], ['B3', 'R1', '2024-03-06', '2024-03-08'], ['B4', 'R1', '2024-03-07', '2024-03-10'], ['B5', 'R2', '2024-03-01', '2024-03-05'], ['B6', 'R2', '2024-03-02', '2024-03-03'], ['B7', 'R2', '2024-03-10', '2024-03-12']] }],
+    hint: `Two intervals overlap exactly when <b>each one starts before the other ends</b>: <code>a.start &lt; b.end AND b.start &lt; a.end</code>. Self-join on room, and avoid listing each pair twice.`,
+    sql: `SELECT a.room,
+       a.booking_id AS booking_a,
+       b.booking_id AS booking_b,
+       GREATEST(a.start_date, b.start_date) AS overlap_start,
+       LEAST(a.end_date, b.end_date)        AS overlap_end
+FROM bookings a
+JOIN bookings b
+  ON  a.room = b.room                 -- equality key: keeps the join hashable
+  AND a.booking_id < b.booking_id     -- each pair once, no self-pairs
+  AND a.start_date < b.end_date
+  AND b.start_date < a.end_date
+ORDER BY a.room, booking_a;`,
+    steps: [`The overlap test covers every case (partial overlap, one inside the other) with just two comparisons. Strict <code>&lt;</code> means touching ranges don't overlap: B2 ends 03-06 and B3 starts 03-06, so they're fine.`, `<code>a.booking_id &lt; b.booking_id</code> removes (B1, B1) self-pairs and the mirrored duplicate (B2, B1).`, `B6 lies entirely inside B5: still caught (03-01 &lt; 03-03 and 03-02 &lt; 03-05).`, `GREATEST of the starts and LEAST of the ends give the overlapping period.`],
+    out: { c: ['room', 'booking_a', 'booking_b', 'overlap_start', 'overlap_end'], r: [['R1', 'B1', 'B2', '2024-03-03', '2024-03-04'], ['R1', 'B3', 'B4', '2024-03-07', '2024-03-08'], ['R2', 'B5', 'B6', '2024-03-02', '2024-03-03']] },
+    cx: `<b>Cost:</b> a self-join is O(k²) within each room in the worst case; the equality on room keeps it from becoming a full cartesian product. <b>Faster detection:</b> sort by start and compare with the running max end: <code>MAX(end_date) OVER (PARTITION BY room ORDER BY start_date, booking_id ROWS BETWEEN UNBOUNDED PRECEDING AND 1 PRECEDING) &gt; start_date</code> flags overlaps in O(n log n). <b>Follow-up "merge overlapping ranges":</b> start a new island when start_date ≥ that running max end, number islands with a running SUM, then GROUP BY island (gaps-and-islands again).` }
+];
+const pbSeen = new Set();
+let pbI = 0;
+$('#pbTabs').innerHTML = PB.map((p, i) => `<button class="${i ? '' : 'on'}" data-i="${i}">P${String(i + 1).padStart(2, '0')} · ${p.t}</button>`).join('');
+tabs('#pbTabs', d => { pbI = +d.i; pbRender(); });
+function pbRender() {
+  const p = PB[pbI], lvc = p.lv === 'Easy' ? 'ok' : 'mid';
+  $('#pbBody').innerHTML = `<div class="row" style="margin-top:6px"><span class="badge ${lvc}">${p.lv.toUpperCase()}</span><span class="note-s">Problem ${pbI + 1} of ${PB.length}</span></div>
+    <div class="pb-h">P${String(pbI + 1).padStart(2, '0')} · ${p.t}</div>
+    <p>${p.st}</p>
+    <div class="cx" style="grid-template-columns:${p.inp.length > 1 ? '1fr 1.4fr' : '1fr'}">${p.inp.map(t => `<div><div class="tcap">INPUT · ${t.n}</div><div class="tw">${tbl(t.c, t.r)}</div></div>`).join('')}</div>
+    <div class="row" style="margin-top:12px"><button class="btn" id="pbHint">Show hint</button><button class="btn pri" id="pbSol">Show solution</button>${pbI < PB.length - 1 ? '<button class="btn" id="pbNextP">Next problem →</button>' : ''}</div>
+    <div class="hint" id="pbHintBox" style="display:none"><b>Hint.</b> ${p.hint}</div>
+    <div class="pb-sol" id="pbSolBox" style="display:none">
+      <div class="grid2" style="grid-template-columns:1.25fr 1fr">
+        <div><div class="tcap">SNOWFLAKE SQL</div><div class="code ro">${codeHTML(p.sql)}</div></div>
+        <div><div class="tcap">STEP BY STEP</div><ol>${p.steps.map(s => `<li>${s}</li>`).join('')}</ol></div>
+      </div>
+      <div class="tcap">OUTPUT (illustrative)</div><div class="tw">${tbl(p.out.c, p.out.r)}</div>
+      <div class="call pro" style="margin-top:12px"><b class="k">COMPLEXITY &amp; ALTERNATIVES</b><div>${p.cx}</div></div>
+    </div>`;
+  $('#pbHint').onclick = () => { const b = $('#pbHintBox'), on = b.style.display === 'none'; b.style.display = on ? '' : 'none'; $('#pbHint').textContent = on ? 'Hide hint' : 'Show hint'; };
+  $('#pbSol').onclick = () => { const b = $('#pbSolBox'), on = b.style.display === 'none'; b.style.display = on ? '' : 'none'; $('#pbSol').textContent = on ? 'Hide solution' : 'Show solution'; if (on) { pbSeen.add(pbI); $('#pbCount').textContent = `${pbSeen.size} / ${PB.length} solutions opened`; } };
+  const nx = $('#pbNextP'); if (nx) nx.onclick = () => { $$('#pbTabs button')[pbI + 1].click(); };
+}
+pbRender();
+</script>
+
+<script>
+/* ===== 09 SQL lab ===== */
+const SQL = [
+  { t: 'Window frames', l: [
+    [`-- Daily sales with running total, moving average, rank and share`, `A comment describing the goal. In an interview, writing the intent first helps the interviewer follow you.`],
+    [`SELECT region,`, `Start of the select list. region is the partition key for most windows below.`],
+    [`       sale_date,`, `The ordering column for running calculations.`],
+    [`       amount,`, `The value being summed, averaged and ranked. Window functions keep every detail row, so amount stays visible next to its context.`],
+    [`       SUM(amount) OVER (`, `A running total: SUM used as a window function because of OVER.`],
+    [`         PARTITION BY region`, `Restart the running total for every region.`],
+    [`         ORDER BY sale_date, sale_id`, `Accumulate in date order. sale_id is a unique tie-breaker so rows on the same date are always processed in the same order (deterministic results).`],
+    [`         ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS running_total,`, `Frame: from the first row of the partition up to this physical row. Writing ROWS explicitly avoids the RANGE default, where rows with the same date would share one value.`],
+    [`       AVG(amount) OVER (`, `A moving average, also a window aggregate.`],
+    [`         PARTITION BY region`, `Each region gets its own moving window.`],
+    [`         ORDER BY sale_date, sale_id`, `Same order as before, so the engine can reuse the sort.`],
+    [`         ROWS BETWEEN 6 PRECEDING AND CURRENT ROW)         AS moving_avg_7,`, `The current row plus the 6 before it = up to 7 rows. It counts rows, not calendar days: if days are missing, fill them with a date spine first.`],
+    [`       LAG(amount, 1, 0) OVER (PARTITION BY region ORDER BY sale_date, sale_id) AS prev_amount,`, `The previous row's amount within the region; the third argument returns 0 instead of NULL for the first row. LAG takes no frame.`],
+    [`       DENSE_RANK() OVER (PARTITION BY region ORDER BY amount DESC)            AS amount_rank,`, `Rank sales within each region by size, biggest first. Ties share a rank and no numbers are skipped.`],
+    [`       RATIO_TO_REPORT(amount) OVER (PARTITION BY region)                       AS share_of_region,`, `This row's amount divided by the region total: the share of total. No ORDER BY is allowed here; it always uses the whole partition.`],
+    [`       LAST_VALUE(amount) OVER (`, `The last amount of the region by date. This is the function with the famous frame gotcha.`],
+    [`         PARTITION BY region ORDER BY sale_date, sale_id`, `Defines what "last" means: the latest sale in the region.`],
+    [`         ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) AS last_amount`, `The whole partition as the frame. Without this, a frame ending at CURRENT ROW would make LAST_VALUE return the current row's own value.`],
+    [`FROM sales`, `The source table.`],
+    [`WHERE sale_date >= '2024-01-01'`, `Filter rows before any window is computed: fewer rows to sort, and Snowflake can prune micro-partitions by date. Note: this also changes the windows (the running total now starts on Jan 1).`],
+    [`ORDER BY region, sale_date;`, `Presentation order of the final result. Window ORDER BY clauses don't order the output.`]
+  ] },
+  { t: 'QUALIFY', l: [
+    [`-- Latest version of each customer (dedup before a MERGE)`, `Use case 1: deduplicate a staging table so a MERGE never sees two source rows for the same key (which would cause a nondeterministic-merge error).`],
+    [`SELECT *`, `Keep all columns. The window expression doesn't have to appear in the output.`],
+    [`FROM customer_raw`, `The raw, possibly duplicated staging table.`],
+    [`QUALIFY ROW_NUMBER() OVER (`, `QUALIFY filters on a window function, after it has been computed. ROW_NUMBER guarantees exactly one row per partition gets number 1.`],
+    [`          PARTITION BY cust_id`, `One group per business key.`],
+    [`          ORDER BY updated_at DESC, load_id DESC) = 1;`, `Newest version first; load_id breaks exact ties so the same row wins every time. Keep only row 1.`],
+    [`-- Top 3 products per region by revenue, ties included`, `Use case 2: top-N per group, combined with GROUP BY.`],
+    [`SELECT region, product, SUM(amount) AS revenue`, `Aggregate first: revenue per region and product.`],
+    [`FROM sales`, `Source table.`],
+    [`GROUP BY region, product`, `One row per (region, product). Windows and QUALIFY run after this grouping.`],
+    [`QUALIFY RANK() OVER (PARTITION BY region ORDER BY revenue DESC) <= 3;`, `Rank the grouped rows within each region and keep ranks 1 to 3. RANK keeps ties, so a region can return more than 3 rows. The alias revenue is usable here in Snowflake.`],
+    [`-- Orders more than twice the customer's average`, `Use case 3: QUALIFY with a window aggregate instead of a rank.`],
+    [`SELECT order_id, customer_id, amount`, `Detail columns of each order.`],
+    [`FROM orders`, `Source table.`],
+    [`QUALIFY amount > 2 * AVG(amount) OVER (PARTITION BY customer_id);`, `Compare each order with its own customer's average (no ORDER BY → the whole partition). This replaces a self-join or a join to a pre-aggregated CTE.`]
+  ] },
+  { t: 'Recursive CTE', l: [
+    [`WITH RECURSIVE org (emp_id, name, manager_id, lvl, path) AS (`, `Declare a recursive CTE named org with an explicit column list. In Snowflake the RECURSIVE keyword is optional but makes the intent clear.`],
+    [`  SELECT emp_id, name, manager_id, 1, '/' || name || '/'`, `Anchor member: runs once. Level 1, and a path string that starts with this person. The anchor determines the column types.`],
+    [`  FROM employees`, `Base table for the anchor.`],
+    [`  WHERE manager_id IS NULL`, `Start at the top of the hierarchy: employees without a manager.`],
+    [`  UNION ALL`, `Joins anchor and recursive results. It must be UNION ALL for a recursive CTE.`],
+    [`  SELECT e.emp_id, e.name, e.manager_id, o.lvl + 1,`, `Recursive member: for each person found in the previous iteration, find their direct reports one level deeper.`],
+    [`         o.path || e.name || '/'`, `Extend the path, e.g. /Meera/Arjun/Carlos/. Great for display, sorting and cycle detection.`],
+    [`  FROM employees e`, `The base table again, aliased e for the reports.`],
+    [`  JOIN org o`, `Self-reference: the CTE joins to itself. Each iteration sees only the rows produced by the previous one.`],
+    [`    ON e.manager_id = o.emp_id`, `A report's manager_id must equal an emp_id found in the previous level.`],
+    [`  WHERE o.lvl < 20`, `Depth guard: stop at 20 levels even if the data is broken.`],
+    [`    AND NOT CONTAINS(o.path, '/' || e.name || '/')`, `Cycle guard: don't revisit someone already on this path. In production use the unique emp_id in the path, because names can repeat.`],
+    [`)`, `End of the CTE definition. Recursion stops when an iteration returns zero rows.`],
+    [`SELECT REPEAT(' ', (lvl - 1) * 2) || name AS org_chart, lvl, path`, `Indent each name by its level to draw a text org chart.`],
+    [`FROM org`, `Read the full recursive result (all iterations combined).`],
+    [`ORDER BY path;`, `Sorting by path places every person directly under their manager: a depth-first tree order.`]
+  ] },
+  { t: 'ROLLUP', l: [
+    [`SELECT IFF(GROUPING(region) = 1, 'ALL REGIONS', region)   AS region_label,`, `When region was rolled up in this row (a subtotal), print a label. GROUPING() is safer than COALESCE: a real NULL region in the data would otherwise also be labelled 'ALL REGIONS'.`],
+    [`       IFF(GROUPING(product) = 1, 'ALL PRODUCTS', product) AS product_label,`, `Same for product.`],
+    [`       SUM(amount)                       AS revenue,`, `The measure, computed for every grouping set.`],
+    [`       COUNT_IF(status = 'RETURNED')     AS returns,`, `Conditional count in one pass: Snowflake shorthand for SUM(IFF(status = 'RETURNED', 1, 0)).`],
+    [`       GROUPING(region)                  AS g_region,`, `1 if region is aggregated away in this row, 0 if it is a real grouping value.`],
+    [`       GROUPING(product)                 AS g_product,`, `Same flag for product.`],
+    [`       GROUPING_ID(region, product)      AS g_level`, `A bit vector of the flags: 0 = detail, 1 = region subtotal, 3 = grand total. Handy for filtering or sorting levels.`],
+    [`FROM sales`, `Source table.`],
+    [`WHERE sale_date >= '2024-01-01'`, `Row filter before grouping.`],
+    [`GROUP BY ROLLUP (region, product)`, `Grouping sets (region, product), (region) and (): detail, subtotal per region, and the grand total, all in one scan.`],
+    [`ORDER BY g_region, region, g_product, product;`, `Output order isn't guaranteed, so sort explicitly: each region's details, then its subtotal; the grand total comes last.`]
+  ] },
+  { t: 'PIVOT', l: [
+    [`-- Static pivot: one column per quarter`, `Rows become columns. The list of values must be known in advance.`],
+    [`SELECT *`, `All columns produced by the pivot.`],
+    [`FROM (SELECT region, quarter, amount FROM sales_q)`, `Feed PIVOT only the grouping column, the pivot column and the value. Any extra column would become an implicit grouping column and split the rows.`],
+    [`PIVOT (SUM(amount) FOR quarter IN ('Q1', 'Q2', 'Q3', 'Q4')`, `Aggregate amount for each listed quarter value; each value becomes a column.`],
+    [`       DEFAULT ON NULL (0))`, `Replace empty cells (no rows for that quarter) with 0 instead of NULL.`],
+    [`  AS p (region, q1, q2, q3, q4)`, `Alias the output columns. Otherwise they are named after the quoted values, which is awkward to reference.`],
+    [`ORDER BY region;`, `Sort the result.`],
+    [`-- Dynamic pivot: columns come from the data`, `Snowflake can discover the pivot values at run time.`],
+    [`SELECT *`, `All output columns; their number depends on the data.`],
+    [`FROM (SELECT region, quarter, amount FROM sales_q)`, `Same narrow input as before.`],
+    [`PIVOT (SUM(amount) FOR quarter IN (ANY ORDER BY quarter))`, `ANY creates one column per distinct quarter value, ordered by quarter. A subquery (IN (SELECT …)) also works. The output schema changes when new values appear, so downstream consumers must cope.`],
+    [`ORDER BY region;`, `Sort the result.`],
+    [`-- Unpivot back to rows`, `The reverse operation: columns become rows.`],
+    [`SELECT region, quarter, amount`, `quarter will hold the source column name, amount its value.`],
+    [`FROM region_quarters`, `A wide table with q1 to q4 columns.`],
+    [`UNPIVOT (amount FOR quarter IN (q1, q2, q3, q4));`, `Each of the four columns produces one row per region. NULL cells are skipped by default.`]
+  ] },
+  { t: 'ASOF JOIN', l: [
+    [`SELECT t.trade_id,`, `One output row per trade.`],
+    [`       t.symbol,`, `Instrument being traded.`],
+    [`       t.trade_ts,`, `When the trade happened.`],
+    [`       t.price                        AS trade_price,`, `Executed price.`],
+    [`       q.quote_ts,`, `Timestamp of the quote that was in force at trade time.`],
+    [`       q.bid,`, `Best bid at that moment.`],
+    [`       q.ask,`, `Best ask at that moment.`],
+    [`       t.price - (q.bid + q.ask) / 2  AS slippage`, `Distance from the mid-price: a typical analytics metric that needs the "as of" quote.`],
+    [`FROM trades t`, `Left side: every trade is kept.`],
+    [`ASOF JOIN quotes q`, `For each trade, find at most one quote: the closest one in time that satisfies the match condition.`],
+    [`  MATCH_CONDITION (t.trade_ts >= q.quote_ts)`, `"The latest quote at or before the trade." One comparison operator (>=, >, <=, <) on the time columns.`],
+    [`  ON t.symbol = q.symbol`, `Equality keys: only compare quotes for the same symbol.`],
+    [`WHERE t.trade_ts >= '2024-06-03 09:30:00'`, `Ordinary filter on the result.`],
+    [`ORDER BY t.symbol, t.trade_ts;`, `Sort for presentation.`],
+    [`-- Pre-ASOF equivalent (works anywhere, usually slower)`, `What people wrote before ASOF JOIN existed.`],
+    [`SELECT t.trade_id, q.quote_ts, q.bid, q.ask`, `Same idea, fewer columns.`],
+    [`FROM trades t`, `Every trade.`],
+    [`LEFT JOIN quotes q`, `LEFT keeps trades with no earlier quote.`],
+    [`  ON q.symbol = t.symbol AND q.quote_ts <= t.trade_ts`, `Joins each trade to ALL earlier quotes of its symbol: potentially millions of pairs per trade on tick data.`],
+    [`QUALIFY ROW_NUMBER() OVER (PARTITION BY t.trade_id ORDER BY q.quote_ts DESC) = 1;`, `Then keeps only the latest one. Correct, but the intermediate join can be enormous; ASOF JOIN avoids building it.`]
+  ] },
+  { t: 'MATCH_RECOGNIZE', l: [
+    [`SELECT *`, `Return the measures defined below plus the partition column.`],
+    [`FROM login_events`, `Source: one row per login attempt (user_name, event_ts, status).`],
+    [`MATCH_RECOGNIZE (`, `Start pattern matching over ordered rows.`],
+    [`  PARTITION BY user_name`, `Look for the pattern separately for each user.`],
+    [`  ORDER BY event_ts`, `Patterns are sequences, so order matters: chronological.`],
+    [`  MEASURES`, `Columns to compute for each match.`],
+    [`    MATCH_NUMBER()  AS attempt_no,`, `Sequential number of the match within the partition (1, 2, 3…).`],
+    [`    FIRST(event_ts) AS first_fail_ts,`, `Timestamp of the first row in the match (the first failure).`],
+    [`    LAST(event_ts)  AS success_ts,`, `Timestamp of the last row in the match (the successful login).`],
+    [`    COUNT(fail.*)   AS failures`, `How many rows matched the fail symbol.`],
+    [`  ONE ROW PER MATCH`, `Collapse each match into one summary row. ALL ROWS PER MATCH would return every matched row instead.`],
+    [`  AFTER MATCH SKIP PAST LAST ROW`, `Resume searching after the end of a match, so matches never overlap (this is the default).`],
+    [`  PATTERN (fail{3,} ok)`, `The regular expression over symbols: three or more fail rows immediately followed by an ok row.`],
+    [`  DEFINE`, `Conditions that decide which symbol a row can match.`],
+    [`    fail AS status = 'FAILED',`, `A row is a fail if its status is FAILED.`],
+    [`    ok   AS status = 'SUCCESS'`, `A row is ok if the login succeeded.`],
+    [`)`, `End of MATCH_RECOGNIZE: the result behaves like a table.`],
+    [`WHERE DATEDIFF('minute', first_fail_ts, success_ts) <= 10;`, `Keep only bursts that happened within 10 minutes: a possible brute-force signal worth alerting on.`]
+  ] }
+];
+let sqlI = 0;
+function sqlShow(i) {
+  sqlI = i;
+  $$('#sqlTabs button').forEach((b, k) => b.classList.toggle('on', k === i));
+  $('#sqlCode').innerHTML = SQL[i].l.map(([l], k) => `<div data-k="${k}"><em>${k + 1}</em>${hlLine(l) || ' '}</div>`).join('');
+  $('#sqlExp').innerHTML = '<b class="h">CLICK A LINE</b>Each line is explained in plain English.';
+  $$('#sqlCode div').forEach(d => d.onclick = () => {
+    const e = SQL[sqlI].l[d.dataset.k][1]; if (!e) return;
+    $$('#sqlCode div').forEach(x => x.classList.remove('on')); d.classList.add('on');
+    $('#sqlExp').innerHTML = `<b class="h">LINE ${+d.dataset.k + 1}</b>${esc(e)}`;
+  });
+}
+$('#sqlTabs').innerHTML = SQL.map(s => `<button>${s.t}</button>`).join('');
+$$('#sqlTabs button').forEach((b, i) => b.onclick = () => sqlShow(i));
+sqlShow(0);
+
+/* ===== 10 Q&A ===== */
+const QA = [
+  ['Basics', 'b', `WHERE vs HAVING vs QUALIFY: what's the difference?`, `<p>They filter at different stages of the logical order. <b>WHERE</b> filters individual rows <i>before</i> grouping, so it can't use aggregates or window functions (and it's where pruning happens). <b>HAVING</b> filters <i>groups</i> after GROUP BY, so it can use aggregates: <code>HAVING SUM(amount) &gt; 1000</code>. <b>QUALIFY</b> filters rows <i>after window functions</i>: <code>QUALIFY ROW_NUMBER() OVER (PARTITION BY id ORDER BY ts DESC) = 1</code>. Rule of thumb: filter as early as possible, so row conditions always go in WHERE even if HAVING would also accept them.</p>`],
+  ['Basics', 't', `COUNT(*) vs COUNT(col) vs COUNT(DISTINCT col)?`, `<p><code>COUNT(*)</code> counts rows, NULLs included. <code>COUNT(col)</code> counts rows where col is <b>not NULL</b>. <code>COUNT(DISTINCT col)</code> counts distinct non-NULL values. So on 10 rows where email is NULL 3 times and has 2 duplicates, you get 10, 7 and 5. A classic bug: <code>COUNT(o.order_id)</code> after a LEFT JOIN correctly gives 0 for customers without orders, while <code>COUNT(*)</code> gives 1. In Snowflake, <code>COUNT(col1, col2)</code> skips rows where <i>any</i> argument is NULL, and <code>APPROX_COUNT_DISTINCT</code> (HyperLogLog) is a cheap estimate on huge data.</p>`],
+  ['Basics', 'b', `UNION vs UNION ALL?`, `<p><b>UNION ALL</b> simply appends the results. <b>UNION</b> appends and then removes duplicate rows, which needs an extra hash or sort over the whole result. Use UNION ALL by default (it's faster and keeps legitimate duplicates); use UNION only when you really need distinct rows. Both require the same number of columns with compatible types, matched <b>by position</b>, not by name (Snowflake also offers <code>UNION [ALL] BY NAME</code> to match by column name). Related set operators: INTERSECT and EXCEPT (alias MINUS).</p>`],
+  ['Basics', 't', `Explain NULL semantics. What does NULL = NULL return? How do aggregates treat NULLs?`, `<p>NULL means "unknown", so SQL uses three-valued logic: <code>NULL = NULL</code> is <b>NULL (unknown)</b>, not TRUE, and WHERE keeps only TRUE rows. Test with <code>IS NULL</code>, or use null-safe comparison: <code>a IS NOT DISTINCT FROM b</code> or Snowflake's <code>EQUAL_NULL(a, b)</code>. Aggregates skip NULLs: <code>AVG(x)</code> divides by the count of non-NULL values, and <code>SUM</code> over no non-NULL rows returns NULL, not 0 (wrap with COALESCE). In GROUP BY, all NULLs form one group. Sorting: by default Snowflake treats NULL as the highest value (NULLS LAST for ASC, NULLS FIRST for DESC; controlled by the DEFAULT_NULL_ORDERING parameter). TRUE OR NULL = TRUE, FALSE AND NULL = FALSE, which is why NOT IN breaks with NULLs.</p>`],
+  ['Basics', 't', `Why can you use a SELECT alias in WHERE in Snowflake but not in Postgres?`, `<p>Logically, aliases are created in the SELECT step, which runs after WHERE, GROUP BY and HAVING, so standard SQL engines reject them earlier. Snowflake resolves aliases early as a convenience, so <code>SELECT amount * 1.18 AS gross … WHERE gross &gt; 100</code> works, and you can even reuse an alias later in the same SELECT list. Caveats: if an alias has the same name as a real column, the column takes precedence in WHERE; and the code becomes non-portable. In a live round it's fine to use, but say that you know it's a Snowflake extension.</p>`],
+  ['Windows', 'b', `What's the difference between a window function and GROUP BY?`, `<p>GROUP BY <b>collapses</b> rows: one output row per group. A window function computes over a set of related rows but <b>returns one value per input row</b>, so details and context appear side by side (each order and its customer's total). Windows are evaluated after GROUP BY/HAVING, so you can even window over aggregates: <code>RANK() OVER (ORDER BY SUM(amount) DESC)</code>.</p>`],
+  ['Windows', 't', `ROWS vs RANGE, and what is the default frame?`, `<p><b>ROWS</b> counts physical rows (2 PRECEDING = the two rows before). <b>RANGE</b> works on values: all rows whose ORDER BY value equals the current row's (peers) are included together. In ANSI SQL, ORDER BY without a frame means <code>RANGE BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW</code>, so duplicates in the ORDER BY key get the same running total; no ORDER BY means the whole partition. That default is why LAST_VALUE often "returns the current row". Engines have differed on defaults for some functions, so the senior answer is: <b>always write the frame explicitly</b>, use ROWS for running totals and moving averages, and add a unique tie-breaker.</p>`],
+  ['Windows', 't', `ROW_NUMBER vs RANK vs DENSE_RANK: which for dedup, top-N, Nth highest?`, `<p>For scores 100, 90, 90, 80: ROW_NUMBER = 1, 2, 3, 4; RANK = 1, 2, 2, 4; DENSE_RANK = 1, 2, 2, 3. <b>Dedup</b> → ROW_NUMBER (exactly one row per key; RANK would keep tied duplicates). <b>Top-N with ties</b> → RANK. <b>Nth highest distinct value</b> → DENSE_RANK. ROW_NUMBER is non-deterministic on ties unless the ORDER BY includes a unique column, which can make pipelines produce different results on reruns.</p>`],
+  ['Windows', 's', `A running-total query over 2 billion rows is slow. What do you look at?`, `<p>Open the Query Profile: is the <code>WindowFunction</code>/<code>Sort</code> step spilling to local or remote disk? Main causes: (1) <b>no or low-cardinality PARTITION BY</b>, so one giant partition is processed by one worker; partition by account/day where the logic allows. (2) Too much input: filter in WHERE first, select fewer columns, <b>pre-aggregate</b> to the needed grain (daily totals instead of events). (3) Several windows with different ORDER BYs force several sorts; align them. (4) Recomputing history every run: make it <b>incremental</b>, storing yesterday's closing balance and adding today's rows (a dynamic table or stream + task). Only then consider a larger warehouse to stop the spilling.</p>`],
+  ['CTE', 'b', `CTE vs subquery vs temporary table vs view?`, `<p>A <b>CTE</b> and a <b>subquery</b> exist only inside one statement; a CTE is named, can be referenced several times, and reads top-down, so it's better for complex logic. The optimizer may compute a CTE once or inline it. A <b>temporary table</b> is physically stored for the session: use it when an expensive intermediate result is reused across <i>several statements</i> or you want to inspect it. A <b>view</b> is a saved query object reused across sessions and users (with access control). In interviews, CTEs with clearly named grains (<code>daily</code>, <code>ranked</code>, <code>final</code>) are the expected style.</p>`],
+  ['CTE', 't', `How does a recursive CTE execute, and how does it stop?`, `<p>It has an <b>anchor</b> member and a <b>recursive</b> member joined by UNION ALL. The anchor runs once. Then the recursive member runs repeatedly, each time joining the base table to <b>only the rows produced by the previous iteration</b>. When an iteration returns no rows, recursion stops and all iterations are combined. Snowflake also enforces a maximum recursion depth by default (adjustable through support), which turns infinite loops into errors. Protect yourself with a depth counter (<code>WHERE lvl &lt; n</code>) and a visited path (<code>NOT CONTAINS(path, id)</code> or an ARRAY of visited ids) so that cycles in dirty data are cut off.</p>`],
+  ['CTE', 's', `Return all direct and indirect reports of manager 42, with their depth and the reporting path.`, `<p>Recursive CTE: anchor <code>SELECT emp_id, name, 1 AS depth, '/' || emp_id || '/' AS path FROM employees WHERE manager_id = 42</code>; recursive member joins <code>employees e</code> to the CTE on <code>e.manager_id = r.emp_id</code>, with <code>depth + 1</code> and the path extended, plus depth and cycle guards. Mention alternatives: Snowflake's <code>CONNECT BY … START WITH manager_id = 42</code> with LEVEL and SYS_CONNECT_BY_PATH, and, for heavy repeated use, a pre-computed closure table (ancestor_id, descendant_id, depth) refreshed by a task so that lookups become simple joins.</p>`],
+  ['Grouping', 't', `ROLLUP vs CUBE vs GROUPING SETS, and why do you need GROUPING()?`, `<p>All three produce several aggregation levels in one query. <b>ROLLUP(a, b)</b> = sets (a, b), (a), () following a hierarchy. <b>CUBE(a, b)</b> = all 2ⁿ combinations: (a, b), (a), (b), (). <b>GROUPING SETS</b> = exactly the sets you list. In subtotal rows, the rolled-up columns are NULL, which is ambiguous when the data itself contains NULLs. <code>GROUPING(col)</code> returns 1 for "rolled up" and 0 for "real value", so use it for labels (<code>IFF(GROUPING(region) = 1, 'Total', region)</code>) and for sorting or filtering levels.</p>`],
+  ['Grouping', 't', `What are the pitfalls of PIVOT in Snowflake?`, `<p>(1) PIVOT <b>implicitly groups by every other column</b> of its input, so always pivot a narrow subquery (key, pivot column, value). (2) Static PIVOT needs the value list; <code>IN (ANY ORDER BY …)</code> or <code>IN (SELECT …)</code> make it dynamic, but then the output schema changes with the data and can break downstream views. (3) Missing combinations give NULL; use <code>DEFAULT ON NULL (0)</code>. (4) Generated column names are based on the quoted values, so alias them (<code>AS p (region, q1, q2)</code>). Conditional aggregation (<code>SUM(IFF(quarter = 'Q1', amount, 0))</code>) is the portable alternative and handles several measures at once.</p>`],
+  ['Joins', 't', `NOT IN vs NOT EXISTS: why can NOT IN return no rows?`, `<p><code>x NOT IN (1, 2, NULL)</code> means <code>x &lt;&gt; 1 AND x &lt;&gt; 2 AND x &lt;&gt; NULL</code>. The last comparison is UNKNOWN, so the whole expression is never TRUE and every row is filtered out: one NULL in the subquery empties the result. <b>NOT EXISTS</b> checks for matching rows, and NULLs simply never match, so it behaves as expected. Use NOT EXISTS (or LEFT JOIN … WHERE right.key IS NULL) for anti-joins, or add <code>WHERE col IS NOT NULL</code> inside a NOT IN subquery. IN/EXISTS (semi-joins) don't have this problem.</p>`],
+  ['Joins', 't', `What is an ASOF JOIN and when do you use it?`, `<p>An ASOF JOIN matches each left row with the <b>single closest</b> right row in time that satisfies a comparison: <code>FROM trades t ASOF JOIN quotes q MATCH_CONDITION (t.trade_ts &gt;= q.quote_ts) ON t.symbol = q.symbol</code> = "the latest quote at or before each trade". Unmatched left rows are kept with NULLs (outer behaviour). Uses: market data, IoT readings with the latest calibration, exchange rate at transaction time, the last known status of a ticket. It replaces the expensive "range join + ROW_NUMBER" workaround with a dedicated, single-pass operator.</p>`],
+  ['Joins', 's', `After a join, your revenue total is 3× too high. How do you diagnose it?`, `<p>A <b>fan-out join</b>: the join key isn't unique on one side, so rows are multiplied before SUM. Steps: check the grain of each input (<code>SELECT key, COUNT(*) … GROUP BY key HAVING COUNT(*) &gt; 1</code>); compare row counts before and after the join; look at the Join operator's output rows in the Query Profile. Fixes: aggregate each side to the join grain first, then join; use EXISTS for a pure filter; dedup the dimension (QUALIFY ROW_NUMBER() = 1). Avoid "fixing" it with DISTINCT or by dividing by a count: that hides the real problem.</p>`],
+  ['Patterns', 's', `Explain the gaps-and-islands technique.`, `<p>Goal: group consecutive values (days, ids) into runs. Deduplicate to one row per entity per value, then compute <code>value − ROW_NUMBER() OVER (PARTITION BY entity ORDER BY value)</code> (for dates: <code>DATEADD('day', -ROW_NUMBER() …, d)</code>). Inside a consecutive run, both increase by 1, so the difference is constant; at each gap it jumps. GROUP BY entity and that key gives start, end and length of each island. The other approach is "flag + running sum": flag a row when the gap to LAG(value) is larger than allowed, then a running SUM of flags numbers the islands, which handles fuzzy gaps (e.g. ≤ 2 days) and sessionization.</p>`],
+  ['Patterns', 't', `When would you use MATCH_RECOGNIZE instead of window functions?`, `<p>When the question is about a <b>sequence of conditions</b>, not just a neighbour comparison: "price falls for at least 2 days then rises", "3+ failed logins followed by a success", "view → cart → purchase in order". With LAG/LEAD you'd need many offsets and flags, and variable-length patterns become unreadable. MATCH_RECOGNIZE expresses them as a regex over symbols (<code>PATTERN (strt down+ up+)</code>) with conditions in DEFINE, and handles overlaps through AFTER MATCH SKIP. For simple cases (previous row, running totals) window functions are clearer and more widely known.</p>`],
+  ['Patterns', 's', `How do you approach a live SQL problem you've never seen?`, `<p>(1) <b>Restate and clarify</b>: output grain, ties, NULLs, duplicates, time zones, what "consecutive" or "active" means. (2) <b>Sketch the input and expected output</b> for 3 or 4 rows. (3) <b>Name the pattern</b>: rank within group, compare with neighbour, islands, division, interval overlap. (4) <b>Build with CTEs</b>, one step and one grain at a time, running each step if you can. (5) <b>Test edge cases</b> aloud: ties, single-row groups, empty groups, NULLs. (6) <b>Discuss cost and alternatives</b>: one pass vs self-join, partition sizes, what changes at 10 billion rows. Talking through steps 1 and 5 is often what separates a senior answer.</p>`]
+];
+const LV = { b: 'FUNDAMENTAL', t: 'TRICKY', s: 'SCENARIO' };
+function qa(f) { $('#qaList').innerHTML = QA.filter(q => f === 'all' || q[0] === f).map(([tp, l, q, a]) => `<details class="qa"><summary><span class="lv ${l}">${LV[l]}</span><span class="tp">${tp.toUpperCase()}</span>${q}</summary><div class="ans">${a}</div></details>`).join(''); }
+tabs('#qaTabs', d => qa(d.f));
+qa('all');
+
+/* ===== 11 quiz ===== */
+const QZ = [
+  [`Which clause does the database evaluate first, logically?`, [`SELECT`, `FROM`, `WHERE`, `ORDER BY`], 1, `FROM (with its JOINs) builds the row set first. Then WHERE, GROUP BY, HAVING, windows, QUALIFY, SELECT, DISTINCT, ORDER BY, LIMIT.`],
+  [`In Snowflake, how do you keep only rows where ROW_NUMBER() = 1 without a subquery?`, [`WHERE ROW_NUMBER() OVER (…) = 1`, `HAVING ROW_NUMBER() OVER (…) = 1`, `QUALIFY ROW_NUMBER() OVER (…) = 1`, `LIMIT 1 PER PARTITION`], 2, `QUALIFY filters after window functions are computed. WHERE and HAVING run before windows exist.`],
+  [`Scores are 100, 90, 90, 80 (ORDER BY score DESC). What does DENSE_RANK return for 80?`, [`3`, `4`, `2`, `1`], 0, `DENSE_RANK gives 1, 2, 2, 3: ties share a rank and no number is skipped. RANK would give 4.`],
+  [`SELECT * FROM customers WHERE id NOT IN (SELECT customer_id FROM orders). One order has customer_id = NULL. What happens?`, [`NULL is ignored and the query works normally`, `The query returns no rows`, `The query fails with an error`, `Only the customer with NULL id is returned`], 1, `x NOT IN (…, NULL) contains x <> NULL, which is UNKNOWN, so no row passes the filter. Use NOT EXISTS.`],
+  [`A column has 10 rows, 3 of them NULL. What does COUNT(col) return?`, [`10`, `3`, `7`, `NULL`], 2, `COUNT(col) counts only non-NULL values. COUNT(*) would return 10.`],
+  [`What is the practical difference between UNION and UNION ALL?`, [`UNION ALL removes duplicates`, `UNION removes duplicate rows, which costs an extra hash/sort`, `UNION matches columns by name`, `There is no difference in Snowflake`], 1, `UNION = UNION ALL + DISTINCT. Default to UNION ALL unless you need deduplication.`],
+  [`For the FIRST row of a partition, how many rows are in the frame ROWS BETWEEN 2 PRECEDING AND CURRENT ROW?`, [`3`, `2`, `1`, `0`], 2, `There are no preceding rows yet, so the frame contains only the current row. That's why moving averages "warm up" at the start of each partition.`],
+  [`In a ROLLUP result, GROUPING(region) = 1 means…`, [`region is NULL in the source data`, `this row is a subtotal or total where region was rolled up`, `region has only one distinct value`, `the row is a duplicate`], 1, `GROUPING() distinguishes rolled-up subtotal NULLs from real NULLs in the data.`],
+  [`How many grouping sets does GROUP BY CUBE(a, b, c) produce?`, [`3`, `4`, `6`, `8`], 3, `CUBE produces every combination: 2³ = 8. ROLLUP(a, b, c) would produce 4.`],
+  [`In each iteration of a recursive CTE, the recursive member joins against…`, [`the entire result accumulated so far`, `only the rows produced by the previous iteration`, `only the anchor rows`, `a random sample of rows`], 1, `Only the previous iteration's rows (the working table). Recursion stops when an iteration adds no rows.`],
+  [`An ASOF JOIN finds no earlier quote for a trade. What happens to that trade?`, [`It is dropped, like an inner join`, `It is kept, with NULLs in the quote columns`, `It matches the earliest quote instead`, `The query fails`], 1, `ASOF JOIN keeps every left-side row; unmatched rows get NULLs (outer behaviour).`],
+  [`Which expression identifies consecutive-day "islands" for a user?`, [`login_date − ROW_NUMBER() OVER (PARTITION BY user_id ORDER BY login_date)`, `RANK() OVER (ORDER BY user_id)`, `COUNT(*) OVER (PARTITION BY login_date)`, `LAG(user_id)`], 0, `Within a run of consecutive days, the date and the row number both increase by 1, so their difference is constant; it changes at every gap. Deduplicate days first.`],
+  [`LAST_VALUE(x) OVER (PARTITION BY p ORDER BY d) keeps returning the current row's value. The safest fix is…`, [`Use RANGE instead of ROWS`, `Add ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING`, `Remove PARTITION BY`, `Use DISTINCT`], 1, `A frame that ends at CURRENT ROW makes the "last" row the current one. Make the frame span the whole partition, or use FIRST_VALUE with ORDER BY d DESC.`],
+  [`In MATCH_RECOGNIZE, what does AFTER MATCH SKIP PAST LAST ROW do?`, [`Resumes after the last row of the match, so matches never overlap`, `Skips the last row of the table`, `Lets the last row of a match start the next match`, `Returns only the last row of each match`], 0, `It's the default: matching continues after the match ends. SKIP TO LAST <symbol> allows the last row to be reused as the start of the next match.`]
+];
+let qi = 0; const qAns = Array(QZ.length).fill(null);
+QZ.forEach((_, i) => { const s = document.createElement('span'); s.onclick = () => qShow(i); $('#qzBar').appendChild(s); });
+function qShow(i) {
+  qi = i; const [q, opts, ok, ex] = QZ[i], a = qAns[i];
+  $('#qzN').textContent = i + 1;
+  [...$('#qzBar').children].forEach((s, k) => { s.classList.toggle('on', qAns[k] !== null); s.style.outline = k === i ? '2px solid var(--ice)' : ''; });
+  $('#qzBody').innerHTML = `<h3 style="margin-top:6px">${esc(q)}</h3>` + opts.map((o, k) => `<button class="opt ${a !== null ? (k === ok ? 'ok' : (k === a ? 'bad' : '')) : ''}" data-k="${k}">${String.fromCharCode(65 + k)}. ${esc(o)}</button>`).join('') + (a !== null ? `<div class="qexp"><b>${a === ok ? 'Correct.' : 'Not quite.'}</b> ${esc(ex)}</div>` : '');
+  $$('#qzBody .opt').forEach(b => b.onclick = () => { if (qAns[qi] !== null) return; qAns[qi] = +b.dataset.k; qShow(qi); $('#qzS').textContent = qAns.filter((x, j) => x === QZ[j][2]).length; });
+  $('#qzNext').textContent = i === QZ.length - 1 ? 'See result' : 'Next';
+}
+function qResult() {
+  const s = qAns.filter((x, j) => x === QZ[j][2]).length;
+  const msg = s >= QZ.length - 2 ? 'Ready for the live SQL round. Now time yourself on the problem bank.' : s >= Math.round(QZ.length * 0.6) ? 'Solid. Replay the window visualizer and the NOT IN demo, then retry.' : 'Walk through the logical-order stepper, the window visualizer and the problem bank again, then retry.';
+  $('#qzBody').innerHTML = `<div class="score">${s} / ${QZ.length}</div><p style="margin-top:8px">${msg}</p><button class="btn pri" id="qzAgain" style="margin-top:10px">Retry quiz</button>`;
+  $('#qzAgain').onclick = () => { qAns.fill(null); $('#qzS').textContent = 0; qShow(0); };
+}
+$('#qzNext').onclick = () => qi === QZ.length - 1 ? qResult() : qShow(qi + 1);
+$('#qzPrev').onclick = () => qShow(Math.max(0, qi - 1));
+qShow(0);
+</script>
+<div class="toast" id="toast"></div>
+<script>
+(() => {
+  const t = document.getElementById('toast'); let h;
+  document.querySelectorAll('.road a.soon').forEach(a => a.addEventListener('click', e => {
+    e.preventDefault();
+    t.textContent = `Module ${a.dataset.m} isn't built yet. Ask for it in chat and it will be added here.`;
+    t.classList.add('on'); clearTimeout(h); h = setTimeout(() => t.classList.remove('on'), 2800);
+  }));
+})();
+</script>
+</body>
+</html>

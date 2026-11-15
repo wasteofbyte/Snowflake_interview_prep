@@ -1,0 +1,1548 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Snowflake Interview Lab · Module 08 · Security &amp; Governance</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/space-grotesk@5/300.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/space-grotesk@5/700.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/ibm-plex-sans@5/300.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/ibm-plex-sans@5/400.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/ibm-plex-sans@5/600.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/jetbrains-mono@5/400.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/jetbrains-mono@5/700.css">
+<style>
+:root{
+  --bg:#F2F6FA; --card:#FFFFFF; --card2:#E9EFF5; --ink:#0B1B2B; --ink2:#46596B; --ink3:#7F90A2;
+  --line:rgba(11,27,43,.12); --line2:rgba(11,27,43,.22);
+  --ice:#0A86C2; --ice-s:#DCEFF9; --amber:#B86F00; --amber-s:#FFF0D4; --teal:#0B8A6A; --teal-s:#DAF3EB;
+  --red:#C93C3C; --red-s:#FCE4E4; --grid:rgba(10,134,194,.06);
+  --f-head:"Space Grotesk",sans-serif; --f-body:"IBM Plex Sans",sans-serif; --f-mono:"JetBrains Mono",monospace;
+  --r:10px;
+}
+[data-theme="dark"]{
+  --bg:#08121D; --card:#0F1D2C; --card2:#16293B; --ink:#E5EDF5; --ink2:#9DB0C3; --ink3:#687D91;
+  --line:rgba(229,237,245,.10); --line2:rgba(229,237,245,.22);
+  --ice:#4CC3F0; --ice-s:rgba(76,195,240,.13); --amber:#FFB938; --amber-s:rgba(255,185,56,.13); --teal:#3FD3A8; --teal-s:rgba(63,211,168,.13);
+  --red:#FF7070; --red-s:rgba(255,112,112,.14); --grid:rgba(76,195,240,.05);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:var(--f-body);color:var(--ink);line-height:1.7;font-size:16px;
+  background:radial-gradient(1200px 600px at 85% -10%, var(--ice-s), transparent 60%),radial-gradient(900px 500px at -10% 30%, var(--teal-s), transparent 60%),
+  linear-gradient(var(--grid) 1px, transparent 1px) 0 0/32px 32px,linear-gradient(90deg, var(--grid) 1px, transparent 1px) 0 0/32px 32px,var(--bg);background-attachment:fixed}
+code,.mono{font-family:var(--f-mono);font-size:.88em}
+p code,li code,td code{background:var(--card2);padding:1px 6px;border-radius:5px}
+button{font-family:var(--f-body);cursor:pointer}
+.top{position:sticky;top:0;z-index:30;display:flex;align-items:center;gap:16px;padding:12px 28px;border-bottom:1px solid var(--line);background:color-mix(in srgb,var(--bg) 82%,transparent);backdrop-filter:saturate(1.4) blur(8px)}
+.brand{font-family:var(--f-mono);font-weight:700;letter-spacing:.06em;font-size:13px}.brand b{color:var(--ice)}
+.pill{font-family:var(--f-mono);font-size:12px;padding:3px 10px;border-radius:99px;border:1px solid var(--line2);color:var(--ink2)}
+.prog{flex:1;height:4px;background:var(--card2);border-radius:4px;overflow:hidden;max-width:360px;margin-left:auto}
+.prog i{display:block;height:100%;width:0;background:var(--ice);transition:width .4s}
+.prog-l{font-family:var(--f-mono);font-size:12px;color:var(--ink2);min-width:84px}
+.theme{border:1px solid var(--line2);background:var(--card);color:var(--ink);border-radius:8px;padding:5px 10px;font-size:13px}
+.wrap{display:grid;grid-template-columns:270px minmax(0,1fr);gap:36px;max-width:1340px;margin:0 auto;padding:28px}
+nav.side{position:sticky;top:76px;align-self:start;max-height:calc(100vh - 96px);overflow:auto;padding-right:6px}
+.side h4{font-family:var(--f-mono);font-size:11px;letter-spacing:.14em;color:var(--ink3);margin:6px 0 10px;font-weight:400}
+.side a{display:flex;gap:10px;align-items:baseline;padding:6px 10px;border-radius:8px;color:var(--ink2);text-decoration:none;font-size:14px;border-left:2px solid transparent}
+.side a span{font-family:var(--f-mono);font-size:11px;color:var(--ink3)}
+.side a:hover{background:var(--card)}
+.side a.act{color:var(--ink);background:var(--card);border-left-color:var(--ice);border-radius:0 8px 8px 0}
+.side a.seen span{color:var(--teal)}
+.road{margin-top:22px;border-top:1px solid var(--line);padding-top:14px}
+.road div{font-size:13px;color:var(--ink3);padding:3px 10px;display:flex;gap:8px}
+.road div.now{color:var(--ink);font-weight:600}.road div.done{color:var(--teal)}
+.road div em{font-style:normal;font-family:var(--f-mono);font-size:11px;min-width:20px}
+main{min-width:0}
+section{padding:36px 0 44px;border-bottom:1px dashed var(--line2);scroll-margin-top:70px}
+.eyebrow{font-family:var(--f-mono);font-size:12px;letter-spacing:.16em;color:var(--ice);margin-bottom:6px}
+h1{font-family:var(--f-head);font-weight:700;font-size:clamp(40px,6vw,76px);line-height:1;letter-spacing:-.03em}
+h1 .thin,h2 .thin{font-weight:300;color:var(--ink2)}
+h2{font-family:var(--f-head);font-weight:700;font-size:clamp(28px,3.4vw,40px);letter-spacing:-.02em;line-height:1.1;margin-bottom:12px}
+h3{font-family:var(--f-head);font-weight:700;font-size:20px;margin:26px 0 10px;letter-spacing:-.01em}
+.lead{font-size:18px;font-weight:300;color:var(--ink2);max-width:820px}
+p{margin:8px 0}
+ul.dots{margin:8px 0 8px 20px}ul.dots li{margin:4px 0}
+.wwh{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:20px 0}
+.wwh .box{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:18px 20px;position:relative;overflow:hidden}
+.wwh .box.how{grid-column:1/-1}
+.wwh .tag{font-family:var(--f-mono);font-size:11px;letter-spacing:.14em;display:inline-block;padding:2px 8px;border-radius:5px;margin-bottom:8px}
+.box.what .tag{background:var(--ice-s);color:var(--ice)}.box.why .tag{background:var(--amber-s);color:var(--amber)}.box.how .tag{background:var(--teal-s);color:var(--teal)}
+.box::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px}
+.box.what::before{background:var(--ice)}.box.why::before{background:var(--amber)}.box.how::before{background:var(--teal)}
+.call{display:flex;gap:14px;padding:14px 18px;border-radius:var(--r);margin:14px 0;border:1px solid var(--line)}
+.call b.k{font-family:var(--f-mono);font-size:11px;letter-spacing:.12em;white-space:nowrap;padding-top:3px}
+.call.analogy{background:var(--ice-s)}.call.analogy b.k{color:var(--ice)}
+.call.trap{background:var(--red-s)}.call.trap b.k{color:var(--red)}
+.call.pro{background:var(--teal-s)}.call.pro b.k{color:var(--teal)}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px;margin:18px 0}
+.panel-h{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+.panel-h .t{font-family:var(--f-mono);font-size:12px;letter-spacing:.12em;color:var(--ink2)}.panel-h .t b{color:var(--ink)}
+.btn{border:1px solid var(--line2);background:var(--card);color:var(--ink);padding:7px 14px;border-radius:8px;font-size:14px;transition:all .15s}
+.btn:hover{border-color:var(--ice);color:var(--ice)}
+.btn.pri{background:var(--ice);color:var(--card);border-color:var(--ice)}.btn.pri:hover{color:var(--card);filter:brightness(1.08)}
+.btn.warn{border-color:var(--red);color:var(--red)}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.ctl{display:flex;align-items:center;gap:12px;font-size:14px;color:var(--ink2);margin:8px 0}
+.ctl label{min-width:150px}.ctl input[type=range]{flex:1;accent-color:var(--ice)}
+.ctl .v{font-family:var(--f-mono);font-size:13px;color:var(--ink);min-width:110px;text-align:right}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:14px 0}
+.stat{background:var(--card2);border-radius:10px;padding:12px 14px}
+.stat .k{font-family:var(--f-mono);font-size:11px;color:var(--ink3);letter-spacing:.08em}
+.stat .n{font-family:var(--f-head);font-weight:700;font-size:28px;line-height:1.2}
+.stat .s{font-size:12px;color:var(--ink2)}
+.sqlbox{font-family:var(--f-mono);font-size:13px;background:var(--card2);border-radius:8px;padding:10px 14px;white-space:pre-wrap;color:var(--ink);border-left:3px solid var(--ice);overflow:auto}
+.insight{font-size:14px;padding:10px 14px;border-radius:8px;background:var(--amber-s);color:var(--ink);margin-top:10px}.insight b{color:var(--amber)}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+.tabs button{border:1px solid var(--line2);background:transparent;color:var(--ink2);padding:6px 12px;border-radius:99px;font-size:13px}
+.tabs button.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}.grid2>div{min-width:0}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.mini{background:var(--card2);border-radius:10px;padding:14px}
+.mini h5{font-family:var(--f-head);font-size:15px;margin-bottom:4px}
+.mini p{font-size:14px;color:var(--ink2);margin:0}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:13px;color:var(--ink2);margin:8px 0}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:-1px;margin-right:6px}
+table.t{width:100%;border-collapse:collapse;font-size:14px}
+table.t th,table.t td{padding:7px 10px;border-bottom:1px solid var(--line);text-align:left}
+table.t th{font-family:var(--f-mono);font-size:11px;letter-spacing:.1em;color:var(--ink3);font-weight:400}
+table.t td.m{font-family:var(--f-mono);font-size:12px}
+svg{width:100%;height:auto;display:block}
+svg .t{font-family:var(--f-body);font-size:14px;fill:var(--ink)}
+svg .ts{font-family:var(--f-body);font-size:12px;fill:var(--ink2)}
+svg .th{font-family:var(--f-head);font-size:14px;font-weight:700;fill:var(--ink)}
+svg .tm{font-family:var(--f-mono);font-size:11px;fill:var(--ink2)}
+.L-cs{fill:var(--amber-s);stroke:var(--amber)}.L-cp{fill:var(--ice-s);stroke:var(--ice)}.L-st{fill:var(--teal-s);stroke:var(--teal)}
+.neutral{fill:var(--card);stroke:var(--line2)}
+.arr{stroke:var(--ink3);stroke-width:1.2;fill:none}
+.fn{transition:opacity .3s}
+.flow.playing .fn{opacity:.25}
+.flow.playing .fn.on{opacity:1}
+.fn.on rect{stroke-width:2.4}
+.edge{stroke:var(--ink3);stroke-width:1.4;fill:none;transition:opacity .3s}
+.flow.playing .edge{opacity:.2}
+.flow.playing .edge.on{opacity:1;stroke:var(--ice);stroke-width:2.4;stroke-dasharray:7 5}
+@media (prefers-reduced-motion:no-preference){
+  .flow.playing .edge.on{animation:dash .8s linear infinite}
+  @keyframes dash{to{stroke-dashoffset:-24}}
+  .pulse{animation:pulse 1.2s ease-in-out infinite}
+  @keyframes pulse{0%,100%{opacity:.35}50%{opacity:1}}
+  .rise{animation:rise .5s both}
+  @keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+  .grow{transform-box:fill-box;transform-origin:left center;animation:grow .6s both}
+  @keyframes grow{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+}
+.stepbar{display:flex;gap:6px;margin:12px 0}
+.stepbar span{flex:1;height:4px;border-radius:4px;background:var(--card2);cursor:pointer}
+.stepbar span.on{background:var(--ice)}
+.stepdesc{min-height:120px;background:var(--card2);border-radius:10px;padding:14px 16px}
+.stepdesc h4{font-family:var(--f-head);font-size:17px;margin-bottom:6px}
+.stepdesc .two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.stepdesc .two div{font-size:14px;color:var(--ink2)}
+.stepdesc .two b.l{display:block;font-family:var(--f-mono);font-size:11px;letter-spacing:.12em;margin-bottom:4px}
+.stepdesc .two .you b.l{color:var(--ice)}.stepdesc .two .be b.l{color:var(--teal)}
+.term{background:#0A141F;color:#D6E2EE;font-family:var(--f-mono);font-size:12.5px;border-radius:12px;padding:14px 16px;height:340px;overflow:auto;border:1px solid #1E3247}
+.term div{white-space:pre;line-height:1.5}
+.term .tin{color:#FFB938}.term .terr{color:#FF7A7A}.term .tok{color:#3FD3A8}.term .tdim{color:#6F8499}
+.tbar{display:flex;gap:6px;align-items:center;margin-bottom:8px}
+.tbar i{width:10px;height:10px;border-radius:50%;display:inline-block}
+.tinput{display:flex;gap:8px;margin-top:8px}
+.tinput input{flex:1;font-family:var(--f-mono);font-size:13px;padding:8px 10px;border-radius:8px;border:1px solid var(--line2);background:var(--card);color:var(--ink)}
+.cmds{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}
+.cmds button{font-family:var(--f-mono);font-size:11.5px;border:1px solid var(--line2);background:var(--card);color:var(--ink);padding:5px 9px;border-radius:7px;text-align:left}
+.cmds button:hover{border-color:var(--amber);color:var(--amber)}
+.cmds button small{display:block;font-family:var(--f-body);font-size:11px;color:var(--ink3)}
+.explain{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 16px;min-height:90px;font-size:14.5px}
+.explain b.h{font-family:var(--f-mono);font-size:12px;color:var(--ice);letter-spacing:.1em;display:block;margin-bottom:4px}
+.gantt-l{font-family:var(--f-mono);font-size:11px;fill:var(--ink2)}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font-family:var(--f-mono);font-size:12px;border:1px solid var(--line2);padding:5px 10px;border-radius:99px;cursor:pointer;user-select:none;background:var(--card);color:var(--ink2)}
+.chip.on{background:var(--ice-s);border-color:var(--ice);color:var(--ice)}
+.chip.now{outline:2px solid var(--amber);outline-offset:2px}
+.fcard{border:1px solid var(--line2);border-radius:10px;padding:10px 12px;cursor:pointer;background:var(--card);text-align:left;color:var(--ink)}
+.fcard.on{border-color:var(--ice);background:var(--ice-s)}
+.fcard b{display:block;font-family:var(--f-mono);font-size:12px}
+.fcard small{color:var(--ink3);font-size:12px}
+.out{font-family:var(--f-mono);font-size:12px;background:var(--card2);border-radius:8px;padding:10px 14px;white-space:pre-wrap;border-left:3px solid var(--teal);max-height:260px;overflow:auto}
+.chunk{border:1px solid var(--line2);border-radius:8px;padding:8px 10px;font-size:13px;margin:6px 0;background:var(--card)}
+.chunk em{font-style:normal;background:var(--amber-s);color:var(--ink);border-bottom:2px solid var(--amber)}
+.chunk b{font-family:var(--f-mono);font-size:11px;color:var(--ice);margin-right:8px}
+.act-i{color:var(--teal);font-family:var(--f-mono);font-size:12px;font-weight:700}
+.act-d{color:var(--red);font-family:var(--f-mono);font-size:12px;font-weight:700}
+.badge{font-family:var(--f-mono);font-size:11px;padding:2px 8px;border-radius:99px;white-space:nowrap}
+.badge.ok{background:var(--teal-s);color:var(--teal)}.badge.bad{background:var(--red-s);color:var(--red)}.badge.mid{background:var(--amber-s);color:var(--amber)}.badge.off{background:var(--card2);color:var(--ink3)}
+.flash{animation:flash 1s}
+@keyframes flash{0%{box-shadow:0 0 0 3px var(--amber)}100%{box-shadow:0 0 0 0 transparent}}
+.tn rect{fill:var(--card);stroke:var(--line2);transition:all .3s}
+.tn.run rect{fill:var(--amber-s);stroke:var(--amber);stroke-width:2.4}
+.tn.ok rect{fill:var(--teal-s);stroke:var(--teal);stroke-width:2}
+.tn.skip rect{fill:var(--card2);stroke:var(--ink3);stroke-dasharray:5 4}
+.tn.fail rect{fill:var(--red-s);stroke:var(--red);stroke-width:2}
+.tn .st{font-family:var(--f-mono);font-size:10px;fill:var(--ink3)}
+.log{max-height:240px;overflow:auto}
+.pk{transition:transform .8s cubic-bezier(.5,.05,.3,1)}
+.code{font-family:var(--f-mono);font-size:13px;background:var(--card2);border-radius:10px;padding:10px 0;overflow:auto}
+.code div{padding:2px 16px 2px 0;cursor:pointer;white-space:pre;display:block}
+.code div em{font-style:normal;color:var(--ink3);width:40px;text-align:right;padding-right:14px;display:inline-block;user-select:none}
+.code div:hover{background:var(--ice-s)}
+.code div.on{background:var(--ice-s);box-shadow:inset 3px 0 var(--ice)}
+.kw{color:var(--ice);font-weight:700}.str{color:var(--teal)}.num{color:var(--amber)}
+.qa{border:1px solid var(--line);border-radius:10px;margin:8px 0;background:var(--card);overflow:hidden}
+.qa summary{list-style:none;cursor:pointer;padding:14px 18px;display:flex;gap:12px;align-items:baseline;font-weight:600}
+.qa summary::-webkit-details-marker{display:none}
+.qa summary .lv{font-family:var(--f-mono);font-size:10px;letter-spacing:.1em;padding:2px 8px;border-radius:99px;flex:none;font-weight:400}
+.lv.b{background:var(--teal-s);color:var(--teal)}.lv.t{background:var(--red-s);color:var(--red)}.lv.s{background:var(--amber-s);color:var(--amber)}
+.qa summary .tp{font-family:var(--f-mono);font-size:10px;color:var(--ink3);flex:none;font-weight:400}
+.qa summary::after{content:"+";margin-left:auto;font-family:var(--f-mono);color:var(--ink3)}
+.qa[open] summary::after{content:"−"}
+.qa .ans{padding:0 18px 16px;color:var(--ink2);font-size:15px;border-top:1px solid var(--line)}
+.qa .ans p:first-child{margin-top:12px}
+.opt{display:block;width:100%;text-align:left;padding:12px 14px;margin:8px 0;border:1px solid var(--line2);border-radius:10px;background:var(--card);color:var(--ink);font-size:15px}
+.opt:hover{border-color:var(--ice)}
+.opt.ok{border-color:var(--teal);background:var(--teal-s)}.opt.bad{border-color:var(--red);background:var(--red-s)}
+.qexp{margin-top:10px;padding:12px 14px;border-radius:10px;background:var(--card2);font-size:14px;color:var(--ink2)}
+.score{font-family:var(--f-head);font-weight:700;font-size:56px;line-height:1}
+.cheat{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+.cheat div{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 16px;font-size:14px}
+.cheat div em{font-style:normal;font-family:var(--f-mono);font-size:20px;font-weight:700;color:var(--ice);display:block;line-height:1.1;margin-bottom:4px}
+.analogy-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:18px}
+.ag{border-radius:12px;padding:16px;border:1px solid var(--line);background:var(--card)}
+.ag .k{font-family:var(--f-mono);font-size:11px;letter-spacing:.12em}
+.ag h5{font-family:var(--f-head);font-size:18px;margin:2px 0 4px}
+.ag p{font-size:14px;color:var(--ink2);margin:0}
+.ag.a1{border-top:3px solid var(--amber)}.ag.a1 .k{color:var(--amber)}
+.ag.a2{border-top:3px solid var(--ice)}.ag.a2 .k{color:var(--ice)}
+.ag.a3{border-top:3px solid var(--teal)}.ag.a3 .k{color:var(--teal)}
+.ag.a4{border-top:3px solid var(--red)}.ag.a4 .k{color:var(--red)}
+footer{padding:40px 0;color:var(--ink3);font-size:13px;font-family:var(--f-mono)}
+.note-s{font-size:12px;color:var(--ink3);font-style:italic}
+@media (max-width:1000px){
+  .wrap{grid-template-columns:1fr;padding:16px}
+  nav.side{display:none}
+  .wwh,.grid2,.stepdesc .two{grid-template-columns:1fr}
+  .grid3,.analogy-grid{grid-template-columns:1fr}
+  .prog{display:none}
+}
+.road a.rm{display:flex;gap:8px;align-items:baseline;font-size:13px;padding:5px 10px;border-radius:8px;text-decoration:none;color:var(--ink2);border-left:2px solid transparent}
+.road a.rm:hover{background:var(--card);color:var(--ink)}
+.road a.rm em{font-style:normal;font-family:var(--f-mono);font-size:11px;min-width:20px}
+.road a.rm i{font-style:normal;font-family:var(--f-mono);font-size:9.5px;margin-left:auto;border:1px solid var(--line2);border-radius:99px;padding:0 6px;white-space:nowrap;color:var(--ink3)}
+.road a.rm.now{color:var(--ink);font-weight:600;border-left-color:var(--ice);background:var(--card);border-radius:0 8px 8px 0}
+.road a.rm.now i{border-color:var(--ice);color:var(--ice)}
+.road a.rm.ready em,.road a.rm.ready i{color:var(--teal)}.road a.rm.ready i{border-color:var(--teal)}
+.road a.rm.soon{color:var(--ink3)}
+.toast{position:fixed;bottom:24px;left:50%;transform:translate(-50%,20px);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;font-size:14px;opacity:0;transition:all .3s;z-index:60;pointer-events:none;max-width:90vw}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+.code div.pdone{box-shadow:inset 3px 0 var(--teal)}
+#pcCode{max-height:600px;position:relative}
+/* ===== Module 08 additions ===== */
+.rg rect{fill:var(--card);stroke:var(--line2);stroke-width:1.2;transition:all .3s}
+.rg.sys rect{fill:var(--amber-s);stroke:var(--amber)}
+.rg.acc rect{fill:var(--teal-s);stroke:var(--teal)}
+.rg.fun rect{fill:var(--ice-s);stroke:var(--ice)}
+.rg.active rect{stroke-width:3;stroke:var(--ink)}
+.rg.path rect{stroke-width:3;stroke:var(--ice);filter:drop-shadow(0 0 4px var(--ice))}
+.rg.hold rect{stroke-width:3;stroke:var(--teal);filter:drop-shadow(0 0 5px var(--teal))}
+.rg .st{font-family:var(--f-mono);font-size:10px;fill:var(--ink3)}
+.rge{stroke:var(--ink3);stroke-width:1.6;fill:none;transition:all .3s}
+.rge.off{stroke-dasharray:4 5;opacity:.35}
+.rge.path{stroke:var(--ice);stroke-width:3;stroke-dasharray:8 5}
+@media (prefers-reduced-motion:no-preference){ .rge.path{animation:dash .8s linear infinite} }
+.cklist{display:flex;flex-direction:column;gap:4px}
+.cklist label{display:flex;gap:8px;align-items:center;font-size:13.5px;color:var(--ink2);cursor:pointer;padding:3px 6px;border-radius:6px}
+.cklist label:hover{background:var(--card2)}
+.cklist input{accent-color:var(--ice)}
+.cklist code{font-size:12px}
+.sel{font-family:var(--f-mono);font-size:13px;padding:6px 8px;border-radius:8px;border:1px solid var(--line2);background:var(--card);color:var(--ink)}
+.txt{font-family:var(--f-mono);font-size:13px;padding:7px 10px;border-radius:8px;border:1px solid var(--line2);background:var(--card);color:var(--ink);min-width:170px}
+.msk{color:var(--red);font-family:var(--f-mono);font-size:12px}
+.clr{color:var(--teal);font-family:var(--f-mono);font-size:12px}
+tr.hid td{opacity:.35;text-decoration:line-through}
+tr.vis td:first-child{box-shadow:inset 3px 0 var(--teal)}
+.chk{display:flex;gap:10px;align-items:flex-start;padding:8px 10px;border-radius:8px;margin:5px 0;font-size:14px;background:var(--card2)}
+.chk b.i{font-family:var(--f-mono);font-size:12px;min-width:22px}
+.chk.ok b.i{color:var(--teal)}.chk.bad b.i{color:var(--red)}.chk.skip{opacity:.5}
+.chk .fix{display:block;font-family:var(--f-mono);font-size:12px;color:var(--ink);margin-top:3px;white-space:pre-wrap}
+.layer{transition:opacity .3s}
+.kv{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px}
+.kv div{background:var(--card2);border-radius:8px;padding:8px 10px;font-size:12.5px}
+.kv div b{display:block;font-family:var(--f-mono);font-size:10.5px;letter-spacing:.08em;color:var(--ink3);font-weight:400}
+.mtx{border-collapse:collapse;font-size:13px}
+.mtx th,.mtx td{padding:5px 9px;border-bottom:1px solid var(--line);text-align:center}
+.mtx th{font-family:var(--f-mono);font-size:10.5px;color:var(--ink3);font-weight:400}
+.mtx td:first-child{text-align:left;font-family:var(--f-mono);font-size:12px}
+.mtx input{accent-color:var(--teal)}
+@media (max-width:1000px){ .kv{grid-template-columns:1fr 1fr} .grid2[style*="grid-template-columns"],.grid3[style*="grid-template-columns"]{grid-template-columns:1fr!important} .grid2>div,.panel{overflow-x:auto} }
+/* course-wide phone layout */
+@media (max-width:560px){
+  .top{flex-wrap:wrap;gap:8px;padding:10px 14px}
+  .top .pill,.top .prog-l,.top .prog{display:none}
+  .brand{flex:1}
+  .ctl{flex-wrap:wrap}.ctl label{min-width:0;flex:1 1 100%}.ctl .v{min-width:0;text-align:left}
+  table{display:block;overflow-x:auto;max-width:100%}
+  .grid2,.grid3,.analogy-grid,[style*="grid-template-columns"]{grid-template-columns:1fr!important}
+  .grid2>*,.grid3>*,.call>div{min-width:0}
+  p code,li code,td code{word-break:break-word}
+  .code,.sqlbox,.out,.term,pre{max-width:100%;overflow-x:auto}
+  .call{flex-direction:column;gap:6px}
+  main,section,.panel,.wwh .box,.mini{min-width:0;max-width:100%}
+}
+</style>
+</head>
+<body>
+<div class="top">
+  <div class="brand">SNOWFLAKE<b>//</b>INTERVIEW LAB</div>
+  <span class="pill">Module 08 · Security &amp; governance</span>
+  <div class="prog"><i id="progBar"></i></div>
+  <span class="prog-l" id="progLbl">0% explored</span>
+  <button class="theme" id="themeBtn">Dark / light</button>
+</div>
+<div class="wrap">
+<nav class="side">
+  <h4>MODULE 08 · CHAPTERS</h4>
+  <a href="#intro"><span>00</span>Start here</a>
+  <a href="#layers"><span>01</span>Defence in depth</a>
+  <a href="#rbac"><span>02</span>Access control model</a>
+  <a href="#privs"><span>03</span>Privileges in practice</a>
+  <a href="#authn"><span>04</span>Authentication &amp; network</a>
+  <a href="#mask"><span>05</span>Column-level security</a>
+  <a href="#rap"><span>06</span>Row-level security</a>
+  <a href="#gov"><span>07</span>Governance &amp; monitoring</a>
+  <a href="#sql"><span>08</span>SQL lab</a>
+  <a href="#qa"><span>09</span>Interview Q&amp;A</a>
+  <a href="#quiz"><span>10</span>Quiz</a>
+  <a href="#cheat"><span>11</span>Cheat sheet</a>
+  <div class="road">
+    <h4>COURSE ROADMAP · CLICK TO OPEN</h4>
+    <a class="rm ready" href="../module01/"><em>01</em>Architecture<i>open</i></a>
+    <a class="rm ready" href="../module02/"><em>02</em>SnowSQL · unstructured · streams, tasks &amp; procedures<i>open</i></a>
+    <a class="rm ready" href="../module03/"><em>03</em>Performance tuning<i>open</i></a>
+    <a class="rm ready" href="../module04/"><em>04</em>Data ingestion (Snowpipe)<i>open</i></a>
+    <a class="rm ready" href="../module05/"><em>05</em>Dynamic tables &amp; transforms<i>open</i></a>
+    <a class="rm ready" href="../module06/"><em>06</em>Semi-structured data<i>open</i></a>
+    <a class="rm ready" href="../module07/"><em>07</em>Data protection<i>open</i></a>
+    <a class="rm now" href="../module08/"><em>08</em>Security &amp; governance<i>you are here</i></a>
+    <a class="rm ready" href="../module09/"><em>09</em>Cost optimization<i>open</i></a>
+    <a class="rm ready" href="../module10/"><em>10</em>Data sharing<i>open</i></a>
+    <a class="rm ready" href="../module11/"><em>11</em>Snowpark &amp; Cortex AI<i>open</i></a>
+    <a class="rm ready" href="../module12/"><em>12</em>Advanced SQL<i>open</i></a>
+    <a class="rm ready" href="../module13/"><em>13</em>Modeling &amp; tooling<i>open</i></a>
+    <a class="rm ready" href="../module14/"><em>14</em>System design &amp; behavioral<i>open</i></a>
+  </div>
+</nav>
+<main>
+
+<section id="intro">
+  <div class="eyebrow">MODULE 08 · SECURITY &amp; GOVERNANCE</div>
+  <h1>Who are you?<br><span class="thin">What may you see?</span></h1>
+  <p class="lead" style="margin-top:18px">Every query in Snowflake passes through a series of checks before a single row comes back: where is it coming from, who is sending it, which role is active, which rows and columns that role may see, and who wrote it all down. This module walks through each check, from network policies and key-pair logins to role hierarchies, masking and row access policies, tags, audit views and the encryption keys underneath.</p>
+  <p style="margin-top:14px">Think of Snowflake as a <b>big office building</b> that stores everyone's files:</p>
+  <div class="analogy-grid">
+    <div class="ag a1 rise"><div class="k">NETWORK POLICY</div><h5>The gate guard</h5><p>Checks which street you came from before you even reach the door. Unknown address? You never get inside, no matter who you are.</p></div>
+    <div class="ag a2 rise" style="animation-delay:.1s"><div class="k">AUTHENTICATION</div><h5>The ID check at reception</h5><p>Proves you are really Priya: badge plus a code on your phone (MFA), or a signed letter only you could write (key-pair).</p></div>
+    <div class="ag a3 rise" style="animation-delay:.2s"><div class="k">AUTHORIZATION (RBAC)</div><h5>The keycard</h5><p>Your card is programmed for a job, not a person: the "Analyst" card opens floors 3 and 4. Change jobs, swap the card.</p></div>
+    <div class="ag a4 rise" style="animation-delay:.3s"><div class="k">MASKING + ROW ACCESS</div><h5>Black marker &amp; folder filter</h5><p>Inside the room, salary lines are blacked out for you, and the cabinet only shows your region's folders. Same cabinet, different view per person.</p></div>
+  </div>
+  <div class="call analogy"><b class="k">AND THE CCTV</b><div>Every door swipe and every file opened is recorded: <code>LOGIN_HISTORY</code> is the visitor logbook and <code>ACCESS_HISTORY</code> is the camera on the filing cabinets. Security you can't audit is security you can't prove, which is exactly what auditors ask about.</div></div>
+</section>
+
+<section id="layers">
+  <div class="eyebrow">CHAPTER 01</div>
+  <h2>Defence in depth <span class="thin">· five layers, one query</span></h2>
+  <div class="wwh">
+    <div class="box what"><span class="tag">01 · WHAT IS IT</span>
+      <p><b>Defence in depth</b> means stacking several independent security controls so that if one fails or is misconfigured, the next one still protects the data. In Snowflake the layers are:</p>
+      <ul class="dots">
+        <li><b>Network</b>: network policies and rules (allowed / blocked IPs), private connectivity (PrivateLink and similar).</li>
+        <li><b>Authentication</b>: proving identity: password + MFA, key-pair, SSO (SAML), OAuth.</li>
+        <li><b>Authorization</b>: what the active role may do: RBAC + DAC, privileges on objects.</li>
+        <li><b>Data-level controls</b>: row access policies, masking policies, secure views.</li>
+        <li><b>Monitoring</b>: LOGIN_HISTORY, ACCESS_HISTORY, QUERY_HISTORY, Trust Center.</li>
+      </ul>
+      <p>Underneath all of them: <b>encryption</b> of every byte at rest and in transit.</p>
+    </div>
+    <div class="box why"><span class="tag">02 · WHY WE USE IT</span>
+      <p>No single control is perfect. A password leaks, a role gets granted too widely, a contractor's laptop is stolen. With layers:</p>
+      <ul class="dots">
+        <li>A leaked password is useless from outside the allowed network, or without the MFA device.</li>
+        <li>A wrongly granted SELECT still shows masked PII if the masking policy doesn't list that role.</li>
+        <li>Even a fully authorised user only sees their region's rows.</li>
+        <li>And whatever happens, the audit trail tells you <b>who saw what, when</b>.</li>
+      </ul>
+      <p>Regulations (GDPR, HIPAA, PCI DSS, SOX) expect exactly this: least privilege, need-to-know, and proof.</p>
+    </div>
+    <div class="box how"><span class="tag">03 · HOW IT WORKS · FOLLOW ONE QUERY THROUGH THE LAYERS</span>
+      <p>Pick a scenario and press <b>Next</b>. Each layer lights up with <b style="color:var(--ice)">what the user experiences</b> and <b style="color:var(--teal)">what Snowflake does in the backend</b>. Almost all of these checks run in the <b>cloud services layer</b> (Module 1), before or while the query is compiled, so a denied query usually never starts a warehouse.</p>
+      <div class="tabs" id="jScen" style="margin-top:10px"><button class="on" data-s="ok">Happy path (analyst)</button><button data-s="ip">From an unlisted IP</button><button data-s="auth">Service job, rotated key</button><button data-s="priv">Missing privilege</button><button data-s="hr">HR admin (sees PII)</button></div>
+      <svg viewBox="0 0 760 230" class="flow" id="jFlow"></svg>
+      <div class="stepbar" id="jBar"></div>
+      <div class="stepdesc" id="jDesc"></div>
+      <div class="row" style="margin-top:12px"><button class="btn" id="jPrev">Back</button><button class="btn pri" id="jNext">Start</button><button class="btn" id="jReset">Reset</button></div>
+    </div>
+  </div>
+  <div class="grid2">
+    <div class="call trap" style="margin:0"><b class="k">INTERVIEW TRAP</b><div>"In which order are row access and masking policies applied?" <b>Row access first, then masking.</b> Snowflake first decides <i>which rows</i> survive, then decides <i>how each column value is displayed</i>. That also means the row access policy is evaluated on the original, unmasked values.</div></div>
+    <div class="call pro" style="margin:0"><b class="k">SENIOR ANGLE</b><div>Most of these features (masking, row access policies, tag-based masking, classification, ACCESS_HISTORY) need <b>Enterprise Edition or higher</b>. Private connectivity and Tri-Secret Secure need <b>Business Critical</b>. Mentioning the edition when you propose a design shows you've done this for real.</div></div>
+  </div>
+</section>
+
+<section id="rbac">
+  <div class="eyebrow">CHAPTER 02</div>
+  <h2>Access control model <span class="thin">· roles, privileges, owners</span></h2>
+  <div class="wwh">
+    <div class="box what"><span class="tag">01 · WHAT IS IT</span>
+      <p>Snowflake combines two models:</p>
+      <ul class="dots">
+        <li><b>RBAC (role-based access control)</b>: privileges are granted to <b>roles</b>, and roles are granted to <b>users</b> (or to other roles). A user never holds a privilege directly.</li>
+        <li><b>DAC (discretionary access control)</b>: every object has an <b>owner</b>, the role that holds its <code>OWNERSHIP</code> privilege (usually the role that created it). The owner decides who else gets access.</li>
+      </ul>
+      <p>Four words to remember: <b>securable object</b> (what you protect), <b>privilege</b> (what you may do to it: SELECT, USAGE, INSERT…), <b>role</b> (the container of privileges), <b>user</b> (the person or program who activates a role).</p>
+    </div>
+    <div class="box why"><span class="tag">02 · WHY WE USE IT</span>
+      <p>Granting privileges to 400 individual people is unmanageable: when someone changes team you'd hunt for dozens of grants. With roles you grant once to <code>ANALYST</code>, and moving a person is a single <code>GRANT ROLE</code> / <code>REVOKE ROLE</code>.</p>
+      <p>Role <b>inheritance</b> lets you build small reusable blocks ("read sales", "write sales") and compose them into job roles. Ownership (DAC) lets teams manage their own objects without a central admin approving every grant, and <b>managed access schemas</b> (chapter 03) let you switch that freedom off where needed.</p>
+    </div>
+    <div class="box how"><span class="tag">03 · HOW IT WORKS · THE SECURABLE OBJECT HIERARCHY</span>
+      <p>Objects live inside containers, and access is checked <b>at every level</b>. To touch a table you need a path of privileges all the way down: <code>USAGE</code> on the database, <code>USAGE</code> on the schema, then the object privilege (<code>SELECT</code>).</p>
+      <svg viewBox="0 0 760 210" style="margin-top:8px">
+        <rect class="neutral" x="10" y="10" width="740" height="190" rx="12" stroke-width="1"/><text class="tm" x="24" y="30">ORGANIZATION (ORGADMIN)</text>
+        <rect class="L-cs" x="30" y="40" width="700" height="150" rx="10" stroke-width="1"/><text class="tm" x="44" y="58">ACCOUNT</text>
+        <rect class="neutral" x="50" y="70" width="120" height="40" rx="8" stroke-width="1"/><text class="ts" x="110" y="90" text-anchor="middle" dominant-baseline="central">users · roles</text>
+        <rect class="neutral" x="50" y="120" width="120" height="56" rx="8" stroke-width="1"/><text class="ts" x="110" y="140" text-anchor="middle" dominant-baseline="central">warehouses</text><text class="ts" x="110" y="158" text-anchor="middle" dominant-baseline="central">integrations · policies</text>
+        <rect class="L-cp" x="190" y="66" width="525" height="114" rx="10" stroke-width="1"/><text class="tm" x="204" y="84">DATABASE  SALES_DB  (+ database roles)</text>
+        <rect class="L-st" x="210" y="94" width="490" height="76" rx="8" stroke-width="1"/><text class="tm" x="224" y="111">SCHEMA  CORE</text>
+        <rect class="neutral" x="224" y="120" width="88" height="38" rx="6" stroke-width="1"/><text class="ts" x="268" y="139" text-anchor="middle" dominant-baseline="central">tables</text>
+        <rect class="neutral" x="320" y="120" width="88" height="38" rx="6" stroke-width="1"/><text class="ts" x="364" y="139" text-anchor="middle" dominant-baseline="central">views</text>
+        <rect class="neutral" x="416" y="120" width="88" height="38" rx="6" stroke-width="1"/><text class="ts" x="460" y="139" text-anchor="middle" dominant-baseline="central">stages</text>
+        <rect class="neutral" x="512" y="120" width="88" height="38" rx="6" stroke-width="1"/><text class="ts" x="556" y="139" text-anchor="middle" dominant-baseline="central">procs · UDFs</text>
+        <rect class="neutral" x="608" y="120" width="84" height="38" rx="6" stroke-width="1"/><text class="ts" x="650" y="139" text-anchor="middle" dominant-baseline="central">policies · tags</text>
+      </svg>
+    </div>
+  </div>
+
+  <h3>System-defined roles</h3>
+  <table class="t">
+    <tr><th>ROLE</th><th>WHAT IT IS FOR</th><th>INHERITS</th></tr>
+    <tr><td class="m">ORGADMIN</td><td>Organization level: create accounts, view usage across all accounts in the org.</td><td>(separate, not under ACCOUNTADMIN)</td></tr>
+    <tr><td class="m">ACCOUNTADMIN</td><td>Top role in an account: billing, account parameters, everything below. Grant to very few people, always with MFA, never as a default role.</td><td>SYSADMIN + SECURITYADMIN</td></tr>
+    <tr><td class="m">SECURITYADMIN</td><td>Holds <code>MANAGE GRANTS</code>: can grant or revoke any privilege on any object. Manages users and roles.</td><td>USERADMIN</td></tr>
+    <tr><td class="m">USERADMIN</td><td><code>CREATE USER</code> and <code>CREATE ROLE</code>. Owns the users and roles it creates.</td><td>PUBLIC</td></tr>
+    <tr><td class="m">SYSADMIN</td><td><code>CREATE WAREHOUSE</code> and <code>CREATE DATABASE</code>. Snowflake recommends granting all custom roles up to SYSADMIN so it can manage every object.</td><td>(custom roles you grant to it)</td></tr>
+    <tr><td class="m">PUBLIC</td><td>Automatically granted to every user and every role. Anything granted to PUBLIC is visible to everyone, so keep it empty.</td><td>–</td></tr>
+  </table>
+
+  <div class="panel">
+    <div class="panel-h"><div class="t">SIMULATOR · <b>ROLE HIERARCHY BUILDER</b> · grant roles, grant privileges, then test a user</div><button class="btn" id="rgReset">Reset to best practice</button></div>
+    <svg viewBox="0 0 760 365" id="rgSvg" style="max-width:900px;margin:0 auto"></svg>
+    <div class="legend"><span><i style="background:var(--amber)"></i>system role</span><span><i style="background:var(--ice)"></i>functional role (a job)</span><span><i style="background:var(--teal)"></i>access role (a set of privileges)</span><span>line = "lower role is granted to upper role", so the upper one inherits it · dashed = not granted</span></div>
+    <div class="grid2" style="margin-top:8px">
+      <div>
+        <div class="note-s">1 · Role-to-role grants (click to toggle)</div>
+        <div class="cklist" id="rgEdges"></div>
+      </div>
+      <div>
+        <div class="note-s">2 · Privilege grants</div>
+        <div class="row" style="margin:4px 0"><select class="sel" id="rgPrivSel"></select><span class="note-s">TO ROLE</span><select class="sel" id="rgRoleSel"></select><button class="btn" id="rgGrant">GRANT</button></div>
+        <div id="rgPrivList" style="font-size:13px"></div>
+      </div>
+    </div>
+    <div class="row" style="margin-top:12px">
+      <span class="note-s">3 · Test as user:</span><select class="sel" id="rgUser"></select>
+      <span class="note-s">action:</span><select class="sel" id="rgAct"></select>
+      <span class="note-s">session:</span><div class="tabs" id="rgSec" style="margin:0"><button class="on" data-v="none">USE SECONDARY ROLES NONE</button><button data-v="all">USE SECONDARY ROLES ALL</button></div>
+    </div>
+    <div class="explain" id="rgOut" style="margin-top:10px"></div>
+    <div class="sqlbox" id="rgSql" style="margin-top:10px;max-height:200px"></div>
+    <div class="insight" id="rgIns"></div>
+  </div>
+
+  <div class="grid2">
+    <div class="mini"><h5>Access roles vs functional roles</h5><p><b>Access roles</b> hold object privileges and describe <i>data</i>: <code>SALES_RO</code>, <code>SALES_RW</code>. <b>Functional roles</b> describe a <i>job</i>: <code>ANALYST</code>, <code>DATA_ENGINEER</code>. Access roles are granted to functional roles, functional roles to users, and functional roles roll up to <code>SYSADMIN</code>. A new analyst gets one grant. A new table means changing one access role, not twenty job roles.</p></div>
+    <div class="mini"><h5>Ownership</h5><p>The role that creates an object owns it (<code>OWNERSHIP</code>), and can grant privileges on it to others (in a normal schema). Ownership belongs to a <b>role</b>, not a person, so objects survive when people leave. Ownership can be transferred with <code>GRANT OWNERSHIP … COPY CURRENT GRANTS</code> (chapter 03).</p></div>
+  </div>
+  <h3>Secondary roles and database roles</h3>
+  <div class="grid2">
+    <div class="mini"><h5>Secondary roles</h5><p>A session has exactly one <b>primary role</b> (<code>USE ROLE ANALYST</code>). <code>USE SECONDARY ROLES ALL</code> (or a list of roles) adds the privileges of the user's <i>other</i> granted roles to the session, so a query can join data visible to different roles. Important rule: <b>creating objects</b> and ownership use the <b>primary role only</b>, while privileges for other SQL actions come from the primary plus secondary roles. Newer accounts may set users to <code>DEFAULT_SECONDARY_ROLES = ('ALL')</code> by default; check your account's behaviour.</p></div>
+    <div class="mini"><h5>Database roles</h5><p>A role that lives <b>inside a database</b> (<code>CREATE DATABASE ROLE sales_db.reader</code>). Its privileges can only cover objects in that database. You can't <code>USE ROLE</code> a database role directly: you grant it to an account role (or another database role in the same database). They are perfect for <b>data sharing</b> (grant different database roles to a share so consumers see different subsets) and for packaging a database's access model with the database itself.</p></div>
+  </div>
+  <div class="grid2" style="margin-top:14px">
+    <div class="call trap" style="margin:0"><b class="k">INTERVIEW TRAP</b><div>"ACCOUNTADMIN can see everything, right?" <b>Not automatically.</b> ACCOUNTADMIN inherits SYSADMIN and SECURITYADMIN. If a custom role that owns a database is <b>not</b> granted up to SYSADMIN, then neither SYSADMIN nor ACCOUNTADMIN inherit its privileges (an "orphan" role). SECURITYADMIN could <i>grant</i> itself access through MANAGE GRANTS, but it doesn't have it by default. Try it in the simulator: untick <code>ANALYST → SYSADMIN</code>.</div></div>
+    <div class="call pro" style="margin:0"><b class="k">SENIOR ANGLE</b><div>Separate duties: <b>USERADMIN</b> creates users and roles, <b>SECURITYADMIN</b> manages grants and policies, <b>SYSADMIN</b> owns databases and warehouses, and <b>ACCOUNTADMIN</b> is a break-glass role used rarely, held by at least two people with MFA. Manage all of it as code (Terraform, schemachange or dbt grants) so every grant is reviewed.</div></div>
+  </div>
+</section>
+
+<section id="privs">
+  <div class="eyebrow">CHAPTER 03</div>
+  <h2>Privileges in practice <span class="thin">· why can't I query this table?</span></h2>
+  <div class="wwh">
+    <div class="box what"><span class="tag">01 · WHAT IS IT</span>
+      <p>A <b>privilege</b> is one permitted action on one securable object. The ones you'll use every day:</p>
+      <ul class="dots">
+        <li><code>USAGE</code> on a database, schema or warehouse: "you may enter / use it". It doesn't let you read any data by itself.</li>
+        <li><code>SELECT</code>, <code>INSERT</code>, <code>UPDATE</code>, <code>DELETE</code>, <code>TRUNCATE</code> on tables; <code>SELECT</code> on views.</li>
+        <li><code>CREATE TABLE</code> / <code>CREATE VIEW</code>… on a schema; <code>OPERATE</code> and <code>MONITOR</code> on a warehouse.</li>
+        <li><code>OWNERSHIP</code>: full control, exactly one owner role per object.</li>
+      </ul>
+    </div>
+    <div class="box why"><span class="tag">02 · WHY IT MATTERS</span>
+      <p>"Access denied" tickets are the most common security work a Snowflake developer does, and the error messages are deliberately vague: Snowflake says an object <b>"does not exist or not authorized"</b> so it never confirms to an unauthorised user that a table exists.</p>
+      <p>Knowing the full <b>privilege chain</b>, plus future grants, managed access and what <code>CREATE OR REPLACE</code> does to grants, lets you fix those tickets in minutes and design schemas where they don't happen.</p>
+    </div>
+    <div class="box how"><span class="tag">03 · HOW IT WORKS · THE PRIVILEGE CHAIN</span>
+      <p>When you run <code>SELECT * FROM sales_db.core.orders</code>, cloud services checks, for the roles active in your session (primary + secondary, including everything they inherit): <b>USAGE on SALES_DB → USAGE on CORE → SELECT on ORDERS</b>. All three are needed. To actually execute, the session also needs a warehouse the role has <b>USAGE</b> on (USAGE is enough for an auto-resume warehouse to start; <code>OPERATE</code> is needed to suspend or resume it by hand). Privileges are evaluated at <b>compile time</b>, so a denied query never consumes warehouse credits.</p>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-h"><div class="t">SIMULATOR · <b>"WHY CAN'T I QUERY THIS TABLE?"</b> · PRIYA runs SELECT * FROM sales_db.core.orders on BI_WH</div><div class="row"><button class="btn" id="ckAll">Grant everything</button><button class="btn" id="ckNone">Start from nothing</button></div></div>
+    <div class="grid2">
+      <div>
+        <div class="note-s">Current state (tick what exists):</div>
+        <div class="cklist" id="ckBoxes"></div>
+        <div class="note-s" style="margin-top:10px">How did REPORTING get SELECT on ORDERS?</div>
+        <select class="sel" id="ckSel" style="width:100%;margin-top:4px"></select>
+      </div>
+      <div>
+        <div class="explain" id="ckOut"></div>
+      </div>
+    </div>
+    <div id="ckList" style="margin-top:10px"></div>
+    <div class="insight" id="ckIns"></div>
+  </div>
+
+  <h3>Future grants vs ON ALL</h3>
+  <div class="grid2">
+    <div class="mini"><h5><code>GRANT SELECT ON ALL TABLES IN SCHEMA …</code></h5><p>A one-time bulk grant on the tables that exist <b>right now</b>. A table created tomorrow gets nothing. A table re-created with <code>CREATE OR REPLACE</code> is a <i>new</i> object and loses its grants (unless you add <code>COPY GRANTS</code>).</p></div>
+    <div class="mini"><h5><code>GRANT SELECT ON FUTURE TABLES IN SCHEMA …</code></h5><p>A rule stored on the schema: every table created there <b>from now on</b> automatically gets the grant. It doesn't touch existing tables, so you run both statements. If a schema has its own future grants for an object type, <b>database-level</b> future grants for that type are ignored in that schema.</p></div>
+  </div>
+
+  <h3>Managed access schemas: who is allowed to grant?</h3>
+  <p>In a normal schema, the <b>owner of each object</b> decides who gets access (DAC). In a <b>managed access schema</b> (<code>CREATE SCHEMA … WITH MANAGED ACCESS</code>) object owners lose that right: only the <b>schema owner</b> or a role with <code>MANAGE GRANTS</code> can grant privileges on objects in the schema. Grant decisions become centralised, while engineers can still create and own tables.</p>
+  <div class="panel">
+    <div class="panel-h"><div class="t">MINI-SIMULATOR · <b>GRANT SELECT ON TABLE core.orders TO ROLE analyst</b></div></div>
+    <div class="row" style="margin-bottom:6px"><span class="note-s" style="min-width:110px">Schema type:</span><div class="tabs" id="maType" style="margin:0"><button class="on" data-v="reg">Regular schema</button><button data-v="man">WITH MANAGED ACCESS</button></div></div>
+    <div class="row"><span class="note-s" style="min-width:110px">Who runs it:</span><div class="tabs" id="maWho" style="margin:0"><button class="on" data-v="obj">ETL_OWNER (owns the table)</button><button data-v="sch">SALES_ADMIN (owns the schema)</button><button data-v="sec">SECURITYADMIN (MANAGE GRANTS)</button></div></div>
+    <div class="explain" id="maOut" style="margin-top:10px"></div>
+  </div>
+
+  <div class="grid3">
+    <div class="mini"><h5>Grants to a share</h5><p>Data sharing uses the same model: <code>GRANT USAGE ON DATABASE … TO SHARE s</code>, <code>GRANT USAGE ON SCHEMA …</code>, <code>GRANT SELECT ON TABLE … TO SHARE s</code>, or grant a <b>database role</b> to the share. Views must be <b>secure views</b> to be shared. Module 10 goes deep.</p></div>
+    <div class="mini"><h5>Transferring ownership</h5><p><code>GRANT OWNERSHIP ON TABLE t TO ROLE new_owner COPY CURRENT GRANTS</code> keeps the existing grants on the object. <code>REVOKE CURRENT GRANTS</code> drops them. If the object already has grants to other roles and you specify neither, the statement fails, which protects you from silently breaking access.</p></div>
+    <div class="mini"><h5>Inspect before you guess</h5><p><code>SHOW GRANTS ON TABLE t</code> (who can access it), <code>SHOW GRANTS TO ROLE r</code> (what a role holds), <code>SHOW GRANTS TO USER u</code> (which roles a user has), <code>SHOW FUTURE GRANTS IN SCHEMA s</code>. For history: <code>ACCOUNT_USAGE.GRANTS_TO_ROLES</code> and <code>GRANTS_TO_USERS</code>.</p></div>
+  </div>
+  <div class="grid2" style="margin-top:14px">
+    <div class="call trap" style="margin:0"><b class="k">INTERVIEW TRAP</b><div>"The dbt job rebuilt the table overnight and now the BI tool can't read it." <code>CREATE OR REPLACE TABLE</code> creates a <b>new</b> object, so direct grants on the old one are gone. Fixes: future grants on the schema, <code>COPY GRANTS</code> in the CREATE statement, or dbt's <code>grants</code> config / <code>copy_grants</code> setting.</div></div>
+    <div class="call pro" style="margin:0"><b class="k">SENIOR ANGLE</b><div>A clean production pattern: one <b>managed access schema</b> per data domain, owned by a deploy role; <b>future grants</b> to <code>&lt;domain&gt;_RO</code> and <code>&lt;domain&gt;_RW</code> access roles; access roles granted to functional roles; nobody grants anything by hand. New tables are readable the moment they're created, and every privilege traces back to code.</div></div>
+  </div>
+</section>
+
+<section id="authn">
+  <div class="eyebrow">CHAPTER 04</div>
+  <h2>Authentication &amp; network <span class="thin">· proving who you are, and where from</span></h2>
+  <div class="wwh">
+    <div class="box what"><span class="tag">01 · WHAT IS IT</span>
+      <p><b>Authentication</b> answers "are you really this user?". <b>Network policies</b> answer "are you allowed to connect from this address at all?". Both happen <b>before</b> any role or privilege is considered.</p>
+      <p>Snowflake supports passwords with <b>MFA</b>, <b>key-pair</b> (RSA) authentication, <b>SSO</b> through SAML 2.0 identity providers (Okta, Microsoft Entra ID…), <b>OAuth</b> (Snowflake OAuth or External OAuth), and <b>programmatic access tokens</b>. Users can be provisioned automatically from your IdP with <b>SCIM</b>.</p>
+    </div>
+    <div class="box why"><span class="tag">02 · WHY WE USE IT</span>
+      <p>Stolen credentials are one of the most common causes of cloud data breaches. A strong setup means:</p>
+      <ul class="dots"><li>Humans log in through the company IdP (SSO) with MFA, so leaving the company disables Snowflake access automatically.</li><li>Pipelines use <b>service users</b> with key-pair or OAuth: no passwords in config files.</li><li>Network policies make a leaked credential useless from outside known networks.</li></ul>
+      <p>Snowflake has been moving toward <b>blocking password-only sign-in</b> for human users and enforcing MFA, in phases. Check the current timeline in the docs, but in an interview say: "humans use SSO + MFA, services use key-pair or OAuth".</p>
+    </div>
+    <div class="box how"><span class="tag">03 · HOW IT WORKS · COMPARE THE METHODS</span>
+      <div class="tabs" id="amTabs" style="margin-top:6px"><button class="on" data-m="pw">Password + MFA</button><button data-m="kp">Key-pair</button><button data-m="saml">SSO (SAML)</button><button data-m="soa">Snowflake OAuth</button><button data-m="eoa">External OAuth</button><button data-m="pat">Programmatic access token</button></div>
+      <div class="grid2" style="grid-template-columns:1.2fr 1fr">
+        <div class="explain" id="amDesc"></div>
+        <div class="sqlbox" id="amSql"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-h"><div class="t">STEPPER · <b>ZERO-DOWNTIME KEY-PAIR ROTATION</b> · service user SVC_ETL</div><div class="row"><button class="btn" id="krPrev">Back</button><button class="btn pri" id="krNext">Next</button><button class="btn" id="krReset">Reset</button></div></div>
+    <div class="stepbar" id="krBar"></div>
+    <div class="grid2" style="grid-template-columns:1.2fr 1fr">
+      <div class="stepdesc" id="krDesc"></div>
+      <div><table class="t" id="krState"></table></div>
+    </div>
+    <div class="sqlbox" id="krSql" style="margin-top:10px"></div>
+  </div>
+
+  <div class="grid3">
+    <div class="mini"><h5>Service users</h5><p><code>CREATE USER svc_etl TYPE = SERVICE</code> marks a non-human user. Service users can't log in with a password or use MFA and SSO; they authenticate with key-pair, OAuth or tokens. The default is <code>TYPE = PERSON</code>. A <code>LEGACY_SERVICE</code> type exists for older password-based integrations and is being phased out.</p></div>
+    <div class="mini"><h5>SCIM provisioning</h5><p>A <code>SECURITY INTEGRATION TYPE = SCIM</code> lets Okta or Entra ID <b>push</b> users and groups into Snowflake: IdP groups become Snowflake roles, and disabling someone in the IdP disables their Snowflake user. The integration runs as a dedicated provisioner role (<code>RUN_AS_ROLE</code>), which owns the users and roles it creates.</p></div>
+    <div class="mini"><h5>Authentication policies</h5><p><code>CREATE AUTHENTICATION POLICY</code> controls which methods (<code>AUTHENTICATION_METHODS</code>), client types and MFA settings are allowed, at account or user level. Example: humans must enrol in MFA and may only use SAML; service users only key-pair.</p></div>
+  </div>
+
+  <h3>Network policies and network rules</h3>
+  <p>A <b>network rule</b> is a reusable list of network identifiers (<code>TYPE = IPV4</code> CIDR ranges, or private endpoint IDs such as <code>AWSVPCEID</code>) with a <code>MODE</code> (<code>INGRESS</code> for connections into Snowflake). A <b>network policy</b> references rules in <code>ALLOWED_NETWORK_RULE_LIST</code> and <code>BLOCKED_NETWORK_RULE_LIST</code> (the older <code>ALLOWED_IP_LIST</code> / <code>BLOCKED_IP_LIST</code> still work). You activate a policy on the <b>account</b>, on a <b>user</b>, or on a security integration. Rules: <b>blocked wins over allowed</b>; if an allowed list exists, anything not in it is denied; a <b>user-level policy replaces the account-level one</b> for that user.</p>
+  <div class="panel">
+    <div class="panel-h"><div class="t">SIMULATOR · <b>NETWORK POLICY EVALUATOR</b></div><span class="note-s">Account policy CORP_NP: allow 203.0.113.0/24 (office) + 198.18.0.0/16 (VPN), block 203.0.113.99 (stolen laptop). User policy ETL_NP: allow 192.0.2.0/28 (Airflow NAT)</span></div>
+    <div class="row" style="margin-bottom:6px"><span class="note-s" style="min-width:120px">Connecting user:</span><div class="tabs" id="npUser" style="margin:0"><button class="on" data-v="saurav">SAURAV (person)</button><button data-v="svc">SVC_ETL (service)</button></div></div>
+    <div class="row" style="margin-bottom:6px"><span class="note-s" style="min-width:120px">Policies active:</span><div class="tabs" id="npAcct" style="margin:0"><button class="on" data-v="1">CORP_NP on account</button><button data-v="0">No account policy</button></div><div class="tabs" id="npUsr" style="margin:0"><button class="on" data-v="1">ETL_NP on SVC_ETL</button><button data-v="0">No user policy</button></div></div>
+    <div class="row" style="margin-bottom:6px"><span class="note-s" style="min-width:120px">Client IP:</span><input class="txt" id="npIp" value="203.0.113.25"><div class="chips" id="npChips"></div></div>
+    <div id="npSteps"></div>
+    <div class="explain" id="npOut" style="margin-top:8px"></div>
+  </div>
+  <div class="grid2">
+    <div class="call trap" style="margin:0"><b class="k">INTERVIEW TRAP</b><div>"We added a user-level policy for the ETL user and now it can connect from an IP that the account policy blocks. Bug?" <b>No, that's how precedence works:</b> the user-level policy <i>replaces</i> the account-level one for that user, so the account's allowed and blocked lists no longer apply to it. Also remember: Snowflake won't let you activate an account policy that would block your own current IP, which protects you from locking yourself out.</div></div>
+    <div class="call pro" style="margin:0"><b class="k">SENIOR ANGLE</b><div><b>Private connectivity</b> (AWS PrivateLink, Azure Private Link, Google Cloud Private Service Connect) keeps traffic off the public internet. It needs <b>Business Critical</b> edition. Combine it with network rules of type <code>AWSVPCEID</code> / <code>AZURELINKID</code> and a policy that blocks public access, so even valid credentials only work from inside your VPC.</div></div>
+  </div>
+</section>
+
+<section id="mask">
+  <div class="eyebrow">CHAPTER 05</div>
+  <h2>Column-level security <span class="thin">· dynamic data masking</span></h2>
+  <div class="wwh">
+    <div class="box what"><span class="tag">01 · WHAT IS IT</span>
+      <p>A <b>masking policy</b> is a schema-level object containing a small SQL expression (usually a <code>CASE</code>) that decides, <b>at query time</b>, what value a user sees in a column: the real value, a partially masked value, a hash, or NULL. You write it once and attach it to any number of columns (<code>ALTER TABLE … MODIFY COLUMN email SET MASKING POLICY pii_email</code>).</p>
+      <p>The stored data is never changed. That's why it's called <b>dynamic</b> masking: the same row looks different depending on who asks.</p>
+    </div>
+    <div class="box why"><span class="tag">02 · WHY WE USE IT</span>
+      <ul class="dots">
+        <li>One table for everyone instead of a "masked copy" per audience, which drifts and doubles storage.</li>
+        <li>Follows the column everywhere: views, joins, CTAS, BI tools, shares. You can't bypass it by querying differently.</li>
+        <li><b>Separation of duties</b>: a security team owns the policy, and even the table owner (or ACCOUNTADMIN) sees masked data unless the policy says otherwise.</li>
+        <li>GDPR / HIPAA / PCI: PII and PHI visible only to those with a need to know.</li>
+      </ul>
+    </div>
+    <div class="box how"><span class="tag">03 · HOW IT WORKS · IN THE BACKEND</span>
+      <p>When a query is compiled, cloud services sees that a column has a policy and <b>rewrites the query</b>: every reference to <code>email</code> becomes <code>pii_email(email)</code> wrapped around the column at the point it's read from the table. The policy body is evaluated per row with session context functions:</p>
+      <ul class="dots">
+        <li><code>CURRENT_ROLE()</code> returns only the <b>primary</b> role name. It ignores the role hierarchy and secondary roles.</li>
+        <li><code>IS_ROLE_IN_SESSION('PII_READER')</code> returns TRUE if that role is the primary role, a secondary role, <b>or inherited</b> by them. This is usually what you want.</li>
+        <li><code>INVOKER_ROLE()</code> is useful when the policy fires inside a view or UDF.</li>
+      </ul>
+      <p><b>Conditional masking</b> passes extra columns into the policy (<code>USING (email, consent_flag)</code>), so a value can be shown or hidden based on another column in the same row.</p>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-h"><div class="t">SIMULATOR · <b>SAME TABLE, DIFFERENT ROLES</b> · SELECT * FROM hr.customers</div><span class="note-s">Sample data. Role hierarchy here: PII_READER is granted to HR_ADMIN.</span></div>
+    <div class="row" style="margin-bottom:6px"><span class="note-s" style="min-width:120px">USE ROLE:</span><div class="tabs" id="mkRole" style="margin:0"><button class="on" data-v="ANALYST">ANALYST</button><button data-v="SUPPORT">SUPPORT</button><button data-v="HR_ADMIN">HR_ADMIN</button><button data-v="PII_READER">PII_READER</button><button data-v="SYSADMIN">SYSADMIN (table owner)</button></div></div>
+    <div class="row" style="margin-bottom:10px"><span class="note-s" style="min-width:120px">Policy style:</span><div class="tabs" id="mkMode" style="margin:0"><button class="on" data-v="cur">CURRENT_ROLE() IN (…)</button><button data-v="iris">IS_ROLE_IN_SESSION(…)</button><button data-v="cond">+ conditional on consent</button></div></div>
+    <div class="grid2" style="grid-template-columns:1fr 1.2fr">
+      <div class="sqlbox" id="mkSql" style="font-size:12px"></div>
+      <div><table class="t" id="mkTbl"></table></div>
+    </div>
+    <div class="insight" id="mkIns"></div>
+  </div>
+
+  <div class="grid3">
+    <div class="mini"><h5>Tag-based masking</h5><p>Attach a policy to a <b>tag</b> instead of a column: <code>ALTER TAG pii SET MASKING POLICY pii_string</code>. Every column tagged <code>pii</code> (now or later) whose data type matches is masked automatically. One policy per data type per tag. A policy set <b>directly on a column</b> takes precedence over the tag-based one.</p></div>
+    <div class="mini"><h5>External tokenization</h5><p>Data is <b>tokenized before it lands</b> in Snowflake by a partner (for example Protegrity or ALTR). A masking policy calls an <b>external function</b> to detokenize on the fly, but only for authorised roles. Snowflake never stores the clear value.</p></div>
+    <div class="mini"><h5>Rules worth knowing</h5><p>A column can have <b>one</b> masking policy. The policy's input and return types must match the column type. Masking applies to the <i>result</i>, so <code>WHERE email = 'x@y.com'</code> by a masked role compares against the masked value. Use <code>POLICY_REFERENCES</code> to see where a policy is attached.</p></div>
+  </div>
+  <div class="grid2" style="margin-top:14px">
+    <div class="call trap" style="margin:0"><b class="k">INTERVIEW TRAP</b><div>"I'm HR_ADMIN, which inherits PII_READER, but I still see masked emails." The policy uses <code>CURRENT_ROLE() IN ('PII_READER')</code>, which compares only the primary role's <i>name</i>. Switch to <code>IS_ROLE_IN_SESSION('PII_READER')</code>, which honours the hierarchy and secondary roles. Try it in the simulator.</div></div>
+    <div class="call pro" style="margin:0"><b class="k">SENIOR ANGLE</b><div>Don't hard-code role names in 40 policies. Keep a small <b>entitlement table</b> or a dedicated role (<code>PII_READER</code>) and reference it in every policy, then manage who gets that role. Combine with <b>tag-based masking</b> and classification so new PII columns are protected the day they're created.</div></div>
+  </div>
+</section>
+
+<section id="rap">
+  <div class="eyebrow">CHAPTER 06</div>
+  <h2>Row-level security <span class="thin">· row access policies</span></h2>
+  <div class="wwh">
+    <div class="box what"><span class="tag">01 · WHAT IS IT</span>
+      <p>A <b>row access policy</b> is a schema-level object whose body returns a <b>BOOLEAN</b> for each row: TRUE means the row is visible, FALSE means it silently disappears from the result. You attach it to a table or view on one or more columns: <code>ALTER TABLE orders ADD ROW ACCESS POLICY region_rap ON (region)</code>.</p>
+      <p>The most common pattern uses a <b>mapping table</b>: <i>role SALES_EMEA → region EMEA</i>. The policy looks up whether the current role is mapped to the row's region.</p>
+    </div>
+    <div class="box why"><span class="tag">02 · WHY WE USE IT</span>
+      <ul class="dots">
+        <li>One <code>ORDERS</code> table instead of <code>ORDERS_EMEA</code>, <code>ORDERS_APAC</code>… or dozens of filtered views.</li>
+        <li>Access changes are <b>data changes</b> (insert a row in the mapping table), not code deployments.</li>
+        <li>Works for multi-tenant SaaS (tenant_id), regional compliance, and manager hierarchies.</li>
+        <li>Enforced for every query path: BI tools, notebooks, ad-hoc SQL.</li>
+      </ul>
+    </div>
+    <div class="box how"><span class="tag">03 · HOW IT WORKS · IN THE BACKEND</span>
+      <p>At compile time Snowflake rewrites the query as if a hidden <code>WHERE region_rap(region)</code> filter were added on the table scan. If the policy body queries a mapping table, that lookup becomes part of the plan (typically a join or semi-join), and it runs with the <b>policy owner's</b> privileges, so users don't need SELECT on the mapping table. Row access is evaluated <b>before</b> masking.</p>
+      <p>Performance tips: keep the mapping table small, use simple equality lookups, and consider <b>memoizable functions</b> for the lookup. Large or complex policy bodies show up as extra joins in the Query Profile.</p>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-h"><div class="t">SIMULATOR · <b>ROW ACCESS POLICY WITH A MAPPING TABLE</b> · SELECT * FROM sales.orders</div><span class="note-s">Sample data</span></div>
+    <div class="row" style="margin-bottom:10px"><span class="note-s" style="min-width:100px">USE ROLE:</span><div class="tabs" id="raRole" style="margin:0"><button class="on" data-v="SALES_EMEA">SALES_EMEA</button><button data-v="SALES_APAC">SALES_APAC</button><button data-v="SALES_AMER">SALES_AMER</button><button data-v="SALES_LEAD">SALES_LEAD</button><button data-v="GLOBAL_ADMIN">GLOBAL_ADMIN</button><button data-v="INTERN">INTERN</button></div></div>
+    <div class="grid2" style="grid-template-columns:1fr 1.3fr">
+      <div>
+        <div class="note-s">security.region_map (tick to edit the mapping)</div>
+        <table class="mtx" id="raMap"></table>
+        <div class="sqlbox" id="raSql" style="margin-top:10px;font-size:12px"></div>
+      </div>
+      <div>
+        <table class="t" id="raTbl"></table>
+        <div class="stats">
+          <div class="stat"><div class="k">ROWS RETURNED</div><div class="n" id="raN">–</div><div class="s">of 8 in the table</div></div>
+          <div class="stat"><div class="k">SELECT SUM(amount)</div><div class="n" id="raSum">–</div><div class="s">same query, different answer</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="insight" id="raIns"></div>
+  </div>
+  <div class="grid2">
+    <div class="call trap" style="margin:0"><b class="k">INTERVIEW TRAP</b><div>"A user says the dashboard total is wrong." With row access policies there's <b>no error</b> when rows are filtered: <code>COUNT(*)</code> and <code>SUM()</code> simply return smaller numbers. Always check <code>POLICY_REFERENCES</code> for the table and the user's role mapping before debugging the SQL.</div></div>
+    <div class="call pro" style="margin:0"><b class="k">SENIOR ANGLE</b><div>Use <code>IS_ROLE_IN_SESSION</code> in the mapping lookup if you want inherited roles to count (e.g. <code>SALES_LEAD</code> inherits both regional roles). For tenant isolation in apps, key the mapping on <code>CURRENT_USER()</code> or a session context value, and test the policy with <code>EXECUTE USING POLICY_CONTEXT(CURRENT_ROLE => '…')</code> instead of switching roles by hand.</div></div>
+  </div>
+</section>
+
+<section id="gov">
+  <div class="eyebrow">CHAPTER 07</div>
+  <h2>Governance &amp; monitoring <span class="thin">· know your data, prove who touched it</span></h2>
+  <div class="wwh">
+    <div class="box what"><span class="tag">01 · WHAT IS IT</span>
+      <ul class="dots">
+        <li><b>Object tagging</b>: key-value labels (<code>cost_center = 'finance'</code>, <code>pii = 'email'</code>) on accounts, warehouses, databases, schemas, tables and columns.</li>
+        <li><b>Data classification</b>: Snowflake samples column values and suggests semantic categories (EMAIL, NAME, PHONE_NUMBER…) and privacy categories (IDENTIFIER, QUASI_IDENTIFIER, SENSITIVE), optionally applying system tags.</li>
+        <li><b>Audit views</b>: <code>ACCESS_HISTORY</code> (which columns each query read and wrote), <code>LOGIN_HISTORY</code>, <code>QUERY_HISTORY</code>.</li>
+        <li><b>Secure views / UDFs</b>, <b>Trust Center</b>, and the <b>encryption</b> model underneath everything.</li>
+      </ul>
+    </div>
+    <div class="box why"><span class="tag">02 · WHY WE USE IT</span>
+      <p>Masking and row access policies protect data you <b>know</b> is sensitive. Governance answers the harder questions: <i>where is all our PII?</i>, <i>who queried customer emails last quarter?</i>, <i>which dashboards break if we drop this column?</i>, <i>how much does the finance team spend?</i></p>
+      <p>Auditors and regulators ask for evidence, not intentions. These features turn "we think it's secure" into a query result.</p>
+    </div>
+    <div class="box how"><span class="tag">03 · HOW IT WORKS · TAG INHERITANCE (click a level)</span>
+      <p>A tag set on a parent object is <b>inherited</b> by its children: tag a schema and every table and column in it reports that tag, unless a child sets its own value (the nearest one wins). Query <code>TAG_REFERENCES</code> or the <code>TAG_REFERENCES_ALL_COLUMNS</code> function to see direct and inherited tags.</p>
+      <div class="tabs" id="tgLvl" style="margin-top:8px"><button class="on" data-v="db">SET TAG on database</button><button data-v="sch">on schema CORE</button><button data-v="tbl">on table CUSTOMERS</button><button data-v="col">on column EMAIL</button></div>
+      <div class="grid2" style="grid-template-columns:1fr 1fr">
+        <table class="t" id="tgTbl"></table>
+        <div class="sqlbox" id="tgSql"></div>
+      </div>
+      <p class="note-s" style="margin-top:8px">Snowflake has also added automatic tag propagation, where tags can follow data into derived objects (for example through CTAS or views) when the tag is configured to propagate. Check the current docs for exactly which operations propagate.</p>
+    </div>
+  </div>
+
+  <div class="grid3">
+    <div class="mini"><h5>Classification</h5><p><code>SYSTEM$CLASSIFY('db.sch.customers', {'auto_tag': true})</code> analyses a table and can set the system tags <code>SNOWFLAKE.CORE.SEMANTIC_CATEGORY</code> and <code>PRIVACY_CATEGORY</code> on columns. Snowflake also offers automatic, scheduled classification of whole databases through classification profiles. Feature names and options have evolved, so verify the current syntax.</p></div>
+    <div class="mini"><h5>ACCESS_HISTORY</h5><p>In <code>SNOWFLAKE.ACCOUNT_USAGE</code> (Enterprise+). One row per query with JSON arrays: <code>direct_objects_accessed</code> (what the SQL named), <code>base_objects_accessed</code> (the underlying tables behind views), <code>objects_modified</code> (writes, with column lineage) and <code>policies_referenced</code>. Data arrives with some latency (up to a few hours) and is kept for 365 days.</p></div>
+    <div class="mini"><h5>LOGIN_HISTORY</h5><p>Every login attempt: user, client IP, client type, first and second authentication factor, success flag and error message. <code>ACCOUNT_USAGE.LOGIN_HISTORY</code> keeps 365 days (with latency); the <code>INFORMATION_SCHEMA.LOGIN_HISTORY()</code> table function covers the last 7 days in near real time.</p></div>
+    <div class="mini"><h5>Secure views &amp; UDFs</h5><p><code>CREATE SECURE VIEW</code> hides the view definition from non-owners and stops the optimizer from using tricks (like pushing a user's filter below the view's own filter) that could leak hidden rows through errors or timing. The cost: some optimizations are disabled, so they can be slower. Required for views in shares.</p></div>
+    <div class="mini"><h5>Trust Center</h5><p>A Snowsight area that runs <b>scanners</b> against your account (for example CIS benchmark checks: MFA for ACCOUNTADMIN users, network policies set, and so on) and lists findings with remediation guidance. A good answer to "how do you continuously check the security posture?".</p></div>
+    <div class="mini"><h5>Object dependencies &amp; lineage</h5><p><code>ACCOUNT_USAGE.OBJECT_DEPENDENCIES</code> shows which views depend on which tables. With <code>objects_modified</code> in ACCESS_HISTORY you get column-level lineage: which source columns fed which target columns.</p></div>
+  </div>
+
+  <h3>ACCESS_HISTORY: what one row tells you <span class="note-s">(illustrative)</span></h3>
+  <table class="t">
+    <tr><th>QUERY_START_TIME</th><th>USER_NAME</th><th>DIRECT_OBJECTS_ACCESSED</th><th>BASE_OBJECTS_ACCESSED</th><th>POLICIES_REFERENCED</th></tr>
+    <tr><td class="m">2024-03-15 09:12</td><td class="m">PRIYA</td><td class="m">SALES.RPT.V_CUSTOMER_360 (email, region)</td><td class="m">HR.CORE.CUSTOMERS (email, region)</td><td class="m">PII_EMAIL (masking)</td></tr>
+    <tr><td class="m">2024-03-15 09:40</td><td class="m">SVC_ETL</td><td class="m">RAW.ORDERS_STG (*)</td><td class="m">RAW.ORDERS_STG</td><td class="m">–</td></tr>
+  </table>
+  <p class="note-s">PRIYA queried a view, yet the base table and the masking policy that fired are still recorded. That's how you answer "who read customer emails?" even when people go through views.</p>
+
+  <h3>Encryption: the key hierarchy</h3>
+  <p>All data in Snowflake is encrypted <b>at rest with AES-256</b> and <b>in transit with TLS 1.2+</b>, always on, at no cost. Keys form a <b>hierarchy</b>: a root key held in a hardware security module (HSM) protects account master keys, which protect table master keys, which protect the file keys that encrypt each micro-partition. Each key only protects a small amount of data, which limits the blast radius of any single key.</p>
+  <div class="panel">
+    <div class="panel-h"><div class="t">SIMULATOR · <b>KEY ROTATION, REKEYING &amp; TRI-SECRET SECURE</b></div><span class="note-s">Illustrative model, not a benchmark</span></div>
+    <div class="row" style="margin-bottom:6px"><button class="btn" id="enM">+30 days</button><button class="btn" id="enY">+1 year</button><button class="btn" id="enR">Reset</button>
+      <span class="note-s" style="margin-left:8px">Periodic rekeying:</span><div class="tabs" id="enRk" style="margin:0"><button class="on" data-v="0">OFF</button><button data-v="1">ON (Enterprise+)</button></div>
+      <span class="note-s" style="margin-left:8px">Tri-Secret Secure:</span><div class="tabs" id="enTs" style="margin:0"><button class="on" data-v="0">OFF</button><button data-v="1">ON (Business Critical)</button></div>
+      <button class="btn warn" id="enRev">Revoke customer key</button></div>
+    <svg viewBox="0 0 760 250" id="enSvg"></svg>
+    <div class="stats">
+      <div class="stat"><div class="k">DAY</div><div class="n" id="enDay">0</div></div>
+      <div class="stat"><div class="k">ACTIVE KEY VERSION</div><div class="n" id="enAct">v1</div><div class="s">encrypts new data</div></div>
+      <div class="stat"><div class="k">RETIRED KEYS</div><div class="n" id="enRet">0</div><div class="s">decrypt-only</div></div>
+      <div class="stat"><div class="k">OLDEST KEY IN USE</div><div class="n" id="enOld">0 d</div><div class="s">protecting your oldest data</div></div>
+      <div class="stat"><div class="k">DATA READABLE?</div><div class="n" id="enSt" style="font-size:20px">YES</div></div>
+    </div>
+    <div class="insight" id="enIns"></div>
+  </div>
+  <div class="grid2">
+    <div class="call trap" style="margin:0"><b class="k">INTERVIEW TRAP</b><div><b>Rotation ≠ rekeying.</b> <i>Rotation</i> (automatic, about every 30 days) means new data gets a new key and old keys become decrypt-only; old data stays encrypted with old keys. <i>Periodic rekeying</i> (<code>PERIODIC_DATA_REKEYING = TRUE</code>, Enterprise+) re-encrypts data whose key is older than a year with a fresh key, then retires the old key for good.</div></div>
+    <div class="call pro" style="margin:0"><b class="k">SENIOR ANGLE</b><div><b>Tri-Secret Secure</b> (Business Critical) combines a Snowflake-managed key with a <b>customer-managed key</b> in your cloud KMS into a composite master key. Snowflake can't decrypt your data without your key, and if you revoke it, the data becomes unreadable, which is a strong control for regulated industries. The trade-off: losing or revoking the key by mistake means losing access.</div></div>
+  </div>
+</section>
+
+<section id="sql">
+  <div class="eyebrow">CHAPTER 08</div>
+  <h2>SQL lab <span class="thin">· click any line for an explanation</span></h2>
+  <div class="panel">
+    <div class="tabs" id="sqlTabs"></div>
+    <div class="grid2" style="grid-template-columns:1.35fr 1fr">
+      <div class="code" id="sqlCode"></div>
+      <div class="explain" id="sqlExp"><b class="h">CLICK A LINE</b>Each line is explained in plain English.</div>
+    </div>
+  </div>
+</section>
+
+<section id="qa">
+  <div class="eyebrow">CHAPTER 09</div>
+  <h2>Interview Q&amp;A <span class="thin">· answer out loud first, then open</span></h2>
+  <div class="tabs" id="qaTabs"><button class="on" data-f="all">All</button><button data-f="RBAC">RBAC &amp; privileges</button><button data-f="Auth">Authentication &amp; network</button><button data-f="Masking">Masking</button><button data-f="Row access">Row access</button><button data-f="Governance">Governance &amp; encryption</button></div>
+  <div id="qaList"></div>
+</section>
+
+<section id="quiz">
+  <div class="eyebrow">CHAPTER 10</div>
+  <h2>Quiz <span class="thin">· 14 questions</span></h2>
+  <div class="panel">
+    <div class="panel-h"><div class="t">QUESTION <b id="qzN">1</b> / 14</div><div class="t">SCORE <b id="qzS">0</b></div></div>
+    <div class="stepbar" id="qzBar"></div>
+    <div id="qzBody"></div>
+    <div class="row" style="margin-top:12px"><button class="btn" id="qzPrev">Back</button><button class="btn pri" id="qzNext">Next</button></div>
+  </div>
+</section>
+
+<section id="cheat">
+  <div class="eyebrow">CHAPTER 11</div>
+  <h2>Cheat sheet <span class="thin">· if you remember only these</span></h2>
+  <div class="cheat">
+    <div><em>5 layers</em>Network → authentication → authorization → row access → masking. Monitoring watches all of them. Encryption sits underneath.</div>
+    <div><em>RBAC + DAC</em>Privileges go to roles, roles go to users. Every object has one owner role that can grant on it (except in managed access schemas).</div>
+    <div><em>Role tree</em>ACCOUNTADMIN ⊃ SYSADMIN + SECURITYADMIN; SECURITYADMIN ⊃ USERADMIN; PUBLIC is in everyone. ORGADMIN sits above, at org level.</div>
+    <div><em>Roll up to SYSADMIN</em>Grant every custom functional role to SYSADMIN, or ACCOUNTADMIN won't inherit it either.</div>
+    <div><em>Access vs functional</em><code>SALES_RO</code> holds privileges; <code>ANALYST</code> holds access roles; users get <code>ANALYST</code>.</div>
+    <div><em>USAGE chain</em>USAGE on database + USAGE on schema + SELECT on table + USAGE on a warehouse. Errors say "does not exist or not authorized".</div>
+    <div><em>FUTURE + ALL</em>Future grants cover new objects only; ON ALL covers existing ones. Schema-level future grants override database-level ones. CREATE OR REPLACE loses direct grants unless COPY GRANTS.</div>
+    <div><em>Secondary roles</em><code>USE SECONDARY ROLES ALL</code> adds the other granted roles' privileges. CREATE / ownership uses the primary role only.</div>
+    <div><em>Auth</em>Humans: SSO (SAML) + MFA. Services: <code>TYPE = SERVICE</code> + key-pair or OAuth. Rotate keys with RSA_PUBLIC_KEY_2.</div>
+    <div><em>Network policy</em>Blocked beats allowed. User-level policy replaces account-level. Private connectivity = Business Critical.</div>
+    <div><em>IS_ROLE_IN_SESSION</em>Honours role hierarchy and secondary roles; CURRENT_ROLE() is the primary role name only. Row access runs before masking.</div>
+    <div><em>Audit &amp; keys</em>ACCESS_HISTORY (columns read and written, base objects, policies), LOGIN_HISTORY. AES-256, ~30-day rotation, yearly rekeying (Enterprise+), Tri-Secret Secure (BC).</div>
+  </div>
+  <div class="call analogy" style="margin-top:20px"><b class="k">NEXT MODULE</b><div><b><a href="../module09/" style="color:var(--ice)">Module 09: Cost optimization →</a></b> Credits and editions, warehouse sizing and auto-suspend, resource monitors and budgets, serverless feature costs, storage costs from Time Travel and Fail-safe, and how to attribute spend with tags (which you just learned).</div></div>
+</section>
+<footer>Snowflake Interview Lab · Module 08 · Security &amp; Governance · Prepared for Saurav Patel</footer>
+</main>
+</div>
+
+<script>
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+const fmt = (n, d = 0) => Number(n).toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d });
+const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+const tabs = (sel, cb) => $$(sel + ' button').forEach(b => b.addEventListener('click', () => { $$(sel + ' button').forEach(x => x.classList.remove('on')); b.classList.add('on'); cb(b.dataset); }));
+
+/* theme + progress */
+const root = document.documentElement;
+root.dataset.theme = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+$('#themeBtn').onclick = () => { root.dataset.theme = root.dataset.theme === 'dark' ? 'light' : 'dark'; };
+const secs = $$('main section'), seen = new Set();
+const io = new IntersectionObserver(es => es.forEach(e => {
+  if (!e.isIntersecting) return;
+  seen.add(e.target.id);
+  $$('.side > a').forEach(a => { const id = a.getAttribute('href').slice(1); a.classList.toggle('act', id === e.target.id); if (seen.has(id)) a.classList.add('seen'); });
+  const pct = Math.round(seen.size / secs.length * 100);
+  $('#progBar').style.width = pct + '%'; $('#progLbl').textContent = pct + '% explored';
+}), { rootMargin: '-40% 0px -55% 0px' });
+secs.forEach(s => io.observe(s));
+
+/* ===== 01 defence in depth: journey ===== */
+const JN = [['Client', 'driver / Snowsight'], ['Network', 'network policy'], ['Authenticate', 'who are you?'], ['Authorize', 'RBAC privileges'], ['Row access', 'which rows?'], ['Masking', 'which values?'], ['Result', 'warehouse runs']];
+(function jBuild() {
+  let s = '';
+  for (let i = 0; i < 6; i++) s += `<path class="edge" id="je${i}" d="M${8 + i * 108 + 96} 80 L${8 + (i + 1) * 108} 80"/>`;
+  s += `<path class="edge" id="jem1" d="M${8 + 2 * 108 + 48} 120 L${8 + 2 * 108 + 48} 160"/><path class="edge" id="jem2" d="M${8 + 6 * 108 + 48} 120 L${8 + 6 * 108 + 48} 160"/><path class="edge" id="jem0" d="M${8 + 1 * 108 + 48} 120 L${8 + 1 * 108 + 48} 160"/>`;
+  const cls = ['neutral', 'L-cs', 'L-cs', 'L-cp', 'L-st', 'L-st', 'neutral'];
+  JN.forEach(([h, sub], i) => { const x = 8 + i * 108; s += `<g class="fn" id="jn${i}"><rect class="${cls[i]}" x="${x}" y="40" width="96" height="80" rx="10" stroke-width="1"/><text class="th" x="${x + 48}" y="70" text-anchor="middle" dominant-baseline="central" style="font-size:13px">${h}</text><text class="ts" x="${x + 48}" y="92" text-anchor="middle" dominant-baseline="central" style="font-size:11px">${sub}</text></g>`; });
+  s += `<g class="fn" id="jn7"><rect class="neutral" x="116" y="160" width="636" height="50" rx="10" stroke-width="1"/><text class="th" x="434" y="178" text-anchor="middle" dominant-baseline="central">Monitoring</text><text class="ts" x="434" y="197" text-anchor="middle" dominant-baseline="central">LOGIN_HISTORY · QUERY_HISTORY · ACCESS_HISTORY · Trust Center</text></g>`;
+  s += `<text class="tm" x="8" y="22">every check below runs in cloud services, before compute does any work (except the final Result)</text>`;
+  $('#jFlow').innerHTML = s;
+})();
+const J0 = { n: [0], e: [], h: 'Request leaves the client', you: 'Priya opens Tableau and refreshes the "Customers" dashboard, which runs <code>SELECT * FROM sales.customers</code>.', be: 'The driver opens an HTTPS connection (TLS 1.2+) to <code>&lt;org&gt;-&lt;account&gt;.snowflakecomputing.com</code>. Everything after this point happens inside Snowflake’s cloud services layer.' };
+const JNET = { n: [1], e: ['je0'], h: 'Network policy: allowed', you: 'Nothing visible. Priya is in the office, IP 203.0.113.25.', be: 'Cloud services looks for a network policy on the <b>user</b>; none, so it uses the <b>account</b> policy CORP_NP. Blocked list first (no match), then allowed list: 203.0.113.0/24 matches. Connection may proceed.' };
+const JAUTH = { n: [2], e: ['je1'], h: 'Authentication: SSO + MFA', you: 'Tableau opens the Okta login page; Priya approves an MFA push on her phone.', be: 'Okta returns a signed <b>SAML assertion</b>. Snowflake validates its signature with the certificate stored in the <code>SAML2</code> security integration, maps the NameID to user PRIYA, and issues a session token. A row is written to <code>LOGIN_HISTORY</code>.' };
+const JAZ = { n: [3], e: ['je2'], h: 'Authorization: privileges checked at compile time', you: 'The session uses Priya’s default role ANALYST.', be: 'While compiling, cloud services resolves <code>sales.customers</code> and checks the active roles (primary + secondary + everything they inherit) for <b>USAGE on SALES, USAGE on the schema, SELECT on CUSTOMERS</b>, plus USAGE on the warehouse. All found through ANALYST → SALES_RO.' };
+const JRAP = { n: [4], e: ['je3'], h: 'Row access policy filters rows', you: 'Priya will only see EMEA customers. She isn’t told rows were removed.', be: 'The table has <code>region_rap</code> on REGION. The optimizer injects it like a hidden WHERE clause; the body looks up <code>security.region_map</code> (with the <b>policy owner’s</b> privileges) and ANALYST maps to EMEA. Illustrative: 3 of 8 rows survive.' };
+const JMASK = { n: [5], e: ['je4'], h: 'Masking policy rewrites columns', you: 'The email column shows <code>*****@*****</code>.', be: 'The projection <code>email</code> is rewritten to <code>pii_email(email)</code>. <code>IS_ROLE_IN_SESSION(\'PII_READER\')</code> is FALSE for ANALYST, so the masked branch is returned. The stored data is untouched.' };
+const JRES = { n: [6], e: ['je5'], h: 'The warehouse executes the rewritten plan', you: 'The dashboard renders.', be: 'Only now does the warehouse do work: it scans micro-partitions (decrypting them with their file keys), applies the policy filter and masking expressions, and returns results.' };
+const JMON = (txt) => ({ n: [7], e: ['jem0', 'jem1', 'jem2'], h: 'Monitoring: everything is recorded', you: 'Nothing visible to the user.', be: txt });
+const JS = {
+  ok: { steps: [J0, JNET, JAUTH, JAZ, JRAP, JMASK, JRES, JMON('<code>QUERY_HISTORY</code> records the query; <code>ACCESS_HISTORY</code> (Enterprise+) records that CUSTOMERS.email and region were read and lists <code>pii_email</code> and <code>region_rap</code> under <code>policies_referenced</code>.')], end: '<b>Five independent checks passed.</b> Note how much happened before any compute ran: network, login and privileges all live in cloud services.' },
+  ip: { steps: [{ ...J0, you: 'Priya tries the same dashboard from a coffee shop, IP 198.51.100.7, without the VPN.' }, { n: [1], e: ['je0'], h: 'Network policy: BLOCKED', bad: 1, you: 'Login fails with an error like <i>"IP 198.51.100.7 is not allowed to access Snowflake. Contact your local security administrator."</i>', be: 'No user-level policy, so CORP_NP applies. The IP is not on the blocked list, but it’s also <b>not inside any allowed range</b>, and when an allowed list exists everything else is denied. Her (correct) password and MFA are never even asked for.' }, JMON('The failed attempt appears in <code>LOGIN_HISTORY</code> with <code>IS_SUCCESS = \'NO\'</code>, the client IP and an error message: useful for spotting credential-stuffing attempts.')], end: '<b>Stopped at layer 1.</b> A leaked password is worthless from an unknown network.' },
+  auth: { steps: [{ ...J0, you: 'The nightly Airflow job connects as service user SVC_ETL with its private key.', be: 'The connector builds a <b>JWT</b> containing the account, user and public-key fingerprint, signs it with the private key, and sends it over HTTPS.' }, { n: [1], e: ['je0'], h: 'Network policy: allowed', you: '–', be: 'SVC_ETL has its own user-level policy ETL_NP, which <b>replaces</b> the account policy for this user. The Airflow NAT IP 192.0.2.5 is inside 192.0.2.0/28.' }, { n: [2], e: ['je1'], h: 'Authentication: FAILED', bad: 1, you: 'The job fails with an error like <i>"JWT token is invalid."</i>', be: 'Last week the team rotated keys and ran <code>UNSET RSA_PUBLIC_KEY</code>, but this Airflow worker still has the <b>old private key</b>. The JWT signature doesn’t verify against RSA_PUBLIC_KEY or RSA_PUBLIC_KEY_2. (See the rotation stepper in chapter 04 for the safe order.)' }, JMON('<code>LOGIN_HISTORY</code> shows <code>FIRST_AUTHENTICATION_FACTOR = RSA_KEYPAIR</code> with the failure. Alert on repeated failures for service users.')], end: '<b>Stopped at layer 2.</b> The right network is not enough without a valid credential.' },
+  priv: { steps: [{ ...J0, you: 'A new BI service account with role REPORTING runs <code>SELECT * FROM sales.core.customers</code>.' }, JNET, { ...JAUTH, h: 'Authentication: OAuth token', you: '–', be: 'The BI tool presents an OAuth access token; Snowflake validates it and maps it to the user. The session’s role is REPORTING.' }, { n: [3], e: ['je2'], h: 'Authorization: DENIED', bad: 1, you: 'Error: <i>"SQL compilation error: Schema \'SALES.CORE\' does not exist or not authorized."</i>', be: 'REPORTING has USAGE on the database but <b>not USAGE on the schema</b>. Compilation stops here, so <b>no warehouse is resumed</b> and no credits are spent. The message is deliberately vague: it never confirms the schema exists.' }, JMON('<code>QUERY_HISTORY</code> shows the failed query with its error code, which is how you find these issues in bulk.')], end: '<b>Stopped at layer 3.</b> Use the chapter 03 checker to see every missing link in the privilege chain.' },
+  hr: { steps: [{ ...J0, you: 'Anita (role HR_ADMIN) runs the same query.' }, JNET, JAUTH, { ...JAZ, you: 'Default role HR_ADMIN.', be: 'HR_ADMIN inherits SALES_RO and PII_READER. USAGE + SELECT found.' }, { ...JRAP, you: 'All 8 rows come back.', be: 'The policy body starts with <code>IS_ROLE_IN_SESSION(\'GLOBAL_READER\') OR …</code>; HR_ADMIN inherits GLOBAL_READER, so every row returns TRUE without needing the mapping lookup.' }, { ...JMASK, h: 'Masking policy: clear values', you: 'Real email addresses are shown.', be: '<code>IS_ROLE_IN_SESSION(\'PII_READER\')</code> is TRUE because HR_ADMIN <b>inherits</b> PII_READER. With <code>CURRENT_ROLE() = \'PII_READER\'</code> it would have been FALSE: see chapter 05.' }, JRES, JMON('ACCESS_HISTORY records this read too, including that the masking policy was referenced. Auditors often ask exactly: "show every query that read unmasked PII".')], end: '<b>Same query, same table, different result.</b> Policies, not copies of tables, decide what each person sees.' }
+};
+let jS = 'ok', jI = -1;
+function jRender() {
+  const sc = JS[jS], st = jI >= 0 ? sc.steps[jI] : null, svg = $('#jFlow');
+  svg.classList.toggle('playing', !!st);
+  $$('#jFlow .fn').forEach(g => { const k = +g.id.slice(2); g.classList.toggle('on', !!st && st.n.includes(k)); const r = g.querySelector('rect'); r.style.stroke = st && st.bad && st.n.includes(k) ? 'var(--red)' : ''; r.style.strokeWidth = st && st.bad && st.n.includes(k) ? '3' : ''; });
+  $$('#jFlow .edge').forEach(e => e.classList.toggle('on', !!st && st.e.includes(e.id)));
+  $('#jBar').innerHTML = sc.steps.map((_, k) => `<span class="${k <= jI ? 'on' : ''}" data-k="${k}"></span>`).join('');
+  $$('#jBar span').forEach(s => s.onclick = () => { jI = +s.dataset.k; jRender(); });
+  $('#jDesc').innerHTML = st ? `<h4>${jI + 1} / ${sc.steps.length} · ${st.h} ${st.bad ? '<span class="badge bad">DENIED</span>' : ''}</h4><div class="two"><div class="you"><b class="l">WHAT THE USER SEES</b>${st.you}</div><div class="be"><b class="l">WHAT SNOWFLAKE DOES</b>${st.be}</div></div>${jI === sc.steps.length - 1 ? `<div class="insight">${sc.end}</div>` : ''}` : '<h4>Ready</h4><div style="font-size:14.5px;color:var(--ink2)">Press <b>Start</b> to send the query through the layers.</div>';
+  $('#jNext').textContent = jI < 0 ? 'Start' : 'Next';
+  $('#jNext').disabled = jI === sc.steps.length - 1;
+  $('#jPrev').disabled = jI < 0;
+}
+$('#jNext').onclick = () => { if (jI < JS[jS].steps.length - 1) { jI++; jRender(); } };
+$('#jPrev').onclick = () => { if (jI >= 0) { jI--; jRender(); } };
+$('#jReset').onclick = () => { jI = -1; jRender(); };
+tabs('#jScen', d => { jS = d.s; jI = -1; jRender(); });
+jRender();
+
+/* ===== 02 role hierarchy builder ===== */
+const RGN = { ACCOUNTADMIN: [380, 30, 'sys'], SECURITYADMIN: [200, 105, 'sys'], SYSADMIN: [560, 105, 'sys'], USERADMIN: [120, 180, 'sys'], ANALYST: [440, 180, 'fun'], DATA_ENGINEER: [660, 180, 'fun'], HR_RO: [330, 255, 'acc'], SALES_RW: [640, 255, 'acc'], SALES_RO: [500, 330, 'acc'], PUBLIC: [120, 330, 'sys'] };
+const RG_FIXED = [['USERADMIN', 'SECURITYADMIN'], ['SECURITYADMIN', 'ACCOUNTADMIN'], ['SYSADMIN', 'ACCOUNTADMIN']];
+const RG_TOG = [['SALES_RO', 'ANALYST'], ['HR_RO', 'ANALYST'], ['SALES_RO', 'SALES_RW'], ['SALES_RW', 'DATA_ENGINEER'], ['ANALYST', 'SYSADMIN'], ['DATA_ENGINEER', 'SYSADMIN']];
+const RG_DEF_ON = [true, false, true, true, true, true];
+const RGP = { sel_o: 'SELECT ON TABLE SALES_DB.CORE.ORDERS', ins_o: 'INSERT ON TABLE SALES_DB.CORE.ORDERS', sel_s: 'SELECT ON TABLE HR_DB.CORE.SALARIES', cwh: 'CREATE WAREHOUSE ON ACCOUNT', cus: 'CREATE USER ON ACCOUNT', mg: 'MANAGE GRANTS ON ACCOUNT' };
+const RG_DEF_P = [['sel_o', 'SALES_RO'], ['ins_o', 'SALES_RW'], ['sel_s', 'HR_RO'], ['cwh', 'SYSADMIN'], ['cus', 'USERADMIN'], ['mg', 'SECURITYADMIN']];
+const RGU = { PRIYA: ['ANALYST'], ARJUN: ['DATA_ENGINEER', 'ANALYST'], MEERA: ['SECURITYADMIN'], RAVI: ['SYSADMIN'], KIRAN: ['ACCOUNTADMIN'], NEW_HIRE: [] };
+let RG = {};
+function rgInit() { RG = { on: RG_DEF_ON.slice(), privs: RG_DEF_P.map(x => x.slice()), user: RG.user || 'PRIYA', act: RG.act || 'sel_o', sec: RG.sec || 'none' }; }
+rgInit();
+const rgEdges = () => RG_FIXED.concat(RG_TOG.filter((_, i) => RG.on[i]));
+function rgSearch(start, pk) {
+  /* BFS down the hierarchy from an active role; every role implicitly inherits PUBLIC */
+  const prev = { [start]: null }, q = [start];
+  while (q.length) {
+    const r = q.shift();
+    if (RG.privs.some(([p, ro]) => p === pk && ro === r)) { const path = []; let c = r; while (c) { path.unshift(c); c = prev[c]; } return path; }
+    const kids = rgEdges().filter(([c, p]) => p === r).map(([c]) => c);
+    if (r !== 'PUBLIC') kids.push('PUBLIC');
+    kids.forEach(k => { if (!(k in prev)) { prev[k] = r; q.push(k); } });
+  }
+  return null;
+}
+function rgDraw(hl) {
+  const W = 150, H = 40;
+  let s = '';
+  const all = RG_FIXED.map(e => [...e, 1]).concat(RG_TOG.map((e, i) => [...e, RG.on[i] ? 1 : 0]));
+  all.forEach(([c, p, on]) => {
+    const [x1, y1] = RGN[c], [x2, y2] = RGN[p];
+    const inPath = hl && hl.path && hl.path.some((r, k) => k > 0 && hl.path[k - 1] === p && r === c);
+    s += `<line class="rge ${on ? '' : 'off'} ${inPath ? 'path' : ''}" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"/>`;
+  });
+  s += `<text class="tm" x="120" y="362" text-anchor="middle">granted to every role and user</text>`;
+  Object.entries(RGN).forEach(([n, [x, y, t]]) => {
+    const priv = RG.privs.filter(([, r]) => r === n).length;
+    const c = [t, hl && hl.active.includes(n) ? 'active' : '', hl && hl.path && hl.path.includes(n) ? 'path' : '', hl && hl.path && hl.path[hl.path.length - 1] === n ? 'hold' : ''].join(' ');
+    s += `<g class="rg ${c}"><rect x="${x - W / 2}" y="${y - H / 2}" width="${W}" height="${H}" rx="9" style="fill:var(--card);stroke:none;filter:none"/><rect x="${x - W / 2}" y="${y - H / 2}" width="${W}" height="${H}" rx="9"/><text class="th" x="${x}" y="${y - 5}" text-anchor="middle" dominant-baseline="central" style="font-size:13px">${n}</text><text class="st" x="${x}" y="${y + 11}" text-anchor="middle" dominant-baseline="central">${priv ? priv + ' direct privilege' + (priv > 1 ? 's' : '') : (n === 'PUBLIC' ? 'implicit' : 'inherits only')}</text></g>`;
+  });
+  $('#rgSvg').innerHTML = s;
+}
+function rgRender() {
+  $('#rgEdges').innerHTML = RG_TOG.map(([c, p], i) => `<label><input type="checkbox" data-i="${i}" ${RG.on[i] ? 'checked' : ''}><code>GRANT ROLE ${c} TO ROLE ${p}</code></label>`).join('');
+  $$('#rgEdges input').forEach(b => b.onchange = () => { RG.on[+b.dataset.i] = b.checked; rgRender(); });
+  $('#rgPrivList').innerHTML = RG.privs.map(([p, r], i) => `<div class="row" style="justify-content:space-between;border-bottom:1px solid var(--line);padding:3px 0"><span class="mono" style="font-size:11.5px">${RGP[p]} → <b>${r}</b></span><button class="btn" data-i="${i}" style="padding:2px 8px;font-size:12px">revoke</button></div>`).join('') || '<span class="note-s">No privileges granted.</span>';
+  $$('#rgPrivList button').forEach(b => b.onclick = () => { RG.privs.splice(+b.dataset.i, 1); rgRender(); });
+  const granted = RGU[RG.user], primary = granted[0] || 'PUBLIC';
+  const active = RG.sec === 'all' ? (granted.length ? granted.slice() : ['PUBLIC']) : [primary];
+  let path = null, via = null;
+  for (const a of active) { path = rgSearch(a, RG.act); if (path) { via = a; break; } }
+  rgDraw({ active, path });
+  const roleTxt = r => r === primary ? `${r} (primary)` : `${r} (secondary)`;
+  let out;
+  if (path) {
+    const chain = path.map((r, k) => k === 0 ? `<b>${roleTxt(r)}</b>` : `inherits <b>${r}</b>`).join(' → ');
+    out = `<b class="h">ALLOWED</b><span class="badge ok" style="margin-right:8px">OK</span><b>${RG.user}</b> → ${chain} → holds <code>${RGP[RG.act]}</code>`;
+  } else out = `<b class="h">DENIED</b><span class="badge bad" style="margin-right:8px">INSUFFICIENT PRIVILEGES</span>No path from ${active.map(r => `<b>${r}</b>`).join(', ')} down to a role holding <code>${RGP[RG.act]}</code>. Active roles: ${active.join(', ')}${RG.sec === 'none' && granted.length > 1 ? ` (secondary roles are OFF, so ${granted.slice(1).join(', ')} is not used)` : ''}.`;
+  $('#rgOut').innerHTML = out;
+  /* insight */
+  let ins;
+  const holders = RG.privs.filter(([p]) => p === RG.act).map(([, r]) => r);
+  const otherPath = !path && granted.slice(1).some(g => rgSearch(g, RG.act));
+  if (holders.includes('PUBLIC')) ins = '<b>Danger:</b> this privilege is granted to <b>PUBLIC</b>, so every user in the account has it, including NEW_HIRE. Keep PUBLIC empty.';
+  else if (otherPath) ins = `<b>Secondary roles:</b> ${RG.user}'s other granted role can do this, but only the primary role is active. Switch to <b>USE SECONDARY ROLES ALL</b> (or <code>USE ROLE</code> that role). Remember: creating objects still uses the primary role.`;
+  else if (!path && RG.user === 'MEERA' && RG.act !== 'cwh') ins = '<b>SECURITYADMIN is not a super-reader.</b> It holds MANAGE GRANTS, so it <i>could</i> grant itself this privilege, but it does not have it by default. Try MANAGE GRANTS as the action instead.';
+  else if (!path && RG.user === 'KIRAN') ins = '<b>Orphan role!</b> ACCOUNTADMIN only inherits what reaches SYSADMIN or SECURITYADMIN. Tick <code>ANALYST → SYSADMIN</code> / <code>DATA_ENGINEER → SYSADMIN</code> so the hierarchy is complete.';
+  else if (path && path.length === 1 && ['ANALYST', 'DATA_ENGINEER'].includes(path[0]) && ['sel_o', 'ins_o', 'sel_s'].includes(RG.act)) ins = '<b>Works, but not best practice:</b> object privileges granted straight to a functional role. Put them in an access role (e.g. SALES_RO) and grant that role, so the same bundle can be reused.';
+  else if (path && path.length > 2) ins = `<b>Inheritance at work:</b> ${path.length - 1} levels of role grants. Untick one line on the path to see access disappear instantly: that's how one REVOKE fixes a whole team.`;
+  else if (RG.user === 'NEW_HIRE') ins = 'NEW_HIRE has no roles except PUBLIC. That is the safe default: access comes only from explicit grants.';
+  else ins = path ? 'Allowed. Try another user, untick a role grant, or revoke a privilege to see how access changes.' : 'Denied. Grant the privilege to an access role on this user\'s inheritance path, or grant the user a role that has it.';
+  $('#rgIns').innerHTML = ins;
+  /* SQL */
+  const L = ['-- role hierarchy as code (generated from your choices)'];
+  RG_TOG.forEach(([c, p], i) => { if (RG.on[i]) L.push(`GRANT ROLE ${c.toLowerCase()} TO ROLE ${p.toLowerCase()};`); });
+  RG.privs.forEach(([p, r]) => { if (!['cwh', 'cus', 'mg'].includes(p) || !['SYSADMIN', 'USERADMIN', 'SECURITYADMIN'].includes(r)) L.push(`GRANT ${RGP[p]} TO ROLE ${r.toLowerCase()};`); });
+  L.push('-- (USAGE on SALES_DB / HR_DB, their schemas and a warehouse also live in the access roles; omitted to keep the graph readable)');
+  Object.entries(RGU).forEach(([u, rs]) => rs.forEach(r => L.push(`GRANT ROLE ${r.toLowerCase()} TO USER ${u.toLowerCase()};`)));
+  L.push('', `-- session of ${RG.user}`, `USE ROLE ${primary.toLowerCase()};`, `USE SECONDARY ROLES ${RG.sec === 'all' ? 'ALL' : 'NONE'};`);
+  $('#rgSql').textContent = L.join('\n');
+}
+$('#rgPrivSel').innerHTML = Object.entries(RGP).map(([k, v]) => `<option value="${k}">${v}</option>`).join('');
+$('#rgRoleSel').innerHTML = Object.keys(RGN).map(r => `<option>${r}</option>`).join('');
+$('#rgUser').innerHTML = Object.entries(RGU).map(([u, r]) => `<option value="${u}">${u} (${r.length ? r.join(' + ') : 'PUBLIC only'})</option>`).join('');
+$('#rgAct').innerHTML = Object.entries(RGP).map(([k, v]) => `<option value="${k}">${v.replace(' ON ACCOUNT', '').replace('ON TABLE ', 'ON ')}</option>`).join('');
+$('#rgGrant').onclick = () => { const p = $('#rgPrivSel').value, r = $('#rgRoleSel').value; if (!RG.privs.some(([a, b]) => a === p && b === r)) RG.privs.push([p, r]); rgRender(); };
+$('#rgUser').onchange = e => { RG.user = e.target.value; rgRender(); };
+$('#rgAct').onchange = e => { RG.act = e.target.value; rgRender(); };
+tabs('#rgSec', d => { RG.sec = d.v; rgRender(); });
+$('#rgReset').onclick = () => { rgInit(); rgRender(); };
+rgRender();
+
+/* ===== 03 why can't I query? ===== */
+const CKB = [
+  ['role', 'GRANT ROLE reporting TO USER priya'],
+  ['active', 'Role is active in the session (USE ROLE reporting, or a secondary role)'],
+  ['db', 'GRANT USAGE ON DATABASE sales_db TO ROLE reporting'],
+  ['sch', 'GRANT USAGE ON SCHEMA sales_db.core TO ROLE reporting'],
+  ['wh', 'GRANT USAGE ON WAREHOUSE bi_wh TO ROLE reporting']
+];
+const CKS = {
+  none: ['No SELECT grant on ORDERS at all', false, 'There is simply no SELECT privilege on the table for this role.'],
+  direct: ['GRANT SELECT ON TABLE orders (direct grant)', true, ''],
+  allOld: ['GRANT SELECT ON ALL TABLES IN SCHEMA core, run before ORDERS was created', false, 'ON ALL is a one-time grant on objects that existed at that moment. ORDERS was created later, so it was never covered.'],
+  cor: ['Direct grant, but last night dbt ran CREATE OR REPLACE TABLE orders', false, 'CREATE OR REPLACE dropped the old table and created a new object with a new identity. Its direct grants went with the old table.'],
+  corcg: ['Direct grant, then CREATE OR REPLACE TABLE orders … COPY GRANTS', true, ''],
+  fut: ['GRANT SELECT ON FUTURE TABLES IN SCHEMA core (set up before ORDERS was created)', true, ''],
+  futdb: ['FUTURE grant at DATABASE level, but schema CORE has its own schema-level future grants for tables', false, 'When a schema defines future grants for an object type, database-level future grants for that type are ignored in that schema. So ORDERS got the schema-level grants (to other roles) only.']
+};
+const CK = { role: true, active: true, db: true, sch: false, wh: true, sel: 'cor' };
+$('#ckSel').innerHTML = Object.entries(CKS).map(([k, v]) => `<option value="${k}">${v[0]}</option>`).join('');
+function ckRender() {
+  $('#ckBoxes').innerHTML = CKB.map(([k, t]) => `<label><input type="checkbox" data-k="${k}" ${CK[k] ? 'checked' : ''}><code>${t}</code></label>`).join('');
+  $$('#ckBoxes input').forEach(b => b.onchange = () => { CK[b.dataset.k] = b.checked; ckRender(); });
+  $('#ckSel').value = CK.sel;
+  const selOk = CKS[CK.sel][1];
+  const rows = [
+    ['Role granted to user', CK.role, 'Requested role \'REPORTING\' is not assigned to the executing user.', 'GRANT ROLE reporting TO USER priya;'],
+    ['Role active in session', CK.role && CK.active, 'The query runs under some other role (e.g. PUBLIC or a default role) that has none of the grants below.', CK.role ? 'USE ROLE reporting;   -- or: ALTER USER priya SET DEFAULT_ROLE = reporting;' : '(grant the role first, then USE ROLE reporting)'],
+    ['USAGE on database SALES_DB', CK.db, 'SQL compilation error: Database \'SALES_DB\' does not exist or not authorized.', 'GRANT USAGE ON DATABASE sales_db TO ROLE reporting;'],
+    ['USAGE on schema SALES_DB.CORE', CK.sch, 'SQL compilation error: Schema \'SALES_DB.CORE\' does not exist or not authorized.', 'GRANT USAGE ON SCHEMA sales_db.core TO ROLE reporting;'],
+    ['SELECT on table ORDERS', selOk, 'SQL compilation error: Object \'SALES_DB.CORE.ORDERS\' does not exist or not authorized.', CK.sel === 'futdb' ? 'GRANT SELECT ON FUTURE TABLES IN SCHEMA sales_db.core TO ROLE reporting;\nGRANT SELECT ON ALL TABLES IN SCHEMA sales_db.core TO ROLE reporting;' : CK.sel === 'cor' ? 'GRANT SELECT ON TABLE sales_db.core.orders TO ROLE reporting;\n-- and stop it recurring: COPY GRANTS, or a FUTURE grant on the schema' : 'GRANT SELECT ON TABLE sales_db.core.orders TO ROLE reporting;\nGRANT SELECT ON FUTURE TABLES IN SCHEMA sales_db.core TO ROLE reporting;'],
+    ['USAGE on warehouse BI_WH', CK.wh, 'No active warehouse selected in the current session. Select an active warehouse with the \'use warehouse\' command.', 'GRANT USAGE ON WAREHOUSE bi_wh TO ROLE reporting;']
+  ];
+  const actOk = CK.role && CK.active;
+  const missing = rows.filter((r, i) => !r[1] && (i < 2 || actOk));
+  const first = rows.find(r => !r[1]);
+  $('#ckList').innerHTML = rows.map((r, i) => {
+    const skip = i >= 2 && !actOk;
+    const cls = skip ? 'skip' : r[1] ? 'ok' : 'bad';
+    return `<div class="chk ${cls}"><b class="i">${skip ? '–' : r[1] ? '✓' : '✗'}</b><div><b>${i + 1}. ${r[0]}</b>${skip ? ' <span class="note-s">(irrelevant until the right role is active)</span>' : ''}${!skip && !r[1] ? `<span class="fix">${esc(r[3])}</span>` : ''}${i === 4 && !selOk ? `<div class="note-s" style="font-style:normal">${CKS[CK.sel][2]}</div>` : ''}</div></div>`;
+  }).join('');
+  $('#ckOut').innerHTML = first ? `<b class="h">QUERY FAILS</b><span class="badge bad" style="margin-right:6px">ERROR</span><i>${esc(first[2])}</i><p style="margin-top:8px">${missing.length} thing${missing.length === 1 ? '' : 's'} to fix. Snowflake stops at the <b>first</b> failing check, so after fixing one you'd hit the next error: the list below shows them all at once.</p>` : `<b class="h">QUERY SUCCEEDS</b><span class="badge ok" style="margin-right:6px">OK</span>Every link in the chain is present: role granted and active → USAGE on database → USAGE on schema → SELECT on table → USAGE on warehouse.`;
+  $('#ckIns').innerHTML = !first ? '<b>All green.</b> Now switch the SELECT source to "CREATE OR REPLACE" to reproduce the most common production ticket.' : (!CK.sch && CK.db) ? '<b>Classic:</b> database USAGE without schema USAGE. The error names the schema, but it never says "permission": it says "does not exist or not authorized".' : !selOk ? `<b>The table privilege is the problem.</b> ${CKS[CK.sel][2]}` : !CK.wh ? '<b>Warehouse:</b> privileges are fine, but there is no warehouse this role may use, so the query can compile but not run.' : '<b>Role first:</b> privileges belong to roles. If the role isn\'t granted and active, nothing else matters.';
+}
+$('#ckSel').onchange = e => { CK.sel = e.target.value; ckRender(); };
+$('#ckAll').onclick = () => { Object.assign(CK, { role: true, active: true, db: true, sch: true, wh: true, sel: 'fut' }); ckRender(); };
+$('#ckNone').onclick = () => { Object.assign(CK, { role: false, active: false, db: false, sch: false, wh: false, sel: 'none' }); ckRender(); };
+ckRender();
+
+/* managed access mini */
+const MA = { t: 'reg', w: 'obj' };
+function maRender() {
+  const { t, w } = MA; let ok, msg;
+  if (w === 'sec') { ok = true; msg = 'Roles with the global <code>MANAGE GRANTS</code> privilege (SECURITYADMIN and above) can grant on any object, in any schema type.'; }
+  else if (t === 'reg') { ok = w === 'obj'; msg = w === 'obj' ? 'Regular schema = discretionary access control: the <b>object owner</b> decides who gets access to its own table.' : 'In a regular schema, owning the <i>schema</i> does not give you the right to grant on tables owned by another role. Only the table owner (or MANAGE GRANTS) can.'; }
+  else { ok = w === 'sch'; msg = w === 'obj' ? 'In a <b>managed access schema</b> the object owner can still create, alter and query its table, but can <b>no longer grant</b> privileges on it. That is the whole point: grant decisions are centralised.' : 'In a managed access schema the <b>schema owner</b> (or MANAGE GRANTS) makes all grant decisions for every object in the schema, including tables it does not own.'; }
+  $('#maOut').innerHTML = `<b class="h">${ok ? 'GRANT SUCCEEDS' : 'GRANT FAILS: insufficient privileges'}</b><span class="badge ${ok ? 'ok' : 'bad'}" style="margin-right:8px">${ok ? 'OK' : 'ERROR'}</span>${msg}`;
+}
+tabs('#maType', d => { MA.t = d.v; maRender(); });
+tabs('#maWho', d => { MA.w = d.v; maRender(); });
+maRender();
+</script>
+
+<script>
+/* ===== 04 authentication methods ===== */
+const AM = {
+  pw: { d: `<b class="h">PASSWORD + MFA</b>The user types a password (Snowflake stores only a salted hash), then confirms a <b>second factor</b>. Duo push has long been the built-in option; Snowflake has added others such as passkeys and authenticator apps, so check current docs for the list. <b>Password policies</b> control length, complexity, age and lockout; <b>authentication policies</b> can make MFA enrolment mandatory.<p style="margin-top:8px"><b>Best for:</b> humans, only where SSO isn't available. Snowflake is phasing out password-only sign-in, so never use it for pipelines.</p>`, s: `CREATE PASSWORD POLICY security.policies.pw_std
+  PASSWORD_MIN_LENGTH = 14
+  PASSWORD_MAX_AGE_DAYS = 90
+  PASSWORD_MAX_RETRIES = 5
+  PASSWORD_LOCKOUT_TIME_MINS = 30;
+ALTER ACCOUNT SET PASSWORD POLICY security.policies.pw_std;
+
+CREATE AUTHENTICATION POLICY security.policies.humans
+  MFA_ENROLLMENT = REQUIRED
+  AUTHENTICATION_METHODS = ('SAML', 'PASSWORD');
+ALTER ACCOUNT SET AUTHENTICATION POLICY security.policies.humans;` },
+  kp: { d: `<b class="h">KEY-PAIR (RSA)</b>You generate an RSA key pair (2048-bit minimum). The <b>public key</b> is stored on the user; the <b>private key</b> stays with the client (ideally encrypted with a passphrase, inside a secrets manager). At login the driver builds a short-lived <b>JWT</b> and signs it with the private key; Snowflake verifies the signature with the stored public key. No secret ever crosses the network.<p style="margin-top:8px"><b>Best for:</b> service users: Airflow, dbt, Kafka connector, Snowpipe REST calls, SnowSQL scripts. Two slots (<code>RSA_PUBLIC_KEY</code>, <code>RSA_PUBLIC_KEY_2</code>) allow rotation without downtime.</p>`, s: `-- on a secure host
+openssl genrsa 2048 | openssl pkcs8 -topk8 -v2 aes256 -inform PEM -out rsa_key.p8
+openssl rsa -in rsa_key.p8 -pubout -out rsa_key.pub
+
+-- in Snowflake (paste the key body, without the BEGIN/END lines)
+CREATE USER svc_etl TYPE = SERVICE DEFAULT_ROLE = etl_role;
+ALTER USER svc_etl SET RSA_PUBLIC_KEY = 'MIIBIjANBgkqh...';
+DESC USER svc_etl;   -- RSA_PUBLIC_KEY_FP shows the fingerprint` },
+  saml: { d: `<b class="h">SSO WITH SAML 2.0</b>Snowflake trusts an external <b>identity provider</b> (Okta, Microsoft Entra ID, Ping…). The user is redirected to the IdP, logs in there (with the company's MFA), and the IdP posts back a <b>signed SAML assertion</b>. Snowflake checks the signature with the IdP certificate stored in the security integration and maps the assertion's NameID to the user's <code>LOGIN_NAME</code>.<p style="margin-top:8px"><b>Best for:</b> all humans. One place to enforce MFA and disable leavers. Pair it with <b>SCIM</b> so users and roles are provisioned automatically.</p>`, s: `CREATE SECURITY INTEGRATION okta_sso
+  TYPE = SAML2
+  ENABLED = TRUE
+  SAML2_ISSUER = 'http://www.okta.com/exk...'
+  SAML2_SSO_URL = 'https://acme.okta.com/app/snowflake/exk.../sso/saml'
+  SAML2_PROVIDER = 'OKTA'
+  SAML2_X509_CERT = 'MIIDpDCCAoygAwIBAgIG...';
+
+-- drivers / SnowSQL: authenticator = externalbrowser` },
+  soa: { d: `<b class="h">SNOWFLAKE OAUTH</b>Snowflake itself is the <b>authorization server</b>. A client application (Tableau, Looker, a custom app) sends the user to Snowflake to log in and consent; Snowflake issues an <b>access token</b> (and optionally a refresh token) that the app uses on the user's behalf. The app never sees the password, and the session runs as the real user with their roles.<p style="margin-top:8px"><b>Best for:</b> partner BI tools and custom apps acting for individual users. Powerful roles such as ACCOUNTADMIN and SECURITYADMIN are blocked from OAuth sessions by default.</p>`, s: `CREATE SECURITY INTEGRATION tableau_oauth
+  TYPE = OAUTH
+  ENABLED = TRUE
+  OAUTH_CLIENT = TABLEAU_DESKTOP;
+
+CREATE SECURITY INTEGRATION my_app_oauth
+  TYPE = OAUTH
+  ENABLED = TRUE
+  OAUTH_CLIENT = CUSTOM
+  OAUTH_CLIENT_TYPE = 'CONFIDENTIAL'
+  OAUTH_REDIRECT_URI = 'https://app.example.com/callback'
+  OAUTH_ISSUE_REFRESH_TOKENS = TRUE
+  OAUTH_REFRESH_TOKEN_VALIDITY = 86400;` },
+  eoa: { d: `<b class="h">EXTERNAL OAUTH</b>Your own authorization server (Okta, Entra ID, PingFederate, or a custom one) issues the token. Snowflake doesn't take part in the login; it only <b>validates</b> the token's signature using the issuer's public keys (<code>JWS_KEYS_URL</code>), checks the audience, and maps a token claim (such as <code>upn</code>) to a Snowflake user. The role can come from the token's scope (for example <code>session:role:ANALYST</code>).<p style="margin-top:8px"><b>Best for:</b> organisations that centralise all tokens in their IdP, and service-to-service access with client credentials.</p>`, s: `CREATE SECURITY INTEGRATION entra_oauth
+  TYPE = EXTERNAL_OAUTH
+  ENABLED = TRUE
+  EXTERNAL_OAUTH_TYPE = AZURE
+  EXTERNAL_OAUTH_ISSUER = 'https://sts.windows.net/<tenant-id>/'
+  EXTERNAL_OAUTH_JWS_KEYS_URL = 'https://login.microsoftonline.com/<tenant-id>/discovery/v2.0/keys'
+  EXTERNAL_OAUTH_AUDIENCE_LIST = ('https://acme.snowflakecomputing.com')
+  EXTERNAL_OAUTH_TOKEN_USER_MAPPING_CLAIM = 'upn'
+  EXTERNAL_OAUTH_SNOWFLAKE_USER_MAPPING_ATTRIBUTE = 'LOGIN_NAME';` },
+  pat: { d: `<b class="h">PROGRAMMATIC ACCESS TOKENS</b>A relatively new option: a token generated for a specific user that a client can use in place of a password (for example with drivers or REST APIs). Tokens can be <b>restricted to one role</b> and have an <b>expiry</b>. For service users Snowflake expects a network policy to be in place before tokens can be used. Details (limits, defaults, policy requirements) are still evolving, so check the current docs before quoting specifics.<p style="margin-top:8px"><b>Best for:</b> tools that can only send a "password-like" secret. Prefer key-pair or OAuth when the client supports them.</p>`, s: `-- syntax as currently documented; verify before use
+ALTER USER svc_bi ADD PROGRAMMATIC ACCESS TOKEN bi_token
+  ROLE_RESTRICTION = 'REPORTING'
+  DAYS_TO_EXPIRY = 30
+  COMMENT = 'Power BI gateway';
+
+SHOW USER PROGRAMMATIC ACCESS TOKENS FOR USER svc_bi;
+ALTER USER svc_bi REMOVE PROGRAMMATIC ACCESS TOKEN bi_token;` }
+};
+const amShow = m => { $('#amDesc').innerHTML = AM[m].d; $('#amSql').textContent = AM[m].s; };
+tabs('#amTabs', d => amShow(d.m));
+amShow('pw');
+
+/* ===== key-pair rotation stepper ===== */
+const KR = [
+  { h: 'Starting point', d: 'SVC_ETL logs in with key pair <b>A</b>. Slot 1 holds public key A, slot 2 is empty. Policy says keys must be rotated every 90 days, and nobody wants the nightly load to break.', s1: 'A', s2: '', cli: 'A', sql: 'DESC USER svc_etl;\n-- RSA_PUBLIC_KEY_FP   = SHA256:a1f3…   (key A)\n-- RSA_PUBLIC_KEY_2_FP = null' },
+  { h: '1 · Generate key pair B', d: 'Create a new RSA key pair on a secure host, or let your secrets tooling do it. The private key goes straight into the secrets manager (Vault, AWS Secrets Manager, Azure Key Vault). Snowflake never needs the private key.', s1: 'A', s2: '', cli: 'A', sql: 'openssl genrsa 2048 | openssl pkcs8 -topk8 -v2 aes256 -inform PEM -out rsa_key_b.p8\nopenssl rsa -in rsa_key_b.p8 -pubout -out rsa_key_b.pub' },
+  { h: '2 · Register B in the second slot', d: 'Now <b>both</b> public keys are valid. Nothing breaks: every running job still signs with A, and A still matches slot 1.', s1: 'A', s2: 'B', cli: 'A', sql: "ALTER USER svc_etl SET RSA_PUBLIC_KEY_2 = 'MIIBIjANBgkqh…(key B)…';" },
+  { h: '3 · Roll the clients over to B', d: 'Update the secret used by Airflow / dbt / the Kafka connector and restart workers gradually. During the rollout some workers use A and some use B, and <b>both succeed</b>. That overlap is the reason for two slots.', s1: 'A', s2: 'B', cli: 'B', sql: '-- airflow connection: private_key_file = /secrets/rsa_key_b.p8\n-- check: all recent SVC_ETL logins succeed\nSELECT event_timestamp, is_success, error_message\nFROM SNOWFLAKE.ACCOUNT_USAGE.LOGIN_HISTORY\nWHERE user_name = \'SVC_ETL\' ORDER BY event_timestamp DESC LIMIT 20;' },
+  { h: '4 · Remove key A', d: 'Unset slot 1. The old private key A is now worthless, even if a copy leaked. A forgotten worker still holding A will fail with "JWT token is invalid", which is exactly the failure in chapter 01’s scenario, so do this only after step 3 is verified.', s1: '', s2: 'B', cli: 'B', sql: 'ALTER USER svc_etl UNSET RSA_PUBLIC_KEY;' },
+  { h: '5 · Next rotation: slots alternate', d: 'In 90 days, generate key C, put it in the <b>free slot 1</b>, roll clients to C, then unset slot 2. Automate the whole cycle (e.g. a scheduled job in your secrets platform) so rotation is routine, not an incident.', s1: 'C', s2: 'B', cli: 'B → C', sql: "ALTER USER svc_etl SET RSA_PUBLIC_KEY = 'MIIBIjANBgkqh…(key C)…';\n-- roll clients to C, then:\nALTER USER svc_etl UNSET RSA_PUBLIC_KEY_2;" }
+];
+let krI = 0;
+function krRender() {
+  const s = KR[krI];
+  $('#krBar').innerHTML = KR.map((_, k) => `<span class="${k <= krI ? 'on' : ''}" data-k="${k}"></span>`).join('');
+  $$('#krBar span').forEach(x => x.onclick = () => { krI = +x.dataset.k; krRender(); });
+  $('#krDesc').innerHTML = `<h4>${s.h}</h4><div style="font-size:14.5px;color:var(--ink2)">${s.d}</div>`;
+  const ok = k => s.s1 === k || s.s2 === k;
+  const b = (v) => `<span class="badge ${v ? 'ok' : 'bad'}">${v ? 'login OK' : 'JWT invalid'}</span>`;
+  $('#krState').innerHTML = `<tr><th>USER PROPERTY / CLIENT</th><th>VALUE</th></tr>
+    <tr><td class="m">RSA_PUBLIC_KEY</td><td class="m">${s.s1 ? 'key ' + s.s1 : '<span class="note-s">empty</span>'}</td></tr>
+    <tr><td class="m">RSA_PUBLIC_KEY_2</td><td class="m">${s.s2 ? 'key ' + s.s2 : '<span class="note-s">empty</span>'}</td></tr>
+    <tr><td>Clients sign with</td><td class="m">private key ${s.cli}</td></tr>
+    <tr><td>A client using key A</td><td>${b(ok('A'))}</td></tr>
+    <tr><td>A client using key B</td><td>${b(ok('B'))}</td></tr>`;
+  $('#krSql').textContent = s.sql;
+  $('#krPrev').disabled = krI === 0; $('#krNext').disabled = krI === KR.length - 1;
+}
+$('#krNext').onclick = () => { if (krI < KR.length - 1) { krI++; krRender(); } };
+$('#krPrev').onclick = () => { if (krI > 0) { krI--; krRender(); } };
+$('#krReset').onclick = () => { krI = 0; krRender(); };
+krRender();
+
+/* ===== network policy evaluator ===== */
+const NPP = { CORP_NP: { allow: ['203.0.113.0/24', '198.18.0.0/16'], block: ['203.0.113.99/32'] }, ETL_NP: { allow: ['192.0.2.0/28'], block: [] } };
+const NP = { user: 'saurav', acct: '1', usr: '1' };
+const ip2n = ip => { const p = ip.trim().split('.'); if (p.length !== 4 || p.some(x => !/^\d{1,3}$/.test(x) || +x > 255)) return null; return p.reduce((a, x) => a * 256 + (+x), 0); };
+const inCidr = (ip, c) => { const [base, bits] = c.split('/'); const b = +bits, n = ip2n(ip), m = ip2n(base); const size = Math.pow(2, 32 - b); return Math.floor(n / size) === Math.floor(m / size); };
+const NPC = [['203.0.113.25', 'office'], ['203.0.113.99', 'stolen laptop'], ['198.18.4.20', 'VPN'], ['198.51.100.7', 'coffee shop'], ['192.0.2.5', 'Airflow NAT']];
+$('#npChips').innerHTML = NPC.map(([ip, l]) => `<span class="chip" data-ip="${ip}">${ip} · ${l}</span>`).join('');
+$$('#npChips .chip').forEach(c => c.onclick = () => { $('#npIp').value = c.dataset.ip; npRender(); });
+function npRender() {
+  const ip = $('#npIp').value.trim();
+  $$('#npChips .chip').forEach(c => c.classList.toggle('on', c.dataset.ip === ip));
+  if (ip2n(ip) === null) { $('#npSteps').innerHTML = ''; $('#npOut').innerHTML = '<b class="h">INVALID IP</b>Type an IPv4 address such as 203.0.113.25.'; return; }
+  const U = NP.user === 'svc' ? 'SVC_ETL' : 'SAURAV';
+  let pol = null, why;
+  if (NP.user === 'svc' && NP.usr === '1') { pol = 'ETL_NP'; why = 'SVC_ETL has a <b>user-level</b> policy (ETL_NP). It takes precedence, so the account policy is <b>ignored</b> for this user.'; }
+  else if (NP.acct === '1') { pol = 'CORP_NP'; why = `${U} has no user-level policy, so the <b>account-level</b> policy CORP_NP applies.`; }
+  else why = 'No network policy applies to this user, so <b>any IP</b> may attempt to log in. Authentication is now the only gate.';
+  const steps = [`<div class="chk ok"><b class="i">1</b><div><b>Which policy?</b> ${why}</div></div>`];
+  let ok = true, out;
+  if (pol) {
+    const P = NPP[pol], bl = P.block.find(c => inCidr(ip, c)), al = P.allow.find(c => inCidr(ip, c));
+    steps.push(`<div class="chk ${bl ? 'bad' : 'ok'}"><b class="i">2</b><div><b>Blocked list</b> (${P.block.join(', ') || 'empty'}): ${bl ? `<b>${ip}</b> matches ${bl}. Blocked always wins, even if it's also inside an allowed range.` : 'no match.'}</div></div>`);
+    if (bl) { ok = false; steps.push(`<div class="chk skip"><b class="i">3</b><div><b>Allowed list</b>: not evaluated (already blocked). ${al ? `Note: ${ip} <i>is</i> inside ${al}.` : ''}</div></div>`); }
+    else { ok = !!al; steps.push(`<div class="chk ${al ? 'ok' : 'bad'}"><b class="i">3</b><div><b>Allowed list</b> (${P.allow.join(', ')}): ${al ? `matches ${al}.` : `no match. Because an allowed list exists, every IP outside it is denied.`}</div></div>`); }
+  }
+  $('#npSteps').innerHTML = steps.join('');
+  if (ok) out = `<b class="h">CONNECTION ALLOWED → continue to authentication</b><span class="badge ok" style="margin-right:8px">PASS</span>${pol ? `${ip} passes ${pol}.` : 'No policy in force.'}`;
+  else out = `<b class="h">CONNECTION REFUSED</b><span class="badge bad" style="margin-right:8px">BLOCKED</span>Error similar to: <i>IP ${esc(ip)} is not allowed to access Snowflake. Contact your local security administrator.</i> The attempt is still logged in LOGIN_HISTORY.`;
+  if (NP.user === 'svc' && NP.usr === '1' && ip === '203.0.113.99') out += '<p style="margin-top:6px">Interesting: the stolen-laptop IP is blocked for SVC_ETL only because ETL_NP doesn’t allow it, not because of CORP_NP’s block list, which no longer applies to this user.</p>';
+  if (NP.user === 'svc' && NP.usr === '0' && NP.acct === '1' && ip === '192.0.2.5') out += '<p style="margin-top:6px">Without ETL_NP, the Airflow NAT IP falls under CORP_NP and is refused: this is why service users often get their own user-level policy.</p>';
+  if (!pol) out += '<p style="margin-top:6px"><b>Not recommended:</b> every account should have an account-level network policy (Trust Center flags this).</p>';
+  $('#npOut').innerHTML = out;
+}
+$('#npIp').addEventListener('input', npRender);
+tabs('#npUser', d => { NP.user = d.v; npRender(); });
+tabs('#npAcct', d => { NP.acct = d.v; npRender(); });
+tabs('#npUsr', d => { NP.usr = d.v; npRender(); });
+npRender();
+
+/* ===== 05 masking simulator ===== */
+const MKD = [['Asha Rao', 'asha.rao@example.com', '+1-555-0101', 98000, true], ['Ben Ortiz', 'ben.o@example.org', '+1-555-0102', 72000, false], ['Chen Li', 'chen.li@example.net', '+1-555-0103', 115000, true], ['Dana Kim', 'dana@example.com', '+1-555-0104', 64000, false]];
+const MK = { role: 'ANALYST', mode: 'cur' };
+function mkRender() {
+  const { role, mode } = MK;
+  const full = mode === 'cur' ? role === 'PII_READER' : (role === 'PII_READER' || role === 'HR_ADMIN');
+  const fn = mode === 'cur' ? "CURRENT_ROLE() IN ('PII_READER')" : "IS_ROLE_IN_SESSION('PII_READER')";
+  $('#mkSql').textContent = `CREATE OR REPLACE MASKING POLICY pii_email\n  AS (val STRING${mode === 'cond' ? ', consent BOOLEAN' : ''}) RETURNS STRING ->\n  CASE\n    WHEN ${fn} THEN val\n    WHEN CURRENT_ROLE() = 'SUPPORT'\n      THEN '*****@' || SPLIT_PART(val, '@', 2)\n${mode === 'cond' ? "    WHEN CURRENT_ROLE() = 'ANALYST' AND consent\n      THEN val\n" : ''}    ELSE '*****'\n  END;\n\nALTER TABLE hr.customers MODIFY COLUMN email\n  SET MASKING POLICY pii_email${mode === 'cond' ? ' USING (email, marketing_consent)' : ''};\n\n-- phone: SUPPORT sees last 4 digits\n-- salary: NULL unless ${fn}\n\nUSE ROLE ${role};\nSELECT * FROM hr.customers;`;
+  const cell = (v, clear) => clear ? `<span class="clr">${esc(v)}</span>` : `<span class="msk">${esc(v)}</span>`;
+  $('#mkTbl').innerHTML = `<tr><th>NAME</th><th>EMAIL</th><th>PHONE</th><th>SALARY</th><th>CONSENT</th></tr>` + MKD.map(([n, e, p, s, c]) => {
+    let em, emC;
+    if (full) { em = e; emC = 1; } else if (role === 'SUPPORT') { em = '*****@' + e.split('@')[1]; emC = 0; } else if (mode === 'cond' && role === 'ANALYST' && c) { em = e; emC = 1; } else { em = '*****'; emC = 0; }
+    const ph = full ? p : role === 'SUPPORT' ? '***-***-' + p.slice(-4) : '********';
+    const sa = full ? fmt(s) : 'NULL';
+    return `<tr><td>${n}</td><td>${cell(em, emC)}</td><td>${cell(ph, full)}</td><td>${cell(sa, full)}</td><td class="m">${c ? 'TRUE' : 'FALSE'}</td></tr>`;
+  }).join('');
+  let ins;
+  if (role === 'HR_ADMIN' && mode === 'cur') ins = '<b>The classic bug:</b> HR_ADMIN inherits PII_READER, yet everything is masked, because <code>CURRENT_ROLE()</code> returns the string <code>HR_ADMIN</code>. Switch the policy style to <b>IS_ROLE_IN_SESSION</b>.';
+  else if (role === 'HR_ADMIN') ins = '<b>Fixed.</b> <code>IS_ROLE_IN_SESSION(\'PII_READER\')</code> is TRUE when the role is primary, secondary or inherited, so HR_ADMIN sees clear values.';
+  else if (role === 'SYSADMIN') ins = '<b>Separation of duties:</b> SYSADMIN owns the table but still sees masked data. Owning a table does not exempt you from its masking policy; only the policy body decides. Even ACCOUNTADMIN is masked unless the policy lists it.';
+  else if (role === 'SUPPORT') ins = '<b>Partial masking:</b> support can confirm "is your email at example.com?" and the last 4 digits of a phone number, which is enough to verify a caller without exposing the full value.';
+  else if (role === 'PII_READER') ins = 'PII_READER is named directly, so both policy styles show clear values. The difference only appears with inherited or secondary roles.';
+  else if (mode === 'cond') ins = '<b>Conditional masking:</b> the policy receives a second column (<code>marketing_consent</code>) through <code>USING</code>. ANALYST sees the email only on rows where the customer consented.';
+  else ins = '<b>ANALYST</b> sees masked values. Same table, same query, nothing stored differently: the policy is applied at query time.';
+  $('#mkIns').innerHTML = ins;
+}
+tabs('#mkRole', d => { MK.role = d.v; mkRender(); });
+tabs('#mkMode', d => { MK.mode = d.v; mkRender(); });
+mkRender();
+
+/* ===== 06 row access simulator ===== */
+const RAD = [[1001, 'Acme GmbH', 'EMEA', 1200], [1002, 'Sakura KK', 'APAC', 800], [1003, 'Blue Ltd', 'AMER', 1500], [1004, 'Nord AB', 'EMEA', 640], [1005, 'Lotus Pte', 'APAC', 2200], [1006, 'Maple Inc', 'AMER', 300], [1007, 'Rhein AG', 'EMEA', 910], [1008, 'Andes SA', 'LATAM', 450]];
+const RAREG = ['EMEA', 'APAC', 'AMER', 'LATAM'], RAROLES = ['SALES_EMEA', 'SALES_APAC', 'SALES_AMER', 'SALES_LEAD', 'INTERN'];
+const RAINH = { SALES_LEAD: ['SALES_EMEA', 'SALES_APAC'] };
+const RA = { role: 'SALES_EMEA', mode: 'cur', map: { SALES_EMEA: ['EMEA'], SALES_APAC: ['APAC'], SALES_AMER: ['AMER', 'LATAM'], SALES_LEAD: [], INTERN: [] } };
+function raRender() {
+  const { role, mode, map } = RA;
+  $('#raMap').innerHTML = `<tr><th>ROLE_NAME</th>${RAREG.map(r => `<th>${r}</th>`).join('')}</tr>` + RAROLES.map(ro => `<tr><td>${ro}</td>${RAREG.map(rg => `<td><input type="checkbox" data-ro="${ro}" data-rg="${rg}" ${map[ro].includes(rg) ? 'checked' : ''}></td>`).join('')}</tr>`).join('');
+  $$('#raMap input').forEach(b => b.onchange = () => { const a = map[b.dataset.ro]; if (b.checked) a.push(b.dataset.rg); else a.splice(a.indexOf(b.dataset.rg), 1); raRender(); });
+  const sessionRoles = mode === 'iris' ? [role, ...(RAINH[role] || [])] : [role];
+  const admin = role === 'GLOBAL_ADMIN';
+  const vis = RAD.map(r => admin || sessionRoles.some(sr => (map[sr] || []).includes(r[2])));
+  const lookup = mode === 'cur' ? 'm.role_name = CURRENT_ROLE()' : 'IS_ROLE_IN_SESSION(m.role_name)';
+  $('#raSql').textContent = `CREATE OR REPLACE ROW ACCESS POLICY security.region_rap\n  AS (row_region VARCHAR) RETURNS BOOLEAN ->\n    IS_ROLE_IN_SESSION('GLOBAL_ADMIN')\n    OR EXISTS (\n      SELECT 1 FROM security.region_map m\n      WHERE ${lookup}\n        AND m.region = row_region);\n\nALTER TABLE sales.orders\n  ADD ROW ACCESS POLICY security.region_rap ON (region);`;
+  $('#raTbl').innerHTML = `<tr><th>ORDER_ID</th><th>CUSTOMER</th><th>REGION</th><th>AMOUNT</th><th>POLICY</th></tr>` + RAD.map((r, i) => `<tr class="${vis[i] ? 'vis' : 'hid'}"><td class="m">${r[0]}</td><td>${r[1]}</td><td class="m">${r[2]}</td><td class="m">${fmt(r[3])}</td><td>${vis[i] ? '<span class="badge ok">TRUE</span>' : '<span class="badge off">FALSE</span>'}</td></tr>`).join('');
+  const n = vis.filter(Boolean).length, sum = RAD.reduce((a, r, i) => a + (vis[i] ? r[3] : 0), 0);
+  $('#raN').textContent = n; $('#raSum').textContent = n ? fmt(sum) : 'NULL';
+  let ins;
+  if (admin) ins = '<b>Bypass branch:</b> <code>IS_ROLE_IN_SESSION(\'GLOBAL_ADMIN\')</code> is TRUE, so the policy returns TRUE for every row without even consulting the mapping table.';
+  else if (role === 'SALES_LEAD' && mode === 'cur' && !map.SALES_LEAD.length) ins = '<b>Zero rows, no error.</b> SALES_LEAD inherits SALES_EMEA and SALES_APAC, but the lookup compares <code>CURRENT_ROLE()</code> (the string SALES_LEAD) with the mapping table. Switch the lookup to <b>IS_ROLE_IN_SESSION(m.role_name)</b>.';
+  else if (role === 'SALES_LEAD' && mode === 'iris') ins = '<b>Inheritance honoured:</b> the session contains SALES_LEAD plus its inherited SALES_EMEA and SALES_APAC, so EMEA and APAC rows are visible without adding SALES_LEAD to the map.';
+  else if (role === 'INTERN' && !map.INTERN.length) ins = '<b>No mapping, no rows.</b> The query succeeds and returns nothing, and SUM returns NULL. Users rarely report "permission denied" with row policies; they report "the numbers are wrong".';
+  else ins = `<b>${role}</b> sees ${n} of 8 rows. Tick or untick boxes in the mapping table: access changes instantly, with no change to the policy or to any grant, because the policy reads the mapping table at query time.`;
+  $('#raIns').innerHTML = ins;
+}
+tabs('#raRole', d => { RA.role = d.v; raRender(); });
+$('#raMap').insertAdjacentHTML('beforebegin', '<div class="tabs" id="raMode" style="margin:6px 0"><button class="on" data-v="cur">lookup: CURRENT_ROLE()</button><button data-v="iris">lookup: IS_ROLE_IN_SESSION()</button></div>');
+tabs('#raMode', d => { RA.mode = d.v; raRender(); });
+raRender();
+
+/* ===== 07 tag inheritance ===== */
+const TGO = [['SALES_DB', 'database', 0], ['SALES_DB.CORE', 'schema', 1], ['CORE.CUSTOMERS', 'table', 2], ['CUSTOMERS.EMAIL', 'column', 3], ['CUSTOMERS.NAME', 'column', 3], ['CORE.ORDERS', 'table', 2], ['SALES_DB.STAGING', 'schema', 1]];
+const TGL = { db: { idx: 0, v: 'internal', sql: "ALTER DATABASE sales_db\n  SET TAG governance.tags.sensitivity = 'internal';" }, sch: { idx: 1, v: 'confidential', sql: "ALTER SCHEMA sales_db.core\n  SET TAG governance.tags.sensitivity = 'confidential';" }, tbl: { idx: 2, v: 'confidential', sql: "ALTER TABLE sales_db.core.customers\n  SET TAG governance.tags.sensitivity = 'confidential';" }, col: { idx: 3, v: 'restricted', sql: "ALTER TABLE sales_db.core.customers\n  MODIFY COLUMN email\n  SET TAG governance.tags.sensitivity = 'restricted';" } };
+const tgUnder = (child, parent) => { const c = TGO[child][0], p = TGO[parent][0]; if (child === parent) return true; if (parent === 0) return true; if (parent === 1) return c.startsWith('CORE.') || c.startsWith('CUSTOMERS.'); if (parent === 2) return c.startsWith('CUSTOMERS.'); return false; };
+function tgRender(l) {
+  const L = TGL[l];
+  $('#tgTbl').innerHTML = `<tr><th>OBJECT</th><th>DOMAIN</th><th>SENSITIVITY</th></tr>` + TGO.map((o, i) => { const d = i === L.idx, inh = !d && tgUnder(i, L.idx); return `<tr><td class="m" style="padding-left:${10 + o[2] * 14}px">${o[0]}</td><td class="m">${o[1]}</td><td>${d ? `<span class="badge mid">${L.v} · direct</span>` : inh ? `<span class="badge ok">${L.v} · inherited</span>` : '<span class="badge off">none</span>'}</td></tr>`; }).join('');
+  $('#tgSql').textContent = `CREATE TAG IF NOT EXISTS governance.tags.sensitivity\n  ALLOWED_VALUES 'public', 'internal', 'confidential', 'restricted';\n\n${L.sql}\n\n-- what applies to each column (direct + inherited)?\nSELECT * FROM TABLE(\n  sales_db.INFORMATION_SCHEMA.TAG_REFERENCES_ALL_COLUMNS(\n    'sales_db.core.customers', 'table'));`;
+}
+tabs('#tgLvl', d => tgRender(d.v));
+tgRender('db');
+
+/* ===== 07 encryption hierarchy ===== */
+const EN = { day: 0, rk: '0', ts: '0', rev: false };
+function enRender() {
+  const { day, rk, ts, rev } = EN;
+  const act = Math.floor(day / 30) + 1;
+  const ageOf = v => day - (v - 1) * 30;
+  let retired = 0; for (let v = 1; v < act; v++) if (rk === '0' || ageOf(v) <= 365) retired++;
+  const oldest = rk === '1' ? Math.min(day, 365) : day;
+  const dead = ts === '1' && rev;
+  let s = '';
+  const box = (x, y, w, h, cls, t1, t2, id) => `<g ${id ? `id="${id}"` : ''}><rect class="${cls}" x="${x}" y="${y}" width="${w}" height="${h}" rx="9" stroke-width="1"/><text class="th" x="${x + w / 2}" y="${y + h / 2 - 8}" text-anchor="middle" dominant-baseline="central" style="font-size:13px">${t1}</text><text class="ts" x="${x + w / 2}" y="${y + h / 2 + 10}" text-anchor="middle" dominant-baseline="central" style="font-size:11px">${t2}</text></g>`;
+  s += box(300, 6, 200, 44, 'neutral', 'Root key', 'held in an HSM');
+  s += `<path class="arr" d="M400 50 L400 66"/>`;
+  if (ts === '1') {
+    s += box(40, 66, 200, 48, rev ? 'neutral' : 'L-cs', rev ? 'Customer key: REVOKED' : 'Customer-managed key', 'your cloud KMS');
+    s += `<path class="arr" d="M240 90 L300 90"/><text class="th" x="270" y="82" text-anchor="middle" style="fill:var(--amber)">+</text>`;
+    if (rev) s += `<path d="M60 72 L220 108 M220 72 L60 108" stroke="var(--red)" stroke-width="3"/>`;
+  }
+  s += box(300, 66, 200, 48, 'L-cs', ts === '1' ? 'Composite master key' : 'Account master key', `v${act} active · rotates ~30 d`);
+  s += `<path class="arr" d="M400 114 L400 130"/>`;
+  s += box(300, 130, 200, 44, 'L-cp', 'Table master keys', `one per table · v${act}`);
+  s += `<path class="arr" d="M400 174 L400 188"/>`;
+  s += `<text class="tm" x="20" y="200">micro-partitions (file keys), coloured by the key generation protecting them</text>`;
+  for (let i = 0; i < 24; i++) {
+    const written = Math.round(day * i / 23), v = Math.floor(written / 30) + 1, age = day - written;
+    let st, col;
+    if (dead) { st = 'x'; col = 'var(--red)'; }
+    else if (rk === '1' && ageOf(v) > 365) { st = 'r'; col = 'var(--ice)'; }
+    else if (v === act) { st = 'a'; col = 'var(--teal)'; }
+    else { st = 'o'; col = 'var(--amber)'; }
+    s += `<rect x="${20 + i * 30.5}" y="208" width="26" height="30" rx="4" fill="${col}" opacity="${st === 'x' ? .35 : .85}"><title>written day ${written}, key v${v}${st === 'r' ? ' (rekeyed)' : ''}</title></rect>`;
+  }
+  $('#enSvg').innerHTML = s;
+  $('#enDay').textContent = fmt(day); $('#enAct').textContent = 'v' + act; $('#enRet').textContent = retired; $('#enOld').textContent = fmt(oldest) + ' d';
+  $('#enSt').textContent = dead ? 'NO' : 'YES'; $('#enSt').style.color = dead ? 'var(--red)' : 'var(--teal)';
+  $('#enRev').disabled = ts !== '1';
+  $('#enRev').textContent = rev ? 'Restore customer key' : 'Revoke customer key';
+  let ins;
+  if (dead) ins = '<b>Tri-Secret Secure in action:</b> without your customer-managed key, the composite master key can’t be formed, so <b>no</b> data can be decrypted, by anyone, including Snowflake. Restoring access to the key restores the data. Use this power carefully.';
+  else if (day === 0) ins = 'Press <b>+30 days</b> a few times. Teal = protected by the active key; amber = by a retired (decrypt-only) key; blue = re-encrypted by periodic rekeying. Hover a partition to see its key.';
+  else if (rk === '0' && day > 365) ins = `<b>Rotation only:</b> new data uses key v${act}, but your oldest partitions are still protected by a key that is ${fmt(day)} days old. Turn on <b>periodic rekeying</b> to cap key age at one year.`;
+  else if (rk === '1' && day > 365) ins = '<b>Rekeying on:</b> data whose key is older than a year has been re-encrypted with a fresh key, and the old keys were destroyed. Oldest key in use stays at about 365 days. It happens in the background with no downtime.';
+  else ins = `Each 30-day rotation creates a new active key (now v${act}); older keys are kept only to decrypt existing data. Rotation is automatic and free in every edition.`;
+  $('#enIns').innerHTML = ins + ' <span class="note-s">Illustrative model, not a benchmark.</span>';
+}
+$('#enM').onclick = () => { EN.day += 30; enRender(); };
+$('#enY').onclick = () => { EN.day += 365; enRender(); };
+$('#enR').onclick = () => { Object.assign(EN, { day: 0, rev: false }); enRender(); };
+$('#enRev').onclick = () => { EN.rev = !EN.rev; enRender(); };
+tabs('#enRk', d => { EN.rk = d.v; enRender(); });
+tabs('#enTs', d => { EN.ts = d.v; if (d.v === '0') EN.rev = false; enRender(); });
+enRender();
+</script>
+
+<script>
+/* ===== 08 SQL lab ===== */
+const SQL = [
+  { t: 'Roles & hierarchy', l: [
+    ['USE ROLE USERADMIN;', 'USERADMIN is the system role meant for creating users and roles. It owns the roles it creates.'],
+    ["CREATE ROLE IF NOT EXISTS sales_ro COMMENT = 'Access role: read SALES_DB';", 'An access role: a reusable bundle of read privileges on one data domain.'],
+    ["CREATE ROLE IF NOT EXISTS sales_rw COMMENT = 'Access role: write SALES_DB';", 'The matching write bundle.'],
+    ["CREATE ROLE IF NOT EXISTS analyst COMMENT = 'Functional role';", 'A functional role describes a job, not data.'],
+    ['CREATE ROLE IF NOT EXISTS data_engineer;', 'Another functional role.'],
+    ['', ''],
+    ['USE ROLE SECURITYADMIN;', 'SECURITYADMIN (which inherits USERADMIN and holds MANAGE GRANTS) wires the hierarchy together.'],
+    ['GRANT ROLE sales_ro TO ROLE sales_rw;', 'Writers can also read: sales_rw inherits everything sales_ro has.'],
+    ['GRANT ROLE sales_ro TO ROLE analyst;', 'Analysts get read access to sales data through the access role.'],
+    ['GRANT ROLE sales_rw TO ROLE data_engineer;', 'Engineers get read + write.'],
+    ['GRANT ROLE analyst TO ROLE SYSADMIN;', 'Roll functional roles up to SYSADMIN, so SYSADMIN (and therefore ACCOUNTADMIN) inherits them. Skipping this creates orphan roles.'],
+    ['GRANT ROLE data_engineer TO ROLE SYSADMIN;', 'Same for every functional role.'],
+    ['', ''],
+    ['GRANT ROLE analyst TO USER priya;', 'Users receive functional roles only. Moving Priya to another team = revoke one role, grant another.'],
+    ['ALTER USER priya SET DEFAULT_ROLE = analyst DEFAULT_WAREHOUSE = bi_wh;', 'The role and warehouse her sessions start with. A default role must also be granted to the user to take effect.'],
+    ['', ''],
+    ['USE ROLE SYSADMIN;', 'SYSADMIN owns SALES_DB in this setup, so it can create database roles inside it.'],
+    ['CREATE DATABASE ROLE IF NOT EXISTS sales_db.reader;', 'A role that lives inside the database. Its privileges can only cover objects in SALES_DB.'],
+    ['GRANT DATABASE ROLE sales_db.reader TO ROLE sales_ro;', 'Database roles cannot be activated with USE ROLE; you grant them to account roles (or to a share).'],
+    ['', ''],
+    ['USE ROLE analyst;', 'Make ANALYST the primary role of this session.'],
+    ['USE SECONDARY ROLES ALL;', 'Also activate all other roles granted to the user, for privilege checks on queries. Object creation still uses the primary role.'],
+    ['SELECT CURRENT_ROLE(), CURRENT_SECONDARY_ROLES();', 'Shows the primary role and a JSON list of active secondary roles.']
+  ] },
+  { t: 'Grants, future grants, managed access', l: [
+    ['USE ROLE SECURITYADMIN;', 'MANAGE GRANTS lets this role grant on any object.'],
+    ['GRANT USAGE ON DATABASE sales_db TO ROLE sales_ro;', 'Link 1 of the chain: may enter the database.'],
+    ['GRANT USAGE ON SCHEMA sales_db.core TO ROLE sales_ro;', 'Link 2: may enter the schema.'],
+    ['GRANT SELECT ON ALL TABLES IN SCHEMA sales_db.core TO ROLE sales_ro;', 'Link 3 for tables that exist today (one-time bulk grant).'],
+    ['GRANT SELECT ON FUTURE TABLES IN SCHEMA sales_db.core TO ROLE sales_ro;', 'And for every table created later. Schema-level future grants override database-level ones for the same object type.'],
+    ['GRANT SELECT ON FUTURE VIEWS IN SCHEMA sales_db.core TO ROLE sales_ro;', 'Views are a separate object type and need their own future grant.'],
+    ['GRANT INSERT, UPDATE, DELETE ON FUTURE TABLES IN SCHEMA sales_db.core TO ROLE sales_rw;', 'Write privileges for the write access role.'],
+    ['GRANT USAGE ON WAREHOUSE bi_wh TO ROLE analyst;', 'Compute access. USAGE is enough to run queries (and auto-resume); OPERATE allows manual resume/suspend.'],
+    ['', ''],
+    ['CREATE SCHEMA IF NOT EXISTS sales_db.finance WITH MANAGED ACCESS;', 'Managed access: object owners can no longer grant; only the schema owner or MANAGE GRANTS can.'],
+    ['ALTER SCHEMA sales_db.core ENABLE MANAGED ACCESS;', 'Convert an existing schema.'],
+    ['', ''],
+    ['GRANT OWNERSHIP ON TABLE sales_db.core.orders TO ROLE deploy_role COPY CURRENT GRANTS;', 'Hand the table to the deploy role and keep all existing grants. REVOKE CURRENT GRANTS would drop them instead.'],
+    ['GRANT OWNERSHIP ON ALL TABLES IN SCHEMA sales_db.core TO ROLE deploy_role COPY CURRENT GRANTS;', 'Bulk version for every table in the schema.'],
+    ['CREATE OR REPLACE TABLE sales_db.core.orders COPY GRANTS AS SELECT * FROM sales_db.staging.orders_new;', 'Rebuilding a table? COPY GRANTS carries the old object\'s grants over to the new one.'],
+    ['', ''],
+    ['SHOW GRANTS TO ROLE sales_ro;', 'Everything the role holds directly.'],
+    ['SHOW FUTURE GRANTS IN SCHEMA sales_db.core;', 'The future-grant rules stored on the schema.'],
+    ['SHOW GRANTS ON TABLE sales_db.core.orders;', 'Who can access this table, and who owns it.']
+  ] },
+  { t: 'Users, key-pair, SCIM', l: [
+    ['USE ROLE USERADMIN;', 'Users are created by USERADMIN (or a SCIM provisioner role).'],
+    ['CREATE USER IF NOT EXISTS svc_etl', 'A non-human user for the Airflow pipeline.'],
+    ['  TYPE = SERVICE', 'Service user: no password, no MFA or SSO prompts. Authenticates with key-pair, OAuth or tokens.'],
+    ['  DEFAULT_ROLE = data_engineer', 'Starting role for its sessions.'],
+    ['  DEFAULT_WAREHOUSE = etl_wh', 'Starting warehouse.'],
+    ["  RSA_PUBLIC_KEY = 'MIIBIjANBgkqh...'", 'The public half of the key pair (paste without the BEGIN/END lines). The private key stays in the secrets manager.'],
+    ["  COMMENT = 'Airflow nightly loads';", 'Document who owns the service user.'],
+    ['GRANT ROLE data_engineer TO USER svc_etl;', 'USERADMIN can grant this role because it owns it.'],
+    ['', ''],
+    ["ALTER USER svc_etl SET RSA_PUBLIC_KEY_2 = 'MIIBIjANBgkqh...(new)';", 'Rotation step 1: register the new public key in the second slot. Both keys now work.'],
+    ['ALTER USER svc_etl UNSET RSA_PUBLIC_KEY;', 'Rotation step 2 (after all clients use the new key): remove the old one.'],
+    ['DESC USER svc_etl;', 'Shows RSA_PUBLIC_KEY_FP and RSA_PUBLIC_KEY_2_FP fingerprints to confirm which keys are registered.'],
+    ['', ''],
+    ['USE ROLE ACCOUNTADMIN;', 'Security integrations are created by ACCOUNTADMIN (or a role granted CREATE INTEGRATION).'],
+    ['CREATE ROLE IF NOT EXISTS okta_provisioner;', 'The role SCIM will act as.'],
+    ['GRANT CREATE USER ON ACCOUNT TO ROLE okta_provisioner;', 'SCIM must be able to create users…'],
+    ['GRANT CREATE ROLE ON ACCOUNT TO ROLE okta_provisioner;', '…and roles (IdP groups become roles).'],
+    ['GRANT ROLE okta_provisioner TO ROLE ACCOUNTADMIN;', 'Keep the hierarchy complete.'],
+    ['CREATE SECURITY INTEGRATION okta_scim', 'The SCIM endpoint configuration.'],
+    ["  TYPE = SCIM SCIM_CLIENT = 'OKTA' RUN_AS_ROLE = 'OKTA_PROVISIONER';", 'Okta will push users and groups; objects it creates are owned by OKTA_PROVISIONER.'],
+    ["SELECT SYSTEM$GENERATE_SCIM_ACCESS_TOKEN('OKTA_SCIM');", 'Generates the bearer token you paste into the Okta app configuration.']
+  ] },
+  { t: 'Network rules & policies', l: [
+    ['USE ROLE SECURITYADMIN;', 'Network policies are managed by SECURITYADMIN or higher.'],
+    ['CREATE NETWORK RULE security.net.office_ips', 'Network rules are schema-level objects: reusable lists of network identifiers.'],
+    ["  TYPE = IPV4 MODE = INGRESS VALUE_LIST = ('203.0.113.0/24', '198.18.0.0/16');", 'IPv4 CIDR ranges for connections coming INTO Snowflake: office and VPN.'],
+    ["CREATE NETWORK RULE security.net.stolen_laptop TYPE = IPV4 MODE = INGRESS VALUE_LIST = ('203.0.113.99');", 'A single IP to block.'],
+    ["CREATE NETWORK RULE security.net.airflow_nat TYPE = IPV4 MODE = INGRESS VALUE_LIST = ('192.0.2.0/28');", 'The NAT range of the Airflow cluster.'],
+    ["CREATE NETWORK RULE security.net.corp_vpce TYPE = AWSVPCEID MODE = INGRESS VALUE_LIST = ('vpce-0abc1234def567890');", 'Private connectivity: allow traffic from a specific AWS VPC endpoint (PrivateLink, Business Critical).'],
+    ['', ''],
+    ['CREATE NETWORK POLICY corp_np', 'The account-wide policy.'],
+    ["  ALLOWED_NETWORK_RULE_LIST = ('security.net.office_ips', 'security.net.corp_vpce')", 'Only these sources are allowed; everything else is denied.'],
+    ["  BLOCKED_NETWORK_RULE_LIST = ('security.net.stolen_laptop');", 'Blocked rules win over allowed rules.'],
+    ["CREATE NETWORK POLICY etl_np ALLOWED_NETWORK_RULE_LIST = ('security.net.airflow_nat');", 'A narrow policy just for the service user.'],
+    ['', ''],
+    ['ALTER ACCOUNT SET NETWORK_POLICY = corp_np;', 'Activate for the whole account. Snowflake refuses if your own current IP would be blocked.'],
+    ['ALTER USER svc_etl SET NETWORK_POLICY = etl_np;', 'User-level policy: replaces the account policy for this user only.'],
+    ["SHOW PARAMETERS LIKE 'NETWORK_POLICY' IN USER svc_etl;", 'Check which policy is attached to the user.'],
+    ['DESC NETWORK POLICY corp_np;', 'See the rules the policy references.'],
+    ['', ''],
+    ["CREATE NETWORK POLICY legacy_np ALLOWED_IP_LIST = ('203.0.113.0/24') BLOCKED_IP_LIST = ('203.0.113.99');", 'The older inline IP-list style still works; network rules are the recommended approach.']
+  ] },
+  { t: 'Masking & tag-based masking', l: [
+    ['USE ROLE SECURITYADMIN;', 'In production, use a dedicated policy-admin role that owns all policies (separation of duties).'],
+    ['CREATE OR REPLACE MASKING POLICY security.policies.pii_email AS (val STRING) RETURNS STRING ->', 'Input and return types must match the column type.'],
+    ['  CASE', 'The body is an ordinary SQL expression, evaluated per row at query time.'],
+    ["    WHEN IS_ROLE_IN_SESSION('PII_READER') THEN val", 'Clear value if PII_READER is primary, secondary or inherited. Prefer this over CURRENT_ROLE().'],
+    ["    WHEN IS_ROLE_IN_SESSION('SUPPORT') THEN REGEXP_REPLACE(val, '.+@', '*****@')", 'Partial masking: keep the domain, hide the person.'],
+    ["    ELSE '*****'", 'Everyone else, including the table owner, sees the fully masked value.'],
+    ['  END;', 'Closes the CASE expression and the policy body.'],
+    ['ALTER TABLE hr.core.customers MODIFY COLUMN email SET MASKING POLICY security.policies.pii_email;', 'Attach to a column. One masking policy per column.'],
+    ['', ''],
+    ['CREATE OR REPLACE MASKING POLICY security.policies.email_consent AS (val STRING, consent BOOLEAN) RETURNS STRING ->', 'Conditional masking: a second argument receives another column from the same row.'],
+    ["  CASE WHEN consent OR IS_ROLE_IN_SESSION('PII_READER') THEN val ELSE '*****' END;", 'Show the email only where the customer consented, or to PII readers.'],
+    ['ALTER TABLE crm.core.leads MODIFY COLUMN email SET MASKING POLICY security.policies.email_consent USING (email, marketing_consent);', 'USING maps columns to the policy arguments: the masked column first.'],
+    ['', ''],
+    ["CREATE TAG IF NOT EXISTS governance.tags.pii ALLOWED_VALUES 'email', 'phone', 'name';", 'A tag with a controlled vocabulary.'],
+    ['CREATE OR REPLACE MASKING POLICY security.policies.pii_string AS (val STRING) RETURNS STRING ->', 'A generic policy for any STRING column tagged as PII.'],
+    ["  CASE WHEN IS_ROLE_IN_SESSION('PII_READER') THEN val ELSE '***MASKED***' END;", 'PII readers see the value; everyone else sees a fixed placeholder.'],
+    ['ALTER TAG governance.tags.pii SET MASKING POLICY security.policies.pii_string;', 'Tag-based masking: every STRING column carrying this tag is now masked. One policy per data type per tag.'],
+    ["ALTER TABLE hr.core.employees MODIFY COLUMN phone SET TAG governance.tags.pii = 'phone';", 'Tagging the column is all it takes; a policy set directly on a column would take precedence.'],
+    ['', ''],
+    ["SELECT * FROM TABLE(hr.INFORMATION_SCHEMA.POLICY_REFERENCES(POLICY_NAME => 'security.policies.pii_email'));", 'Where is this policy attached? Essential before changing or dropping a policy.']
+  ] },
+  { t: 'Row access policy', l: [
+    ['CREATE TABLE IF NOT EXISTS security.policies.region_map (role_name STRING, region STRING);', 'The mapping (entitlement) table: which role may see which region.'],
+    ["INSERT INTO security.policies.region_map VALUES ('SALES_EMEA', 'EMEA'), ('SALES_APAC', 'APAC'),", 'Access is now data: add a row to grant a region.'],
+    ["  ('SALES_AMER', 'AMER'), ('SALES_AMER', 'LATAM');", 'One role can map to several regions.'],
+    ['', ''],
+    ['CREATE OR REPLACE ROW ACCESS POLICY security.policies.region_rap', 'A schema-level policy object.'],
+    ['  AS (row_region VARCHAR) RETURNS BOOLEAN ->', 'Receives the column value for each row; must return TRUE (keep) or FALSE (hide).'],
+    ["  IS_ROLE_IN_SESSION('GLOBAL_ADMIN')", 'Bypass branch for global roles, checked first and cheaply.'],
+    ['  OR EXISTS (', 'Otherwise, keep the row only if a matching entry exists in the mapping table.'],
+    ['    SELECT 1 FROM security.policies.region_map m', 'The lookup runs with the policy owner\'s privileges, so users need no SELECT on the mapping table.'],
+    ['    WHERE IS_ROLE_IN_SESSION(m.role_name)', 'Matches inherited and secondary roles too. CURRENT_ROLE() = m.role_name would only match the primary role.'],
+    ['      AND m.region = row_region', 'The row\'s region must be mapped to one of the session\'s roles.'],
+    ['  );', 'Closes the EXISTS subquery and the policy body.'],
+    ['ALTER TABLE sales.core.orders ADD ROW ACCESS POLICY security.policies.region_rap ON (region);', 'Attach to the table on the REGION column. One row access policy per table or view.'],
+    ['', ''],
+    ["EXECUTE USING POLICY_CONTEXT(CURRENT_ROLE => 'SALES_EMEA')", 'Policy simulation: run a query as if a given role were active, without switching roles.'],
+    ['  AS SELECT region, COUNT(*) FROM sales.core.orders GROUP BY region;', 'Should return EMEA only. Great for testing policies in CI.'],
+    ['', ''],
+    ['ALTER TABLE sales.core.orders DROP ROW ACCESS POLICY security.policies.region_rap,', 'Swap policies atomically: drop the old…'],
+    ['  ADD ROW ACCESS POLICY security.policies.region_rap_v2 ON (region);', '…and add the new one in the same statement, so there is no window with no policy.']
+  ] },
+  { t: 'Audit, classification, keys', l: [
+    ['SELECT ah.query_start_time, ah.user_name,', 'Who read customer emails in the last 30 days, even through views?'],
+    ["       obj.value:objectName::STRING AS object_name, col.value:columnName::STRING AS column_name", 'Pull names out of the JSON arrays.'],
+    ['FROM SNOWFLAKE.ACCOUNT_USAGE.ACCESS_HISTORY ah,', 'Enterprise Edition. One row per query, with some latency.'],
+    ['  LATERAL FLATTEN(ah.base_objects_accessed) obj,', 'base_objects_accessed resolves views to the underlying tables.'],
+    ['  LATERAL FLATTEN(obj.value:columns) col', 'One row per column accessed.'],
+    ["WHERE obj.value:objectName::STRING = 'HR.CORE.CUSTOMERS'", 'Filter on the base table…'],
+    ["  AND col.value:columnName::STRING = 'EMAIL'", '…and the sensitive column.'],
+    ["  AND ah.query_start_time > DATEADD('day', -30, CURRENT_TIMESTAMP());", 'Last 30 days (ACCOUNT_USAGE keeps a year).'],
+    ['', ''],
+    ['SELECT user_name, client_ip, reported_client_type, error_message, COUNT(*) AS failures', 'Failed logins in the last week: spot brute force or broken service users.'],
+    ['FROM SNOWFLAKE.ACCOUNT_USAGE.LOGIN_HISTORY', 'Every login attempt, successful or not.'],
+    ["WHERE is_success = 'NO' AND event_timestamp > DATEADD('day', -7, CURRENT_TIMESTAMP())", 'IS_SUCCESS is a YES/NO string.'],
+    ['GROUP BY 1, 2, 3, 4 ORDER BY failures DESC;', 'One row per user / IP / client / error, worst offenders first.'],
+    ['', ''],
+    ['SELECT DISTINCT user_name FROM SNOWFLAKE.ACCOUNT_USAGE.LOGIN_HISTORY', 'Who still logs in with a password and no second factor?'],
+    ["WHERE first_authentication_factor = 'PASSWORD' AND second_authentication_factor IS NULL AND is_success = 'YES';", 'These users are your MFA rollout list.'],
+    ['', ''],
+    ['SELECT grantee_name, granted_by, created_on FROM SNOWFLAKE.ACCOUNT_USAGE.GRANTS_TO_USERS', 'Who holds ACCOUNTADMIN right now?'],
+    ["WHERE role = 'ACCOUNTADMIN' AND deleted_on IS NULL;", 'deleted_on IS NULL = grant still active. Expect a short list.'],
+    ['', ''],
+    ["SELECT SYSTEM$CLASSIFY('hr.core.customers', {'auto_tag': true});", 'Classify a table and set semantic / privacy category system tags on its columns.'],
+    ["SELECT * FROM SNOWFLAKE.ACCOUNT_USAGE.TAG_REFERENCES WHERE tag_name = 'SEMANTIC_CATEGORY';", 'All columns that classification has tagged (with ACCOUNT_USAGE latency).'],
+    ['ALTER ACCOUNT SET PERIODIC_DATA_REKEYING = TRUE;', 'Enterprise+: re-encrypt data whose keys are older than a year.']
+  ] }
+];
+const KW = /\b(CREATE|OR|REPLACE|IF|NOT|EXISTS|ALTER|SET|UNSET|SELECT|FROM|WHERE|GROUP|BY|ORDER|DESC|AS|COUNT|SHOW|LIKE|INTO|INSERT|UPDATE|DELETE|VALUES|AND|USE|ROLE|ROLES|SECONDARY|USER|GRANT|GRANTS|TO|ON|IN|ALL|FUTURE|TABLES|VIEWS|TABLE|SCHEMA|DATABASE|WAREHOUSE|USAGE|OWNERSHIP|COPY|CURRENT|MANAGED|ACCESS|WITH|ENABLE|MASKING|POLICY|ROW|NETWORK|RULE|TYPE|MODE|TAG|MODIFY|COLUMN|CASE|WHEN|THEN|ELSE|END|RETURNS|ADD|DROP|SECURITY|INTEGRATION|IS|NULL|DISTINCT|LATERAL|FLATTEN|EXECUTE|USING|ACCOUNT|COMMENT|TRUE|FALSE|PARAMETERS|ALLOWED_VALUES|DATEADD|CURRENT_TIMESTAMP|IS_ROLE_IN_SESSION|CURRENT_ROLE)\b/g;
+const hl = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/('[^']*')/g, '\u0001$1\u0002').replace(KW, '<span class="kw">$1</span>').replace(/\b(\d+)\b/g, '<span class="num">$1</span>').replace(/\u0001([^\u0002]*)\u0002/g, (m, a) => '<span class="str">' + a.replace(/<[^>]+>/g, '') + '</span>');
+let sqlI = 0;
+function sqlShow(i) {
+  sqlI = i;
+  $$('#sqlTabs button').forEach((b, k) => b.classList.toggle('on', k === i));
+  $('#sqlCode').innerHTML = SQL[i].l.map(([l], k) => `<div data-k="${k}"><em>${k + 1}</em>${l.trim().startsWith('--') ? `<span style="color:var(--ink3)">${esc(l)}</span>` : hl(l) || ' '}</div>`).join('');
+  $('#sqlExp').innerHTML = '<b class="h">CLICK A LINE</b>Each line is explained in plain English.';
+  $$('#sqlCode div').forEach(d => d.onclick = () => {
+    const e = SQL[sqlI].l[d.dataset.k][1]; if (!e) return;
+    $$('#sqlCode div').forEach(x => x.classList.remove('on')); d.classList.add('on');
+    $('#sqlExp').innerHTML = `<b class="h">LINE ${+d.dataset.k + 1}</b>${esc(e)}`;
+  });
+}
+$('#sqlTabs').innerHTML = SQL.map(s => `<button>${s.t}</button>`).join('');
+$$('#sqlTabs button').forEach((b, i) => b.onclick = () => sqlShow(i));
+sqlShow(0);
+
+/* ===== 09 Q&A ===== */
+const QA = [
+  ['RBAC', 'b', `Explain Snowflake's access control model.`, `<p>It combines <b>RBAC</b> and <b>DAC</b>. Privileges on securable objects are granted to <b>roles</b>; roles are granted to users and to other roles (inheritance). Every object has exactly one <b>owner role</b> (the OWNERSHIP privilege), which can grant access to it: that's the discretionary part. A user acts through the roles active in the session: one primary role plus optional secondary roles. Securable objects are nested (account → database → schema → table/view/stage…), so access needs privileges at each level, e.g. USAGE on database and schema plus SELECT on the table.</p>`],
+  ['RBAC', 'b', `Describe the system-defined roles and how they relate.`, `<p><b>ACCOUNTADMIN</b> is the top role and inherits <b>SYSADMIN</b> and <b>SECURITYADMIN</b>. SECURITYADMIN holds MANAGE GRANTS and inherits <b>USERADMIN</b> (CREATE USER / CREATE ROLE). SYSADMIN creates warehouses and databases, and should inherit all custom functional roles. <b>PUBLIC</b> is granted to everyone automatically. <b>ORGADMIN</b> works at organization level (accounts, org usage). Best practice: ACCOUNTADMIN for very few people, with MFA, never as a default role.</p>`],
+  ['RBAC', 't', `What are access roles vs functional roles, and why bother?`, `<p><b>Access roles</b> hold object privileges for a data domain (SALES_RO, SALES_RW). <b>Functional roles</b> represent jobs (ANALYST, DATA_ENGINEER) and receive access roles. Users get functional roles only, and functional roles roll up to SYSADMIN. Benefits: a new table touches one access role; a new hire gets one grant; audits read cleanly ("ANALYST can read SALES because it holds SALES_RO"). Combined with future grants and managed access schemas, nobody grants privileges by hand.</p>`],
+  ['RBAC', 't', `A user has the right role granted but still gets "Object does not exist or not authorized". Walk me through debugging.`, `<p>(1) Is the role actually <b>active</b>? Check <code>CURRENT_ROLE()</code> and <code>CURRENT_SECONDARY_ROLES()</code>; BI tools often connect with a different default role. (2) Check the chain: <code>SHOW GRANTS TO ROLE …</code> for USAGE on the database, USAGE on the schema, SELECT on the object, and inherited roles. (3) Was the object <b>recreated</b> (CREATE OR REPLACE without COPY GRANTS)? Was the grant an <b>ON ALL</b> run before the table existed? Does a schema-level future grant override the database-level one? (4) Is the warehouse usable? (5) Fully-qualified name typos and case-sensitive quoted identifiers. Fix the root cause with future grants, not one-off grants.</p>`],
+  ['RBAC', 't', `How do secondary roles work, and what's the catch?`, `<p><code>USE SECONDARY ROLES ALL</code> (or a specific list) makes the user's other granted roles contribute privileges to the session, so one query can combine data authorised by different roles. The catch: <b>object creation and ownership use only the primary role</b>, and policies that check <code>CURRENT_ROLE()</code> only see the primary role, which is one reason to use <code>IS_ROLE_IN_SESSION()</code>. Some accounts default users to all secondary roles, so be aware of the behaviour in yours.</p>`],
+  ['RBAC', 's', `Design the RBAC model for a new data platform with raw, curated and mart layers and three teams.`, `<p>One database per layer (or per domain), schemas <b>WITH MANAGED ACCESS</b>, all objects owned by a deploy role used by CI/CD. Per database/schema: access roles <code>&lt;db&gt;_RO</code>, <code>&lt;db&gt;_RW</code> (possibly database roles), wired with USAGE + future grants. Functional roles: DATA_ENGINEER (RW raw/curated, RO marts), ANALYST (RO marts), DATA_SCIENTIST (RO curated + marts, own sandbox schema). Functional roles roll up to SYSADMIN. Users and group membership come from the IdP via SCIM, with SSO + MFA. Service users per pipeline with key-pair. PII protected by tag-based masking; regional data by a row access policy. All of it in Terraform, reviewed by pull request, and audited with ACCESS_HISTORY and GRANTS_TO_ROLES.</p>`],
+  ['Auth', 'b', `Which authentication methods does Snowflake support, and which would you use where?`, `<p>Passwords with MFA, key-pair (RSA + JWT), SSO via SAML 2.0, Snowflake OAuth, External OAuth, and programmatic access tokens. <b>Humans</b>: SSO through the corporate IdP with MFA, so leavers lose access automatically. <b>Pipelines</b>: <code>TYPE = SERVICE</code> users with key-pair (or OAuth client credentials), never passwords. <b>BI tools acting for users</b>: OAuth, so queries run as the real user with their roles and policies.</p>`],
+  ['Auth', 't', `How do you rotate a key-pair without downtime?`, `<p>Snowflake allows two public keys per user: <code>RSA_PUBLIC_KEY</code> and <code>RSA_PUBLIC_KEY_2</code>. Generate the new pair, set it in the free slot (both keys now valid), roll the private key out to all clients through the secrets manager, verify logins succeed, then <code>UNSET</code> the old slot. Next rotation uses the other slot. Check fingerprints with <code>DESC USER</code>.</p>`],
+  ['Auth', 't', `Account-level and user-level network policies both exist. Which applies? And what about blocked vs allowed?`, `<p>The <b>user-level</b> policy takes precedence and replaces the account-level one for that user. Within a policy, the <b>blocked</b> list wins over the allowed list, and if an allowed list exists, any address outside it is denied. Network rules (TYPE = IPV4, AWSVPCEID, AZURELINKID…) are the modern way to define these lists. Snowflake prevents activating an account policy that blocks your current IP.</p>`],
+  ['Auth', 's', `Security wants Snowflake reachable only from the corporate network and the AWS VPC where Airflow runs. Design it.`, `<p>Business Critical edition with <b>AWS PrivateLink</b> for the VPC (and private DNS), network rules for the office/VPN CIDRs and the VPC endpoint ID, an account network policy allowing only those rules, and optionally a user-level policy for service users restricted to the VPC endpoint. Humans log in via SSO + MFA; Airflow uses a <code>TYPE = SERVICE</code> user with key-pair from Secrets Manager. Monitor <code>LOGIN_HISTORY</code> for blocked attempts and use Trust Center to verify the configuration. Also consider internal-stage network rules (<code>MODE = INTERNAL_STAGE</code>) if stage access must be private too.</p>`],
+  ['Masking', 'b', `What is dynamic data masking and how does it work internally?`, `<p>A masking policy is a schema-level object with an expression that returns the value a user sees. Attached to a column, it's applied at <b>query runtime</b>: cloud services rewrites the query so each read of the column passes through the policy, evaluated with context functions (<code>IS_ROLE_IN_SESSION</code>, <code>CURRENT_ROLE</code>, <code>INVOKER_ROLE</code>…). Stored data is never changed, and the policy follows the column into views, joins, CTAS and shares. Requires Enterprise Edition.</p>`],
+  ['Masking', 't', `CURRENT_ROLE() vs IS_ROLE_IN_SESSION() in a masking policy?`, `<p><code>CURRENT_ROLE()</code> returns the primary role's name only; it ignores inheritance and secondary roles. <code>IS_ROLE_IN_SESSION('X')</code> is TRUE if X is the primary role, a secondary role, or inherited by either. If HR_ADMIN inherits PII_READER, a <code>CURRENT_ROLE() IN ('PII_READER')</code> check masks HR_ADMIN incorrectly. Use IS_ROLE_IN_SESSION for hierarchy-aware policies.</p>`],
+  ['Masking', 's', `You have 300 tables and new PII columns appear every week. How do you keep them masked?`, `<p>Use <b>tag-based masking</b>: create a <code>pii</code> tag, attach one masking policy per data type to the tag, and tag columns instead of attaching policies one by one. Run <b>classification</b> (SYSTEM$CLASSIFY or automatic classification) to detect PII and apply tags, and review its suggestions. Tag at schema level where whole schemas are sensitive (inherited by columns). Monitor coverage with TAG_REFERENCES and POLICY_REFERENCES, and make tagging part of the CI checks for new models.</p>`],
+  ['Row access', 'b', `What is a row access policy and when would you use one?`, `<p>A schema-level object that returns a BOOLEAN per row; attached to a table or view on chosen columns, it filters rows at query time. Use it for regional or departmental restrictions, multi-tenant SaaS tables (tenant_id), or manager hierarchies, instead of maintaining many filtered copies or views. Usually backed by a mapping table so access changes are data changes.</p>`],
+  ['Row access', 't', `If a table has both a row access policy and a masking policy, what happens, and in which order?`, `<p>Row access is evaluated <b>first</b> to decide which rows are returned, then masking is applied to the columns of the surviving rows. The row policy therefore sees the original values. Snowflake has also restricted using the same column in both a row access policy signature and a masking policy signature (check the current docs for this limitation), so plan which columns drive which policy.</p>`],
+  ['Row access', 's', `Users complain that queries got slower after a row access policy was added. What do you check?`, `<p>Open the Query Profile: the policy appears as an extra filter/join against the mapping table. Keep the mapping table small and simple (equality lookups on role and key), avoid complex subqueries or UDF calls per row, and consider memoizable functions for the lookup. Make sure the policy column is a good pruning column (clustering on region/tenant can help). Test with <code>EXECUTE USING POLICY_CONTEXT</code> to compare plans per role.</p>`],
+  ['Governance', 'b', `What does ACCESS_HISTORY give you that QUERY_HISTORY doesn't?`, `<p>QUERY_HISTORY has the SQL text and performance metrics. <b>ACCESS_HISTORY</b> (Enterprise+) has structured, column-level information: which objects and columns were read (<code>direct_objects_accessed</code> and, through views, <code>base_objects_accessed</code>), what was written (<code>objects_modified</code>, giving column lineage), and which policies were referenced. That answers "who read this PII column?" without parsing SQL.</p>`],
+  ['Governance', 't', `Explain Snowflake's encryption key hierarchy, rotation and rekeying.`, `<p>All data is encrypted with AES-256 at rest and TLS in transit. A hierarchical key model: root key (HSM) → account master keys → table master keys → file keys per micro-partition. Snowflake-managed keys are <b>rotated</b> automatically about every 30 days: new data uses the new key, older keys become decrypt-only. <b>Periodic rekeying</b> (Enterprise+, <code>PERIODIC_DATA_REKEYING</code>) re-encrypts data whose keys are older than a year and retires those keys. <b>Tri-Secret Secure</b> (Business Critical) combines a customer-managed KMS key with Snowflake's key; revoking it makes the data unreadable.</p>`],
+  ['Governance', 't', `What is a secure view and why can it be slower?`, `<p>A secure view hides its definition from non-owners and prevents the optimizer from applying transformations that could expose rows the view filters out (for example evaluating a user's function or predicate before the view's own filter, where errors or timing could leak data). Disabling those optimizations can cost performance. Use secure views when the view itself enforces security or when sharing data; use regular views otherwise.</p>`]
+];
+const LV = { b: 'FUNDAMENTAL', t: 'TRICKY', s: 'SCENARIO' };
+function qa(f) { $('#qaList').innerHTML = QA.filter(q => f === 'all' || q[0] === f).map(([tp, l, q, a]) => `<details class="qa"><summary><span class="lv ${l}">${LV[l]}</span><span class="tp">${tp.toUpperCase()}</span>${q}</summary><div class="ans">${a}</div></details>`).join(''); }
+tabs('#qaTabs', d => qa(d.f));
+qa('all');
+
+/* ===== 10 quiz ===== */
+const QZ = [
+  [`Which system role inherits both SYSADMIN and SECURITYADMIN?`, [`ORGADMIN`, `USERADMIN`, `ACCOUNTADMIN`, `PUBLIC`], 2, `ACCOUNTADMIN sits at the top of the account and inherits SYSADMIN and SECURITYADMIN. ORGADMIN is a separate organization-level role.`],
+  [`A custom role ANALYST owns several tables but was never granted to SYSADMIN. Which is true?`, [`ACCOUNTADMIN still sees everything automatically`, `Neither SYSADMIN nor ACCOUNTADMIN inherit ANALYST's privileges`, `PUBLIC inherits them`, `Snowflake grants it to SYSADMIN automatically`], 1, `ACCOUNTADMIN only inherits what reaches SYSADMIN or SECURITYADMIN. Roll custom roles up to SYSADMIN.`],
+  [`Minimum privileges for a role to run SELECT on SALES_DB.CORE.ORDERS (besides a warehouse)?`, [`SELECT on the table only`, `USAGE on database + USAGE on schema + SELECT on table`, `OWNERSHIP on the schema`, `USAGE on schema + SELECT on table`], 1, `Access is checked at every container level: database USAGE, schema USAGE, then the object privilege.`],
+  [`GRANT SELECT ON FUTURE TABLES IN SCHEMA s TO ROLE r. What about tables already in s?`, [`They're covered too`, `Only tables created in the last 24 h`, `The statement fails if tables exist`, `They're not covered; use GRANT … ON ALL TABLES as well`], 3, `Future grants apply only to objects created after the rule exists. ON ALL handles existing objects.`],
+  [`In a managed access schema, who can grant SELECT on a table?`, [`The table owner`, `Any role with USAGE on the schema`, `The schema owner or a role with MANAGE GRANTS`, `Only ACCOUNTADMIN`], 2, `Managed access removes the object owner's right to grant; decisions are centralised with the schema owner or MANAGE GRANTS.`],
+  [`dbt rebuilt a table with CREATE OR REPLACE and the BI role lost access. The cleanest prevention?`, [`Run the job as ACCOUNTADMIN`, `Future grants on the schema, or COPY GRANTS when recreating`, `Grant to PUBLIC`, `Use secondary roles`], 1, `CREATE OR REPLACE creates a new object, losing direct grants. Future grants or COPY GRANTS fix it properly.`],
+  [`With USE SECONDARY ROLES ALL active, which role owns a table you create?`, [`The primary role`, `All active roles share ownership`, `The most powerful secondary role`, `SYSADMIN`], 0, `Object creation and ownership always use the primary role.`],
+  [`A service user must never use a password. What is the best fit?`, [`TYPE = PERSON with a long password`, `TYPE = SERVICE with Duo MFA`, `TYPE = SERVICE with key-pair authentication`, `SSO via SAML`], 2, `Service users authenticate non-interactively; key-pair (or OAuth) is the standard choice.`],
+  [`Why does Snowflake allow RSA_PUBLIC_KEY and RSA_PUBLIC_KEY_2 on one user?`, [`One per region`, `To rotate keys without downtime`, `One for reads, one for writes`, `Required for MFA`], 1, `Both keys are valid at once, so clients can move to the new key before the old one is removed.`],
+  [`An IP is in both the allowed list and the blocked list of the active network policy. Result?`, [`Blocked`, `Allowed`, `Depends on list order`, `Error when creating the policy`], 0, `The blocked list takes precedence over the allowed list.`],
+  [`HR_ADMIN inherits PII_READER. The masking policy uses CURRENT_ROLE() IN ('PII_READER'). What does HR_ADMIN see?`, [`Clear values`, `Masked values`, `An error`, `NULL for every column`], 1, `CURRENT_ROLE() returns the primary role name, HR_ADMIN, so the check fails. IS_ROLE_IN_SESSION would honour the inheritance.`],
+  [`In which order are policies applied when a query reads a table with both a row access and a masking policy?`, [`Masking, then row access`, `In parallel, no defined order`, `Only the one created first applies`, `Row access, then masking`], 3, `Rows are filtered first (using original values), then column values are masked.`],
+  [`Which view answers "who read the EMAIL column of CUSTOMERS, including through views?"`, [`QUERY_HISTORY`, `LOGIN_HISTORY`, `ACCESS_HISTORY (base_objects_accessed)`, `TABLE_STORAGE_METRICS`], 2, `ACCESS_HISTORY records column-level reads; base_objects_accessed resolves views to their underlying tables.`],
+  [`What does Tri-Secret Secure add?`, [`A customer-managed key combined with Snowflake's key into a composite master key`, `MFA for all users`, `Automatic 30-day key rotation`, `Row-level encryption per user`], 0, `Tri-Secret Secure (Business Critical) requires your KMS key to decrypt data; revoking it makes the data unreadable. Rotation happens in every edition anyway.`]
+];
+let qi = 0; const qAns = Array(QZ.length).fill(null);
+QZ.forEach((_, i) => { const s = document.createElement('span'); s.onclick = () => qShow(i); $('#qzBar').appendChild(s); });
+function qShow(i) {
+  qi = i; const [q, opts, ok, ex] = QZ[i], a = qAns[i];
+  $('#qzN').textContent = i + 1;
+  [...$('#qzBar').children].forEach((s, k) => { s.classList.toggle('on', qAns[k] !== null); s.style.outline = k === i ? '2px solid var(--ice)' : ''; });
+  $('#qzBody').innerHTML = `<h3 style="margin-top:6px">${q}</h3>` + opts.map((o, k) => `<button class="opt ${a !== null ? (k === ok ? 'ok' : (k === a ? 'bad' : '')) : ''}" data-k="${k}">${String.fromCharCode(65 + k)}. ${o}</button>`).join('') + (a !== null ? `<div class="qexp"><b>${a === ok ? 'Correct.' : 'Not quite.'}</b> ${ex}</div>` : '');
+  $$('#qzBody .opt').forEach(b => b.onclick = () => { if (qAns[qi] !== null) return; qAns[qi] = +b.dataset.k; qShow(qi); $('#qzS').textContent = qAns.filter((x, j) => x === QZ[j][2]).length; });
+  $('#qzNext').textContent = i === QZ.length - 1 ? 'See result' : 'Next';
+}
+function qResult() {
+  const s = qAns.filter((x, j) => x === QZ[j][2]).length;
+  const msg = s >= QZ.length - 2 ? 'Interview-ready on security and governance.' : s >= Math.round(QZ.length * 0.6) ? 'Solid. Replay the role hierarchy builder and the masking simulator, then retry.' : 'Walk through the defence-in-depth journey, the privilege checker and the policy simulators again, then retry.';
+  $('#qzBody').innerHTML = `<div class="score">${s} / ${QZ.length}</div><p style="margin-top:8px">${msg}</p><button class="btn pri" id="qzAgain" style="margin-top:10px">Retry quiz</button>`;
+  $('#qzAgain').onclick = () => { qAns.fill(null); $('#qzS').textContent = 0; qShow(0); };
+}
+$('#qzNext').onclick = () => qi === QZ.length - 1 ? qResult() : qShow(qi + 1);
+$('#qzPrev').onclick = () => qShow(Math.max(0, qi - 1));
+qShow(0);
+</script>
+<div class="toast" id="toast"></div>
+<script>
+(() => {
+  const t = document.getElementById('toast'); let h;
+  document.querySelectorAll('.road a.soon').forEach(a => a.addEventListener('click', e => {
+    e.preventDefault();
+    t.textContent = `Module ${a.dataset.m} isn't built yet. Ask for it in chat and it will be added here.`;
+    t.classList.add('on'); clearTimeout(h); h = setTimeout(() => t.classList.remove('on'), 2800);
+  }));
+})();
+</script>
+</body>
+</html>

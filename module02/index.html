@@ -1,0 +1,1676 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Snowflake Interview Lab · Module 02 · SnowSQL, Unstructured Data, Streams, Tasks &amp; Procedures</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/space-grotesk@5/300.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/space-grotesk@5/700.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/ibm-plex-sans@5/300.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/ibm-plex-sans@5/400.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/ibm-plex-sans@5/600.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/jetbrains-mono@5/400.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/jetbrains-mono@5/700.css">
+<style>
+:root{
+  --bg:#F2F6FA; --card:#FFFFFF; --card2:#E9EFF5; --ink:#0B1B2B; --ink2:#46596B; --ink3:#7F90A2;
+  --line:rgba(11,27,43,.12); --line2:rgba(11,27,43,.22);
+  --ice:#0A86C2; --ice-s:#DCEFF9; --amber:#B86F00; --amber-s:#FFF0D4; --teal:#0B8A6A; --teal-s:#DAF3EB;
+  --red:#C93C3C; --red-s:#FCE4E4; --grid:rgba(10,134,194,.06);
+  --f-head:"Space Grotesk",sans-serif; --f-body:"IBM Plex Sans",sans-serif; --f-mono:"JetBrains Mono",monospace;
+  --r:10px;
+}
+[data-theme="dark"]{
+  --bg:#08121D; --card:#0F1D2C; --card2:#16293B; --ink:#E5EDF5; --ink2:#9DB0C3; --ink3:#687D91;
+  --line:rgba(229,237,245,.10); --line2:rgba(229,237,245,.22);
+  --ice:#4CC3F0; --ice-s:rgba(76,195,240,.13); --amber:#FFB938; --amber-s:rgba(255,185,56,.13); --teal:#3FD3A8; --teal-s:rgba(63,211,168,.13);
+  --red:#FF7070; --red-s:rgba(255,112,112,.14); --grid:rgba(76,195,240,.05);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:var(--f-body);color:var(--ink);line-height:1.7;font-size:16px;
+  background:radial-gradient(1200px 600px at 85% -10%, var(--ice-s), transparent 60%),radial-gradient(900px 500px at -10% 30%, var(--teal-s), transparent 60%),
+  linear-gradient(var(--grid) 1px, transparent 1px) 0 0/32px 32px,linear-gradient(90deg, var(--grid) 1px, transparent 1px) 0 0/32px 32px,var(--bg);background-attachment:fixed}
+code,.mono{font-family:var(--f-mono);font-size:.88em}
+p code,li code,td code{background:var(--card2);padding:1px 6px;border-radius:5px}
+button{font-family:var(--f-body);cursor:pointer}
+.top{position:sticky;top:0;z-index:30;display:flex;align-items:center;gap:16px;padding:12px 28px;border-bottom:1px solid var(--line);background:color-mix(in srgb,var(--bg) 82%,transparent);backdrop-filter:saturate(1.4) blur(8px)}
+.brand{font-family:var(--f-mono);font-weight:700;letter-spacing:.06em;font-size:13px}.brand b{color:var(--ice)}
+.pill{font-family:var(--f-mono);font-size:12px;padding:3px 10px;border-radius:99px;border:1px solid var(--line2);color:var(--ink2)}
+.prog{flex:1;height:4px;background:var(--card2);border-radius:4px;overflow:hidden;max-width:360px;margin-left:auto}
+.prog i{display:block;height:100%;width:0;background:var(--ice);transition:width .4s}
+.prog-l{font-family:var(--f-mono);font-size:12px;color:var(--ink2);min-width:84px}
+.theme{border:1px solid var(--line2);background:var(--card);color:var(--ink);border-radius:8px;padding:5px 10px;font-size:13px}
+.wrap{display:grid;grid-template-columns:270px minmax(0,1fr);gap:36px;max-width:1340px;margin:0 auto;padding:28px}
+nav.side{position:sticky;top:76px;align-self:start;max-height:calc(100vh - 96px);overflow:auto;padding-right:6px}
+.side h4{font-family:var(--f-mono);font-size:11px;letter-spacing:.14em;color:var(--ink3);margin:6px 0 10px;font-weight:400}
+.side a{display:flex;gap:10px;align-items:baseline;padding:6px 10px;border-radius:8px;color:var(--ink2);text-decoration:none;font-size:14px;border-left:2px solid transparent}
+.side a span{font-family:var(--f-mono);font-size:11px;color:var(--ink3)}
+.side a:hover{background:var(--card)}
+.side a.act{color:var(--ink);background:var(--card);border-left-color:var(--ice);border-radius:0 8px 8px 0}
+.side a.seen span{color:var(--teal)}
+.road{margin-top:22px;border-top:1px solid var(--line);padding-top:14px}
+.road div{font-size:13px;color:var(--ink3);padding:3px 10px;display:flex;gap:8px}
+.road div.now{color:var(--ink);font-weight:600}.road div.done{color:var(--teal)}
+.road div em{font-style:normal;font-family:var(--f-mono);font-size:11px;min-width:20px}
+main{min-width:0}
+section{padding:36px 0 44px;border-bottom:1px dashed var(--line2);scroll-margin-top:70px}
+.eyebrow{font-family:var(--f-mono);font-size:12px;letter-spacing:.16em;color:var(--ice);margin-bottom:6px}
+h1{font-family:var(--f-head);font-weight:700;font-size:clamp(40px,6vw,76px);line-height:1;letter-spacing:-.03em}
+h1 .thin,h2 .thin{font-weight:300;color:var(--ink2)}
+h2{font-family:var(--f-head);font-weight:700;font-size:clamp(28px,3.4vw,40px);letter-spacing:-.02em;line-height:1.1;margin-bottom:12px}
+h3{font-family:var(--f-head);font-weight:700;font-size:20px;margin:26px 0 10px;letter-spacing:-.01em}
+.lead{font-size:18px;font-weight:300;color:var(--ink2);max-width:820px}
+p{margin:8px 0}
+ul.dots{margin:8px 0 8px 20px}ul.dots li{margin:4px 0}
+.wwh{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:20px 0}
+.wwh .box{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:18px 20px;position:relative;overflow:hidden}
+.wwh .box.how{grid-column:1/-1}
+.wwh .tag{font-family:var(--f-mono);font-size:11px;letter-spacing:.14em;display:inline-block;padding:2px 8px;border-radius:5px;margin-bottom:8px}
+.box.what .tag{background:var(--ice-s);color:var(--ice)}.box.why .tag{background:var(--amber-s);color:var(--amber)}.box.how .tag{background:var(--teal-s);color:var(--teal)}
+.box::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px}
+.box.what::before{background:var(--ice)}.box.why::before{background:var(--amber)}.box.how::before{background:var(--teal)}
+.call{display:flex;gap:14px;padding:14px 18px;border-radius:var(--r);margin:14px 0;border:1px solid var(--line)}
+.call b.k{font-family:var(--f-mono);font-size:11px;letter-spacing:.12em;white-space:nowrap;padding-top:3px}
+.call.analogy{background:var(--ice-s)}.call.analogy b.k{color:var(--ice)}
+.call.trap{background:var(--red-s)}.call.trap b.k{color:var(--red)}
+.call.pro{background:var(--teal-s)}.call.pro b.k{color:var(--teal)}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px;margin:18px 0}
+.panel-h{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+.panel-h .t{font-family:var(--f-mono);font-size:12px;letter-spacing:.12em;color:var(--ink2)}.panel-h .t b{color:var(--ink)}
+.btn{border:1px solid var(--line2);background:var(--card);color:var(--ink);padding:7px 14px;border-radius:8px;font-size:14px;transition:all .15s}
+.btn:hover{border-color:var(--ice);color:var(--ice)}
+.btn.pri{background:var(--ice);color:var(--card);border-color:var(--ice)}.btn.pri:hover{color:var(--card);filter:brightness(1.08)}
+.btn.warn{border-color:var(--red);color:var(--red)}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.ctl{display:flex;align-items:center;gap:12px;font-size:14px;color:var(--ink2);margin:8px 0}
+.ctl label{min-width:150px}.ctl input[type=range]{flex:1;accent-color:var(--ice)}
+.ctl .v{font-family:var(--f-mono);font-size:13px;color:var(--ink);min-width:110px;text-align:right}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:14px 0}
+.stat{background:var(--card2);border-radius:10px;padding:12px 14px}
+.stat .k{font-family:var(--f-mono);font-size:11px;color:var(--ink3);letter-spacing:.08em}
+.stat .n{font-family:var(--f-head);font-weight:700;font-size:28px;line-height:1.2}
+.stat .s{font-size:12px;color:var(--ink2)}
+.sqlbox{font-family:var(--f-mono);font-size:13px;background:var(--card2);border-radius:8px;padding:10px 14px;white-space:pre-wrap;color:var(--ink);border-left:3px solid var(--ice);overflow:auto}
+.insight{font-size:14px;padding:10px 14px;border-radius:8px;background:var(--amber-s);color:var(--ink);margin-top:10px}.insight b{color:var(--amber)}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+.tabs button{border:1px solid var(--line2);background:transparent;color:var(--ink2);padding:6px 12px;border-radius:99px;font-size:13px}
+.tabs button.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}.grid2>div{min-width:0}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.mini{background:var(--card2);border-radius:10px;padding:14px}
+.mini h5{font-family:var(--f-head);font-size:15px;margin-bottom:4px}
+.mini p{font-size:14px;color:var(--ink2);margin:0}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:13px;color:var(--ink2);margin:8px 0}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:-1px;margin-right:6px}
+table.t{width:100%;border-collapse:collapse;font-size:14px}
+table.t th,table.t td{padding:7px 10px;border-bottom:1px solid var(--line);text-align:left}
+table.t th{font-family:var(--f-mono);font-size:11px;letter-spacing:.1em;color:var(--ink3);font-weight:400}
+table.t td.m{font-family:var(--f-mono);font-size:12px}
+svg{width:100%;height:auto;display:block}
+svg .t{font-family:var(--f-body);font-size:14px;fill:var(--ink)}
+svg .ts{font-family:var(--f-body);font-size:12px;fill:var(--ink2)}
+svg .th{font-family:var(--f-head);font-size:14px;font-weight:700;fill:var(--ink)}
+svg .tm{font-family:var(--f-mono);font-size:11px;fill:var(--ink2)}
+.L-cs{fill:var(--amber-s);stroke:var(--amber)}.L-cp{fill:var(--ice-s);stroke:var(--ice)}.L-st{fill:var(--teal-s);stroke:var(--teal)}
+.neutral{fill:var(--card);stroke:var(--line2)}
+.arr{stroke:var(--ink3);stroke-width:1.2;fill:none}
+.fn{transition:opacity .3s}
+.flow.playing .fn{opacity:.25}
+.flow.playing .fn.on{opacity:1}
+.fn.on rect{stroke-width:2.4}
+.edge{stroke:var(--ink3);stroke-width:1.4;fill:none;transition:opacity .3s}
+.flow.playing .edge{opacity:.2}
+.flow.playing .edge.on{opacity:1;stroke:var(--ice);stroke-width:2.4;stroke-dasharray:7 5}
+@media (prefers-reduced-motion:no-preference){
+  .flow.playing .edge.on{animation:dash .8s linear infinite}
+  @keyframes dash{to{stroke-dashoffset:-24}}
+  .pulse{animation:pulse 1.2s ease-in-out infinite}
+  @keyframes pulse{0%,100%{opacity:.35}50%{opacity:1}}
+  .rise{animation:rise .5s both}
+  @keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+  .grow{transform-box:fill-box;transform-origin:left center;animation:grow .6s both}
+  @keyframes grow{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+}
+.stepbar{display:flex;gap:6px;margin:12px 0}
+.stepbar span{flex:1;height:4px;border-radius:4px;background:var(--card2);cursor:pointer}
+.stepbar span.on{background:var(--ice)}
+.stepdesc{min-height:120px;background:var(--card2);border-radius:10px;padding:14px 16px}
+.stepdesc h4{font-family:var(--f-head);font-size:17px;margin-bottom:6px}
+.stepdesc .two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.stepdesc .two div{font-size:14px;color:var(--ink2)}
+.stepdesc .two b.l{display:block;font-family:var(--f-mono);font-size:11px;letter-spacing:.12em;margin-bottom:4px}
+.stepdesc .two .you b.l{color:var(--ice)}.stepdesc .two .be b.l{color:var(--teal)}
+.term{background:#0A141F;color:#D6E2EE;font-family:var(--f-mono);font-size:12.5px;border-radius:12px;padding:14px 16px;height:340px;overflow:auto;border:1px solid #1E3247}
+.term div{white-space:pre;line-height:1.5}
+.term .tin{color:#FFB938}.term .terr{color:#FF7A7A}.term .tok{color:#3FD3A8}.term .tdim{color:#6F8499}
+.tbar{display:flex;gap:6px;align-items:center;margin-bottom:8px}
+.tbar i{width:10px;height:10px;border-radius:50%;display:inline-block}
+.tinput{display:flex;gap:8px;margin-top:8px}
+.tinput input{flex:1;font-family:var(--f-mono);font-size:13px;padding:8px 10px;border-radius:8px;border:1px solid var(--line2);background:var(--card);color:var(--ink)}
+.cmds{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}
+.cmds button{font-family:var(--f-mono);font-size:11.5px;border:1px solid var(--line2);background:var(--card);color:var(--ink);padding:5px 9px;border-radius:7px;text-align:left}
+.cmds button:hover{border-color:var(--amber);color:var(--amber)}
+.cmds button small{display:block;font-family:var(--f-body);font-size:11px;color:var(--ink3)}
+.explain{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 16px;min-height:90px;font-size:14.5px}
+.explain b.h{font-family:var(--f-mono);font-size:12px;color:var(--ice);letter-spacing:.1em;display:block;margin-bottom:4px}
+.gantt-l{font-family:var(--f-mono);font-size:11px;fill:var(--ink2)}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font-family:var(--f-mono);font-size:12px;border:1px solid var(--line2);padding:5px 10px;border-radius:99px;cursor:pointer;user-select:none;background:var(--card);color:var(--ink2)}
+.chip.on{background:var(--ice-s);border-color:var(--ice);color:var(--ice)}
+.chip.now{outline:2px solid var(--amber);outline-offset:2px}
+.fcard{border:1px solid var(--line2);border-radius:10px;padding:10px 12px;cursor:pointer;background:var(--card);text-align:left;color:var(--ink)}
+.fcard.on{border-color:var(--ice);background:var(--ice-s)}
+.fcard b{display:block;font-family:var(--f-mono);font-size:12px}
+.fcard small{color:var(--ink3);font-size:12px}
+.out{font-family:var(--f-mono);font-size:12px;background:var(--card2);border-radius:8px;padding:10px 14px;white-space:pre-wrap;border-left:3px solid var(--teal);max-height:260px;overflow:auto}
+.chunk{border:1px solid var(--line2);border-radius:8px;padding:8px 10px;font-size:13px;margin:6px 0;background:var(--card)}
+.chunk em{font-style:normal;background:var(--amber-s);color:var(--ink);border-bottom:2px solid var(--amber)}
+.chunk b{font-family:var(--f-mono);font-size:11px;color:var(--ice);margin-right:8px}
+.act-i{color:var(--teal);font-family:var(--f-mono);font-size:12px;font-weight:700}
+.act-d{color:var(--red);font-family:var(--f-mono);font-size:12px;font-weight:700}
+.badge{font-family:var(--f-mono);font-size:11px;padding:2px 8px;border-radius:99px;white-space:nowrap}
+.badge.ok{background:var(--teal-s);color:var(--teal)}.badge.bad{background:var(--red-s);color:var(--red)}.badge.mid{background:var(--amber-s);color:var(--amber)}.badge.off{background:var(--card2);color:var(--ink3)}
+.flash{animation:flash 1s}
+@keyframes flash{0%{box-shadow:0 0 0 3px var(--amber)}100%{box-shadow:0 0 0 0 transparent}}
+.tn rect{fill:var(--card);stroke:var(--line2);transition:all .3s}
+.tn.run rect{fill:var(--amber-s);stroke:var(--amber);stroke-width:2.4}
+.tn.ok rect{fill:var(--teal-s);stroke:var(--teal);stroke-width:2}
+.tn.skip rect{fill:var(--card2);stroke:var(--ink3);stroke-dasharray:5 4}
+.tn.fail rect{fill:var(--red-s);stroke:var(--red);stroke-width:2}
+.tn .st{font-family:var(--f-mono);font-size:10px;fill:var(--ink3)}
+.log{max-height:240px;overflow:auto}
+.pk{transition:transform .8s cubic-bezier(.5,.05,.3,1)}
+.code{font-family:var(--f-mono);font-size:13px;background:var(--card2);border-radius:10px;padding:10px 0;overflow:auto}
+.code div{padding:2px 16px 2px 0;cursor:pointer;white-space:pre;display:block}
+.code div em{font-style:normal;color:var(--ink3);width:40px;text-align:right;padding-right:14px;display:inline-block;user-select:none}
+.code div:hover{background:var(--ice-s)}
+.code div.on{background:var(--ice-s);box-shadow:inset 3px 0 var(--ice)}
+.kw{color:var(--ice);font-weight:700}.str{color:var(--teal)}.num{color:var(--amber)}
+.qa{border:1px solid var(--line);border-radius:10px;margin:8px 0;background:var(--card);overflow:hidden}
+.qa summary{list-style:none;cursor:pointer;padding:14px 18px;display:flex;gap:12px;align-items:baseline;font-weight:600}
+.qa summary::-webkit-details-marker{display:none}
+.qa summary .lv{font-family:var(--f-mono);font-size:10px;letter-spacing:.1em;padding:2px 8px;border-radius:99px;flex:none;font-weight:400}
+.lv.b{background:var(--teal-s);color:var(--teal)}.lv.t{background:var(--red-s);color:var(--red)}.lv.s{background:var(--amber-s);color:var(--amber)}
+.qa summary .tp{font-family:var(--f-mono);font-size:10px;color:var(--ink3);flex:none;font-weight:400}
+.qa summary::after{content:"+";margin-left:auto;font-family:var(--f-mono);color:var(--ink3)}
+.qa[open] summary::after{content:"−"}
+.qa .ans{padding:0 18px 16px;color:var(--ink2);font-size:15px;border-top:1px solid var(--line)}
+.qa .ans p:first-child{margin-top:12px}
+.opt{display:block;width:100%;text-align:left;padding:12px 14px;margin:8px 0;border:1px solid var(--line2);border-radius:10px;background:var(--card);color:var(--ink);font-size:15px}
+.opt:hover{border-color:var(--ice)}
+.opt.ok{border-color:var(--teal);background:var(--teal-s)}.opt.bad{border-color:var(--red);background:var(--red-s)}
+.qexp{margin-top:10px;padding:12px 14px;border-radius:10px;background:var(--card2);font-size:14px;color:var(--ink2)}
+.score{font-family:var(--f-head);font-weight:700;font-size:56px;line-height:1}
+.cheat{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+.cheat div{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 16px;font-size:14px}
+.cheat div em{font-style:normal;font-family:var(--f-mono);font-size:20px;font-weight:700;color:var(--ice);display:block;line-height:1.1;margin-bottom:4px}
+.analogy-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:18px}
+.ag{border-radius:12px;padding:16px;border:1px solid var(--line);background:var(--card)}
+.ag .k{font-family:var(--f-mono);font-size:11px;letter-spacing:.12em}
+.ag h5{font-family:var(--f-head);font-size:18px;margin:2px 0 4px}
+.ag p{font-size:14px;color:var(--ink2);margin:0}
+.ag.a1{border-top:3px solid var(--amber)}.ag.a1 .k{color:var(--amber)}
+.ag.a2{border-top:3px solid var(--ice)}.ag.a2 .k{color:var(--ice)}
+.ag.a3{border-top:3px solid var(--teal)}.ag.a3 .k{color:var(--teal)}
+.ag.a4{border-top:3px solid var(--red)}.ag.a4 .k{color:var(--red)}
+footer{padding:40px 0;color:var(--ink3);font-size:13px;font-family:var(--f-mono)}
+.note-s{font-size:12px;color:var(--ink3);font-style:italic}
+@media (max-width:1000px){
+  .wrap{grid-template-columns:1fr;padding:16px}
+  nav.side{display:none}
+  .wwh,.grid2,.stepdesc .two{grid-template-columns:1fr}
+  .grid3,.analogy-grid{grid-template-columns:1fr}
+  .prog{display:none}
+}
+.road a.rm{display:flex;gap:8px;align-items:baseline;font-size:13px;padding:5px 10px;border-radius:8px;text-decoration:none;color:var(--ink2);border-left:2px solid transparent}
+.road a.rm:hover{background:var(--card);color:var(--ink)}
+.road a.rm em{font-style:normal;font-family:var(--f-mono);font-size:11px;min-width:20px}
+.road a.rm i{font-style:normal;font-family:var(--f-mono);font-size:9.5px;margin-left:auto;border:1px solid var(--line2);border-radius:99px;padding:0 6px;white-space:nowrap;color:var(--ink3)}
+.road a.rm.now{color:var(--ink);font-weight:600;border-left-color:var(--ice);background:var(--card);border-radius:0 8px 8px 0}
+.road a.rm.now i{border-color:var(--ice);color:var(--ice)}
+.road a.rm.ready em,.road a.rm.ready i{color:var(--teal)}.road a.rm.ready i{border-color:var(--teal)}
+.road a.rm.soon{color:var(--ink3)}
+.toast{position:fixed;bottom:24px;left:50%;transform:translate(-50%,20px);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;font-size:14px;opacity:0;transition:all .3s;z-index:60;pointer-events:none;max-width:90vw}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+.code div.pdone{box-shadow:inset 3px 0 var(--teal)}
+#pcCode{max-height:600px;position:relative}
+@media (max-width:560px){
+  .top{flex-wrap:wrap;gap:8px;padding:10px 14px}
+  .top .pill,.top .prog-l{display:none}
+  .ctl{flex-wrap:wrap}.ctl label{min-width:0}.ctl .v{min-width:0;text-align:left}
+  table.t{display:block;overflow-x:auto}
+  .call{flex-direction:column;gap:6px}
+  .tabs button{font-size:12px}
+}
+/* course-wide phone layout */
+@media (max-width:560px){
+  .top{flex-wrap:wrap;gap:8px;padding:10px 14px}
+  .top .pill,.top .prog-l,.top .prog{display:none}
+  .brand{flex:1}
+  .ctl{flex-wrap:wrap}.ctl label{min-width:0;flex:1 1 100%}.ctl .v{min-width:0;text-align:left}
+  table{display:block;overflow-x:auto;max-width:100%}
+  .grid2,.grid3,.analogy-grid,[style*="grid-template-columns"]{grid-template-columns:1fr!important}
+  .grid2>*,.grid3>*,.call>div{min-width:0}
+  p code,li code,td code{word-break:break-word}
+  .code,.sqlbox,.out,.term,pre{max-width:100%;overflow-x:auto}
+  .call{flex-direction:column;gap:6px}
+  main,section,.panel,.wwh .box,.mini{min-width:0;max-width:100%}
+}
+</style>
+</head>
+<body>
+<div class="top">
+  <div class="brand">SNOWFLAKE<b>//</b>INTERVIEW LAB</div>
+  <span class="pill">Module 02 · Load &amp; automate</span>
+  <div class="prog"><i id="progBar"></i></div>
+  <span class="prog-l" id="progLbl">0% explored</span>
+  <button class="theme" id="themeBtn">Dark / light</button>
+</div>
+<div class="wrap">
+<nav class="side">
+  <h4>MODULE 02 · CHAPTERS</h4>
+  <a href="#intro"><span>00</span>Start here</a>
+  <a href="#snowsql"><span>01</span>SnowSQL</a>
+  <a href="#put"><span>02</span>Inside PUT &amp; COPY</a>
+  <a href="#unstruct"><span>03</span>Unstructured data</a>
+  <a href="#ulab"><span>04</span>Processing lab</a>
+  <a href="#streams"><span>05</span>Streams</a>
+  <a href="#tasks"><span>06</span>Tasks</a>
+  <a href="#e2e"><span>07</span>Streams + tasks together</a>
+  <a href="#procs"><span>08</span>Stored procedures</a>
+  <a href="#sql"><span>09</span>SQL lab</a>
+  <a href="#qa"><span>10</span>Interview Q&amp;A</a>
+  <a href="#quiz"><span>11</span>Quiz</a>
+  <a href="#cheat"><span>12</span>Cheat sheet</a>
+  <div class="road">
+    <h4>COURSE ROADMAP · CLICK TO OPEN</h4>
+    <a class="rm ready" href="../module01/"><em>01</em>Architecture<i>open</i></a>
+    <a class="rm now" href="../module02/"><em>02</em>SnowSQL · unstructured · streams, tasks &amp; procedures<i>you are here</i></a>
+    <a class="rm ready" href="../module03/"><em>03</em>Performance tuning<i>open</i></a>
+    <a class="rm ready" href="../module04/"><em>04</em>Data ingestion (Snowpipe)<i>open</i></a>
+    <a class="rm ready" href="../module05/"><em>05</em>Dynamic tables &amp; transforms<i>open</i></a>
+    <a class="rm ready" href="../module06/"><em>06</em>Semi-structured data<i>open</i></a>
+    <a class="rm ready" href="../module07/"><em>07</em>Data protection<i>open</i></a>
+    <a class="rm ready" href="../module08/"><em>08</em>Security &amp; governance<i>open</i></a>
+    <a class="rm ready" href="../module09/"><em>09</em>Cost optimization<i>open</i></a>
+    <a class="rm ready" href="../module10/"><em>10</em>Data sharing<i>open</i></a>
+    <a class="rm ready" href="../module11/"><em>11</em>Snowpark &amp; Cortex AI<i>open</i></a>
+    <a class="rm ready" href="../module12/"><em>12</em>Advanced SQL<i>open</i></a>
+    <a class="rm ready" href="../module13/"><em>13</em>Modeling &amp; tooling<i>open</i></a>
+    <a class="rm ready" href="../module14/"><em>14</em>System design &amp; behavioral<i>open</i></a>
+  </div>
+</nav>
+<main>
+
+<section id="intro">
+  <div class="eyebrow">MODULE 02 · LOAD &amp; AUTOMATE</div>
+  <h1>Get data in.<br><span class="thin">Keep it moving.</span></h1>
+  <p class="lead" style="margin-top:18px">Module 1 showed how Snowflake is built. This module covers how data actually gets into it and keeps flowing: SnowSQL to move files from your laptop, the unstructured data pipeline for PDFs, audio and images, streams and tasks to process new data automatically, and stored procedures to package multi-step logic into one call.</p>
+  <p style="margin-top:14px">We'll keep the restaurant analogy from Module 1 and add four new characters:</p>
+  <div class="analogy-grid">
+    <div class="ag a1 rise"><div class="k">SNOWSQL</div><h5>The delivery van</h5><p>Drives ingredients (files) from your home (laptop) to the restaurant's pantry (stage), and lets you phone in orders (SQL) from outside.</p></div>
+    <div class="ag a2 rise" style="animation-delay:.1s"><div class="k">UNSTRUCTURED DATA</div><h5>Sealed crates</h5><p>A whole fish, a sack of potatoes: nothing is labelled or portioned. You store the crate, write it in the inventory book (directory table), then prep it into usable pieces.</p></div>
+    <div class="ag a3 rise" style="animation-delay:.2s"><div class="k">STREAM</div><h5>The ticket rail</h5><p>Shows only the order tickets that arrived since the chef last cleared the rail. It doesn't hold the food, just a bookmark of what's new.</p></div>
+    <div class="ag a4 rise" style="animation-delay:.3s"><div class="k">TASK</div><h5>The kitchen timer</h5><p>Rings every few minutes and tells a chef to cook whatever is on the ticket rail. If the rail is empty, nobody turns on the stove.</p></div>
+  </div>
+</section>
+
+<section id="snowsql">
+  <div class="eyebrow">CHAPTER 01</div>
+  <h2>SnowSQL <span class="thin">· Snowflake from your terminal</span></h2>
+  <div class="wwh">
+    <div class="box what"><span class="tag">01 · WHAT IS IT</span>
+      <p><b>SnowSQL</b> is Snowflake's <b>command-line client</b>. You install it on your laptop or a server, type <code>snowsql</code>, and get a prompt where you can run any SQL plus special client commands that start with <code>!</code> (like <code>!spool</code> or <code>!source</code>).</p>
+      <p>Under the hood it's built on the <b>Snowflake Python connector</b>. It talks to your account URL (<code>&lt;account&gt;.snowflakecomputing.com</code>) over <b>HTTPS (TLS, port 443)</b>, the same way Snowsight or a JDBC driver does.</p>
+      <p class="note-s">Snowflake's newer CLI is <b>Snowflake CLI</b> (command <code>snow</code>). Snowflake now recommends it for new work, but SnowSQL is still in heavy use, so interviewers ask about both.</p>
+    </div>
+    <div class="box why"><span class="tag">02 · WHY WE USE IT</span>
+      <ul class="dots">
+        <li><b>Upload and download local files:</b> <code>PUT</code> sends files from your machine to an internal stage, and <code>GET</code> brings them back. You can't run these from a Snowsight worksheet.</li>
+        <li><b>Automation:</b> run SQL scripts from shell scripts, cron jobs, Airflow or CI/CD (<code>snowsql -f deploy.sql</code>), with exit codes your scheduler can check.</li>
+        <li><b>Scripting features:</b> variables (<code>&amp;run_date</code>), output to CSV files (<code>!spool</code>), and named connections stored in a config file.</li>
+        <li><b>No browser needed:</b> works on servers and over SSH.</li>
+      </ul>
+    </div>
+    <div class="box how"><span class="tag">03 · HOW IT WORKS · TRY THE TERMINAL</span>
+      <p>Click the commands <b>in order</b> (or type your own). The diagram on the right lights up <b>where each command actually runs</b>: on your laptop, in cloud services, on a warehouse, or in storage. This is the part most beginners never see.</p>
+      <div class="grid2" style="grid-template-columns:1.25fr 1fr;margin-top:10px">
+        <div>
+          <div class="tbar"><i style="background:#FF6B6B"></i><i style="background:#FFB938"></i><i style="background:#3FD3A8"></i><span class="note-s" style="margin-left:8px">snowsql: simulated terminal</span></div>
+          <div class="term" id="term"></div>
+          <div class="tinput"><input id="tIn" placeholder="type a command and press Enter, e.g. LIST @orders_stage;" autocomplete="off"><button class="btn" id="tClear">Clear</button></div>
+          <div class="cmds" id="tCmds"></div>
+        </div>
+        <div>
+          <svg viewBox="0 0 560 300" class="flow" id="tFlow">
+            <path class="edge" id="e-lc" d="M160 135 L230 52"/>
+            <path class="edge" id="e-ls" d="M160 168 L230 250"/>
+            <path class="edge" id="e-cw" d="M380 72 L380 122"/>
+            <path class="edge" id="e-ws" d="M330 178 L300 228"/>
+            <path class="edge" id="e-wt" d="M430 178 L460 228"/>
+            <g class="fn" id="n-laptop"><rect class="neutral" x="20" y="110" width="140" height="80" rx="10" stroke-width="1"/><text class="th" x="90" y="138" text-anchor="middle" dominant-baseline="central">Your laptop</text><text class="ts" x="90" y="158" text-anchor="middle" dominant-baseline="central">SnowSQL + local files</text><text class="tm" x="90" y="176" text-anchor="middle" dominant-baseline="central">orders_*.csv</text></g>
+            <g class="fn" id="n-cs"><rect class="L-cs" x="230" y="16" width="300" height="56" rx="10" stroke-width="1"/><text class="th" x="380" y="36" text-anchor="middle" dominant-baseline="central">Cloud services</text><text class="ts" x="380" y="55" text-anchor="middle" dominant-baseline="central">auth · session · metadata · credentials</text></g>
+            <g class="fn" id="n-wh"><rect class="L-cp" x="230" y="122" width="300" height="56" rx="10" stroke-width="1"/><text class="th" x="380" y="142" text-anchor="middle" dominant-baseline="central">Virtual warehouse</text><text class="ts" x="380" y="161" text-anchor="middle" dominant-baseline="central" id="tWhLbl">DEV_WH · suspended</text></g>
+            <g class="fn" id="n-stage"><rect class="L-st" x="230" y="228" width="140" height="56" rx="10" stroke-width="1"/><text class="th" x="300" y="248" text-anchor="middle" dominant-baseline="central">@orders_stage</text><text class="ts" x="300" y="267" text-anchor="middle" dominant-baseline="central" id="tStLbl">0 files</text></g>
+            <g class="fn" id="n-table"><rect class="L-st" x="390" y="228" width="140" height="56" rx="10" stroke-width="1"/><text class="th" x="460" y="248" text-anchor="middle" dominant-baseline="central">ORDERS table</text><text class="ts" x="460" y="267" text-anchor="middle" dominant-baseline="central" id="tTbLbl">0 rows</text></g>
+          </svg>
+          <div class="explain" id="tExp"><b class="h">WHERE DID IT RUN?</b>Start with <code>snowsql -c dev</code>.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="grid2">
+    <div class="mini"><h5>Connecting</h5><p><code>snowsql -a myorg-myaccount -u saurav</code> works, but in real jobs you save <b>named connections</b> in <code>~/.snowsql/config</code> and run <code>snowsql -c dev</code>. For automation, use <b>key-pair authentication</b> (<code>private_key_path</code>) or SSO (<code>authenticator = externalbrowser</code>) instead of passwords.</p></div>
+    <div class="mini"><h5>Most-used flags</h5><p><code>-c</code> named connection · <code>-q</code> run one query · <code>-f</code> run a script file · <code>-D</code> define a variable · <code>-o</code> set an option (e.g. <code>output_format=csv</code>, <code>exit_on_error=true</code>, <code>friendly=false</code>, <code>header=false</code>, <code>timing=false</code>).</p></div>
+  </div>
+  <div class="call trap"><b class="k">INTERVIEW TRAP</b><div>"Which commands only work from a client like SnowSQL?" <b>PUT and GET</b>, because they move files between <i>your local file system</i> and an <i>internal</i> stage. For external stages (S3, Azure, GCS), you upload with cloud tools instead, and Snowflake reads the files with <code>COPY</code>.</div></div>
+</section>
+
+<section id="put">
+  <div class="eyebrow">CHAPTER 02</div>
+  <h2>Inside PUT &amp; COPY <span class="thin">· what happens in the backend</span></h2>
+  <div class="wwh">
+    <div class="box what"><span class="tag">01 · WHAT IS IT</span>
+      <p>Loading a local file into a table is <b>two separate steps</b>:</p>
+      <ul class="dots"><li><b>PUT</b>: copy the file from your laptop into a <b>stage</b> (a storage area Snowflake manages). The file is still just a file.</li><li><b>COPY INTO</b>: a <b>warehouse</b> reads the staged files, parses them, and writes the rows into a table as <b>micro-partitions</b>.</li></ul>
+    </div>
+    <div class="box why"><span class="tag">02 · WHY TWO STEPS?</span>
+      <p>Moving bytes over the network and parsing or converting data are very different jobs. PUT is network-bound and runs on <b>your</b> machine, so it costs no warehouse credits. COPY is CPU-bound and runs in <b>parallel on a warehouse</b>. Splitting them also means a failed load can be re-run straight from the stage without uploading again.</p>
+    </div>
+    <div class="box how"><span class="tag">03 · HOW PUT WORKS · STEP BY STEP</span>
+      <div class="grid3" style="grid-template-columns:repeat(4,1fr)">
+        <div class="mini"><h5>1 · Ask for permission</h5><p>SnowSQL asks cloud services where the stage lives. It gets back temporary, scoped credentials for that storage location.</p></div>
+        <div class="mini"><h5>2 · Compress</h5><p>With <code>AUTO_COMPRESS=TRUE</code> (the default), each file is gzipped <b>on your laptop</b>, so a CSV usually shrinks to around a quarter of its size and far fewer bytes cross the network.</p></div>
+        <div class="mini"><h5>3 · Encrypt</h5><p>Files are encrypted before they leave your machine, so they're never readable in transit or at rest.</p></div>
+        <div class="mini"><h5>4 · Upload in parallel</h5><p><code>PARALLEL=n</code> threads (default 4, max 99) upload files <b>directly to cloud storage</b>. Large files are uploaded in chunks. A file with the same name that's already in the stage is <b>SKIPPED</b> unless you add <code>OVERWRITE=TRUE</code>.</p></div>
+      </div>
+      <p style="margin-top:10px">Then <b>COPY INTO</b>: cloud services checks the table's <b>load metadata</b> (which files were already loaded in the last <b>64 days</b>) and skips them. That's why running the same COPY twice doesn't create duplicates. The warehouse splits the remaining files across its workers, parses them with the <code>FILE_FORMAT</code>, and writes compressed columnar micro-partitions.</p>
+    </div>
+  </div>
+  <div class="panel">
+    <div class="panel-h"><div class="t">SIMULATOR · <b>PUT UPLOAD THREADS</b> · 8 local CSV files</div><span class="note-s">Illustrative speeds: CPU 200 MB/s, network 100 MB/s shared, 25 MB/s per thread</span></div>
+    <div class="ctl"><label>PARALLEL threads</label><input type="range" id="gP" min="1" max="8" value="4"><span class="v" id="gPV"></span></div>
+    <div class="row" style="margin:6px 0"><span class="note-s" style="min-width:150px">AUTO_COMPRESS:</span><div class="tabs" id="gCTabs" style="margin:0"><button class="on" data-c="1">TRUE (gzip locally)</button><button data-c="0">FALSE (upload raw)</button></div></div>
+    <div class="sqlbox" id="gSql"></div>
+    <svg viewBox="0 0 680 230" id="gSvg"></svg>
+    <div class="legend"><span><i style="background:var(--amber)"></i>compress (your CPU)</span><span><i style="background:var(--ice)"></i>encrypt (your CPU)</span><span><i style="background:var(--teal)"></i>upload to stage (network)</span></div>
+    <div class="stats">
+      <div class="stat"><div class="k">TOTAL TIME</div><div class="n" id="gT">–</div></div>
+      <div class="stat"><div class="k">BYTES SENT</div><div class="n" id="gB">–</div><div class="s">of 712 MB raw</div></div>
+      <div class="stat"><div class="k">WAREHOUSE CREDITS</div><div class="n">0</div><div class="s">PUT never uses a warehouse</div></div>
+    </div>
+    <div class="insight" id="gIns"></div>
+  </div>
+  <div class="call pro"><b class="k">SENIOR ANGLE</b><div>For COPY, Snowflake recommends compressed files of about <b>100–250 MB</b>. Thousands of tiny files add per-file overhead, and one 10 GB file can't be split across a warehouse's workers. So split big exports and combine small ones <i>before</i> the PUT. This comes up again in the ingestion module.</div></div>
+</section>
+
+<section id="unstruct">
+  <div class="eyebrow">CHAPTER 03</div>
+  <h2>Unstructured data <span class="thin">· PDFs, audio, images in Snowflake</span></h2>
+  <div class="wwh">
+    <div class="box what"><span class="tag">01 · WHAT IS IT</span>
+      <p>Data comes in three shapes. Click each one to see how Snowflake stores it:</p>
+      <div class="tabs" id="shapeTabs" style="margin-top:8px"><button class="on" data-s="0">Structured</button><button data-s="1">Semi-structured</button><button data-s="2">Unstructured</button></div>
+      <div id="shapeBox" class="mini"></div>
+    </div>
+    <div class="box why"><span class="tag">02 · WHY IT MATTERS</span>
+      <p>Most company data is unstructured: contracts, invoices, support call recordings, product photos, scanned forms, emails. It holds valuable facts (amounts, dates, complaints, defects) that SQL can't reach until you <b>extract</b> them.</p>
+      <p>Snowflake lets you keep these files <b>next to your tables</b>, with the same security and governance, and process them with SQL (Cortex AI functions) or Python. There's no separate document system to run, and the files never leave Snowflake.</p>
+    </div>
+    <div class="box how"><span class="tag">03 · HOW IT WORKS · THE FULL PIPELINE (click Next)</span>
+      <p>Each step shows <b style="color:var(--ice)">what you do</b> and <b style="color:var(--teal)">what happens in the backend</b>. The key idea: <b>the file itself is never turned into table rows</b>. It stays a file in a stage. Snowflake keeps a catalog of the files, and you write the <i>extracted results</i> to normal tables.</p>
+      <svg viewBox="0 0 680 300" class="flow" id="uFlow">
+        <path class="edge" id="ue1" d="M160 62 L190 62"/><path class="edge" id="ue2" d="M330 62 L360 62"/><path class="edge" id="ue3" d="M500 62 L530 62"/>
+        <path class="edge" id="ue4" d="M600 94 L600 200"/><path class="edge" id="ue5" d="M530 232 L500 232"/><path class="edge" id="ue6" d="M360 232 L330 232"/><path class="edge" id="ue7" d="M190 232 L160 232"/>
+        <g class="fn" id="u1"><rect class="neutral" x="20" y="30" width="140" height="64" rx="10" stroke-width="1"/><text class="th" x="90" y="52" text-anchor="middle" dominant-baseline="central">1 · Raw files</text><text class="ts" x="90" y="72" text-anchor="middle" dominant-baseline="central">PDF · MP3 · JPG</text></g>
+        <g class="fn" id="u2"><rect class="L-st" x="190" y="30" width="140" height="64" rx="10" stroke-width="1"/><text class="th" x="260" y="52" text-anchor="middle" dominant-baseline="central">2 · Stage</text><text class="ts" x="260" y="72" text-anchor="middle" dominant-baseline="central">files as blobs</text></g>
+        <g class="fn" id="u3"><rect class="L-cs" x="360" y="30" width="140" height="64" rx="10" stroke-width="1"/><text class="th" x="430" y="52" text-anchor="middle" dominant-baseline="central">3 · Directory table</text><text class="ts" x="430" y="72" text-anchor="middle" dominant-baseline="central">file catalog</text></g>
+        <g class="fn" id="u4"><rect class="L-cs" x="530" y="30" width="140" height="64" rx="10" stroke-width="1"/><text class="th" x="600" y="52" text-anchor="middle" dominant-baseline="central">4 · Stream</text><text class="ts" x="600" y="72" text-anchor="middle" dominant-baseline="central">new files only</text></g>
+        <g class="fn" id="u5"><rect class="L-cs" x="530" y="200" width="140" height="64" rx="10" stroke-width="1"/><text class="th" x="600" y="222" text-anchor="middle" dominant-baseline="central">5 · Task</text><text class="ts" x="600" y="242" text-anchor="middle" dominant-baseline="central">runs on schedule</text></g>
+        <g class="fn" id="u6"><rect class="L-cp" x="360" y="200" width="140" height="64" rx="10" stroke-width="1"/><text class="th" x="430" y="222" text-anchor="middle" dominant-baseline="central">6 · Process</text><text class="ts" x="430" y="242" text-anchor="middle" dominant-baseline="central">Cortex AI / Python</text></g>
+        <g class="fn" id="u7"><rect class="L-st" x="190" y="200" width="140" height="64" rx="10" stroke-width="1"/><text class="th" x="260" y="222" text-anchor="middle" dominant-baseline="central">7 · Result tables</text><text class="ts" x="260" y="242" text-anchor="middle" dominant-baseline="central">text · fields · chunks</text></g>
+        <g class="fn" id="u8"><rect class="neutral" x="20" y="200" width="140" height="64" rx="10" stroke-width="1"/><text class="th" x="90" y="222" text-anchor="middle" dominant-baseline="central">8 · Use it</text><text class="ts" x="90" y="242" text-anchor="middle" dominant-baseline="central">BI · search · chat</text></g>
+        <text class="tm" x="340" y="150" text-anchor="middle">files stay files ↑ · results become rows ↓</text>
+      </svg>
+      <div class="stepbar" id="uBar"></div>
+      <div class="stepdesc" id="uDesc"></div>
+      <div class="row" style="margin-top:12px"><button class="btn" id="uPrev">Back</button><button class="btn pri" id="uNext">Start</button><button class="btn" id="uReset">Reset</button></div>
+    </div>
+  </div>
+  <h3>Three ways to point at a staged file</h3>
+  <p>To let a function, an app or a person open a staged file, you generate a <b>URL</b> for it. Interviewers like to ask how these three differ.</p>
+  <div class="grid3">
+    <div class="mini"><h5>Scoped URL</h5><p><code>BUILD_SCOPED_FILE_URL(@stage, path)</code><br>Encoded URL that only works for the user or role that generated it, valid for <b>24 hours</b> (the duration of the query's result cache). Best for passing files into <b>UDFs</b> and for short-lived access. Callers don't need privileges on the stage.</p></div>
+    <div class="mini"><h5>File URL</h5><p><code>BUILD_STAGE_FILE_URL(@stage, path)</code><br><b>Permanent</b> URL. Anyone opening it must authenticate to Snowflake <b>and</b> have privileges on the stage. Good for internal apps and catalogs. The directory table's <code>FILE_URL</code> column contains it.</p></div>
+    <div class="mini"><h5>Pre-signed URL</h5><p><code>GET_PRESIGNED_URL(@stage, path, seconds)</code><br>A plain HTTPS link that <b>needs no Snowflake login</b> and expires after the time you set. Good for showing a document in a BI tool or browser. Treat it like a temporary password.</p></div>
+  </div>
+  <div class="call trap"><b class="k">INTERVIEW TRAP</b><div>"I PUT a PDF into a stage and the AI function can't read it." By default <b>PUT gzips the file</b> (<code>AUTO_COMPRESS=TRUE</code>), so the stage holds <code>contract.pdf.gz</code>, not a PDF. For unstructured files, use <code>AUTO_COMPRESS=FALSE</code>. For internal stages used with Cortex or pre-signed URLs, also create the stage with <code>ENCRYPTION = (TYPE = 'SNOWFLAKE_SSE')</code> (server-side encryption).</div></div>
+</section>
+
+<section id="ulab">
+  <div class="eyebrow">CHAPTER 04</div>
+  <h2>Processing lab <span class="thin">· turn files into rows</span></h2>
+  <p>Pick a file, then pick how to process it. You'll see the <b>SQL</b>, a <b>sample output</b>, and <b>what happens in the backend</b>. Outputs are illustrative examples.</p>
+  <div class="panel">
+    <div class="panel-h"><div class="t">SIMULATOR · <b>UNSTRUCTURED PROCESSING</b></div><span class="note-s">AI_* functions are Snowflake Cortex AI SQL functions. Availability and model names vary by region.</span></div>
+    <div class="note-s">1 · Choose a file in <code>@docs_stage</code>:</div>
+    <div class="grid3" id="ufiles" style="grid-template-columns:repeat(4,1fr);margin:8px 0 14px"></div>
+    <div class="note-s">2 · Choose a processing method:</div>
+    <div class="row" id="uops" style="margin:8px 0 14px"></div>
+    <div class="grid2">
+      <div><div class="note-s">SQL you run</div><div class="sqlbox" id="uSql"></div></div>
+      <div><div class="note-s">Sample result (illustrative)</div><div class="out" id="uOut"></div></div>
+    </div>
+    <div class="insight" id="uBe"></div>
+  </div>
+
+  <h3>Chunking: why big text gets cut into pieces</h3>
+  <p>After parsing, a 40-page contract is one huge text value. For <b>search and RAG chatbots</b> (Cortex Search), you split it into <b>chunks</b> so the system can retrieve just the relevant paragraph. <b>Overlap</b> repeats a little text between neighbouring chunks, so a sentence cut at a boundary still keeps its meaning. Move the sliders:</p>
+  <div class="panel">
+    <div class="panel-h"><div class="t">VISUALIZER · <b>SPLIT_TEXT_RECURSIVE_CHARACTER</b></div><span class="note-s">Simplified: cuts by character count. The real function prefers paragraph and sentence boundaries.</span></div>
+    <div class="ctl"><label>chunk_size (chars)</label><input type="range" id="kS" min="150" max="600" step="50" value="300"><span class="v" id="kSV"></span></div>
+    <div class="ctl"><label>overlap (chars)</label><input type="range" id="kO" min="0" max="150" step="10" value="50"><span class="v" id="kOV"></span></div>
+    <div class="sqlbox" id="kSql"></div>
+    <div class="stats"><div class="stat"><div class="k">CHUNKS</div><div class="n" id="kN">–</div></div><div class="stat"><div class="k">DUPLICATED TEXT</div><div class="n" id="kD">–</div><div class="s">extra storage and embedding cost</div></div></div>
+    <div class="legend"><span><i style="background:var(--amber-s);border-bottom:2px solid var(--amber)"></i>overlap repeated from the previous chunk</span></div>
+    <div id="kOut"></div>
+    <div class="insight" id="kIns"></div>
+  </div>
+  <div class="call pro"><b class="k">SENIOR ANGLE</b><div>Two ways to process files: <b>Cortex AI functions</b> (no code, managed models, billed per token or page on top of the warehouse running the query) and <b>Python UDFs</b> using <code>SnowflakeFile</code> (full control, any library such as pypdf or OpenCV, billed as warehouse time only). Use Cortex for OCR, layout, extraction and LLM tasks. Use a UDF for custom parsing, special file formats, or when you need a specific open-source library.</div></div>
+</section>
+
+<section id="streams">
+  <div class="eyebrow">CHAPTER 05</div>
+  <h2>Streams <span class="thin">· "what changed since last time?"</span></h2>
+  <div class="wwh">
+    <div class="box what"><span class="tag">01 · WHAT IS IT</span>
+      <p>A <b>stream</b> is an object that records <b>which rows changed</b> in a table (or view, directory table, external table…) <b>since a bookmark called the offset</b>. You query it like a table and get the changed rows plus three extra columns:</p>
+      <ul class="dots"><li><code>METADATA$ACTION</code>: <span class="act-i">INSERT</span> or <span class="act-d">DELETE</span></li><li><code>METADATA$ISUPDATE</code>: TRUE when the row is half of an UPDATE</li><li><code>METADATA$ROW_ID</code>: a stable, unique ID for the row</li></ul>
+      <p><b>A stream stores no data.</b> It stores only the offset, a point in the table's version history. When you query it, Snowflake compares the table "then" (at the offset) with "now" using the same versioning that powers Time Travel (from Module 1).</p>
+    </div>
+    <div class="box why"><span class="tag">02 · WHY WE USE IT</span>
+      <p>This is <b>Change Data Capture (CDC)</b> inside Snowflake. Without a stream you'd reprocess the whole table every run, or rely on fragile <code>updated_at &gt; last_run</code> logic that misses deletes and late updates.</p>
+      <ul class="dots"><li>Process only new or changed rows, which is cheap and fast</li><li>Captures inserts, updates <b>and deletes</b></li><li>Exactly-once handoff: the offset moves only when your DML commits</li></ul>
+    </div>
+    <div class="box how"><span class="tag">03 · HOW IT WORKS · PLAY WITH IT</span>
+      <p>Change the source table, then watch the stream. Note the difference between just <b>looking</b> (SELECT) and <b>consuming</b> (using the stream in a DML statement such as INSERT or MERGE). <b>Only consuming moves the offset.</b></p>
+    </div>
+  </div>
+  <div class="panel" id="sPanel">
+    <div class="panel-h"><div class="t">SIMULATOR · <b>STREAM ON TABLE ORDERS</b></div>
+      <div class="row"><span class="note-s">Stream type:</span><div class="tabs" id="sType" style="margin:0"><button class="on" data-t="standard">Standard</button><button data-t="append">Append-only</button></div><button class="btn" id="sReset">Reset</button></div></div>
+    <div class="row" style="margin-bottom:6px"><span class="note-s" style="min-width:110px">Change the table:</span>
+      <button class="btn" id="sIns">INSERT a row</button><button class="btn" id="sUpd">UPDATE a row</button><button class="btn" id="sDel">DELETE a row</button><button class="btn" id="sInsDel">INSERT then DELETE same row</button><button class="btn" id="sUpd2">UPDATE same row twice</button></div>
+    <div class="row" style="margin-bottom:10px"><span class="note-s" style="min-width:110px">Use the stream:</span>
+      <button class="btn" id="sSel">SELECT * FROM orders_stream</button><button class="btn pri" id="sCon">Consume: INSERT INTO orders_hist SELECT … FROM orders_stream</button><button class="btn warn" id="sAge">Let 5 days pass without consuming</button></div>
+    <svg viewBox="0 0 680 90" id="sTl"></svg>
+    <div class="grid2">
+      <div><div class="note-s">Source table ORDERS (now)</div><table class="t" id="sTbl"></table></div>
+      <div><div class="note-s">SELECT * FROM orders_stream</div><table class="t" id="sStr"></table></div>
+    </div>
+    <div class="stats">
+      <div class="stat"><div class="k">ROWS IN STREAM</div><div class="n" id="sN">0</div></div>
+      <div class="stat"><div class="k">ORDERS_HIST (CONSUMER)</div><div class="n" id="sTgt">0</div><div class="s">change rows written so far</div></div>
+      <div class="stat"><div class="k">DAYS SINCE LAST CONSUME</div><div class="n" id="sAgeN">0</div><div class="s">stale after 14 (default extension)</div></div>
+      <div class="stat"><div class="k">STATUS</div><div class="n" id="sStat" style="font-size:20px">–</div></div>
+    </div>
+    <div class="insight" id="sMsg">Try <b>UPDATE a row</b> first. In a standard stream, one UPDATE shows up as <b>two rows</b>.</div>
+  </div>
+  <div class="grid3">
+    <div class="mini"><h5>Standard (delta)</h5><p>Inserts, updates and deletes, as <b>net</b> changes. A row inserted and then deleted before you consume shows <b>nothing</b>. For tables, directory tables and views.</p></div>
+    <div class="mini"><h5>Append-only</h5><p>Only <b>inserts</b>. Updates and deletes are ignored, so it's much cheaper to compute. Ideal for append-only event and log tables.</p></div>
+    <div class="mini"><h5>Insert-only</h5><p>For <b>external tables</b> and externally managed Iceberg tables: tracks new files and rows only, because Snowflake can't see changes to existing files.</p></div>
+  </div>
+  <div class="call trap"><b class="k">INTERVIEW TRAP</b><div><b>Staleness.</b> If a stream isn't consumed within the table's data retention period, its offset falls out of the history and the stream becomes <b>stale</b>, which means unusable until it's recreated (and you may lose changes). When retention is shorter than 14 days, Snowflake temporarily extends it for tables that have streams, up to <code>MAX_DATA_EXTENSION_TIME_IN_DAYS</code> (default 14). Check <code>STALE</code> and <code>STALE_AFTER</code> in <code>SHOW STREAMS</code>, and consume regularly.</div></div>
+  <div class="call pro"><b class="k">SENIOR ANGLE</b><div><b>One stream per consumer.</b> Two pipelines reading one stream will fight: the first one to commit moves the offset, and the second one misses those changes. Create two streams on the same table, which costs almost nothing because streams store no data.</div></div>
+</section>
+
+<section id="tasks">
+  <div class="eyebrow">CHAPTER 06</div>
+  <h2>Tasks <span class="thin">· Snowflake's built-in scheduler</span></h2>
+  <div class="wwh">
+    <div class="box what"><span class="tag">01 · WHAT IS IT</span>
+      <p>A <b>task</b> runs <b>one SQL statement or stored procedure call</b> on a schedule (<code>SCHEDULE = '5 MINUTE'</code> or a CRON expression with a time zone), or after another task finishes.</p>
+      <p>Tasks can be chained into a <b>task graph (DAG)</b>: one <b>root</b> task has the schedule, <b>child</b> tasks declare <code>AFTER parent</code>, and an optional <b>finalizer</b> task runs at the end whether the run succeeded or failed (good for cleanup and alerts).</p>
+    </div>
+    <div class="box why"><span class="tag">02 · WHY WE USE IT</span>
+      <ul class="dots"><li>Automate pipelines <b>inside Snowflake</b>, with no external scheduler needed for simple flows</li><li>Combined with streams, process new data every few minutes (near-real-time CDC)</li><li><code>WHEN SYSTEM$STREAM_HAS_DATA('s')</code> skips the run when there's nothing new, <b>without starting any compute</b></li><li>Runs with the task owner's privileges, and every run is logged in <code>TASK_HISTORY</code></li></ul>
+    </div>
+    <div class="box how"><span class="tag">03 · HOW IT WORKS</span>
+      <div class="grid2">
+        <div class="mini"><h5>Serverless tasks</h5><p>Omit <code>WAREHOUSE</code>. Snowflake picks and resizes the compute automatically from past runs, and you're billed only for the <b>seconds actually used</b>, with no 60-second minimum or idle time. Great for short, frequent tasks. Requires the <code>EXECUTE MANAGED TASK</code> privilege.</p></div>
+        <div class="mini"><h5>User-managed (warehouse) tasks</h5><p>Set <code>WAREHOUSE = etl_wh</code>. Each run resumes that warehouse, so the usual billing applies: <b>60-second minimum + idle time until auto-suspend</b>. Better for long, heavy, predictable jobs or when you want to share an existing warehouse.</p></div>
+      </div>
+      <p style="margin-top:10px"><b>Lifecycle:</b> every new task is created <b>SUSPENDED</b>. You must <code>ALTER TASK … RESUME</code> it (children first, root last, or use <code>SYSTEM$TASK_DEPENDENTS_ENABLE('root')</code>). By default, if a run is still going when the next scheduled time arrives, the new run is skipped (<code>ALLOW_OVERLAPPING_EXECUTION = FALSE</code>).</p>
+    </div>
+  </div>
+  <div class="panel">
+    <div class="panel-h"><div class="t">SIMULATOR · <b>TASK GRAPH OVER ONE HOUR</b> · root runs every 5 minutes</div><button class="btn pri" id="kRun">▶ Run 60 minutes</button></div>
+    <div class="row" style="margin-bottom:6px">
+      <span class="note-s">Graph state:</span><div class="tabs" id="kState" style="margin:0"><button class="on" data-v="susp">SUSPENDED (as created)</button><button data-v="res">RESUMED</button></div>
+      <span class="note-s" style="margin-left:10px">Compute:</span><div class="tabs" id="kComp" style="margin:0"><button class="on" data-v="srv">Serverless</button><button data-v="wh">Warehouse (60 s auto-suspend)</button></div>
+    </div>
+    <div class="row" style="margin-bottom:6px">
+      <span class="note-s">WHEN clause:</span><div class="tabs" id="kWhen" style="margin:0"><button class="on" data-v="1">WHEN SYSTEM$STREAM_HAS_DATA</button><button data-v="0">No WHEN (always run)</button></div>
+      <span class="note-s" style="margin-left:10px">Failure:</span><div class="tabs" id="kFail" style="margin:0"><button class="on" data-v="0">All succeed</button><button data-v="1">REFRESH_DIM fails</button></div>
+    </div>
+    <div class="note-s" style="margin:8px 0 4px">New data lands in the stream at these minutes (click to toggle):</div>
+    <div class="chips" id="kSlots"></div>
+    <svg viewBox="0 0 680 210" id="kDag" style="margin-top:12px">
+      <rect x="10" y="8" width="490" height="194" rx="14" fill="none" stroke="var(--line2)" stroke-dasharray="6 5"/>
+      <text class="tm" x="22" y="26">task graph</text>
+      <path class="arr" d="M140 105 L180 105"/><path class="arr" d="M300 95 L340 55"/><path class="arr" d="M300 115 L340 155"/>
+      <path class="arr" d="M500 105 L530 105" stroke-dasharray="4 4"/>
+      <g class="tn" id="kn-root"><rect x="20" y="75" width="120" height="60" rx="10"/><text class="th" x="80" y="98" text-anchor="middle" dominant-baseline="central">LOAD_CURATED</text><text class="st" x="80" y="118" text-anchor="middle" dominant-baseline="central" id="ks-root">root · 5 MINUTE</text></g>
+      <g class="tn" id="kn-merge"><rect x="180" y="75" width="120" height="60" rx="10"/><text class="th" x="240" y="98" text-anchor="middle" dominant-baseline="central">DEDUP_ORDERS</text><text class="st" x="240" y="118" text-anchor="middle" dominant-baseline="central" id="ks-merge">AFTER root</text></g>
+      <g class="tn" id="kn-agg"><rect x="340" y="25" width="140" height="60" rx="10"/><text class="th" x="410" y="48" text-anchor="middle" dominant-baseline="central">BUILD_DAILY_AGG</text><text class="st" x="410" y="68" text-anchor="middle" dominant-baseline="central" id="ks-agg">AFTER dedup</text></g>
+      <g class="tn" id="kn-dim"><rect x="340" y="125" width="140" height="60" rx="10"/><text class="th" x="410" y="148" text-anchor="middle" dominant-baseline="central">REFRESH_DIM</text><text class="st" x="410" y="168" text-anchor="middle" dominant-baseline="central" id="ks-dim">AFTER dedup</text></g>
+      <g class="tn" id="kn-fin"><rect x="530" y="75" width="140" height="60" rx="10"/><text class="th" x="600" y="98" text-anchor="middle" dominant-baseline="central">NOTIFY_DONE</text><text class="st" x="600" y="118" text-anchor="middle" dominant-baseline="central" id="ks-fin">FINALIZE = root</text></g>
+    </svg>
+    <div class="stats">
+      <div class="stat"><div class="k">GRAPH RUNS</div><div class="n" id="kR">0</div></div>
+      <div class="stat"><div class="k">SKIPPED (NO DATA)</div><div class="n" id="kSk">0</div><div class="s">zero compute</div></div>
+      <div class="stat"><div class="k">FAILED TASKS</div><div class="n" id="kF">0</div></div>
+      <div class="stat"><div class="k">BILLED COMPUTE</div><div class="n" id="kB">0 s</div><div class="s" id="kBs"></div></div>
+    </div>
+    <div class="insight" id="kTIns">Press <b>Run 60 minutes</b>. The graph starts <b>SUSPENDED</b>, just like a newly created task.</div>
+    <div class="log"><table class="t"><thead><tr><th>SCHEDULED</th><th>TASK</th><th>STATE</th><th>NOTE</th></tr></thead><tbody id="kLog"></tbody></table></div>
+  </div>
+</section>
+
+<section id="e2e">
+  <div class="eyebrow">CHAPTER 07</div>
+  <h2>Streams + tasks together <span class="thin">· a live CDC pipeline</span></h2>
+  <p>This is the classic pattern from interviews: new orders land in <b>RAW_ORDERS</b>, a <b>stream</b> marks them as new, and every minute a <b>task</b> checks the stream. If there's data, it <b>MERGEs</b> the changes into <b>CURATED_ORDERS</b>, and that commit moves the stream's offset. Press <b>Start the clock</b>, then send orders.</p>
+  <div class="panel">
+    <div class="panel-h"><div class="t">LIVE ANIMATION · <b>RAW → STREAM → TASK → CURATED</b></div>
+      <div class="row"><button class="btn pri" id="pStart">▶ Start the clock</button><button class="btn" id="pSend">Send 3 new orders</button><button class="btn" id="pSend1">Send 1 order</button><button class="btn" id="pSusp">Suspend task</button></div></div>
+    <svg viewBox="0 0 760 250" id="pSvg">
+      <path class="arr" d="M130 140 L180 140"/><path class="arr" d="M310 140 L360 140"/><path class="arr" d="M490 140 L560 140"/><path class="arr" d="M610 76 L610 108" stroke-dasharray="4 4"/>
+      <g><rect class="neutral" x="20" y="110" width="110" height="60" rx="10" stroke-width="1"/><text class="th" x="75" y="132" text-anchor="middle" dominant-baseline="central">Order app</text><text class="ts" x="75" y="151" text-anchor="middle" dominant-baseline="central">Snowpipe / COPY</text></g>
+      <g><rect class="L-st" x="180" y="110" width="130" height="60" rx="10" stroke-width="1"/><text class="th" x="245" y="132" text-anchor="middle" dominant-baseline="central">RAW_ORDERS</text><text class="tm" x="245" y="151" text-anchor="middle" dominant-baseline="central" id="pRaw">0 rows</text></g>
+      <g id="pStreamG"><rect class="L-cs" x="360" y="110" width="130" height="60" rx="10" stroke-width="1"/><text class="th" x="425" y="132" text-anchor="middle" dominant-baseline="central">RAW_STREAM</text><text class="tm" x="425" y="151" text-anchor="middle" dominant-baseline="central" id="pStr">0 changes</text></g>
+      <g id="pTaskG"><rect class="L-cp" x="540" y="16" width="140" height="60" rx="10" stroke-width="1" id="pTaskR"/><text class="th" x="610" y="38" text-anchor="middle" dominant-baseline="central">TASK · 1 MINUTE</text><text class="tm" x="610" y="57" text-anchor="middle" dominant-baseline="central" id="pClock">clock stopped</text></g>
+      <g><rect class="L-st" x="560" y="110" width="160" height="60" rx="10" stroke-width="1"/><text class="th" x="640" y="132" text-anchor="middle" dominant-baseline="central">CURATED_ORDERS</text><text class="tm" x="640" y="151" text-anchor="middle" dominant-baseline="central" id="pCur">0 rows</text></g>
+      <text class="ts" x="425" y="230" text-anchor="middle">parked dots = changes waiting in the stream</text>
+      <g id="pDots"></g>
+      <text class="th" x="380" y="96" text-anchor="middle" id="pBanner" style="fill:var(--amber)"></text>
+    </svg>
+    <div class="insight" id="pIns">Start the clock. One simulated minute passes every 6 real seconds.</div>
+    <div class="sqlbox">CREATE STREAM raw_stream ON TABLE raw_orders;
+
+CREATE TASK merge_orders
+  SCHEDULE = '1 MINUTE'                          -- serverless (no WAREHOUSE)
+  WHEN SYSTEM$STREAM_HAS_DATA('raw_stream')      -- skip when nothing new
+AS
+  MERGE INTO curated_orders t
+  USING raw_stream s ON t.order_id = s.order_id
+  WHEN MATCHED AND s.METADATA$ACTION = 'INSERT' THEN UPDATE SET t.amount = s.amount
+  WHEN NOT MATCHED AND s.METADATA$ACTION = 'INSERT' THEN INSERT (order_id, amount) VALUES (s.order_id, s.amount);
+-- the MERGE commits → offset of raw_stream moves forward → stream is empty again
+
+ALTER TASK merge_orders RESUME;</div>
+  </div>
+  <div class="grid2">
+    <div class="call pro" style="margin:0"><b class="k">SENIOR ANGLE</b><div><b>Streams + tasks vs dynamic tables.</b> A dynamic table is <i>declarative</i>: you write a SELECT and a <code>TARGET_LAG</code>, and Snowflake handles incremental refresh for you. Choose streams + tasks when you need <i>procedural</i> control: custom MERGE logic, SCD Type 2, calling procedures, sending notifications, or writing to several targets.</div></div>
+    <div class="call trap" style="margin:0"><b class="k">INTERVIEW TRAP</b><div>"My task ran but the stream didn't empty." The task probably only <b>SELECTed</b> from the stream (for example inside a procedure that returned a result), or the transaction <b>rolled back</b>. The offset moves only when the stream is used in DML <b>and the transaction commits</b>.</div></div>
+  </div>
+</section>
+
+<section id="procs">
+  <div class="eyebrow">CHAPTER 08</div>
+  <h2>Stored procedures <span class="thin">· programs that run inside Snowflake</span></h2>
+  <div class="wwh">
+    <div class="box what"><span class="tag">01 · WHAT IS IT</span>
+      <p>A <b>stored procedure</b> is a named program saved in a schema and run with <code>CALL my_proc(args)</code>. Inside, it can run many SQL statements plus real programming logic: <b>variables, IF/ELSE, loops, cursors and error handling</b>.</p>
+      <p>Unlike a view or a UDF, it can <b>change things</b>: DML (INSERT, MERGE, DELETE), DDL (CREATE, ALTER, DROP) and even GRANTs. You can write it in <b>SQL (Snowflake Scripting)</b>, Python, JavaScript, Java or Scala. It returns one value (a status message, a number, a JSON object) or, with <code>RETURNS TABLE</code>, a result set.</p>
+    </div>
+    <div class="box why"><span class="tag">02 · WHY WE USE IT</span>
+      <ul class="dots">
+        <li><b>Multi-step logic in one call:</b> a task runs exactly one statement, so real pipelines are written as a procedure and the task just <code>CALL</code>s it.</li>
+        <li><b>Control flow and error handling</b> that plain SQL lacks: skip when there's no data, validate, roll back, log, re-raise.</li>
+        <li><b>Controlled access:</b> with owner's rights, an analyst can run <code>purge_old_orders()</code> without ever being granted DELETE on the table.</li>
+        <li><b>Dynamic SQL:</b> loop over 50 staging tables, or build statements from metadata.</li>
+        <li><b>Reuse:</b> one tested piece of logic instead of copy-pasted scripts.</li>
+      </ul>
+    </div>
+    <div class="box how"><span class="tag">03 · HOW IT WORKS · STEP THROUGH A REAL PROCEDURE</span>
+      <p>Below is a production-style daily load written in Snowflake Scripting. Pick a scenario and press <b>Step</b>. Watch which line runs, how the variables change, whether a transaction is open, and what <b>other users</b> would see in <code>fact_sales</code> at that moment.</p>
+    </div>
+  </div>
+  <div class="panel">
+    <div class="panel-h"><div class="t">SIMULATOR · <b>PROCEDURE DEBUGGER</b> · load_daily_sales('2024-03-15')</div>
+      <div class="row"><button class="btn pri" id="pcStep">Step ▶</button><button class="btn" id="pcAll">Run all</button><button class="btn" id="pcReset">Reset</button></div></div>
+    <div class="tabs" id="pcScen">
+      <button class="on" data-s="ok">Normal day</button><button data-s="rerun">Re-run same day</button><button data-s="nodata">No data yet</button><button data-s="bad">Bad data</button><button data-s="mid">Fails mid-load</button>
+    </div>
+    <div class="grid2" style="grid-template-columns:1.25fr 1fr">
+      <div class="code" id="pcCode"></div>
+      <div>
+        <div class="stepdesc" id="pcNote"></div>
+        <table class="t" id="pcState" style="margin-top:10px"></table>
+      </div>
+    </div>
+    <div class="insight" id="pcEnd">Choose a scenario, then press <b>Step ▶</b>.</div>
+  </div>
+
+  <h3>Where does a procedure actually run?</h3>
+  <div class="grid3">
+    <div class="mini"><h5>1 · CALL goes to cloud services</h5><p>Cloud services checks that your role has <b>USAGE</b> on the procedure, binds the arguments, and starts executing the body.</p></div>
+    <div class="mini"><h5>2 · Each statement is a real query</h5><p>Every SELECT, INSERT or MERGE inside a SQL procedure is compiled and run like any other query, on the <b>session's current warehouse</b>, and shows up separately in Query History. To speed up a slow procedure, find its slowest statement.</p></div>
+    <div class="mini"><h5>3 · Python, Java, Scala</h5><p>These run in a secure sandbox on the warehouse. The handler's first argument is a <b>Snowpark Session</b>, and libraries come from Snowflake's Anaconda channel through <code>PACKAGES</code>. Memory-heavy work may need a Snowpark-optimized warehouse.</p></div>
+  </div>
+
+  <h3>Procedure vs UDF vs task</h3>
+  <table class="t">
+    <tr><th></th><th>STORED PROCEDURE</th><th>UDF / UDTF</th><th>TASK</th></tr>
+    <tr><td><b>How it runs</b></td><td><code>CALL proc(...)</code></td><td>Inside a query: <code>SELECT my_udf(col)</code></td><td>Automatically, on a schedule or after another task</td></tr>
+    <tr><td><b>Returns</b></td><td>One value, or a table</td><td>One value per row (UDF) or rows (UDTF)</td><td>Nothing</td></tr>
+    <tr><td><b>Can change data (DML/DDL)</b></td><td>Yes</td><td>No, read-only</td><td>Yes, through its one statement</td></tr>
+    <tr><td><b>Usable inside SELECT</b></td><td>No</td><td>Yes</td><td>No</td></tr>
+    <tr><td><b>Typical use</b></td><td>Multi-step ETL, admin automation, dynamic SQL</td><td>Reusable calculations, parsing, masking logic</td><td>Scheduling a CALL or a MERGE</td></tr>
+  </table>
+
+  <h3>Owner's rights vs caller's rights</h3>
+  <p>A procedure always runs with <i>someone's</i> privileges. <b>Owner's rights</b> (<code>EXECUTE AS OWNER</code>, the default) uses the privileges of the role that <b>owns</b> the procedure. <b>Caller's rights</b> (<code>EXECUTE AS CALLER</code>) uses the privileges and session of whoever <b>calls</b> it.</p>
+  <div class="panel">
+    <div class="panel-h"><div class="t">SIMULATOR · <b>WHOSE PRIVILEGES?</b></div><span class="note-s">purge_old_orders() is owned by ETL_ADMIN (has DELETE on ORDERS). ANALYST has only SELECT on ORDERS and USAGE on the procedure.</span></div>
+    <div class="row" style="margin-bottom:6px"><span class="note-s" style="min-width:120px">Procedure mode:</span><div class="tabs" id="ocMode" style="margin:0"><button class="on" data-v="owner">EXECUTE AS OWNER</button><button data-v="caller">EXECUTE AS CALLER</button></div></div>
+    <div class="row" style="margin-bottom:6px"><span class="note-s" style="min-width:120px">Who calls it:</span><div class="tabs" id="ocRole" style="margin:0"><button class="on" data-v="analyst">ANALYST</button><button data-v="etl">ETL_ADMIN</button></div></div>
+    <div class="row" style="margin-bottom:10px"><span class="note-s" style="min-width:120px">What it does:</span><div class="tabs" id="ocAct" style="margin:0"><button class="on" data-v="del">DELETE orders older than 2 years</button><button data-v="var">Read session variable $region set by the caller</button></div></div>
+    <div class="sqlbox" id="ocSql"></div>
+    <div class="explain" id="ocOut" style="margin-top:10px"></div>
+  </div>
+
+  <h3>Same idea, three languages</h3>
+  <div class="panel">
+    <div class="tabs" id="pcLang"><button class="on" data-l="sql">Snowflake Scripting (SQL)</button><button data-l="py">Python</button><button data-l="js">JavaScript</button></div>
+    <div class="sqlbox" id="pcLangCode"></div>
+    <div class="insight" id="pcLangNote"></div>
+  </div>
+
+  <div class="grid2">
+    <div class="call trap" style="margin:0"><b class="k">INTERVIEW TRAP</b><div><b>BEGIN is not a transaction.</b> In Snowflake Scripting, <code>BEGIN … END</code> only marks a block of code. To make several statements all-or-nothing, write <code>BEGIN TRANSACTION … COMMIT</code>, with <code>ROLLBACK</code> in the EXCEPTION handler. Any DDL statement (CREATE, ALTER, DROP) also commits an open transaction implicitly.</div></div>
+    <div class="call pro" style="margin:0"><b class="k">SENIOR ANGLE</b><div>A good production procedure is <b>idempotent</b> (DELETE + INSERT, or MERGE, for the run date, so re-runs never duplicate), <b>returns a status</b>, <b>logs</b> every run to an audit table, and <b>re-raises</b> errors so the calling task fails loudly instead of succeeding silently.</div></div>
+  </div>
+</section>
+
+<section id="sql">
+  <div class="eyebrow">CHAPTER 09</div>
+  <h2>SQL lab <span class="thin">· click any line for an explanation</span></h2>
+  <div class="panel">
+    <div class="tabs" id="sqlTabs"></div>
+    <div class="grid2" style="grid-template-columns:1.35fr 1fr">
+      <div class="code" id="sqlCode"></div>
+      <div class="explain" id="sqlExp"><b class="h">CLICK A LINE</b>Each line is explained in plain English.</div>
+    </div>
+  </div>
+</section>
+
+<section id="qa">
+  <div class="eyebrow">CHAPTER 10</div>
+  <h2>Interview Q&amp;A <span class="thin">· answer out loud first, then open</span></h2>
+  <div class="tabs" id="qaTabs"><button class="on" data-f="all">All</button><button data-f="SnowSQL">SnowSQL</button><button data-f="Unstructured">Unstructured</button><button data-f="Streams">Streams</button><button data-f="Tasks">Tasks</button><button data-f="Procedures">Procedures</button></div>
+  <div id="qaList"></div>
+</section>
+
+<section id="quiz">
+  <div class="eyebrow">CHAPTER 11</div>
+  <h2>Quiz <span class="thin">· 14 questions</span></h2>
+  <div class="panel">
+    <div class="panel-h"><div class="t">QUESTION <b id="qzN">1</b> / 14</div><div class="t">SCORE <b id="qzS">0</b></div></div>
+    <div class="stepbar" id="qzBar"></div>
+    <div id="qzBody"></div>
+    <div class="row" style="margin-top:12px"><button class="btn" id="qzPrev">Back</button><button class="btn pri" id="qzNext">Next</button></div>
+  </div>
+</section>
+
+<section id="cheat">
+  <div class="eyebrow">CHAPTER 12</div>
+  <h2>Cheat sheet <span class="thin">· if you remember only these</span></h2>
+  <div class="cheat">
+    <div><em>PUT / GET</em>Move files between your laptop and an internal stage. Client only (SnowSQL, connectors). <b>No warehouse.</b></div>
+    <div><em>AUTO_COMPRESS</em>TRUE by default (gzip). Set FALSE for PDFs, images and audio you want AI functions to read.</div>
+    <div><em>64 days</em>COPY load metadata: files already loaded are skipped. FORCE=TRUE reloads them, which creates duplicates.</div>
+    <div><em>Exit codes</em>SnowSQL with <code>-o exit_on_error=true</code> exits non-zero on failure, so schedulers can detect it.</div>
+    <div><em>Directory table</em>A catalog of staged files (path, size, md5, last_modified, file_url). Not the file contents.</div>
+    <div><em>3 URLs</em>Scoped (24 h, caller only), File (permanent, needs privileges), Pre-signed (expiring, no login).</div>
+    <div><em>Files ≠ rows</em>Unstructured files stay in the stage. Only the <i>extracted</i> results go into tables.</div>
+    <div><em>Offset</em>A stream stores a bookmark, not data. Only DML that commits moves it; SELECT doesn't.</div>
+    <div><em>UPDATE = 2 rows</em>DELETE + INSERT with METADATA$ISUPDATE = TRUE (standard stream, net changes).</div>
+    <div><em>SUSPENDED</em>New tasks are suspended. RESUME children first, root last. Only the root has a SCHEDULE.</div>
+    <div><em>WHEN</em><code>SYSTEM$STREAM_HAS_DATA</code> skips empty runs without starting compute.</div>
+    <div><em>CALL</em>Procedures run with CALL, can do DML/DDL, return one value or a table. UDFs run inside SELECT and are read-only.</div>
+    <div><em>OWNER (default)</em>Owner's rights = owner's privileges, no access to the caller's session. Caller's rights = caller's privileges and session.</div>
+    <div><em>BEGIN ≠ TRANSACTION</em>Use BEGIN TRANSACTION … COMMIT, and ROLLBACK + RAISE in the EXCEPTION handler.</div>
+    <div><em>1 stream / consumer</em>Streams are cheap. Don't share one between two pipelines.</div>
+  </div>
+  <div class="call analogy" style="margin-top:20px"><b class="k">NEXT MODULE</b><div><b><a href="../module03/" style="color:var(--ice)">Module 03: Performance tuning →</a></b> Reading the Query Profile, clustering keys, Search Optimization, Query Acceleration, materialized views and SQL anti-patterns. Open it from the roadmap or the link above.</div></div>
+</section>
+<footer>Snowflake Interview Lab · Module 02 · SnowSQL, Unstructured Data, Streams, Tasks &amp; Procedures · Prepared for Saurav Patel</footer>
+</main>
+</div>
+
+<script>
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+const fmt = (n, d = 0) => Number(n).toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d });
+const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+const tabs = (sel, cb) => $$(sel + ' button').forEach(b => b.addEventListener('click', () => { $$(sel + ' button').forEach(x => x.classList.remove('on')); b.classList.add('on'); cb(b.dataset); }));
+
+/* theme + progress */
+const root = document.documentElement;
+root.dataset.theme = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+$('#themeBtn').onclick = () => { root.dataset.theme = root.dataset.theme === 'dark' ? 'light' : 'dark'; };
+const secs = $$('main section'), seen = new Set();
+const io = new IntersectionObserver(es => es.forEach(e => {
+  if (!e.isIntersecting) return;
+  seen.add(e.target.id);
+  $$('.side a').forEach(a => { const id = a.getAttribute('href').slice(1); a.classList.toggle('act', id === e.target.id); if (seen.has(id)) a.classList.add('seen'); });
+  const pct = Math.round(seen.size / secs.length * 100);
+  $('#progBar').style.width = pct + '%'; $('#progLbl').textContent = pct + '% explored';
+}), { rootMargin: '-40% 0px -55% 0px' });
+secs.forEach(s => io.observe(s));
+
+/* ===== 01 SnowSQL terminal ===== */
+const LOCAL = [['orders_01.csv', 52.4], ['orders_02.csv', 118.0], ['orders_03.csv', 31.5], ['orders_04.csv', 79.9]];
+let T;
+function tInit() { T = { on: false, wh: 'DEV_WH', db: 'SALES_DB', sc: 'PUBLIC', stage: [], loaded: new Set(), rows: 0, fmt: 'psql', spool: false, whRun: false }; }
+tInit();
+const term = $('#term');
+const tp = (txt, cls = '') => { const d = document.createElement('div'); if (cls) d.className = cls; d.textContent = txt; term.appendChild(d); term.scrollTop = term.scrollHeight; };
+const prompt = () => T.on ? `saurav#${T.wh}@${T.db}.${T.sc}>` : '$';
+function table(h, rows) {
+  if (T.fmt === 'csv') return [h.join(','), ...rows.map(r => r.join(','))].join('\n');
+  const w = h.map((x, i) => Math.max(String(x).length, ...rows.map(r => String(r[i]).length)));
+  const line = '+' + w.map(n => '-'.repeat(n + 2)).join('+') + '+';
+  const row = r => '| ' + r.map((c, i) => String(c).padEnd(w[i])).join(' | ') + ' |';
+  return [line, row(h), line, ...rows.map(row), line].join('\n');
+}
+const elapsed = (n, s) => tp(`${n} Row(s) produced. Time Elapsed: ${s.toFixed(3)}s`, 'tdim');
+function tFlow(nodes, edges, html) {
+  const svg = $('#tFlow');
+  svg.classList.add('playing');
+  $$('#tFlow .fn').forEach(g => g.classList.toggle('on', nodes.includes(g.id.slice(2))));
+  $$('#tFlow .edge').forEach(e => e.classList.toggle('on', edges.includes(e.id.slice(2))));
+  $('#tExp').innerHTML = html;
+  $('#tStLbl').textContent = T.stage.length + ' file' + (T.stage.length === 1 ? '' : 's');
+  $('#tTbLbl').textContent = fmt(T.rows) + ' rows';
+  $('#tWhLbl').textContent = T.wh + (T.whRun ? ' · running' : ' · suspended');
+}
+function runCmd(raw) {
+  const c = raw.trim(); if (!c) return;
+  tp(prompt() + ' ' + c, 'tin');
+  const l = c.toLowerCase().replace(/\s+/g, ' ');
+  if (l.startsWith('snowsql')) {
+    if (T.on) { tp('Already connected. Use !exit first.', 'terr'); return; }
+    T.on = true;
+    tp('* SnowSQL * v1.3 (simulated)\nType SQL statements or !help', 'tok');
+    tFlow(['laptop', 'cs'], ['lc'], `<b class="h">LAPTOP → CLOUD SERVICES</b>SnowSQL reads connection <code>dev</code> from <code>~/.snowsql/config</code>, opens an <b>HTTPS (TLS 443)</b> session to your account URL and authenticates (password, key-pair or SSO). Cloud services returns a <b>session token</b> and applies your default role, warehouse, database and schema. <b>No warehouse starts</b> just from logging in.`);
+    return;
+  }
+  if (!T.on) { tp('Not connected. Run: snowsql -c dev', 'terr'); return; }
+  if (l.startsWith('!')) {
+    if (l.startsWith('!exit') || l.startsWith('!quit')) { T.on = false; T.whRun = false; tp('Goodbye!', 'tok'); tFlow(['laptop'], [], `<b class="h">LOCAL</b>The session ends. A warehouse that was running keeps running until its own <code>AUTO_SUSPEND</code> fires: disconnecting doesn't stop it.`); return; }
+    if (l.startsWith('!set output_format=csv')) T.fmt = 'csv';
+    else if (l.startsWith('!set output_format=psql')) T.fmt = 'psql';
+    if (l.startsWith('!spool off')) { T.spool = false; tp('(spool closed: results saved to /tmp/out.csv)', 'tdim'); }
+    else if (l.startsWith('!spool')) { T.spool = true; tp('(spooling all output to /tmp/out.csv)', 'tdim'); }
+    else if (l.startsWith('!help')) tp('!set  !spool  !source <file>  !define var=value  !variables  !print  !exit\nAny other text is sent to Snowflake as SQL.', 'tdim');
+    else if (l.startsWith('!set')) tp('(option set)', 'tdim');
+    else if (!l.startsWith('!spool')) tp('(simulator) try !help', 'tdim');
+    tFlow(['laptop'], [], `<b class="h">RUNS ONLY ON YOUR LAPTOP</b>Commands starting with <code>!</code> are <b>SnowSQL client commands</b>. They're never sent to Snowflake: they change how SnowSQL formats, saves or scripts output (CSV output, spooling to a file, variables, running a script with <code>!source</code>).`);
+    return;
+  }
+  if (l.startsWith('use warehouse')) {
+    T.wh = c.split(/\s+/)[2].replace(';', '').toUpperCase(); tp('+----------------------------------+\n| status                           |\n|----------------------------------|\n| Statement executed successfully. |\n+----------------------------------+');
+    tFlow(['laptop', 'cs'], ['lc'], `<b class="h">CLOUD SERVICES ONLY</b><code>USE</code> just changes your <b>session context</b>, which cloud services stores. The warehouse isn't started until a query actually needs compute.`); return;
+  }
+  if (l.startsWith('put')) {
+    const comp = !l.includes('auto_compress=false'), over = l.includes('overwrite=true');
+    const files = l.includes('*') ? LOCAL : LOCAL.filter(f => l.includes(f[0].slice(0, 9)));
+    if (!files.length) { tp('File not found. Try: PUT file:///data/orders_*.csv @orders_stage;', 'terr'); return; }
+    const rows = files.map(([n, mb]) => {
+      const tgt = comp ? n + '.gz' : n, exists = T.stage.find(s => s.name === tgt);
+      if (exists && !over) return [n, tgt, Math.round(mb * 1048576), exists.bytes, 'NONE', comp ? 'GZIP' : 'NONE', 'SKIPPED', ''];
+      const bytes = Math.round(mb * 1048576 * (comp ? 0.22 : 1));
+      if (exists) { exists.bytes = bytes; } else T.stage.push({ name: tgt, bytes, mb });
+      return [n, tgt, Math.round(mb * 1048576), bytes, 'NONE', comp ? 'GZIP' : 'NONE', 'UPLOADED', ''];
+    });
+    tp(table(['source', 'target', 'source_size', 'target_size', 'source_compression', 'target_compression', 'status', 'message'], rows));
+    elapsed(rows.length, 3.84);
+    const sk = rows.some(r => r[6] === 'SKIPPED');
+    tFlow(['laptop', 'cs', 'stage'], ['lc', 'ls'], `<b class="h">LAPTOP → STAGE DIRECTLY (NO WAREHOUSE)</b>1) Cloud services gives SnowSQL <b>temporary credentials</b> for the stage's storage location. 2) SnowSQL <b>${comp ? 'gzips' : 'does not compress'}</b> and <b>encrypts</b> each file on your machine. 3) It uploads in parallel threads <b>straight to cloud storage</b>. ${sk ? '<br><b>SKIPPED</b> = a file with the same name is already in the stage. Add <code>OVERWRITE=TRUE</code> to replace it.' : 'The files are now in the stage, but they are <b>not in any table yet</b>.'}`);
+    return;
+  }
+  if (l.startsWith('list') || l.startsWith('ls ')) {
+    const rows = T.stage.map(s => ['orders_stage/' + s.name, s.bytes, Math.random().toString(16).slice(2, 10) + '…', 'Sat, 14 Nov 2026 18:02:11 GMT']);
+    tp(rows.length ? table(['name', 'size', 'md5', 'last_modified'], rows) : 'Stage is empty.'); elapsed(rows.length, 0.21);
+    tFlow(['laptop', 'cs', 'stage'], ['lc'], `<b class="h">METADATA ONLY</b><code>LIST</code> asks cloud services to list the objects in the stage location. Nothing is downloaded, and no warehouse is used.`); return;
+  }
+  if (l.startsWith('copy into')) {
+    const force = l.includes('force=true');
+    if (!T.stage.length) { tp('Copy executed with 0 files processed.', 'tdim'); tFlow(['laptop', 'cs'], ['lc'], `<b class="h">NOTHING TO LOAD</b>The stage is empty. Run the PUT first.`); return; }
+    const todo = T.stage.filter(s => force || !T.loaded.has(s.name));
+    T.whRun = true;
+    if (!todo.length) {
+      tp('Copy executed with 0 files processed.', 'tdim');
+      tFlow(['laptop', 'cs', 'wh', 'stage'], ['lc', 'cw'], `<b class="h">LOAD METADATA SAVED YOU</b>Every staged file is already listed in ORDERS' <b>load metadata</b> (kept for 64 days), so COPY skipped them all. <b>No duplicates.</b> <code>FORCE=TRUE</code> would reload them and <b>double</b> your rows.`); return;
+    }
+    let added = 0;
+    const rows = todo.map(s => { const n = Math.round(s.mb * 9500); added += n; T.loaded.add(s.name); return ['orders_stage/' + s.name, 'LOADED', n, n, 0]; });
+    T.rows += added;
+    tp(table(['file', 'status', 'rows_parsed', 'rows_loaded', 'errors_seen'], rows)); elapsed(rows.length, 6.12);
+    tFlow(['laptop', 'cs', 'wh', 'stage', 'table'], ['lc', 'cw', 'ws', 'wt'], `<b class="h">WAREHOUSE DOES THE WORK</b>${force ? '<b>FORCE=TRUE: files reloaded, so the table now has DUPLICATE rows!</b> ' : ''}Cloud services checks load metadata and plans the job. <b>${T.wh} resumes</b> (60-second billing minimum), its workers read the files from the stage <b>in parallel</b>, parse the CSV with the file format, and write <b>compressed columnar micro-partitions</b> into ORDERS. Each file is recorded in the load metadata.`); return;
+  }
+  if (l.startsWith('get')) {
+    if (!T.stage.length) { tp('No files to download.', 'terr'); return; }
+    tp(table(['file', 'size', 'status', 'message'], T.stage.map(s => [s.name, s.bytes, 'DOWNLOADED', '']))); elapsed(T.stage.length, 1.95);
+    tFlow(['laptop', 'cs', 'stage'], ['lc', 'ls'], `<b class="h">STAGE → LAPTOP DIRECTLY</b>The reverse of PUT: SnowSQL gets temporary credentials, downloads in parallel and <b>decrypts</b> the files locally. Files stay compressed (<code>.gz</code>). No warehouse is used.`); return;
+  }
+  if (l.startsWith('select')) {
+    if (l.includes('count(*)') && l.includes('orders') && !l.includes('where')) {
+      tp(table(['COUNT(*)'], [[T.rows]])); elapsed(1, 0.09);
+      tFlow(['laptop', 'cs'], ['lc'], `<b class="h">METADATA ANSWER (MODULE 1!)</b><code>COUNT(*)</code> with no filter is answered from micro-partition metadata in cloud services. <b>No warehouse needed.</b>`); return;
+    }
+    T.whRun = true;
+    tp(table(['ORDER_DATE', 'TOTAL'], [['2024-03-14', '1,204,551.20'], ['2024-03-15', '1,311,090.75']])); elapsed(2, 1.42);
+    tFlow(['laptop', 'cs', 'wh', 'table'], ['lc', 'cw', 'wt'], `<b class="h">NORMAL QUERY</b>Compiled by cloud services, executed on <b>${T.wh}</b>, which reads the micro-partitions it needs. Results stream back to SnowSQL and are printed as a table.`); return;
+  }
+  tp('(simulator) Try one of the buttons below, or !help', 'tdim');
+}
+const TC = [
+  ['snowsql -c dev', 'connect'], ['USE WAREHOUSE dev_wh;', 'set context'], ['PUT file:///data/orders_*.csv @orders_stage AUTO_COMPRESS=TRUE PARALLEL=8;', 'upload files'],
+  ['LIST @orders_stage;', 'see staged files'], ["COPY INTO orders FROM @orders_stage FILE_FORMAT=(TYPE=CSV SKIP_HEADER=1);", 'load to table'],
+  ["COPY INTO orders FROM @orders_stage FILE_FORMAT=(TYPE=CSV SKIP_HEADER=1);", 'run it AGAIN'], ['SELECT COUNT(*) FROM orders;', 'count rows'],
+  ['PUT file:///data/orders_01.csv @orders_stage;', 'PUT same file again'], ['!set output_format=csv', 'client option'], ['GET @orders_stage file:///tmp/downloads/;', 'download'], ['!exit', 'disconnect']
+];
+$('#tCmds').innerHTML = TC.map(([c, d], i) => `<button data-i="${i}">${esc(c.length > 46 ? c.slice(0, 44) + '…' : c)}<small>${i + 1} · ${d}</small></button>`).join('');
+$$('#tCmds button').forEach(b => b.onclick = () => runCmd(TC[b.dataset.i][0]));
+$('#tIn').addEventListener('keydown', e => { if (e.key === 'Enter') { runCmd(e.target.value); e.target.value = ''; } });
+$('#tClear').onclick = () => { term.innerHTML = ''; tInit(); $('#tFlow').classList.remove('playing'); tFlow([], [], '<b class="h">WHERE DID IT RUN?</b>Start with <code>snowsql -c dev</code>.'); $('#tFlow').classList.remove('playing'); tp('$ # simulated terminal: click command 1 to connect', 'tdim'); };
+tp('$ # simulated terminal: click command 1 to connect', 'tdim');
+
+/* ===== 02 PUT gantt ===== */
+const GF = [['orders_01.csv', 52], ['orders_02.csv', 118], ['orders_03.csv', 31], ['orders_04.csv', 80], ['orders_05.csv', 205], ['orders_06.csv', 64], ['orders_07.csv', 140], ['orders_08.csv', 22]];
+let gComp = true;
+function gantt() {
+  const P = +$('#gP').value; $('#gPV').textContent = P + (P === 4 ? ' (default)' : '');
+  const per = Math.min(25, 100 / P);
+  const lanes = Array(P).fill(0), bars = [];
+  let sent = 0;
+  GF.forEach(([n, mb]) => {
+    const li = lanes.indexOf(Math.min(...lanes)), t0 = lanes[li];
+    const bytes = gComp ? mb * 0.22 : mb; sent += bytes;
+    const c = gComp ? mb / 200 : 0, e = bytes / 400, u = bytes / per;
+    bars.push({ n, li, t0, c, e, u }); lanes[li] = t0 + c + e + u;
+  });
+  const total = Math.max(...lanes), X = t => 120 + t / total * 540, lh = Math.min(26, 190 / P);
+  let s = '';
+  for (let i = 0; i < P; i++) s += `<text class="gantt-l" x="10" y="${20 + i * lh + lh / 2}" dominant-baseline="central">thread ${i + 1}</text><line x1="120" x2="660" y1="${20 + i * lh + lh - 2}" y2="${20 + i * lh + lh - 2}" stroke="var(--line)"/>`;
+  bars.forEach((b, k) => {
+    const y = 20 + b.li * lh + 3, h = lh - 8, d = (k * 0.05).toFixed(2);
+    const seg = (t, w, col) => w > 0 ? `<rect class="grow" style="animation-delay:${d}s" x="${X(t)}" y="${y}" width="${Math.max(1, X(t + w) - X(t))}" height="${h}" rx="3" fill="${col}"/>` : '';
+    s += seg(b.t0, b.c, 'var(--amber)') + seg(b.t0 + b.c, b.e, 'var(--ice)') + seg(b.t0 + b.c + b.e, b.u, 'var(--teal)');
+    if (X(b.t0 + b.c + b.e + b.u) - X(b.t0) > 60) s += `<text class="gantt-l" x="${X(b.t0) + 4}" y="${y + h / 2}" dominant-baseline="central" style="fill:var(--card)">${b.n.slice(7, 9)}</text>`;
+  });
+  s += `<text class="gantt-l" x="120" y="${30 + P * lh}">0 s</text><text class="gantt-l" x="660" y="${30 + P * lh}" text-anchor="end">${total.toFixed(1)} s</text>`;
+  $('#gSvg').setAttribute('viewBox', `0 0 680 ${44 + P * lh}`);
+  $('#gSvg').innerHTML = s;
+  $('#gSql').textContent = `PUT file:///data/orders_*.csv @orders_stage AUTO_COMPRESS=${gComp ? 'TRUE' : 'FALSE'} PARALLEL=${P};`;
+  $('#gT').textContent = total.toFixed(1) + ' s'; $('#gB').textContent = fmt(sent) + ' MB';
+  let ins;
+  if (!gComp) ins = `<b>Uploading raw CSV sends ${fmt(sent)} MB</b>, about 4.5× more than gzip. For CSV and JSON destined for COPY, keep AUTO_COMPRESS=TRUE. Turn it off only for files that are already compressed (Parquet, .gz) or for <b>unstructured files</b> (PDF, JPG) that must stay readable as-is.`;
+  else if (P === 1) ins = `<b>One thread</b> uploads files one after another, so the biggest file blocks everything behind it. Raise PARALLEL.`;
+  else if (P >= 6) ins = `<b>Diminishing returns:</b> once the threads together saturate your network (100 MB/s here), adding more threads doesn't help, and the largest file (orders_05) sets the finish time. Splitting that big file would help more.`;
+  else ins = `<b>Parallel threads</b> keep the network busy while other files compress. Total time ≈ the busiest thread. Compression and encryption run on <b>your</b> CPU, which is why PUT costs no Snowflake compute.`;
+  $('#gIns').innerHTML = ins;
+}
+$('#gP').addEventListener('input', gantt);
+tabs('#gCTabs', d => { gComp = d.c === '1'; gantt(); });
+gantt();
+
+/* ===== 03 data shapes ===== */
+const SHAPES = [
+  `<h5>Structured: fixed columns and types</h5><p>Example: an <code>ORDERS</code> table with order_id, date, amount. Loaded with COPY into <b>table columns</b> and stored as micro-partitions. Query directly with SQL.</p>`,
+  `<h5>Semi-structured: self-describing, flexible</h5><p>Examples: JSON events, Avro, Parquet, XML. Loaded into a <code>VARIANT</code> column (Snowflake still stores it columnar internally) and queried with paths like <code>payload:customer.city</code>. Covered in a later module.</p>`,
+  `<h5>Unstructured: no schema at all</h5><p>Examples: PDF contracts, scanned invoices, MP3 call recordings, JPG photos, Word docs. <b>Not loaded into tables.</b> The file stays in a <b>stage</b> as a file. A <b>directory table</b> catalogs it, and you process it (OCR, transcription, AI extraction) to <i>produce</i> structured rows.</p>`
+];
+tabs('#shapeTabs', d => { $('#shapeBox').innerHTML = SHAPES[d.s]; });
+$('#shapeBox').innerHTML = SHAPES[0];
+
+/* ===== 03 unstructured pipeline stepper ===== */
+const US = [
+  { n: ['u1'], e: [], h: '1 · Your raw files', you: 'Collect files from apps, email exports, scanners or call-center systems. They might be on your laptop, an SFTP server or an S3 bucket.', be: 'Nothing in Snowflake yet. These are just bytes of different formats: PDF pages, audio waveforms, image pixels. None of them has rows or columns.' },
+  { n: ['u1', 'u2'], e: ['ue1'], h: '2 · Put files into a stage', you: "<code>CREATE STAGE docs_stage DIRECTORY=(ENABLE=TRUE) ENCRYPTION=(TYPE='SNOWFLAKE_SSE');</code> then <code>PUT file:///contracts/*.pdf @docs_stage AUTO_COMPRESS=FALSE;</code> (or use an <b>external stage</b> over your S3 bucket).", be: 'Each file is stored <b>as-is, as a binary object</b> in cloud object storage, encrypted at rest. Snowflake does <b>not</b> split it into micro-partitions or parse it. A 12 MB PDF stays a 12 MB PDF.' },
+  { n: ['u2', 'u3'], e: ['ue2'], h: '3 · The directory table catalogs the files', you: '<code>ALTER STAGE docs_stage REFRESH;</code> (internal stages) or <code>AUTO_REFRESH=TRUE</code> on external stages via cloud event notifications. Then <code>SELECT * FROM DIRECTORY(@docs_stage);</code>', be: 'Cloud services writes <b>one metadata row per file</b>: RELATIVE_PATH, SIZE, LAST_MODIFIED, MD5, ETAG, FILE_URL. It works like a library card catalog: you can query <i>which</i> files exist with SQL, but the file contents are still in the stage.' },
+  { n: ['u3', 'u4'], e: ['ue3'], h: '4 · A stream watches for new files', you: '<code>CREATE STREAM docs_stream ON STAGE docs_stage;</code>', be: 'The stream bookmarks the directory table. When new files arrive, their directory rows show up in the stream as INSERTs, so each run only processes <b>new</b> documents, not all 50,000 again.' },
+  { n: ['u4', 'u5'], e: ['ue4'], h: '5 · A task runs the processing', you: "<code>CREATE TASK parse_docs SCHEDULE='10 MINUTE' WHEN SYSTEM$STREAM_HAS_DATA('docs_stream') AS INSERT INTO doc_text SELECT … FROM docs_stream;</code>", be: 'Every 10 minutes cloud services checks the stream for free. If there are new files, the task runs its INSERT…SELECT. When it <b>commits</b>, the stream offset moves, so those files are marked as done.' },
+  { n: ['u5', 'u6'], e: ['ue5'], h: '6 · Process: AI functions or Python', you: "<code>AI_PARSE_DOCUMENT(TO_FILE('@docs_stage', relative_path), {'mode':'LAYOUT'})</code>, <code>AI_EXTRACT</code>, <code>AI_TRANSCRIBE</code>… or your own Python UDF that opens the file with <code>SnowflakeFile</code>.", be: '<b>Cortex:</b> your warehouse runs the query, and each file is sent to Snowflake-managed AI models (OCR, layout, LLM) running <b>inside Snowflake</b>. Billed per page or token as AI credits, on top of warehouse time. <b>Python UDF:</b> warehouse nodes read the file through a scoped URL, stream the bytes into your code and run libraries like pypdf. Billed as warehouse time only.' },
+  { n: ['u6', 'u7'], e: ['ue6'], h: '7 · Results become normal table rows', you: 'Write the outputs into tables: <code>doc_text</code> (full text), <code>invoice_fields</code> (vendor, total, due date), <code>doc_chunks</code> (pieces for search).', be: 'These are ordinary tables: micro-partitions, pruning, RBAC, masking, Time Travel. Everything from Module 1 now applies to data that started as a PDF.' },
+  { n: ['u7', 'u8'], e: ['ue7'], h: '8 · Use the results', you: 'Dashboards on extracted fields, joins with sales tables, or a <b>Cortex Search</b> service over <code>doc_chunks</code> to power a "chat with your contracts" app.', be: 'Cortex Search builds and refreshes a hybrid (vector + keyword) index from the chunk table on a <code>TARGET_LAG</code>. Apps query it to retrieve the best chunks, then an LLM answers using them (RAG).' }
+];
+let ui = -1;
+US.forEach((_, i) => { const s = document.createElement('span'); s.onclick = () => uGo(i); $('#uBar').appendChild(s); });
+function uGo(i) {
+  ui = i;
+  const svg = $('#uFlow');
+  svg.classList.toggle('playing', i >= 0);
+  [...$('#uBar').children].forEach((s, k) => s.classList.toggle('on', k <= i));
+  if (i < 0) { $$('#uFlow .fn,#uFlow .edge').forEach(x => x.classList.remove('on')); $('#uDesc').innerHTML = '<h4>Ready</h4><div style="font-size:14px;color:var(--ink2)">Press Start to follow a PDF from your laptop to a chatbot answer.</div>'; $('#uNext').textContent = 'Start'; return; }
+  const st = US[i];
+  $$('#uFlow .fn').forEach(g => g.classList.toggle('on', st.n.includes(g.id)));
+  $$('#uFlow .edge').forEach(e => e.classList.toggle('on', st.e.includes(e.id)));
+  $('#uDesc').innerHTML = `<h4>${st.h}</h4><div class="two"><div class="you"><b class="l">WHAT YOU DO</b>${st.you}</div><div class="be"><b class="l">WHAT HAPPENS IN THE BACKEND</b>${st.be}</div></div>`;
+  $('#uNext').textContent = i === US.length - 1 ? 'Replay' : 'Next';
+}
+$('#uNext').onclick = () => uGo(ui === US.length - 1 ? 0 : ui + 1);
+$('#uPrev').onclick = () => uGo(Math.max(-1, ui - 1));
+$('#uReset').onclick = () => uGo(-1);
+uGo(-1);
+
+/* ===== 04 processing lab ===== */
+const UF = {
+  invoice: { name: 'invoice_INV-2041.pdf', d: 'PDF · 2 pages · scanned', ops: ['parse', 'extract', 'udf'] },
+  contract: { name: 'msa_acme_2024.docx', d: 'DOCX · 14 pages', ops: ['parse', 'extract', 'classify'] },
+  call: { name: 'support_call_0412.mp3', d: 'MP3 · 4 min audio', ops: ['transcribe', 'sentiment'] },
+  photo: { name: 'returned_item_88.jpg', d: 'JPG · product photo', ops: ['vision', 'classifyimg'] }
+};
+const F = n => `TO_FILE('@docs_stage', '${n}')`;
+const UO = {
+  parse: { t: 'AI_PARSE_DOCUMENT · OCR + layout', sql: n => `SELECT AI_PARSE_DOCUMENT(\n         ${F(n)},\n         {'mode': 'LAYOUT'}\n       ):content::STRING AS text;`,
+    out: n => n.includes('INV') ? `# INVOICE INV-2041\nAcme Supplies Ltd · 12 Market St\n\n| Item      | Qty | Unit  | Amount |\n|-----------|-----|-------|--------|\n| Widget A  | 10  | 25.00 | 250.00 |\n| Shipping  | 1   | 62.50 | 62.50  |\n\n**Total due: 312.50 USD** · Due 2024-04-15` : `# MASTER SERVICES AGREEMENT\nThis Agreement is made on 1 March 2024 between Acme Corp ("Client") and Northwind LLC ("Provider")...\n\n## 1. Term\nThe initial term is 24 months...`,
+    be: `OCR reads scanned pages, and <b>LAYOUT</b> mode keeps headings and tables as Markdown (<code>OCR</code> mode returns plain text). Your warehouse runs the query, and the document is processed by Snowflake-managed models. Billed <b>per page</b> as AI credits. The older name is <code>SNOWFLAKE.CORTEX.PARSE_DOCUMENT</code>.` },
+  extract: { t: 'AI_EXTRACT · pull specific fields', sql: n => n.includes('INV') ? `SELECT AI_EXTRACT(\n  file => ${F(n)},\n  responseFormat => {\n    'invoice_no': 'What is the invoice number?',\n    'vendor':     'Who is the vendor?',\n    'total':      'What is the total amount due?',\n    'due_date':   'What is the due date?'\n  }) AS fields;` : `SELECT AI_EXTRACT(\n  file => ${F(n)},\n  responseFormat => {\n    'client':         'Who is the client?',\n    'provider':       'Who is the provider?',\n    'effective_date': 'When does the agreement start?',\n    'term_months':    'How many months is the initial term?'\n  }) AS fields;`,
+    out: n => n.includes('INV') ? `{\n  "response": {\n    "invoice_no": "INV-2041",\n    "vendor": "Acme Supplies Ltd",\n    "total": "312.50",\n    "due_date": "2024-04-15"\n  }\n}` : `{\n  "response": {\n    "client": "Acme Corp",\n    "provider": "Northwind LLC",\n    "effective_date": "2024-03-01",\n    "term_months": "24"\n  }\n}`,
+    be: `You ask questions in plain English and get JSON back. Store it in a VARIANT column, then flatten it into typed columns (<code>fields:response:total::NUMBER(10,2)</code>). The model reads the file directly, with no separate parse step. Billed per token.` },
+  udf: { t: 'Python UDF · SnowflakeFile + pypdf', sql: n => `CREATE OR REPLACE FUNCTION pdf_text(url STRING)\nRETURNS STRING LANGUAGE PYTHON RUNTIME_VERSION = '3.11'\nPACKAGES = ('snowflake-snowpark-python','pypdf2')\nHANDLER = 'run' AS $$\nfrom snowflake.snowpark.files import SnowflakeFile\nfrom PyPDF2 import PdfReader\ndef run(url):\n    with SnowflakeFile.open(url, 'rb') as f:\n        return '\\n'.join(p.extract_text() or '' for p in PdfReader(f).pages)\n$$;\n\nSELECT relative_path,\n       pdf_text(BUILD_SCOPED_FILE_URL(@docs_stage, relative_path))\nFROM DIRECTORY(@docs_stage);`,
+    out: () => `relative_path        | PDF_TEXT\n---------------------+---------------------------------\ninvoice_INV-2041.pdf | INVOICE INV-2041 Acme Supplies...\n                     | (empty if the PDF is a scan:\n                     |  pypdf has no OCR!)`,
+    be: `The query passes a <b>scoped URL</b> into the UDF. On the warehouse nodes, <code>SnowflakeFile.open</code> streams the file's bytes from the stage into Python, and pypdf extracts text. Billed as <b>warehouse time only</b>. Catch: pure-Python libraries can't OCR <b>scanned</b> PDFs, which is where AI_PARSE_DOCUMENT wins.` },
+  classify: { t: 'AI_CLASSIFY · route documents', sql: n => `SELECT AI_CLASSIFY(\n         AI_PARSE_DOCUMENT(${F(n)}, {'mode':'OCR'}):content::STRING,\n         ['NDA', 'MSA', 'Statement of Work', 'Lease']\n       ) AS doc_type;`,
+    out: () => `{\n  "labels": ["MSA"]\n}`, be: `Two AI calls chained in one SQL statement: parse to text, then classify into <b>your</b> label list. Useful for routing documents to the right extraction logic, legal team or retention policy.` },
+  transcribe: { t: 'AI_TRANSCRIBE · speech to text', sql: n => `SELECT AI_TRANSCRIBE(${F(n)}) AS t,\n       t:text::STRING AS transcript;`,
+    out: () => `{\n  "audio_duration": 241.6,\n  "text": "Hi, I'm calling about order 88213. It arrived broken and this is the second time. I want a refund, not another replacement..."\n}`,
+    be: `Audio is processed by a managed speech-to-text model inside Snowflake. Billed by audio duration. The transcript is plain text, so now you can search it, classify it, or join it to orders.` },
+  sentiment: { t: 'AI_SENTIMENT on the transcript', sql: n => `SELECT AI_SENTIMENT(\n         AI_TRANSCRIBE(${F(n)}):text::STRING\n       ) AS sentiment;`,
+    out: () => `{\n  "categories": [\n    { "name": "overall", "sentiment": "negative" }\n  ]\n}`, be: `Chaining: audio → text → sentiment. In production you'd transcribe <b>once</b> into a table, then run sentiment, classification and summaries on that table, so you don't pay to transcribe the same audio repeatedly.` },
+  vision: { t: 'AI_COMPLETE with an image (multimodal)', sql: n => `SELECT AI_COMPLETE(\n         'claude-sonnet-4-5',\n         'Describe any visible damage in this product photo in one sentence.',\n         ${F(n)}\n       ) AS description;`,
+    out: () => `"The ceramic mug has a clear crack running from the rim down to the base of the handle, and a small chip on the rim."`, be: `A vision-capable LLM reads the image inside Snowflake. Billed per token (images count as tokens). Model names and availability depend on your region and account settings.` },
+  classifyimg: { t: 'AI_CLASSIFY on an image', sql: n => `SELECT AI_CLASSIFY(\n         ${F(n)},\n         ['damaged', 'wrong item', 'no issue']\n       ) AS return_reason;`,
+    out: () => `{\n  "labels": ["damaged"]\n}`, be: `Same function as text classification, but the input is a FILE. Great for auto-triaging returns or quality-control photos at scale with one SQL statement over the directory table.` }
+};
+let uf = 'invoice', uo = 'parse';
+$('#ufiles').innerHTML = Object.entries(UF).map(([k, f]) => `<button class="fcard" data-k="${k}"><b>${f.name}</b><small>${f.d}</small></button>`).join('');
+function ulab() {
+  const f = UF[uf];
+  if (!f.ops.includes(uo)) uo = f.ops[0];
+  $$('#ufiles .fcard').forEach(b => b.classList.toggle('on', b.dataset.k === uf));
+  $('#uops').innerHTML = f.ops.map(o => `<button class="btn ${o === uo ? 'pri' : ''}" data-o="${o}">${UO[o].t}</button>`).join('');
+  $$('#uops button').forEach(b => b.onclick = () => { uo = b.dataset.o; ulab(); });
+  $('#uSql').textContent = UO[uo].sql(f.name);
+  $('#uOut').textContent = UO[uo].out(f.name);
+  $('#uBe').innerHTML = '<b>Backend:</b> ' + UO[uo].be;
+}
+$$('#ufiles .fcard').forEach(b => b.onclick = () => { uf = b.dataset.k; ulab(); });
+ulab();
+
+/* ===== 04 chunking ===== */
+const DOC = 'Section 4. Refunds. Customers may request a full refund within 30 days of delivery if the item is unused and in its original packaging. Refund requests must include the order number and a photo of the item. Section 5. Damaged goods. If an item arrives damaged, the customer must report it within 7 days. We will either ship a replacement at no cost or issue a full refund, at the customer\'s choice. Shipping costs for damaged items are always refunded. Section 6. Exceptions. Gift cards, perishable goods and personalised items cannot be returned. Items marked as final sale are not eligible for refunds unless they arrive damaged. Section 7. Processing time. Approved refunds are issued to the original payment method within 5 business days. Bank processing may add 3 to 7 additional days depending on the card issuer.';
+function chunk() {
+  const S = +$('#kS').value; let O = +$('#kO').value;
+  if (O >= S) O = S - 50;
+  $('#kSV').textContent = S; $('#kOV').textContent = O;
+  const out = []; let st = 0;
+  while (st < DOC.length) { const en = Math.min(DOC.length, st + S); out.push([st, en]); if (en === DOC.length) break; st = en - O; }
+  const dup = out.reduce((a, [s, e]) => a + (e - s), 0) - DOC.length;
+  $('#kN').textContent = out.length; $('#kD').textContent = Math.round(dup / DOC.length * 100) + '%';
+  $('#kSql').textContent = `SELECT c.index AS chunk_no, c.value::STRING AS chunk\nFROM doc_text d,\n     LATERAL FLATTEN(SNOWFLAKE.CORTEX.SPLIT_TEXT_RECURSIVE_CHARACTER(\n         d.text, 'none', ${S}, ${O})) c;`;
+  $('#kOut').innerHTML = out.map(([s, e], i) => { const ov = i > 0 ? Math.min(O, e - s) : 0; return `<div class="chunk"><b>#${i}</b>${ov ? `<em>${esc(DOC.slice(s, s + ov))}</em>` : ''}${esc(DOC.slice(s + ov, e))}</div>`; }).join('');
+  let ins;
+  if (O === 0) ins = '<b>No overlap:</b> look for chunks that start mid-sentence. Words like "within 7 days" can lose their subject ("damaged items") when the cut falls between them, so retrieval may miss the answer.';
+  else if (S >= 500) ins = '<b>Big chunks</b> hold more context per hit, but they mix several topics (refunds + damage + exceptions), which makes vector matches fuzzier and feeds the LLM more irrelevant text. Keep chunks fairly small for Cortex Search (Snowflake suggests around 512 tokens or fewer).';
+  else ins = '<b>Balanced:</b> small chunks give precise retrieval, and the overlap keeps sentences that cross a boundary meaningful. The cost is the duplicated text, which you store and embed twice.';
+  $('#kIns').innerHTML = ins;
+}
+['#kS', '#kO'].forEach(s => $(s).addEventListener('input', chunk));
+chunk();
+</script>
+
+<script>
+/* ===== 05 streams ===== */
+const clone = m => new Map([...m].map(([k, v]) => [k, { ...v }]));
+const NAMES = ['Dev', 'Ema', 'Farah', 'Gus', 'Hana', 'Ivan', 'Jin', 'Kofi', 'Lena', 'Mo'];
+let S;
+function sInit() {
+  const t = new Map([[1, { id: 1, name: 'Asha', amt: 100 }], [2, { id: 2, name: 'Ben', amt: 250 }], [3, { id: 3, name: 'Chen', amt: 75 }]]);
+  S = { ver: 1, day: 0, offDay: 0, table: t, snaps: { 1: clone(t) }, off: 1, ins: [], next: 4, tgt: 0, type: S ? S.type : 'standard', stale: false, changed: new Set() };
+}
+sInit();
+function commit(ids) { S.ver++; S.snaps[S.ver] = clone(S.table); S.changed = new Set(ids); }
+function sRows() {
+  if (S.type === 'append') return S.ins.filter(x => x.ver > S.off).map(x => ({ ...x.row, a: 'INSERT', u: false }));
+  const base = S.snaps[S.off], cur = S.table, out = [];
+  cur.forEach((r, id) => { const b = base.get(id); if (!b) out.push({ ...r, a: 'INSERT', u: false }); else if (b.amt !== r.amt || b.name !== r.name) { out.push({ ...b, a: 'DELETE', u: true }); out.push({ ...r, a: 'INSERT', u: true }); } });
+  base.forEach((b, id) => { if (!cur.has(id)) out.push({ ...b, a: 'DELETE', u: false }); });
+  return out;
+}
+function sMsg(h, flash) { $('#sMsg').innerHTML = h; if (flash) { const p = $('#sStr'); p.classList.remove('flash'); void p.offsetWidth; p.classList.add('flash'); } }
+function sDraw() {
+  $('#sTbl').innerHTML = '<tr><th>ID</th><th>NAME</th><th>AMOUNT</th></tr>' + [...S.table.values()].map(r => `<tr class="${S.changed.has(r.id) ? 'rowchg' : ''}"><td class="m">${r.id}</td><td>${r.name}</td><td class="m">${r.amt}</td></tr>`).join('');
+  const rows = S.stale ? [] : sRows();
+  $('#sStr').innerHTML = '<tr><th>ID</th><th>NAME</th><th>AMT</th><th>METADATA$ACTION</th><th>ISUPDATE</th></tr>' +
+    (S.stale ? '<tr><td colspan="5" style="color:var(--red)">Error: stream ORDERS_STREAM is stale. Recreate it.</td></tr>' :
+      rows.length ? rows.map(r => `<tr><td class="m">${r.id}</td><td>${r.name}</td><td class="m">${r.amt}</td><td class="${r.a === 'INSERT' ? 'act-i' : 'act-d'}">${r.a}</td><td class="m">${r.u ? 'TRUE' : 'FALSE'}</td></tr>`).join('') : '<tr><td colspan="5" class="note-s">(empty: no changes since the offset)</td></tr>');
+  $('#sN').textContent = rows.length; $('#sTgt').textContent = S.tgt; $('#sAgeN').textContent = S.day - S.offDay;
+  $('#sStat').innerHTML = S.stale ? '<span class="badge bad">STALE</span>' : (S.day - S.offDay >= 10 ? '<span class="badge mid">AT RISK</span>' : '<span class="badge ok">HEALTHY</span>');
+  const first = Math.max(1, S.ver - 13), X = v => 40 + (v - first) / Math.max(1, Math.min(13, S.ver - first || 1)) * 600;
+  let s = `<line x1="30" x2="650" y1="45" y2="45" stroke="var(--line2)"/><text class="tm" x="30" y="20">table versions (every committed DML creates one)</text>`;
+  for (let v = first; v <= S.ver; v++) s += `<circle cx="${X(v)}" cy="45" r="${v === S.ver ? 7 : 5}" fill="${v > S.off ? 'var(--amber)' : 'var(--card2)'}" stroke="var(--ink3)"/><text class="tm" x="${X(v)}" y="72" text-anchor="middle">v${v}</text>`;
+  if (S.off >= first) s += `<path d="M${X(S.off) - 7} 22 L${X(S.off) + 7} 22 L${X(S.off)} 34 Z" fill="${S.stale ? 'var(--red)' : 'var(--ice)'}"/><text class="tm" x="${X(S.off) > 560 ? X(S.off) - 10 : X(S.off) + 10}" y="30" text-anchor="${X(S.off) > 560 ? 'end' : 'start'}" style="fill:var(--ice)">offset</text>`;
+  else s += `<text class="tm" x="40" y="88" style="fill:var(--ice)">offset at v${S.off} (off-screen, left)</text>`;
+  s += `<text class="tm" x="${X(S.ver)}" y="88" text-anchor="middle" style="fill:var(--amber)">now</text>`;
+  $('#sTl').innerHTML = s;
+}
+function guardStale() { if (S.stale) { sMsg('<b>The stream is stale.</b> It can no longer return changes, so new DML is invisible to it. In real life: <code>CREATE OR REPLACE STREAM</code> and reconcile the missed data (e.g. a full compare). Press Reset.'); sDraw(); return true; } return false; }
+$('#sIns').onclick = () => { if (guardStale()) return; const id = S.next++, r = { id, name: NAMES[(id - 4) % NAMES.length], amt: 50 + (id * 37) % 300 }; S.table.set(id, r); commit([id]); S.ins.push({ ver: S.ver, row: { ...r } }); sMsg(`<b>INSERT</b> creates table version v${S.ver}. The stream now shows the new row as <span class="act-i">INSERT</span>.`); sDraw(); };
+$('#sUpd').onclick = () => { if (guardStale()) return; const r = [...S.table.values()][0]; if (!r) return; r.amt += 50; commit([r.id]); sMsg(S.type === 'append' ? '<b>Append-only streams ignore UPDATEs.</b> The table changed, but the stream shows nothing new for it.' : `<b>One UPDATE = two stream rows</b>: the old version as <span class="act-d">DELETE</span> and the new version as <span class="act-i">INSERT</span>, both with <code>METADATA$ISUPDATE = TRUE</code>.`); sDraw(); };
+$('#sDel').onclick = () => { if (guardStale()) return; const ids = [...S.table.keys()]; if (!ids.length) return; const id = ids[ids.length - 1]; S.table.delete(id); commit([]); sMsg(S.type === 'append' ? '<b>Append-only ignores DELETEs.</b> If the row was inserted after the offset, its INSERT is still in the stream.' : '<b>DELETE</b> appears as <span class="act-d">DELETE</span> with ISUPDATE = FALSE. Your MERGE can use this to delete the row downstream (or soft-delete it).'); sDraw(); };
+$('#sInsDel').onclick = () => { if (guardStale()) return; const id = S.next++, r = { id, name: 'Temp', amt: 999 }; S.table.set(id, r); commit([id]); S.ins.push({ ver: S.ver, row: { ...r } }); S.table.delete(id); commit([]); sMsg(S.type === 'append' ? '<b>Append-only keeps the INSERT</b> of row "Temp" even though it was deleted. Append-only records every insert and ignores deletes.' : '<b>Net change = nothing.</b> A standard stream compares "offset" with "now". Row "Temp" didn\'t exist at either point, so it never appears. Streams give you the <b>net</b> difference, not a full audit log.'); sDraw(); };
+$('#sUpd2').onclick = () => { if (guardStale()) return; const r = [...S.table.values()][1] || [...S.table.values()][0]; if (!r) return; r.amt += 10; commit([r.id]); r.amt += 10; commit([r.id]); sMsg(S.type === 'append' ? 'Append-only ignores both updates.' : `<b>Two updates, but only ONE pair in the stream</b>, showing the value at the offset → the final value. The intermediate value is lost. If you need every change, use a history table or consume more often.`); sDraw(); };
+$('#sSel').onclick = () => { if (guardStale()) return; sMsg('<b>SELECT returned the rows, but the offset did NOT move.</b> You can look as many times as you like, and the same rows come back. Even an Airflow job that only SELECTs leaves the stream unchanged.', true); sDraw(); };
+$('#sCon').onclick = () => {
+  if (guardStale()) return;
+  const n = sRows().length;
+  S.tgt += n; S.off = S.ver; S.offDay = S.day; S.changed = new Set();
+  sMsg(n ? `<b>Consumed ${n} change row(s).</b> The INSERT…SELECT committed, so the offset jumped to <b>v${S.ver}</b> and the stream is empty again. Every change was handed over exactly once.` : '<b>Nothing to consume.</b> The DML ran with 0 rows, but the offset still moved to the current version.');
+  sDraw();
+};
+$('#sAge').onclick = () => {
+  if (S.stale) return;
+  S.day += 5;
+  if (S.day - S.offDay > 14) { S.stale = true; sMsg(`<b>STALE!</b> The offset is ${S.day - S.offDay} days old, past the 14-day extension limit (table retention is 1 day here). Snowflake no longer keeps the history the stream needs.`); }
+  else sMsg(`${S.day - S.offDay} days without consuming. Snowflake is <b>extending</b> the table's data retention to keep the stream's history (up to 14 days by default). SHOW STREAMS → <code>STALE_AFTER</code> shows the deadline.`);
+  sDraw();
+};
+$('#sReset').onclick = () => { sInit(); sMsg('Reset. Try <b>UPDATE a row</b>.'); sDraw(); };
+tabs('#sType', d => { S.type = d.t === 'append' ? 'append' : 'standard'; sMsg(S.type === 'append' ? '<b>Append-only</b>: only inserts since the offset. Cheaper, because Snowflake doesn\'t have to compute updates or deletes.' : '<b>Standard</b>: net inserts, updates (as DELETE+INSERT pairs) and deletes since the offset.'); sDraw(); });
+sDraw();
+
+/* ===== 06 tasks ===== */
+const KT = { root: 20, merge: 40, agg: 25, dim: 15, fin: 5 };
+let K = { state: 'susp', comp: 'srv', when: true, fail: false, slots: new Set([1, 2, 5, 6, 7, 10]), running: false };
+$('#kSlots').innerHTML = Array.from({ length: 12 }, (_, i) => `<span class="chip" data-i="${i}">:${String(i * 5).padStart(2, '0')}</span>`).join('');
+const kSlotDraw = () => $$('#kSlots .chip').forEach(c => c.classList.toggle('on', K.slots.has(+c.dataset.i)));
+$$('#kSlots .chip').forEach(c => c.onclick = () => { const i = +c.dataset.i; K.slots.has(i) ? K.slots.delete(i) : K.slots.add(i); kSlotDraw(); });
+kSlotDraw();
+tabs('#kState', d => K.state = d.v); tabs('#kComp', d => K.comp = d.v); tabs('#kWhen', d => K.when = d.v === '1'); tabs('#kFail', d => K.fail = d.v === '1');
+const kNode = (id, cls, txt) => { const g = $('#kn-' + id); g.setAttribute('class', 'tn ' + (cls || '')); if (txt) $('#ks-' + id).textContent = txt; };
+const DEF = { root: 'root · 5 MINUTE', merge: 'AFTER root', agg: 'AFTER dedup', dim: 'AFTER dedup', fin: 'FINALIZE = root' };
+const kReset = () => Object.keys(DEF).forEach(k => kNode(k, '', DEF[k]));
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const kLog = (t, task, st, note) => $('#kLog').insertAdjacentHTML('afterbegin', `<tr><td class="m">${t}</td><td class="m">${task}</td><td><span class="badge ${st === 'SUCCEEDED' ? 'ok' : st === 'FAILED' ? 'bad' : st === 'SKIPPED' ? 'mid' : 'off'}">${st}</span></td><td style="font-size:13px">${note}</td></tr>`);
+$('#kRun').onclick = async () => {
+  if (K.running) return;
+  K.running = true; $('#kRun').disabled = true; $('#kLog').innerHTML = ''; kReset();
+  let runs = 0, skip = 0, fails = 0, billed = 0;
+  const upd = () => { $('#kR').textContent = runs; $('#kSk').textContent = skip; $('#kF').textContent = fails; $('#kB').textContent = billed + ' s'; $('#kBs').textContent = K.comp === 'srv' ? 'serverless: actual seconds only' : 'warehouse: 60 s min + idle'; };
+  upd();
+  if (K.state === 'susp') {
+    for (let i = 0; i < 12; i++) { $$('#kSlots .chip').forEach(c => c.classList.toggle('now', +c.dataset.i === i)); await sleep(120); }
+    kLog('—', 'LOAD_CURATED', 'SUSPENDED', 'No runs were ever scheduled.');
+    $('#kTIns').innerHTML = '<b>Nothing happened in 60 minutes.</b> Every task is created <b>SUSPENDED</b>, the most common "my task never runs" bug. Switch to <b>RESUMED</b> (in SQL: resume the child tasks first, then <code>ALTER TASK load_curated RESUME</code>) and run again.';
+    $$('#kSlots .chip').forEach(c => c.classList.remove('now'));
+    K.running = false; $('#kRun').disabled = false; return;
+  }
+  for (let i = 0; i < 12; i++) {
+    const tm = `10:${String(i * 5).padStart(2, '0')}`, data = K.slots.has(i);
+    $$('#kSlots .chip').forEach(c => c.classList.toggle('now', +c.dataset.i === i));
+    kReset();
+    if (K.when && !data) {
+      kNode('root', 'skip', 'SKIPPED (no data)'); skip++;
+      kLog(tm, 'LOAD_CURATED', 'SKIPPED', 'WHEN condition false: checked by cloud services, no compute started');
+      upd(); await sleep(450); continue;
+    }
+    const sec = data ? KT : { root: 2, merge: 2, agg: 2, dim: 1, fin: 1 };
+    kNode('root', 'run', 'running…'); await sleep(260); kNode('root', 'ok', `SUCCEEDED · ${sec.root}s`);
+    kNode('merge', 'run', 'running…'); await sleep(260); kNode('merge', 'ok', `SUCCEEDED · ${sec.merge}s`);
+    kNode('agg', 'run', 'running…'); kNode('dim', 'run', 'running…'); await sleep(300);
+    kNode('agg', 'ok', `SUCCEEDED · ${sec.agg}s`);
+    if (K.fail) { kNode('dim', 'fail', 'FAILED · lock timeout'); fails++; } else kNode('dim', 'ok', `SUCCEEDED · ${sec.dim}s`);
+    kNode('fin', 'run', 'running…'); await sleep(220); kNode('fin', 'ok', `SUCCEEDED · ${sec.fin}s`);
+    runs++;
+    const dur = sec.root + sec.merge + Math.max(sec.agg, sec.dim) + sec.fin;
+    const b = K.comp === 'srv' ? dur : Math.max(60, dur + 60);
+    billed += b;
+    kLog(tm, 'LOAD_CURATED → … → NOTIFY_DONE', K.fail ? 'FAILED' : 'SUCCEEDED', `${data ? 'New data merged' : 'No new data, but it ran anyway (no WHEN)'} · ${dur}s work · billed ${b}s${K.fail ? ' · REFRESH_DIM failed, finalizer still ran' : ''}`);
+    upd(); await sleep(350);
+  }
+  $$('#kSlots .chip').forEach(c => c.classList.remove('now'));
+  const notes = [];
+  if (!K.when) notes.push('<b>No WHEN clause:</b> the graph ran every 5 minutes even with nothing new, burning compute on empty runs.');
+  else notes.push(`<b>WHEN saved ${skip} runs:</b> the stream check is a cheap cloud services call, so empty slots cost no compute.`);
+  notes.push(K.comp === 'wh' ? '<b>Warehouse tasks</b> pay a 60 s minimum plus idle time before auto-suspend on every run. That adds up for short, frequent tasks; serverless would bill only the actual seconds.' : '<b>Serverless</b> billed only the seconds the tasks actually ran. Ideal for short, frequent graphs.');
+  if (K.fail) notes.push('<b>REFRESH_DIM failed</b> but <b>NOTIFY_DONE (finalizer)</b> still ran, so you can alert or clean up. Debug with <code>TASK_HISTORY()</code> → <code>ERROR_MESSAGE</code>, and consider <code>SUSPEND_TASK_AFTER_NUM_FAILURES</code>.');
+  $('#kTIns').innerHTML = notes.join(' ');
+  K.running = false; $('#kRun').disabled = false;
+};
+
+/* ===== 07 e2e live pipeline ===== */
+const P = { on: false, susp: false, cd: 60, raw: 0, str: [], cur: 0, timer: null, id: 0 };
+const NS = 'http://www.w3.org/2000/svg';
+function pDraw() {
+  $('#pRaw').textContent = P.raw + ' rows'; $('#pStr').textContent = P.str.length + ' change' + (P.str.length === 1 ? '' : 's'); $('#pCur').textContent = P.cur + ' rows';
+  $('#pClock').textContent = !P.on ? 'clock stopped' : P.susp ? 'SUSPENDED' : `next run in ${Math.ceil(P.cd / 10)}s`;
+}
+const park = i => [372 + (i % 8) * 14, 188 + Math.floor(i / 8) * 14];
+function pSend(n) {
+  for (let k = 0; k < n; k++) setTimeout(() => {
+    const c = document.createElementNS(NS, 'circle');
+    c.setAttribute('r', 6); c.setAttribute('fill', 'var(--ice)'); c.setAttribute('class', 'pk');
+    c.style.transform = 'translate(75px,140px)';
+    $('#pDots').appendChild(c);
+    setTimeout(() => { c.style.transform = 'translate(245px,140px)'; }, 30);
+    setTimeout(() => { P.raw++; const [x, y] = park(P.str.length); P.str.push(c); c.style.transform = `translate(${x}px,${y}px)`; pDraw(); }, 850);
+  }, k * 250);
+  if (!P.on) $('#pIns').innerHTML = 'Orders are landing, but the clock is stopped. Press <b>Start the clock</b> so the task can run.';
+}
+function pTick() {
+  if (P.susp) { pDraw(); return; }
+  P.cd -= 1;
+  if (P.cd <= 0) {
+    P.cd = 60;
+    const r = $('#pTaskR');
+    if (!P.str.length) {
+      $('#pBanner').textContent = 'SKIPPED: stream empty, no compute';
+      $('#pIns').innerHTML = 'The task woke up, <code>SYSTEM$STREAM_HAS_DATA</code> returned FALSE, and the run was <b>skipped</b>. No warehouse and no credits.';
+    } else {
+      const n = P.str.length, dots = P.str.splice(0);
+      r.style.strokeWidth = 3;
+      $('#pBanner').textContent = `MERGE ran: ${n} row${n > 1 ? 's' : ''} → curated`;
+      dots.forEach((c, i) => { setTimeout(() => { c.style.transform = 'translate(610px,46px)'; }, i * 60); setTimeout(() => { c.style.transform = `translate(${580 + (i % 9) * 14}px,140px)`; c.setAttribute('fill', 'var(--teal)'); }, 700 + i * 60); setTimeout(() => c.remove(), 1700 + i * 60); });
+      setTimeout(() => { P.cur += n; r.style.strokeWidth = 1; pDraw(); }, 1600);
+      $('#pIns').innerHTML = `<b>Task run:</b> stream had ${n} change(s), the MERGE upserted them into CURATED_ORDERS and <b>committed</b>, so the stream's offset moved and RAW_STREAM is empty. RAW_ORDERS still has all ${P.raw} rows: streams never delete source data.`;
+    }
+    setTimeout(() => { $('#pBanner').textContent = ''; }, 2600);
+  }
+  pDraw();
+}
+$('#pStart').onclick = () => {
+  P.on = !P.on;
+  if (P.on) { P.timer = setInterval(pTick, 100); $('#pStart').textContent = '❚❚ Pause clock'; $('#pIns').innerHTML = 'Clock running. Send some orders and watch them wait in the stream until the next task run.'; }
+  else { clearInterval(P.timer); $('#pStart').textContent = '▶ Start the clock'; }
+  pDraw();
+};
+$('#pSend').onclick = () => pSend(3);
+$('#pSend1').onclick = () => pSend(1);
+$('#pSusp').onclick = () => {
+  P.susp = !P.susp; $('#pSusp').textContent = P.susp ? 'Resume task' : 'Suspend task';
+  $('#pIns').innerHTML = P.susp ? '<b>Task suspended.</b> Orders keep landing in RAW_ORDERS and changes pile up in the stream. Nothing is lost, but leave it long enough and the stream goes <b>stale</b>.' : 'Task resumed. The backlog will be merged on the next run, all at once.';
+  pDraw();
+};
+pDraw();
+
+/* ===== 08 SQL lab ===== */
+const SQL = [
+  { t: 'SnowSQL config & connect', l: [
+    ['# ~/.snowsql/config', 'SnowSQL reads named connections and default options from this file (on Windows: %USERPROFILE%\\.snowsql\\config). Keep it private (chmod 600).'],
+    ['[connections.dev]', 'A named connection. Use it with: snowsql -c dev'],
+    ['accountname = myorg-myaccount', 'Account identifier in org-account form (the part before .snowflakecomputing.com).'],
+    ['username = saurav', 'Your Snowflake user.'],
+    ['authenticator = externalbrowser', 'SSO: opens your browser to log in through your identity provider. For unattended jobs use key-pair authentication instead.'],
+    ['rolename = analyst', 'Default role for the session.'],
+    ['warehousename = dev_wh', 'Default warehouse. It is only resumed when a query needs compute.'],
+    ['dbname = sales_db', 'Default database.'],
+    ['schemaname = public', 'Default schema.'],
+    ['', ''],
+    ['[connections.etl_prod]', 'A second connection for automation.'],
+    ['accountname = myorg-myaccount', ''],
+    ['username = svc_etl', 'A service user for scheduled jobs: never a person.'],
+    ['private_key_path = /secure/keys/svc_etl.p8', 'Key-pair authentication: no password stored in the file. The public key is registered on the user with ALTER USER svc_etl SET RSA_PUBLIC_KEY = ...'],
+    ['', ''],
+    ['[options]', 'Default client options for every session.'],
+    ['log_file = ~/.snowsql/log', 'Where SnowSQL writes its log (useful for troubleshooting connection problems).'],
+    ['exit_on_error = true', 'Stop the script at the first failing statement and return a non-zero exit code, so your scheduler knows the job failed.'],
+    ['variable_substitution = true', 'Enables &variable placeholders in scripts.']
+  ] },
+  { t: 'PUT → COPY → GET', l: [
+    ["CREATE STAGE IF NOT EXISTS orders_stage", 'A named internal stage: storage that Snowflake manages for you.'],
+    ["  FILE_FORMAT = (TYPE = CSV SKIP_HEADER = 1 FIELD_OPTIONALLY_ENCLOSED_BY = '\"');", 'Attach a default file format, so COPY statements stay short.'],
+    ['', ''],
+    ['PUT file:///data/orders_*.csv @orders_stage', 'Upload every matching local file. Runs on YOUR machine: compress, encrypt, upload directly to storage. No warehouse.'],
+    ['    AUTO_COMPRESS = TRUE PARALLEL = 8;', 'gzip locally (default TRUE) and use 8 upload threads (default 4, max 99).'],
+    ['', ''],
+    ['LIST @orders_stage;', 'Show staged files with size, md5 and last_modified. A metadata call.'],
+    ['', ''],
+    ['COPY INTO orders', 'Load the staged files into the table. This is where the warehouse works.'],
+    ['  FROM @orders_stage', 'Source stage (you can add a path, or PATTERN = \'.*2024.*[.]csv[.]gz\').'],
+    ["  ON_ERROR = 'ABORT_STATEMENT';", "Default for bulk COPY: any bad row fails the whole load. Alternatives: 'CONTINUE', 'SKIP_FILE', 'SKIP_FILE_10%'."],
+    ['', ''],
+    ["COPY INTO orders FROM @orders_stage VALIDATION_MODE = 'RETURN_ERRORS';", 'Dry run: parse the files and report errors without loading anything. A great habit before big loads.'],
+    ['', ''],
+    ['SELECT * FROM TABLE(INFORMATION_SCHEMA.COPY_HISTORY(', 'Load history per file: status, rows loaded, first error.'],
+    ["  TABLE_NAME => 'ORDERS', START_TIME => DATEADD('hour', -24, CURRENT_TIMESTAMP())));", 'Last 24 hours of loads into ORDERS.'],
+    ['', ''],
+    ['GET @orders_stage file:///tmp/downloads/;', 'Download staged files back to your machine (decrypted, still gzipped).'],
+    ["REMOVE @orders_stage PATTERN = '.*[.]csv[.]gz';", 'Clean up the stage after a successful load. Or use PURGE = TRUE on the COPY.']
+  ] },
+  { t: 'SnowSQL scripting', l: [
+    ['#!/bin/bash', 'A shell script that cron, Airflow (BashOperator) or a CI pipeline can run.'],
+    ['snowsql -c etl_prod \\', 'Use the key-pair service connection.'],
+    ['  -f /jobs/load_orders.sql \\', 'Run every statement in this file.'],
+    ['  -D run_date=2024-03-15 \\', 'Define a variable. Inside the script, &run_date is replaced with 2024-03-15.'],
+    ['  -o exit_on_error=true -o variable_substitution=true \\', 'Fail fast and enable variables.'],
+    ['  -o friendly=false -o timing=false -o output_format=csv -o header=true', 'Clean, machine-readable output: no banner, no timing lines, CSV format.'],
+    ['RC=$?', 'Capture the exit code. 0 = success · 1 = client error · 2 = bad command-line arguments · 3 = could not contact the server · 4 = communication problem · 5 = a statement failed with exit_on_error on.'],
+    ['if [ $RC -ne 0 ]; then echo "load failed rc=$RC"; exit $RC; fi', 'Pass the failure up so the scheduler marks the job failed and alerts someone.'],
+    ['', ''],
+    ['-- inside load_orders.sql:', ''],
+    ["COPY INTO orders FROM @orders_stage/&run_date/;", 'The variable picks the right date folder. Re-running the same date is safe because load metadata skips already-loaded files.'],
+    ['!spool /tmp/daily_report.csv', 'From here on, all query output also goes to this file.'],
+    ["SELECT region, SUM(amount) FROM orders WHERE order_date = '&run_date' GROUP BY 1;", 'Daily summary, written to the spool file as CSV.'],
+    ['!spool off', 'Close the file.']
+  ] },
+  { t: 'Unstructured: stage & catalog', l: [
+    ['CREATE OR REPLACE STAGE docs_stage', 'Internal stage to hold documents.'],
+    ['  DIRECTORY = (ENABLE = TRUE)', 'Turn on the directory table: the file catalog.'],
+    ["  ENCRYPTION = (TYPE = 'SNOWFLAKE_SSE');", 'Server-side encryption. Needed for internal stages whose files are read by Cortex AI functions or shared through pre-signed URLs.'],
+    ['', ''],
+    ['PUT file:///contracts/*.pdf @docs_stage AUTO_COMPRESS = FALSE;', 'Keep PDFs as PDFs. With the default TRUE they would be stored as .pdf.gz.'],
+    ['ALTER STAGE docs_stage REFRESH;', 'Sync the directory table with the files now in the stage (internal stages need a manual or scheduled refresh).'],
+    ['', ''],
+    ['SELECT relative_path, size, last_modified, md5, file_url', 'The directory table columns: a catalog row per file.'],
+    ['FROM DIRECTORY(@docs_stage);', 'Query it like a table function.'],
+    ['', ''],
+    ['CREATE STAGE s3_docs URL = \'s3://acme-docs/contracts/\'', 'Or an external stage over your own bucket…'],
+    ['  STORAGE_INTEGRATION = s3_int', '…using a storage integration (an IAM role trust: no keys in SQL).'],
+    ['  DIRECTORY = (ENABLE = TRUE AUTO_REFRESH = TRUE);', 'AUTO_REFRESH: S3 event notifications update the directory table automatically when files arrive.'],
+    ['', ''],
+    ["SELECT BUILD_SCOPED_FILE_URL(@docs_stage, 'msa_acme.pdf');", 'Scoped URL: for UDFs or short-term access by the caller (about 24 hours).'],
+    ["SELECT GET_PRESIGNED_URL(@docs_stage, 'msa_acme.pdf', 3600);", 'Pre-signed URL: anyone holding it can download for 3600 seconds, with no login.']
+  ] },
+  { t: 'Parse, extract, chunk, search', l: [
+    ['CREATE OR REPLACE TABLE doc_text AS', 'Step 1: one row of extracted text per document.'],
+    ['SELECT relative_path,', ''],
+    ["       AI_PARSE_DOCUMENT(TO_FILE('@docs_stage', relative_path),", 'TO_FILE builds a FILE reference from stage + path. AI_PARSE_DOCUMENT does OCR and layout extraction.'],
+    ["                         {'mode': 'LAYOUT'}):content::STRING AS text", 'LAYOUT keeps tables and headings as Markdown. :content pulls the text out of the returned OBJECT.'],
+    ['FROM DIRECTORY(@docs_stage);', 'Process every file listed in the catalog.'],
+    ['', ''],
+    ['CREATE OR REPLACE TABLE doc_chunks AS', 'Step 2: split long text into retrievable pieces.'],
+    ['SELECT d.relative_path, c.index AS chunk_no, c.value::STRING AS chunk', 'FLATTEN turns the returned array into one row per chunk.'],
+    ['FROM doc_text d,', ''],
+    ["     LATERAL FLATTEN(SNOWFLAKE.CORTEX.SPLIT_TEXT_RECURSIVE_CHARACTER(d.text, 'markdown', 1500, 200)) c;", 'Chunk size 1500 characters with 200 overlap. The markdown format prefers splitting on headings and paragraphs.'],
+    ['', ''],
+    ['CREATE OR REPLACE CORTEX SEARCH SERVICE contract_search', 'Step 3: a managed hybrid (vector + keyword) search index.'],
+    ['  ON chunk ATTRIBUTES relative_path', 'Search the chunk column, and allow filtering by file.'],
+    ["  WAREHOUSE = cortex_wh TARGET_LAG = '1 hour'", 'Warehouse used to build and refresh the index. TARGET_LAG = how fresh it must stay.'],
+    ['  AS (SELECT chunk, relative_path FROM doc_chunks);', 'The source query. New chunks are picked up automatically.']
+  ] },
+  { t: 'Streams', l: [
+    ['CREATE OR REPLACE STREAM raw_stream ON TABLE raw_orders;', 'Standard stream: tracks inserts, updates and deletes from now on. Adds hidden change-tracking columns to the table.'],
+    ['CREATE STREAM raw_ins ON TABLE raw_orders APPEND_ONLY = TRUE;', 'Append-only stream: inserts only. A second, independent consumer on the same table.'],
+    ['CREATE STREAM docs_stream ON STAGE docs_stage;', 'Stream on a directory table: new or removed files.'],
+    ['', ''],
+    ['SELECT *, METADATA$ACTION, METADATA$ISUPDATE, METADATA$ROW_ID', 'Look at the changes. A plain SELECT does NOT move the offset.'],
+    ['FROM raw_stream;', ''],
+    ['', ''],
+    ['MERGE INTO curated_orders t', 'Consume the stream with MERGE: the standard CDC apply pattern.'],
+    ['USING (SELECT * FROM raw_stream', ''],
+    ["       WHERE NOT (METADATA$ACTION = 'DELETE' AND METADATA$ISUPDATE)) s", 'Drop the "old value" half of each update pair. Keep real deletes and all inserts.'],
+    ['ON t.order_id = s.order_id', 'Match on the business key.'],
+    ["WHEN MATCHED AND s.METADATA$ACTION = 'DELETE' THEN DELETE", 'Real delete in the source → delete downstream (or set an is_deleted flag).'],
+    ["WHEN MATCHED AND s.METADATA$ACTION = 'INSERT' THEN UPDATE SET t.amount = s.amount, t.status = s.status", 'An update (or re-insert) of an existing key → update.'],
+    ["WHEN NOT MATCHED AND s.METADATA$ACTION = 'INSERT' THEN INSERT (order_id, amount, status) VALUES (s.order_id, s.amount, s.status);", 'A brand-new key → insert. When this MERGE commits, the offset moves.'],
+    ['', ''],
+    ['SHOW STREAMS LIKE \'RAW%\';', 'Check stale (TRUE/FALSE) and stale_after (the deadline to consume before it goes stale).'],
+    ["SELECT SYSTEM$STREAM_HAS_DATA('raw_stream');", 'TRUE if there are changes. Cheap: used in task WHEN clauses.']
+  ] },
+  { t: 'Tasks & graphs', l: [
+    ['CREATE OR REPLACE TASK load_curated', 'Root task of the graph.'],
+    ["  USER_TASK_MANAGED_INITIAL_WAREHOUSE_SIZE = 'XSMALL'", 'No WAREHOUSE → serverless. This only sets the starting size; Snowflake adjusts it from history.'],
+    ["  SCHEDULE = 'USING CRON */5 * * * * America/Los_Angeles'", "Every 5 minutes, time-zone aware. Simpler form: SCHEDULE = '5 MINUTE'. Only the root task may have a schedule."],
+    ['  SUSPEND_TASK_AFTER_NUM_FAILURES = 3', 'Auto-suspend after 3 failed runs in a row, so a broken task doesn\'t loop forever.'],
+    ["  WHEN SYSTEM$STREAM_HAS_DATA('raw_stream')", 'Skip the run (with no compute) when the stream is empty.'],
+    ['AS', ''],
+    ['  CALL merge_orders_proc();', 'One statement per task. Use a stored procedure for multi-step logic.'],
+    ['', ''],
+    ['CREATE OR REPLACE TASK build_daily_agg', 'A child task.'],
+    ['  WAREHOUSE = etl_wh', 'User-managed: runs on this warehouse (60-second minimum and auto-suspend billing apply).'],
+    ['  AFTER load_curated', 'Runs only after the root succeeds. A task can list several predecessors.'],
+    ['AS INSERT OVERWRITE INTO daily_sales SELECT order_date, SUM(amount) FROM curated_orders GROUP BY 1;', 'Rebuild the aggregate.'],
+    ['', ''],
+    ['CREATE OR REPLACE TASK notify_done WAREHOUSE = etl_wh', 'The finalizer.'],
+    ['  FINALIZE = load_curated', 'Runs after the whole graph finishes, success OR failure. Use it for alerts and cleanup.'],
+    ["AS CALL SYSTEM$SEND_EMAIL('ops_email_int', 'data-team@example.com', 'orders graph finished', 'see TASK_HISTORY');", 'Example: an email through a notification integration.'],
+    ['', ''],
+    ["SELECT SYSTEM$TASK_DEPENDENTS_ENABLE('load_curated');", 'Resume the root and ALL its dependents in one call. Remember: tasks are created SUSPENDED.'],
+    ['EXECUTE TASK load_curated;', 'Run the graph once now, outside the schedule. Great for testing.']
+  ] },
+  { t: 'Stored procedures', l: [
+    ["CALL load_daily_sales('2024-03-15');", "Run the procedure. The result is its RETURN value: one row, one column named after the procedure."],
+    ["CALL load_daily_sales(CURRENT_DATE() - 1);", "Arguments can be expressions, so this loads yesterday."],
+    ['', ''],
+    ["SELECT * FROM TABLE(RESULT_SCAN(LAST_QUERY_ID()));", "Read a procedure's output (including RETURNS TABLE results) as a table you can filter or join."],
+    ['', ''],
+    ["SHOW PROCEDURES LIKE 'LOAD%' IN SCHEMA sales_db.etl;", "List procedures with their argument signatures."],
+    ["DESCRIBE PROCEDURE load_daily_sales(DATE);", "Arguments, return type, language, execute-as mode and body. The signature (DATE) is part of the identity: procedures can be overloaded by argument types."],
+    ["SELECT GET_DDL('PROCEDURE', 'load_daily_sales(DATE)');", "The full CREATE statement, handy for version control."],
+    ['', ''],
+    ["GRANT USAGE ON PROCEDURE sales_db.etl.load_daily_sales(DATE) TO ROLE etl_operator;", "Lets a role call the procedure. With owner's rights, that's all they need: no direct grants on the tables."],
+    ["ALTER PROCEDURE load_daily_sales(DATE) EXECUTE AS CALLER;", "Switch the execution mode without recreating the procedure."],
+    ['', ''],
+    ["CREATE OR REPLACE TASK daily_sales_load", "Schedule the procedure: the task's single statement is the CALL."],
+    ["  WAREHOUSE = etl_wh", "Statements inside the procedure run on this warehouse."],
+    ["  SCHEDULE = 'USING CRON 0 2 * * * UTC'", "Every day at 02:00 UTC."],
+    ["AS CALL load_daily_sales(CURRENT_DATE() - 1);", "If the procedure RAISEs, this task run is recorded as FAILED in TASK_HISTORY."],
+    ['', ''],
+    ["SELECT query_id, query_text, execution_status, total_elapsed_time", "Find the slow statement inside a procedure: each statement it runs appears as its own query."],
+    ["FROM TABLE(INFORMATION_SCHEMA.QUERY_HISTORY_BY_SESSION())", "Queries from the current session. For scheduled runs, use SNOWFLAKE.ACCOUNT_USAGE.QUERY_HISTORY."],
+    ["ORDER BY start_time DESC LIMIT 20;", "Most recent first."]
+  ] },
+  { t: 'Monitor & troubleshoot', l: [
+    ['SELECT name, state, scheduled_time, completed_time, error_code, error_message', 'Every task run: SCHEDULED, EXECUTING, SUCCEEDED, FAILED, SKIPPED, CANCELLED.'],
+    ['FROM TABLE(INFORMATION_SCHEMA.TASK_HISTORY(', 'INFORMATION_SCHEMA: near-real-time, last 7 days.'],
+    ["       SCHEDULED_TIME_RANGE_START => DATEADD('hour', -24, CURRENT_TIMESTAMP()),", 'Last 24 hours.'],
+    ['       RESULT_LIMIT => 200))', ''],
+    ['ORDER BY scheduled_time DESC;', 'Newest first. For older history use SNOWFLAKE.ACCOUNT_USAGE.TASK_HISTORY (365 days, with latency).'],
+    ['', ''],
+    ['SELECT * FROM TABLE(INFORMATION_SCHEMA.COMPLETE_TASK_GRAPHS())', 'One row per finished graph run: did the whole DAG succeed?'],
+    ["WHERE root_task_name = 'LOAD_CURATED' ORDER BY completed_time DESC;", ''],
+    ['', ''],
+    ['SHOW TASKS LIKE \'LOAD%\';', 'Check state (started/suspended), schedule, warehouse, predecessors and owner.'],
+    ["SELECT * FROM SNOWFLAKE.ACCOUNT_USAGE.SERVERLESS_TASK_HISTORY WHERE start_time > DATEADD('day', -7, CURRENT_TIMESTAMP());", 'Credits used by serverless tasks: watch this for cost.'],
+    ['', ''],
+    ['ALTER TASK load_curated SET ERROR_INTEGRATION = my_sns_int;', 'Push failure notifications to SNS, Event Grid or Pub/Sub instead of polling history.']
+  ] }
+];
+const KW = /\b(CREATE|OR|REPLACE|STAGE|STREAM|TASK|TABLE|ON|IF|NOT|EXISTS|ALTER|SET|SELECT|FROM|WHERE|GROUP|BY|ORDER|DESC|AS|SUM|COUNT|SHOW|LIKE|MERGE|INTO|USING|WHEN|MATCHED|THEN|UPDATE|INSERT|DELETE|VALUES|AND|CALL|AFTER|FINALIZE|SCHEDULE|WAREHOUSE|COPY|PUT|GET|LIST|REMOVE|LATERAL|FLATTEN|EXECUTE|OVERWRITE|DIRECTORY|RESUME|TRUE|PROCEDURE|RETURNS|LANGUAGE|DECLARE|BEGIN|END|IF|RETURN|RAISE|EXCEPTION|OTHER|TRANSACTION|COMMIT|ROLLBACK|GRANT|USAGE|DESCRIBE|FALSE|INFORMATION_SCHEMA|DATEADD|CURRENT_TIMESTAMP)\b/g;
+const hl = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/('[^']*')/g, '\u0001$1\u0002').replace(KW, '<span class="kw">$1</span>').replace(/\b(\d+)\b/g, '<span class="num">$1</span>').replace(/\u0001([^\u0002]*)\u0002/g, (m, a) => '<span class="str">' + a.replace(/<[^>]+>/g, '') + '</span>');
+let sqlI = 0;
+function sqlShow(i) {
+  sqlI = i;
+  $$('#sqlTabs button').forEach((b, k) => b.classList.toggle('on', k === i));
+  $('#sqlCode').innerHTML = SQL[i].l.map(([l], k) => `<div data-k="${k}"><em>${k + 1}</em>${l.startsWith('#') || l.startsWith('[') || l.startsWith('-o') ? esc(l) : hl(l) || ' '}</div>`).join('');
+  $('#sqlExp').innerHTML = '<b class="h">CLICK A LINE</b>Each line is explained in plain English.';
+  $$('#sqlCode div').forEach(d => d.onclick = () => {
+    const e = SQL[sqlI].l[d.dataset.k][1]; if (!e) return;
+    $$('#sqlCode div').forEach(x => x.classList.remove('on')); d.classList.add('on');
+    $('#sqlExp').innerHTML = `<b class="h">LINE ${+d.dataset.k + 1}</b>${esc(e)}`;
+  });
+}
+$('#sqlTabs').innerHTML = SQL.map(s => `<button>${s.t}</button>`).join('');
+$$('#sqlTabs button').forEach((b, i) => b.onclick = () => sqlShow(i));
+sqlShow(0);
+
+/* ===== 09 Q&A ===== */
+const QA = [
+  ['SnowSQL', 'b', 'What is SnowSQL and how does it connect to Snowflake?', '<p>SnowSQL is Snowflake\'s command-line client, built on the Snowflake Python connector. It opens an HTTPS (TLS, port 443) session to <code>&lt;account&gt;.snowflakecomputing.com</code>, authenticates (password + MFA, key-pair, SSO/OAuth), and gets a session token. SQL statements are sent to cloud services, and commands starting with <code>!</code> run locally inside the client. Connections and options usually live in <code>~/.snowsql/config</code>.</p>'],
+  ['SnowSQL', 'b', 'SnowSQL vs Snowsight vs Snowflake CLI: when do you use which?', '<p><b>Snowsight</b>: browser UI for ad-hoc queries, dashboards and administration. <b>SnowSQL</b>: legacy but widely used terminal client, good for PUT/GET and shell-scripted SQL. <b>Snowflake CLI (<code>snow</code>)</b>: the newer, recommended CLI for developers, covering SQL, PUT/GET, and deploying Snowpark apps, Streamlit and Native Apps with project files. In existing pipelines you\'ll mostly meet SnowSQL; for new automation, mention Snowflake CLI or a connector (Python, JDBC) inside Airflow.</p>'],
+  ['SnowSQL', 't', 'Does PUT use a virtual warehouse? Walk me through what happens.', '<p><b>No.</b> PUT is a client-side operation: (1) cloud services authorizes the request and returns temporary credentials for the stage\'s storage location; (2) the client compresses files with gzip (AUTO_COMPRESS, default TRUE) and encrypts them locally; (3) it uploads them in parallel (PARALLEL, default 4) directly to cloud storage. Files with the same name are skipped unless OVERWRITE=TRUE. It costs storage only, with no compute. The warehouse comes in later, at COPY INTO.</p>'],
+  ['SnowSQL', 't', 'You ran COPY INTO again and it loaded 0 files. Why? How do you force a reload, and what\'s the risk?', '<p>Each table keeps <b>load metadata</b> for 64 days, recording which files (by name and checksum) were loaded. COPY skips them so reruns are idempotent. <code>FORCE = TRUE</code> reloads regardless, which <b>duplicates rows</b> unless you truncate or deduplicate first. Files older than 64 days whose load status is unknown are also skipped by default; <code>LOAD_UNCERTAIN_FILES = TRUE</code> handles that case.</p>'],
+  ['SnowSQL', 's', 'Design a nightly job that loads files from an SFTP server into Snowflake using SnowSQL. How do you make it robust?', '<p>A shell script (scheduled by cron or Airflow) pulls the files, then runs <code>snowsql -c etl_prod -f load.sql -D run_date=… -o exit_on_error=true</code> using a <b>key-pair service user</b>. The script does PUT to a dated stage path, <code>COPY … VALIDATION_MODE</code> (optional dry run), then COPY with an explicit ON_ERROR and checks COPY_HISTORY. The shell checks the <b>exit code</b> and alerts on non-zero. Reruns are safe thanks to load metadata. Finish by archiving or PURGE-ing staged files and logging row counts to an audit table.</p>'],
+  ['Unstructured', 'b', 'What is unstructured data and how does Snowflake store it?', '<p>Data with no predefined schema, such as PDFs, images, audio, video and documents. Snowflake does <b>not</b> load it into table rows. Files stay in an internal or external <b>stage</b> as binary objects. A <b>directory table</b> catalogs them (path, size, md5, last_modified, file_url), and you access them through URLs, the FILE type (<code>TO_FILE</code>), Cortex AI functions, or Python UDFs with <code>SnowflakeFile</code>. The extracted results go into normal tables.</p>'],
+  ['Unstructured', 'b', 'What is a directory table and how is it kept up to date?', '<p>An implicit, read-only table attached to a stage that has <code>DIRECTORY = (ENABLE = TRUE)</code>. It contains one metadata row per staged file. Query it with <code>SELECT * FROM DIRECTORY(@stage)</code>. Refresh it manually with <code>ALTER STAGE … REFRESH</code> (common for internal stages, often from a task), or automatically with <code>AUTO_REFRESH = TRUE</code> on external stages using cloud event notifications. You can put a <b>stream</b> on it to process only new files.</p>'],
+  ['Unstructured', 't', 'Scoped URL vs file URL vs pre-signed URL?', '<p><b>Scoped</b> (<code>BUILD_SCOPED_FILE_URL</code>): encoded, usable only by the role that generated it, expires after about 24 hours. Ideal for passing to UDFs or giving temporary access without granting stage privileges. <b>File URL</b> (<code>BUILD_STAGE_FILE_URL</code>): permanent, but requires Snowflake authentication <i>and</i> privileges on the stage. <b>Pre-signed</b> (<code>GET_PRESIGNED_URL</code>): a plain HTTPS link with an expiry you set that needs no Snowflake login, which makes it convenient and riskier. Use it for BI tools and web apps.</p>'],
+  ['Unstructured', 't', 'Where does the compute happen when you call AI_PARSE_DOCUMENT, and how is it billed?', '<p>The SQL runs on your <b>warehouse</b> (which you pay for as normal), and the model inference runs on <b>Snowflake-managed AI compute inside Snowflake</b>. Data doesn\'t leave the Snowflake boundary. Cortex functions are billed separately in AI credits, per page for document parsing and per token for LLM functions. Tip: Cortex calls usually don\'t benefit from a bigger warehouse, so use a small one (Snowflake recommends MEDIUM or smaller for Cortex queries).</p>'],
+  ['Unstructured', 's', 'Design: 50,000 vendor contracts land in S3 every month. Legal wants key fields extracted and a chatbot to answer questions. Walk me through it.', '<p>(1) External stage on the S3 prefix with a storage integration, <code>DIRECTORY = (ENABLE = TRUE AUTO_REFRESH = TRUE)</code>. (2) A stream on the stage to see new files. (3) A serverless task with <code>WHEN SYSTEM$STREAM_HAS_DATA</code> that runs <code>AI_PARSE_DOCUMENT</code> into <code>doc_text</code> and <code>AI_EXTRACT</code> (parties, dates, renewal terms, liability cap) into a typed <code>contract_fields</code> table. (4) Chunk with <code>SPLIT_TEXT_RECURSIVE_CHARACTER</code> into <code>doc_chunks</code>. (5) A Cortex Search service on the chunks with a TARGET_LAG, and a Streamlit chat app doing RAG with <code>AI_COMPLETE</code>. (6) Governance: RBAC on the stage and tables, masking on sensitive fields, a quality check comparing extraction confidence against a sample. (7) Cost: parse each file once, keep the warehouse small, and monitor Cortex usage views.</p>'],
+  ['Streams', 'b', 'What is a stream? Does it store data?', '<p>A stream is a change-tracking object that returns rows changed in a source object since its <b>offset</b>, plus METADATA$ACTION, METADATA$ISUPDATE and METADATA$ROW_ID. It stores <b>only the offset</b>, no data. Snowflake computes the changes by comparing table versions (the same mechanism as Time Travel), using hidden change-tracking columns added to the table.</p>'],
+  ['Streams', 'b', 'What are the stream types and when would you use each?', '<p><b>Standard (delta)</b>: net inserts, updates and deletes. Use it for CDC into dimension or fact tables. <b>Append-only</b>: inserts only. Cheaper; use it for event, log or IoT tables that are never updated. <b>Insert-only</b>: for external tables and externally managed Iceberg tables, where only new files and rows can be detected.</p>'],
+  ['Streams', 't', 'What advances a stream offset? What if two jobs read the same stream?', '<p>The offset advances only when the stream is used in a <b>DML statement inside a transaction that commits</b> (INSERT, MERGE, CTAS…). A SELECT doesn\'t advance it, and a rollback doesn\'t either. Within a transaction, the stream returns the same rows consistently (repeatable read). If two jobs consume the same stream, whichever commits first moves the offset and the other <b>misses those changes</b>, so create one stream per consumer.</p>'],
+  ['Streams', 't', 'What does "stale stream" mean and how do you prevent it?', '<p>A stream goes stale when its offset falls outside the source table\'s data retention period, so the history it needs is gone and the stream must be recreated. If retention is under 14 days, Snowflake automatically extends retention for tables with streams, up to <code>MAX_DATA_EXTENSION_TIME_IN_DAYS</code> (default 14). Prevent it by consuming regularly (scheduled tasks), monitoring <code>STALE_AFTER</code> in SHOW STREAMS, and alerting when a task has been suspended or failing for too long.</p>'],
+  ['Streams', 't', 'Why do we filter out DELETE rows where METADATA$ISUPDATE = TRUE before a MERGE?', '<p>A standard stream represents each UPDATE as two rows: the old version (DELETE, ISUPDATE=TRUE) and the new version (INSERT, ISUPDATE=TRUE). If both hit the MERGE, the same key matches twice, which causes a nondeterministic-merge error or a wrongful delete. Filtering out the "DELETE half" leaves one INSERT row per update (applied as UPDATE when matched) and keeps real deletes (ISUPDATE=FALSE).</p>'],
+  ['Tasks', 'b', 'What is a task? Serverless vs user-managed?', '<p>A scheduled (or dependent) object that runs one SQL statement or procedure call. <b>Serverless</b>: no WAREHOUSE; Snowflake sizes the compute automatically and bills only the seconds used, which suits short, frequent jobs. <b>User-managed</b>: runs on a named warehouse with normal billing (60-second minimum + idle until auto-suspend), which suits long or heavy jobs or a warehouse that\'s already running. Tasks run with the privileges of the task\'s owner role.</p>'],
+  ['Tasks', 't', 'What are the rules of a task graph (DAG)?', '<p>One <b>root</b> task holds the SCHEDULE. Children declare <code>AFTER</code> one or more predecessors (up to 100 per task and 1,000 tasks per graph). An optional <b>finalizer</b> (<code>FINALIZE = root</code>) runs after every graph run, whether it succeeded or failed. All tasks start <b>suspended</b>: resume the children, then the root (or use <code>SYSTEM$TASK_DEPENDENTS_ENABLE</code>). You must suspend the root before modifying the graph. By default a new run is skipped if the previous graph run is still executing.</p>'],
+  ['Tasks', 's', 'A task that ran fine for months now fails intermittently. How do you debug it?', '<p>Query <code>TASK_HISTORY()</code> for the failed runs: ERROR_CODE, ERROR_MESSAGE and QUERY_ID, then open that query\'s profile. Common causes: <b>lock contention</b> with another job writing the same table (stagger schedules or merge the jobs), runs <b>overlapping</b> as data grows (check skipped runs, resize, or speed up), a <b>stale stream</b>, privilege changes on the owner role, or warehouse <b>timeouts</b> or queuing. Add <code>SUSPEND_TASK_AFTER_NUM_FAILURES</code>, an <code>ERROR_INTEGRATION</code> for push alerts, and a finalizer that logs status to an audit table.</p>'],
+  ['Tasks', 't', 'Streams + tasks vs dynamic tables: which do you choose?', '<p><b>Dynamic tables</b> are declarative: define a SELECT and a TARGET_LAG, and Snowflake manages scheduling and incremental refresh. That means less code and is good for transformation chains. <b>Streams + tasks</b> are procedural: choose them when you need custom MERGE or SCD2 logic, calls to procedures or external functions, notifications, several targets from one change set, or precise scheduling. Many platforms use both: streams + tasks at the edges, dynamic tables for the transformation layers.</p>'],
+  ['Procedures', 'b', `What is a stored procedure, and how is it different from a UDF?`, `<p>A stored procedure is a named program you run with <code>CALL</code>. It can execute many statements, use variables, loops and error handling, and change data and objects (DML, DDL, GRANT). It returns a single value or a table. A <b>UDF</b> is called <i>inside</i> a query (<code>SELECT my_udf(col)</code>), returns a value per row (or rows, for a UDTF), and can't modify data. Rule of thumb: calculations → UDF; actions and multi-step workflows → procedure.</p>`],
+  ['Procedures', 't', `Owner's rights vs caller's rights: what's the default, and when do you use each?`, `<p>The default is <b>owner's rights</b> (<code>EXECUTE AS OWNER</code>): statements run with the owning role's privileges, and the procedure can't read the caller's session variables or change the caller's session. Use it to delegate a controlled action, such as letting support staff purge old data without granting them DELETE. <b>Caller's rights</b> (<code>EXECUTE AS CALLER</code>) runs with the caller's privileges and session context. Use it for utilities that should act on the caller's own objects and respect the caller's permissions. Snowflake also offers <code>EXECUTE AS RESTRICTED CALLER</code>, a tighter form of caller's rights.</p>`],
+  ['Procedures', 't', `In Snowflake Scripting, does BEGIN … END start a transaction?`, `<p><b>No.</b> BEGIN … END only defines a block of code. For all-or-nothing behaviour, use <code>BEGIN TRANSACTION</code> … <code>COMMIT</code>, with <code>ROLLBACK</code> in the EXCEPTION handler. Watch out for DDL: a CREATE, ALTER or DROP inside the transaction commits it implicitly, because each DDL statement runs as its own transaction.</p>`],
+  ['Procedures', 't', `A JavaScript procedure returns undefined for its argument. Why?`, `<p>Inside the JavaScript body, argument names must be referenced in <b>UPPERCASE</b>: an argument declared as <code>tbl</code> is available as <code>TBL</code>. Also use <code>binds</code> (with <code>IDENTIFIER(?)</code> for object names) rather than string concatenation, to avoid SQL injection.</p>`],
+  ['Procedures', 't', `How do you use a table name passed in as a parameter?`, `<p>In Snowflake Scripting, use <code>IDENTIFIER(:tbl_name)</code> in the statement, for example <code>SELECT COUNT(*) FROM IDENTIFIER(:tbl_name)</code>. For statements IDENTIFIER can't cover, build the text and run it with <code>EXECUTE IMMEDIATE</code>, but validate the input first (for example, check it exists in INFORMATION_SCHEMA.TABLES), because string-built SQL is open to injection.</p>`],
+  ['Procedures', 's', `Design a daily load procedure that's safe to re-run and easy to support.`, `<p>Take the run date as an argument. Check the source row count and data quality first, then RETURN a "SKIPPED" status or RAISE a custom exception. Wrap the load in <code>BEGIN TRANSACTION</code> with DELETE-for-date + INSERT (or a MERGE), so re-runs never duplicate and a failure leaves the old data intact. Log every run (date, status, rows, error) to an audit table. In the EXCEPTION handler: ROLLBACK, log SQLERRM, then <code>RAISE</code> so the caller fails visibly. Schedule it with a task (<code>AS CALL load_daily_sales(CURRENT_DATE() - 1)</code>), grant USAGE only to the operator role, and monitor it with TASK_HISTORY.</p>`]
+];
+const LV = { b: 'FUNDAMENTAL', t: 'TRICKY', s: 'SCENARIO' };
+function qa(f) { $('#qaList').innerHTML = QA.filter(q => f === 'all' || q[0] === f).map(([tp, l, q, a]) => `<details class="qa"><summary><span class="lv ${l}">${LV[l]}</span><span class="tp">${tp.toUpperCase()}</span>${q}</summary><div class="ans">${a}</div></details>`).join(''); }
+tabs('#qaTabs', d => qa(d.f));
+qa('all');
+
+/* ===== 10 quiz ===== */
+const QZ = [
+  ['Does the PUT command use a virtual warehouse?', ['Yes, always', 'Only for files over 100 MB', 'No: the client compresses, encrypts and uploads directly to stage storage', 'Only with AUTO_COMPRESS'], 2, 'PUT runs on the client. Cloud services only hands out temporary storage credentials. The warehouse is used later, by COPY INTO.'],
+  ['You run the identical COPY INTO twice. The second run reports "0 files processed". Why?', ['The warehouse was suspended', 'Load metadata (64 days) shows the files were already loaded', 'PUT deleted the files', 'The stage is full'], 1, 'COPY keeps per-table load metadata for 64 days and skips files already loaded. FORCE=TRUE overrides this, at the risk of duplicates.'],
+  ['Which command downloads files from an internal stage to your laptop?', ['COPY INTO @stage', 'UNLOAD', 'GET', 'LIST'], 2, 'GET is the reverse of PUT: a client-side download from an internal stage, decrypted locally.'],
+  ['Why use AUTO_COMPRESS=FALSE when you PUT PDFs for Cortex processing?', ['It is faster', 'Otherwise the stage holds .pdf.gz files that AI functions can\'t read as PDFs', 'PDFs can\'t be encrypted', 'It is required for all PUTs'], 1, 'PUT gzips by default. Unstructured files should stay in their original format.'],
+  ['What does a directory table contain?', ['The text extracted from every file', 'One metadata row per staged file (path, size, md5, last_modified, file_url)', 'A copy of each file', 'Embeddings'], 1, 'It\'s a catalog. File contents remain in the stage.'],
+  ['Which URL expires and can be opened without logging in to Snowflake?', ['Scoped URL', 'File URL', 'Pre-signed URL', 'Directory URL'], 2, 'GET_PRESIGNED_URL produces a time-limited HTTPS link that needs no Snowflake auth, so treat it like a temporary password.'],
+  ['A row is inserted and then deleted before a standard stream is consumed. What does the stream show?', ['An INSERT and a DELETE', 'Only the INSERT', 'Nothing', 'An error'], 2, 'Standard streams return the NET change between the offset and now. The row existed at neither point.'],
+  ['In a standard stream, an UPDATE appears as…', ['One row with ACTION = UPDATE', 'A DELETE + INSERT pair with METADATA$ISUPDATE = TRUE', 'Only the new row', 'Nothing'], 1, 'There is no UPDATE action. Updates are a DELETE (old) + INSERT (new) pair flagged with ISUPDATE.'],
+  ['What advances a stream\'s offset?', ['Any SELECT on the stream', 'Using it in DML inside a transaction that commits', 'Every 24 hours automatically', 'SHOW STREAMS'], 1, 'Only committed DML that reads the stream moves the offset. SELECTs and rolled-back transactions don\'t.'],
+  ['You created a task with a schedule, but it never runs. Most likely cause?', ['The warehouse is too small', 'It is still SUSPENDED: tasks are created suspended', 'Streams are required', 'CRON needs a time zone'], 1, 'Every new task is suspended. ALTER TASK … RESUME (children first, root last) or SYSTEM$TASK_DEPENDENTS_ENABLE.'],
+  ['A task has WHEN SYSTEM$STREAM_HAS_DATA(\'s\') and the stream is empty. What happens?', ['It runs and fails', 'The run is skipped and no compute starts', 'It waits until data arrives', 'It suspends itself'], 1, 'The condition is evaluated cheaply by cloud services. If it\'s false, the run is SKIPPED with no warehouse or serverless compute.'],
+  ['In a task graph, which task(s) can have a SCHEDULE?', ['Every task', 'Only the root task', 'Only the finalizer', 'Only leaf tasks'], 1, 'The root holds the schedule. Children use AFTER, and the finalizer uses FINALIZE = root.'],
+  [`What is the default execution mode of a Snowflake stored procedure?`, [`Caller's rights`, `Owner's rights`, `Restricted caller's rights`, `There is no default; it must be specified`], 1, `EXECUTE AS OWNER is the default: statements run with the owning role's privileges.`],
+  [`Can you call a stored procedure inside a SELECT list, like SELECT my_proc(col) FROM t?`, [`Yes, procedures and UDFs are interchangeable`, `No: procedures run with CALL; use a UDF for logic inside queries`, `Only Python procedures`, `Only if it returns a table`], 1, `Procedures are invoked with CALL. Logic you need per row inside a query belongs in a UDF.`]
+];
+let qi = 0; const qAns = Array(QZ.length).fill(null);
+QZ.forEach((_, i) => { const s = document.createElement('span'); s.onclick = () => qShow(i); $('#qzBar').appendChild(s); });
+function qShow(i) {
+  qi = i; const [q, opts, ok, ex] = QZ[i], a = qAns[i];
+  $('#qzN').textContent = i + 1;
+  [...$('#qzBar').children].forEach((s, k) => { s.classList.toggle('on', qAns[k] !== null); s.style.outline = k === i ? '2px solid var(--ice)' : ''; });
+  $('#qzBody').innerHTML = `<h3 style="margin-top:6px">${q}</h3>` + opts.map((o, k) => `<button class="opt ${a !== null ? (k === ok ? 'ok' : (k === a ? 'bad' : '')) : ''}" data-k="${k}">${String.fromCharCode(65 + k)}. ${o}</button>`).join('') + (a !== null ? `<div class="qexp"><b>${a === ok ? 'Correct.' : 'Not quite.'}</b> ${ex}</div>` : '');
+  $$('#qzBody .opt').forEach(b => b.onclick = () => { if (qAns[qi] !== null) return; qAns[qi] = +b.dataset.k; qShow(qi); $('#qzS').textContent = qAns.filter((x, j) => x === QZ[j][2]).length; });
+  $('#qzNext').textContent = i === QZ.length - 1 ? 'See result' : 'Next';
+}
+function qResult() {
+  const s = qAns.filter((x, j) => x === QZ[j][2]).length;
+  const msg = s >= QZ.length - 2 ? 'Interview-ready on loading and automation.' : s >= Math.round(QZ.length * 0.6) ? 'Solid. Replay the stream and task simulators, then retry.' : 'Walk through the terminal, the stream simulator and the task graph again, then retry.';
+  $('#qzBody').innerHTML = `<div class="score">${s} / ${QZ.length}</div><p style="margin-top:8px">${msg}</p><button class="btn pri" id="qzAgain" style="margin-top:10px">Retry quiz</button>`;
+  $('#qzAgain').onclick = () => { qAns.fill(null); $('#qzS').textContent = 0; qShow(0); };
+}
+$('#qzNext').onclick = () => qi === QZ.length - 1 ? qResult() : qShow(qi + 1);
+$('#qzPrev').onclick = () => qShow(Math.max(0, qi - 1));
+qShow(0);
+</script>
+<script>
+/* ===== 08 stored procedures: debugger ===== */
+const PC = [
+  "CREATE OR REPLACE PROCEDURE load_daily_sales(run_date DATE)",
+  "  RETURNS VARCHAR",
+  "  LANGUAGE SQL",
+  "  EXECUTE AS OWNER",
+  "AS",
+  "$$",
+  "DECLARE",
+  "  row_cnt  INTEGER DEFAULT 0;",
+  "  neg_cnt  INTEGER DEFAULT 0;",
+  "  err      VARCHAR;",
+  "  bad_rows EXCEPTION (-20001, 'Negative amounts found in raw_sales');",
+  "BEGIN",
+  "  SELECT COUNT(*), COUNT_IF(amount < 0) INTO :row_cnt, :neg_cnt",
+  "    FROM raw_sales WHERE sale_date = :run_date;",
+  "  IF (row_cnt = 0) THEN",
+  "    RETURN 'SKIPPED: no raw rows for ' || run_date;",
+  "  END IF;",
+  "  IF (neg_cnt > 0) THEN",
+  "    RAISE bad_rows;",
+  "  END IF;",
+  "  BEGIN TRANSACTION;",
+  "  DELETE FROM fact_sales WHERE sale_date = :run_date;",
+  "  INSERT INTO fact_sales SELECT * FROM raw_sales WHERE sale_date = :run_date;",
+  "  COMMIT;",
+  "  INSERT INTO etl_log VALUES (:run_date, 'SUCCESS', :row_cnt);",
+  "  RETURN 'SUCCESS: loaded ' || row_cnt || ' rows';",
+  "EXCEPTION",
+  "  WHEN OTHER THEN",
+  "    ROLLBACK;",
+  "    err := SQLERRM;",
+  "    INSERT INTO etl_log VALUES (:run_date, 'FAILED: ' || :err, 0);",
+  "    RAISE;",
+  "END;",
+  "$$;",
+  "",
+  "CALL load_daily_sales('2024-03-15');"
+];
+const S_CALL = { ln: [36], note: "The CALL arrives at cloud services. Your role needs USAGE on the procedure. The argument is bound: run_date = 2024-03-15. Because of EXECUTE AS OWNER, every statement inside will run with the <b>owner role's</b> privileges, not yours.", v: { run_date: '2024-03-15' }, ret: 'running…' };
+const S_DECL = { ln: [7, 8, 9, 10, 11], note: "DECLARE: variables get their defaults, and a custom exception <code>bad_rows</code> (error code -20001) is defined. No data has been touched yet.", v: { row_cnt: 0, neg_cnt: 0 } };
+const sCount = (r, n) => ({ ln: [13, 14], note: `The first real query. It's compiled by cloud services and runs on the session's current warehouse. <code>SELECT … INTO</code> stores the results in variables. Note the colon: <code>:row_cnt</code> inside SQL, plain <code>row_cnt</code> in scripting expressions. Result: ${r} rows, ${n} with a negative amount.`, v: { row_cnt: r, neg_cnt: n } });
+const S_IF1F = { ln: [15], note: "<code>IF (row_cnt = 0)</code> is FALSE, so the early RETURN on line 16 is skipped." };
+const S_IF2F = { ln: [18], note: "<code>IF (neg_cnt > 0)</code> is FALSE: the data passed the quality check." };
+const S_BT = { ln: [21], note: "<code>BEGIN TRANSACTION</code> opens an explicit transaction. From now on, changes stay invisible to everyone else until COMMIT.", txn: 'OPEN' };
+const sHandler = (txnAfter, factAfter, rollNote) => [
+  { ln: [27, 28], note: "Execution jumps to the EXCEPTION block. <code>WHEN OTHER</code> catches any error (you could also write <code>WHEN bad_rows THEN</code> to catch just that one)." },
+  { ln: [29], note: rollNote, txn: txnAfter, fact: factAfter },
+  { ln: [30], note: "<code>SQLERRM</code> holds the error message (<code>SQLCODE</code> and <code>SQLSTATE</code> are available too)." },
+  { ln: [31], note: "The failure is written to the audit table. No transaction is open any more, so this INSERT auto-commits and the log row survives even though the CALL is about to fail." },
+  { ln: [32], note: "<code>RAISE;</code> re-throws the original error, so the CALL fails. A task calling this procedure is marked <b>FAILED</b> and alerts can fire: the error isn't silently swallowed." }
+];
+const PS = {
+  ok: { fact0: '0 rows', steps: [S_CALL, S_DECL, sCount(1240, 0), S_IF1F, S_IF2F, S_BT,
+    { ln: [22], note: "DELETE removes any earlier load for this date (none on the first run). This line is what makes the procedure safe to re-run.", fact: '0 rows (others see) · pending: delete 0' },
+    { ln: [23], note: "INSERT … SELECT writes 1,240 rows. Other sessions still see the old state.", fact: '0 rows (others see) · pending: +1,240' },
+    { ln: [24], note: "<code>COMMIT</code> makes the DELETE and INSERT visible together, atomically. Readers never see a half-loaded day.", txn: 'COMMITTED', fact: '1,240 rows' },
+    { ln: [25], note: "Write an audit row to etl_log.", log: '2024-03-15 · SUCCESS · 1,240' },
+    { ln: [26], note: "<code>RETURN</code> ends the procedure. This string is the CALL's result, which you see in Snowsight or in the calling task's history.", ret: 'SUCCESS: loaded 1240 rows' }],
+    end: '<b>Happy path:</b> check, validate, load in one transaction, log, return a status. Ten lines of logic that a single SQL statement could not express.' },
+  rerun: { fact0: '1,240 rows (loaded earlier)', steps: [S_CALL, S_DECL, sCount(1240, 0), S_IF1F, S_IF2F, S_BT,
+    { ln: [22], note: "This time DELETE removes the 1,240 rows loaded by the earlier run, but only inside the open transaction. Dashboards still see the old 1,240.", fact: '1,240 rows (others see) · pending: delete 1,240' },
+    { ln: [23], note: "INSERT writes the fresh 1,240 rows, still uncommitted.", fact: '1,240 rows (others see) · pending: −1,240 +1,240' },
+    { ln: [24], note: "COMMIT swaps old for new in one step.", txn: 'COMMITTED', fact: '1,240 rows (no duplicates)' },
+    { ln: [25], note: "Audit row written.", log: '2024-03-15 · SUCCESS · 1,240' },
+    { ln: [26], note: "Done.", ret: 'SUCCESS: loaded 1240 rows' }],
+    end: '<b>Idempotent:</b> running it twice gives the same result, still 1,240 rows, not 2,480. Interviewers love this. Without the DELETE (or a MERGE), every retry would duplicate the day.' },
+  nodata: { fact0: '0 rows', steps: [S_CALL, S_DECL, sCount(0, 0),
+    { ln: [15], note: "<code>IF (row_cnt = 0)</code> is TRUE: the upstream file hasn't arrived yet." },
+    { ln: [16], note: "<code>RETURN</code> exits immediately. Lines 18 onward never run and no transaction is opened.", ret: 'SKIPPED: no raw rows for 2024-03-15' }],
+    end: '<b>Graceful skip:</b> the CALL succeeds and the return value explains why nothing happened. Choose deliberately: SKIP (the task succeeds) when late data is normal, or RAISE (the task fails, someone is alerted) when missing data is an incident.' },
+  bad: { fact0: '1,180 rows (yesterday\'s good load)', steps: [S_CALL, S_DECL, sCount(1240, 3), S_IF1F,
+    { ln: [18], note: "<code>IF (neg_cnt > 0)</code> is TRUE: 3 rows have negative amounts." },
+    { ln: [19], note: "<code>RAISE bad_rows</code> throws the custom exception (-20001)." },
+    ...sHandler('NONE', null, "<code>ROLLBACK</code>: no transaction was open yet, so there's nothing to undo. Keeping it is still good practice, because the handler can't know where the error happened."),
+  ].map((s, i, a) => i === a.length - 3 ? { ...s, v: { err: 'Negative amounts found in raw_sales' } } : i === a.length - 2 ? { ...s, log: '2024-03-15 · FAILED: Negative amounts… · 0' } : i === a.length - 1 ? { ...s, ret: 'ERROR -20001: Negative amounts found in raw_sales' } : s),
+    end: '<b>Fail fast, fail loud:</b> bad data never reached fact_sales, the failure is logged with a clear message, and the error is re-raised so the task turns red.' },
+  mid: { fact0: '1,240 rows (loaded earlier)', steps: [S_CALL, S_DECL, sCount(1240, 0), S_IF1F, S_IF2F, S_BT,
+    { ln: [22], note: "DELETE removes the earlier 1,240 rows, inside the open transaction.", fact: '1,240 rows (others see) · pending: delete 1,240' },
+    { ln: [23], note: "The INSERT <b>fails</b>: <i>Statement reached its statement or warehouse timeout and was canceled.</i>" },
+    ...sHandler('ROLLED BACK', '1,240 rows (DELETE undone)', "<code>ROLLBACK</code> undoes the uncommitted DELETE, so the old 1,240 rows are safe. Without the explicit transaction, that DELETE would already have auto-committed and dashboards would show <b>zero</b> sales for March 15.")
+  ].map((s, i, a) => i === a.length - 3 ? { ...s, v: { err: 'Statement reached its statement or warehouse timeout…' } } : i === a.length - 2 ? { ...s, log: '2024-03-15 · FAILED: Statement reached… · 0' } : i === a.length - 1 ? { ...s, ret: 'ERROR 000630: Statement reached its statement or warehouse timeout' } : s),
+    end: '<b>This is why the transaction matters.</b> The failure happened after the DELETE but before the INSERT. The transaction plus ROLLBACK left the table exactly as it was before the CALL.' }
+};
+let pcS = 'ok', pcI = -1, pcT = null;
+function pcRender() {
+  const sc = PS[pcS], st = pcI >= 0 ? sc.steps[pcI] : null, cur = st ? st.ln : [], done = new Set();
+  sc.steps.slice(0, Math.max(0, pcI)).forEach(s => s.ln.forEach(l => done.add(l)));
+  const box = $('#pcCode');
+  box.innerHTML = PC.map((l, k) => { const n = k + 1; return `<div class="${cur.includes(n) ? 'on' : done.has(n) ? 'pdone' : ''}"><em>${n}</em>${hl(l) || ' '}</div>`; }).join('');
+  const on = box.querySelector('div.on'); if (on) box.scrollTop = on.offsetTop - box.clientHeight / 2;
+  const s = { v: { run_date: '–', row_cnt: '–', neg_cnt: '–', err: 'NULL' }, txn: 'NONE (autocommit)', fact: sc.fact0, log: '–', ret: 'not called yet' };
+  sc.steps.slice(0, pcI + 1).forEach(x => { if (x.v) Object.assign(s.v, x.v); ['txn', 'log', 'ret'].forEach(k => { if (x[k]) s[k] = x[k]; }); if (x.fact) s.fact = x.fact; });
+  const txb = s.txn === 'OPEN' ? 'mid' : s.txn === 'COMMITTED' ? 'ok' : s.txn === 'ROLLED BACK' ? 'bad' : 'off';
+  const rb = s.ret.startsWith('SUCCESS') ? 'ok' : s.ret.startsWith('ERROR') ? 'bad' : s.ret.startsWith('SKIPPED') ? 'mid' : 'off';
+  $('#pcState').innerHTML = `<tr><th>STATE</th><th>VALUE</th></tr>` +
+    Object.entries(s.v).map(([k, v]) => `<tr><td class="m">${k}</td><td class="m">${typeof v === 'number' ? fmt(v) : esc(v)}</td></tr>`).join('') +
+    `<tr><td>Transaction</td><td><span class="badge ${txb}">${s.txn}</span></td></tr>` +
+    `<tr><td>fact_sales, 2024-03-15</td><td class="m">${esc(s.fact)}</td></tr>` +
+    `<tr><td>etl_log (last row)</td><td class="m">${esc(s.log)}</td></tr>` +
+    `<tr><td>CALL result</td><td><span class="badge ${rb}">${esc(s.ret)}</span></td></tr>`;
+  $('#pcNote').innerHTML = st ? `<h4>Step ${pcI + 1} / ${sc.steps.length} · line ${st.ln.join(', ')}</h4><div style="font-size:14.5px;color:var(--ink2)">${st.note}</div>` : '<h4>Ready</h4><div style="font-size:14.5px;color:var(--ink2)">Press <b>Step ▶</b> to run the CALL one line at a time.</div>';
+  $('#pcEnd').innerHTML = pcI === sc.steps.length - 1 ? sc.end : 'Keep stepping. Watch the <b>Transaction</b> and <b>fact_sales</b> rows: they show what other users would see right now.';
+  $('#pcStep').disabled = pcI === sc.steps.length - 1;
+}
+const pcStop = () => { clearInterval(pcT); pcT = null; $('#pcAll').textContent = 'Run all'; };
+$('#pcStep').onclick = () => { if (pcI < PS[pcS].steps.length - 1) { pcI++; pcRender(); } };
+$('#pcAll').onclick = () => {
+  if (pcT) { pcStop(); return; }
+  if (pcI === PS[pcS].steps.length - 1) pcI = -1;
+  $('#pcAll').textContent = '❚❚ Pause';
+  pcT = setInterval(() => { if (pcI >= PS[pcS].steps.length - 1) { pcStop(); return; } pcI++; pcRender(); }, 900);
+};
+$('#pcReset').onclick = () => { pcStop(); pcI = -1; pcRender(); };
+tabs('#pcScen', d => { pcStop(); pcS = d.s; pcI = -1; pcRender(); });
+pcRender();
+
+/* ===== owner's vs caller's rights ===== */
+const OC = { mode: 'owner', role: 'analyst', act: 'del' };
+function ocDraw() {
+  const { mode, role, act } = OC, R = role === 'analyst' ? 'ANALYST' : 'ETL_ADMIN';
+  $('#ocSql').textContent = `CREATE OR REPLACE PROCEDURE purge_old_orders()\n  RETURNS VARCHAR LANGUAGE SQL\n  EXECUTE AS ${mode === 'owner' ? 'OWNER' : 'CALLER'}\nAS $$\nBEGIN\n  ${act === 'del' ? "DELETE FROM orders WHERE order_date < DATEADD('year', -2, CURRENT_DATE());" : "DELETE FROM orders WHERE region = $region AND order_date < DATEADD('year', -2, CURRENT_DATE());"}\n  RETURN 'purged';\nEND;\n$$;\n\n-- session of the caller:\nUSE ROLE ${R};${act === 'var' ? "\nSET region = 'EMEA';" : ''}\nCALL purge_old_orders();`;
+  let ok, msg;
+  if (act === 'del') {
+    if (mode === 'owner') { ok = true; msg = `The DELETE runs with <b>ETL_ADMIN's</b> privileges (the owner)${role === 'analyst' ? ', so even ANALYST, who has no DELETE privilege, can purge old rows, but only in the exact way the procedure allows. That\'s the main reason owner\'s rights exists: safe, controlled delegation.' : '. The caller happens to be the owner too.'}`; }
+    else if (role === 'analyst') { ok = false; msg = `<i>SQL access control error: Insufficient privileges to operate on table 'ORDERS'.</i> With caller's rights, the procedure can only do what the caller could do by hand. ANALYST has no DELETE, so the procedure can't delete either.`; }
+    else { ok = true; msg = `ETL_ADMIN has DELETE on ORDERS, so the procedure works with caller's rights too.`; }
+  } else {
+    if (mode === 'owner') { ok = false; msg = `Owner's rights procedures are isolated from the caller's session: they <b>can't read the caller's session variables</b> (and can't change the caller's session state). <code>$region</code> is invisible here. Fix: pass it as an argument, e.g. <code>CALL purge_old_orders('EMEA')</code>.`; }
+    else { ok = role !== 'analyst'; msg = role === 'analyst' ? `The procedure <b>can</b> see <code>$region</code>, because caller's rights runs inside the caller's session, but the DELETE still fails: ANALYST has no DELETE privilege. Caller's rights gives access to the caller's context <i>and</i> limits you to the caller's permissions.` : `Caller's rights runs inside the caller's session, so <code>$region = 'EMEA'</code> is visible, and ETL_ADMIN has DELETE. Caller's rights suits utilities that act on the caller's own context.`; }
+  }
+  $('#ocOut').innerHTML = `<b class="h">${ok ? 'RESULT: SUCCEEDS' : 'RESULT: FAILS'}</b><span class="badge ${ok ? 'ok' : 'bad'}" style="margin-right:8px">${ok ? 'OK' : 'ERROR'}</span>${msg}`;
+}
+tabs('#ocMode', d => { OC.mode = d.v; ocDraw(); });
+tabs('#ocRole', d => { OC.role = d.v; ocDraw(); });
+tabs('#ocAct', d => { OC.act = d.v; ocDraw(); });
+ocDraw();
+
+/* ===== languages ===== */
+const PL = {
+  sql: { c: `-- Anonymous block: runs once, isn't saved as an object
+EXECUTE IMMEDIATE $$
+DECLARE
+  c CURSOR FOR SELECT table_name FROM information_schema.tables
+               WHERE table_schema = 'STAGING' AND table_type = 'BASE TABLE';
+  n INTEGER DEFAULT 0;
+BEGIN
+  FOR rec IN c DO
+    EXECUTE IMMEDIATE 'TRUNCATE TABLE STAGING.' || rec.table_name;
+    n := n + 1;
+  END FOR;
+  RETURN 'Truncated ' || n || ' staging tables';
+END;
+$$;`, n: '<b>Snowflake Scripting</b> is the default choice for SQL-heavy logic. This is an <b>anonymous block</b>: same syntax as a procedure body, but it runs once and isn\'t saved, which is great for one-off admin scripts. <code>FOR … IN cursor</code> loops over rows, and <code>EXECUTE IMMEDIATE</code> runs a statement built as a string. Only build SQL strings from trusted values like this metadata query, or use <code>IDENTIFIER(:var)</code>, to avoid SQL injection.' },
+  py: { c: `CREATE OR REPLACE PROCEDURE row_counts(schema_name STRING)
+  RETURNS TABLE (table_name STRING, row_count NUMBER)
+  LANGUAGE PYTHON
+  RUNTIME_VERSION = '3.11'
+  PACKAGES = ('snowflake-snowpark-python')
+  HANDLER = 'run'
+AS $$
+def run(session, schema_name):
+    tables = session.sql(f"SHOW TABLES IN SCHEMA {schema_name}").collect()
+    rows = [(t["name"], t["rows"]) for t in tables]
+    return session.create_dataframe(rows, schema=["table_name", "row_count"])
+$$;
+
+CALL row_counts('SALES_DB.PUBLIC');`, n: '<b>Python</b> suits complex logic, libraries (pandas, requests through external access, ML) and Snowpark DataFrames. The handler\'s <b>first argument is always the Snowpark Session</b>, and <code>RETURNS TABLE</code> lets you return a DataFrame. Watch the f-string: validate <code>schema_name</code> (for example, check it exists in INFORMATION_SCHEMA) before putting it into SQL.' },
+  js: { c: `CREATE OR REPLACE PROCEDURE archive_table(TBL VARCHAR)
+  RETURNS VARCHAR
+  LANGUAGE JAVASCRIPT
+  EXECUTE AS CALLER
+AS $$
+  // argument names are UPPERCASE inside JavaScript: TBL, not tbl
+  var stmt = snowflake.createStatement({
+    sqlText: "CREATE OR REPLACE TABLE IDENTIFIER(?) CLONE IDENTIFIER(?)",
+    binds: [TBL + "_ARCHIVE", TBL]
+  });
+  stmt.execute();
+  return TBL + " archived as a zero-copy clone";
+$$;
+
+CALL archive_table('SALES_DB.PUBLIC.ORDERS');`, n: '<b>JavaScript</b> procedures are the older style; you\'ll meet them in existing code. Classic trap: <b>argument names must be written in UPPERCASE</b> inside the body. Use <code>binds</code> with <code>IDENTIFIER(?)</code> instead of string concatenation. For new work, prefer Snowflake Scripting or Python.' }
+};
+tabs('#pcLang', d => { $('#pcLangCode').textContent = PL[d.l].c; $('#pcLangNote').innerHTML = PL[d.l].n; });
+$('#pcLangCode').textContent = PL.sql.c; $('#pcLangNote').innerHTML = PL.sql.n;
+</script>
+<div class="toast" id="toast"></div>
+<script>
+(() => {
+  const t = document.getElementById('toast'); let h;
+  document.querySelectorAll('.road a.soon').forEach(a => a.addEventListener('click', e => {
+    e.preventDefault();
+    t.textContent = `Module ${a.dataset.m} isn't built yet. Ask for it in chat and it will be added here.`;
+    t.classList.add('on'); clearTimeout(h); h = setTimeout(() => t.classList.remove('on'), 2800);
+  }));
+})();
+</script>
+</body>
+</html>

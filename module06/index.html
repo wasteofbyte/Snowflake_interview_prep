@@ -1,0 +1,1470 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Snowflake Interview Lab · Module 06 · Semi-structured Data</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/space-grotesk@5/300.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/space-grotesk@5/700.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/ibm-plex-sans@5/300.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/ibm-plex-sans@5/400.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/ibm-plex-sans@5/600.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/jetbrains-mono@5/400.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/jetbrains-mono@5/700.css">
+<style>
+:root{
+  --bg:#F2F6FA; --card:#FFFFFF; --card2:#E9EFF5; --ink:#0B1B2B; --ink2:#46596B; --ink3:#7F90A2;
+  --line:rgba(11,27,43,.12); --line2:rgba(11,27,43,.22);
+  --ice:#0A86C2; --ice-s:#DCEFF9; --amber:#B86F00; --amber-s:#FFF0D4; --teal:#0B8A6A; --teal-s:#DAF3EB;
+  --red:#C93C3C; --red-s:#FCE4E4; --grid:rgba(10,134,194,.06);
+  --f-head:"Space Grotesk",sans-serif; --f-body:"IBM Plex Sans",sans-serif; --f-mono:"JetBrains Mono",monospace;
+  --r:10px;
+}
+[data-theme="dark"]{
+  --bg:#08121D; --card:#0F1D2C; --card2:#16293B; --ink:#E5EDF5; --ink2:#9DB0C3; --ink3:#687D91;
+  --line:rgba(229,237,245,.10); --line2:rgba(229,237,245,.22);
+  --ice:#4CC3F0; --ice-s:rgba(76,195,240,.13); --amber:#FFB938; --amber-s:rgba(255,185,56,.13); --teal:#3FD3A8; --teal-s:rgba(63,211,168,.13);
+  --red:#FF7070; --red-s:rgba(255,112,112,.14); --grid:rgba(76,195,240,.05);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:var(--f-body);color:var(--ink);line-height:1.7;font-size:16px;
+  background:radial-gradient(1200px 600px at 85% -10%, var(--ice-s), transparent 60%),radial-gradient(900px 500px at -10% 30%, var(--teal-s), transparent 60%),
+  linear-gradient(var(--grid) 1px, transparent 1px) 0 0/32px 32px,linear-gradient(90deg, var(--grid) 1px, transparent 1px) 0 0/32px 32px,var(--bg);background-attachment:fixed}
+code,.mono{font-family:var(--f-mono);font-size:.88em}
+p code,li code,td code{background:var(--card2);padding:1px 6px;border-radius:5px}
+button{font-family:var(--f-body);cursor:pointer}
+.top{position:sticky;top:0;z-index:30;display:flex;align-items:center;gap:16px;padding:12px 28px;border-bottom:1px solid var(--line);background:color-mix(in srgb,var(--bg) 82%,transparent);backdrop-filter:saturate(1.4) blur(8px)}
+.brand{font-family:var(--f-mono);font-weight:700;letter-spacing:.06em;font-size:13px}.brand b{color:var(--ice)}
+.pill{font-family:var(--f-mono);font-size:12px;padding:3px 10px;border-radius:99px;border:1px solid var(--line2);color:var(--ink2)}
+.prog{flex:1;height:4px;background:var(--card2);border-radius:4px;overflow:hidden;max-width:360px;margin-left:auto}
+.prog i{display:block;height:100%;width:0;background:var(--ice);transition:width .4s}
+.prog-l{font-family:var(--f-mono);font-size:12px;color:var(--ink2);min-width:84px}
+.theme{border:1px solid var(--line2);background:var(--card);color:var(--ink);border-radius:8px;padding:5px 10px;font-size:13px}
+.wrap{display:grid;grid-template-columns:270px minmax(0,1fr);gap:36px;max-width:1340px;margin:0 auto;padding:28px}
+nav.side{position:sticky;top:76px;align-self:start;max-height:calc(100vh - 96px);overflow:auto;padding-right:6px}
+.side h4{font-family:var(--f-mono);font-size:11px;letter-spacing:.14em;color:var(--ink3);margin:6px 0 10px;font-weight:400}
+.side a{display:flex;gap:10px;align-items:baseline;padding:6px 10px;border-radius:8px;color:var(--ink2);text-decoration:none;font-size:14px;border-left:2px solid transparent}
+.side a span{font-family:var(--f-mono);font-size:11px;color:var(--ink3)}
+.side a:hover{background:var(--card)}
+.side a.act{color:var(--ink);background:var(--card);border-left-color:var(--ice);border-radius:0 8px 8px 0}
+.side a.seen span{color:var(--teal)}
+.road{margin-top:22px;border-top:1px solid var(--line);padding-top:14px}
+.road div{font-size:13px;color:var(--ink3);padding:3px 10px;display:flex;gap:8px}
+.road div.now{color:var(--ink);font-weight:600}.road div.done{color:var(--teal)}
+.road div em{font-style:normal;font-family:var(--f-mono);font-size:11px;min-width:20px}
+main{min-width:0}
+section{padding:36px 0 44px;border-bottom:1px dashed var(--line2);scroll-margin-top:70px}
+.eyebrow{font-family:var(--f-mono);font-size:12px;letter-spacing:.16em;color:var(--ice);margin-bottom:6px}
+h1{font-family:var(--f-head);font-weight:700;font-size:clamp(40px,6vw,76px);line-height:1;letter-spacing:-.03em}
+h1 .thin,h2 .thin{font-weight:300;color:var(--ink2)}
+h2{font-family:var(--f-head);font-weight:700;font-size:clamp(28px,3.4vw,40px);letter-spacing:-.02em;line-height:1.1;margin-bottom:12px}
+h3{font-family:var(--f-head);font-weight:700;font-size:20px;margin:26px 0 10px;letter-spacing:-.01em}
+.lead{font-size:18px;font-weight:300;color:var(--ink2);max-width:820px}
+p{margin:8px 0}
+ul.dots{margin:8px 0 8px 20px}ul.dots li{margin:4px 0}
+.wwh{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:20px 0}
+.wwh .box{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:18px 20px;position:relative;overflow:hidden}
+.wwh .box.how{grid-column:1/-1}
+.wwh .tag{font-family:var(--f-mono);font-size:11px;letter-spacing:.14em;display:inline-block;padding:2px 8px;border-radius:5px;margin-bottom:8px}
+.box.what .tag{background:var(--ice-s);color:var(--ice)}.box.why .tag{background:var(--amber-s);color:var(--amber)}.box.how .tag{background:var(--teal-s);color:var(--teal)}
+.box::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px}
+.box.what::before{background:var(--ice)}.box.why::before{background:var(--amber)}.box.how::before{background:var(--teal)}
+.call{display:flex;gap:14px;padding:14px 18px;border-radius:var(--r);margin:14px 0;border:1px solid var(--line)}
+.call b.k{font-family:var(--f-mono);font-size:11px;letter-spacing:.12em;white-space:nowrap;padding-top:3px}
+.call.analogy{background:var(--ice-s)}.call.analogy b.k{color:var(--ice)}
+.call.trap{background:var(--red-s)}.call.trap b.k{color:var(--red)}
+.call.pro{background:var(--teal-s)}.call.pro b.k{color:var(--teal)}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px;margin:18px 0}
+.panel-h{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+.panel-h .t{font-family:var(--f-mono);font-size:12px;letter-spacing:.12em;color:var(--ink2)}.panel-h .t b{color:var(--ink)}
+.btn{border:1px solid var(--line2);background:var(--card);color:var(--ink);padding:7px 14px;border-radius:8px;font-size:14px;transition:all .15s}
+.btn:hover{border-color:var(--ice);color:var(--ice)}
+.btn.pri{background:var(--ice);color:var(--card);border-color:var(--ice)}.btn.pri:hover{color:var(--card);filter:brightness(1.08)}
+.btn.warn{border-color:var(--red);color:var(--red)}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.ctl{display:flex;align-items:center;gap:12px;font-size:14px;color:var(--ink2);margin:8px 0}
+.ctl label{min-width:150px}.ctl input[type=range]{flex:1;accent-color:var(--ice)}
+.ctl .v{font-family:var(--f-mono);font-size:13px;color:var(--ink);min-width:110px;text-align:right}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:14px 0}
+.stat{background:var(--card2);border-radius:10px;padding:12px 14px}
+.stat .k{font-family:var(--f-mono);font-size:11px;color:var(--ink3);letter-spacing:.08em}
+.stat .n{font-family:var(--f-head);font-weight:700;font-size:28px;line-height:1.2}
+.stat .s{font-size:12px;color:var(--ink2)}
+.sqlbox{font-family:var(--f-mono);font-size:13px;background:var(--card2);border-radius:8px;padding:10px 14px;white-space:pre-wrap;color:var(--ink);border-left:3px solid var(--ice);overflow:auto}
+.insight{font-size:14px;padding:10px 14px;border-radius:8px;background:var(--amber-s);color:var(--ink);margin-top:10px}.insight b{color:var(--amber)}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+.tabs button{border:1px solid var(--line2);background:transparent;color:var(--ink2);padding:6px 12px;border-radius:99px;font-size:13px}
+.tabs button.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}.grid2>div{min-width:0}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.mini{background:var(--card2);border-radius:10px;padding:14px}
+.mini h5{font-family:var(--f-head);font-size:15px;margin-bottom:4px}
+.mini p{font-size:14px;color:var(--ink2);margin:0}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:13px;color:var(--ink2);margin:8px 0}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:-1px;margin-right:6px}
+table.t{width:100%;border-collapse:collapse;font-size:14px}
+table.t th,table.t td{padding:7px 10px;border-bottom:1px solid var(--line);text-align:left}
+table.t th{font-family:var(--f-mono);font-size:11px;letter-spacing:.1em;color:var(--ink3);font-weight:400}
+table.t td.m{font-family:var(--f-mono);font-size:12px}
+svg{width:100%;height:auto;display:block}
+svg .t{font-family:var(--f-body);font-size:14px;fill:var(--ink)}
+svg .ts{font-family:var(--f-body);font-size:12px;fill:var(--ink2)}
+svg .th{font-family:var(--f-head);font-size:14px;font-weight:700;fill:var(--ink)}
+svg .tm{font-family:var(--f-mono);font-size:11px;fill:var(--ink2)}
+.L-cs{fill:var(--amber-s);stroke:var(--amber)}.L-cp{fill:var(--ice-s);stroke:var(--ice)}.L-st{fill:var(--teal-s);stroke:var(--teal)}
+.neutral{fill:var(--card);stroke:var(--line2)}
+.arr{stroke:var(--ink3);stroke-width:1.2;fill:none}
+.fn{transition:opacity .3s}
+.flow.playing .fn{opacity:.25}
+.flow.playing .fn.on{opacity:1}
+.fn.on rect{stroke-width:2.4}
+.edge{stroke:var(--ink3);stroke-width:1.4;fill:none;transition:opacity .3s}
+.flow.playing .edge{opacity:.2}
+.flow.playing .edge.on{opacity:1;stroke:var(--ice);stroke-width:2.4;stroke-dasharray:7 5}
+@media (prefers-reduced-motion:no-preference){
+  .flow.playing .edge.on{animation:dash .8s linear infinite}
+  @keyframes dash{to{stroke-dashoffset:-24}}
+  .pulse{animation:pulse 1.2s ease-in-out infinite}
+  @keyframes pulse{0%,100%{opacity:.35}50%{opacity:1}}
+  .rise{animation:rise .5s both}
+  @keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+  .grow{transform-box:fill-box;transform-origin:left center;animation:grow .6s both}
+  @keyframes grow{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+}
+.stepbar{display:flex;gap:6px;margin:12px 0}
+.stepbar span{flex:1;height:4px;border-radius:4px;background:var(--card2);cursor:pointer}
+.stepbar span.on{background:var(--ice)}
+.stepdesc{min-height:120px;background:var(--card2);border-radius:10px;padding:14px 16px}
+.stepdesc h4{font-family:var(--f-head);font-size:17px;margin-bottom:6px}
+.stepdesc .two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.stepdesc .two div{font-size:14px;color:var(--ink2)}
+.stepdesc .two b.l{display:block;font-family:var(--f-mono);font-size:11px;letter-spacing:.12em;margin-bottom:4px}
+.stepdesc .two .you b.l{color:var(--ice)}.stepdesc .two .be b.l{color:var(--teal)}
+.term{background:#0A141F;color:#D6E2EE;font-family:var(--f-mono);font-size:12.5px;border-radius:12px;padding:14px 16px;height:340px;overflow:auto;border:1px solid #1E3247}
+.term div{white-space:pre;line-height:1.5}
+.term .tin{color:#FFB938}.term .terr{color:#FF7A7A}.term .tok{color:#3FD3A8}.term .tdim{color:#6F8499}
+.tbar{display:flex;gap:6px;align-items:center;margin-bottom:8px}
+.tbar i{width:10px;height:10px;border-radius:50%;display:inline-block}
+.tinput{display:flex;gap:8px;margin-top:8px}
+.tinput input{flex:1;font-family:var(--f-mono);font-size:13px;padding:8px 10px;border-radius:8px;border:1px solid var(--line2);background:var(--card);color:var(--ink)}
+.cmds{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}
+.cmds button{font-family:var(--f-mono);font-size:11.5px;border:1px solid var(--line2);background:var(--card);color:var(--ink);padding:5px 9px;border-radius:7px;text-align:left}
+.cmds button:hover{border-color:var(--amber);color:var(--amber)}
+.cmds button small{display:block;font-family:var(--f-body);font-size:11px;color:var(--ink3)}
+.explain{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 16px;min-height:90px;font-size:14.5px}
+.explain b.h{font-family:var(--f-mono);font-size:12px;color:var(--ice);letter-spacing:.1em;display:block;margin-bottom:4px}
+.gantt-l{font-family:var(--f-mono);font-size:11px;fill:var(--ink2)}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font-family:var(--f-mono);font-size:12px;border:1px solid var(--line2);padding:5px 10px;border-radius:99px;cursor:pointer;user-select:none;background:var(--card);color:var(--ink2)}
+.chip.on{background:var(--ice-s);border-color:var(--ice);color:var(--ice)}
+.chip.now{outline:2px solid var(--amber);outline-offset:2px}
+.fcard{border:1px solid var(--line2);border-radius:10px;padding:10px 12px;cursor:pointer;background:var(--card);text-align:left;color:var(--ink)}
+.fcard.on{border-color:var(--ice);background:var(--ice-s)}
+.fcard b{display:block;font-family:var(--f-mono);font-size:12px}
+.fcard small{color:var(--ink3);font-size:12px}
+.out{font-family:var(--f-mono);font-size:12px;background:var(--card2);border-radius:8px;padding:10px 14px;white-space:pre-wrap;border-left:3px solid var(--teal);max-height:260px;overflow:auto}
+.chunk{border:1px solid var(--line2);border-radius:8px;padding:8px 10px;font-size:13px;margin:6px 0;background:var(--card)}
+.chunk em{font-style:normal;background:var(--amber-s);color:var(--ink);border-bottom:2px solid var(--amber)}
+.chunk b{font-family:var(--f-mono);font-size:11px;color:var(--ice);margin-right:8px}
+.act-i{color:var(--teal);font-family:var(--f-mono);font-size:12px;font-weight:700}
+.act-d{color:var(--red);font-family:var(--f-mono);font-size:12px;font-weight:700}
+.badge{font-family:var(--f-mono);font-size:11px;padding:2px 8px;border-radius:99px;white-space:nowrap}
+.badge.ok{background:var(--teal-s);color:var(--teal)}.badge.bad{background:var(--red-s);color:var(--red)}.badge.mid{background:var(--amber-s);color:var(--amber)}.badge.off{background:var(--card2);color:var(--ink3)}
+.flash{animation:flash 1s}
+@keyframes flash{0%{box-shadow:0 0 0 3px var(--amber)}100%{box-shadow:0 0 0 0 transparent}}
+.tn rect{fill:var(--card);stroke:var(--line2);transition:all .3s}
+.tn.run rect{fill:var(--amber-s);stroke:var(--amber);stroke-width:2.4}
+.tn.ok rect{fill:var(--teal-s);stroke:var(--teal);stroke-width:2}
+.tn.skip rect{fill:var(--card2);stroke:var(--ink3);stroke-dasharray:5 4}
+.tn.fail rect{fill:var(--red-s);stroke:var(--red);stroke-width:2}
+.tn .st{font-family:var(--f-mono);font-size:10px;fill:var(--ink3)}
+.log{max-height:240px;overflow:auto}
+.pk{transition:transform .8s cubic-bezier(.5,.05,.3,1)}
+.code{font-family:var(--f-mono);font-size:13px;background:var(--card2);border-radius:10px;padding:10px 0;overflow:auto}
+.code div{padding:2px 16px 2px 0;cursor:pointer;white-space:pre;display:block}
+.code div em{font-style:normal;color:var(--ink3);width:40px;text-align:right;padding-right:14px;display:inline-block;user-select:none}
+.code div:hover{background:var(--ice-s)}
+.code div.on{background:var(--ice-s);box-shadow:inset 3px 0 var(--ice)}
+.kw{color:var(--ice);font-weight:700}.str{color:var(--teal)}.num{color:var(--amber)}
+.qa{border:1px solid var(--line);border-radius:10px;margin:8px 0;background:var(--card);overflow:hidden}
+.qa summary{list-style:none;cursor:pointer;padding:14px 18px;display:flex;gap:12px;align-items:baseline;font-weight:600}
+.qa summary::-webkit-details-marker{display:none}
+.qa summary .lv{font-family:var(--f-mono);font-size:10px;letter-spacing:.1em;padding:2px 8px;border-radius:99px;flex:none;font-weight:400}
+.lv.b{background:var(--teal-s);color:var(--teal)}.lv.t{background:var(--red-s);color:var(--red)}.lv.s{background:var(--amber-s);color:var(--amber)}
+.qa summary .tp{font-family:var(--f-mono);font-size:10px;color:var(--ink3);flex:none;font-weight:400}
+.qa summary::after{content:"+";margin-left:auto;font-family:var(--f-mono);color:var(--ink3)}
+.qa[open] summary::after{content:"−"}
+.qa .ans{padding:0 18px 16px;color:var(--ink2);font-size:15px;border-top:1px solid var(--line)}
+.qa .ans p:first-child{margin-top:12px}
+.opt{display:block;width:100%;text-align:left;padding:12px 14px;margin:8px 0;border:1px solid var(--line2);border-radius:10px;background:var(--card);color:var(--ink);font-size:15px}
+.opt:hover{border-color:var(--ice)}
+.opt.ok{border-color:var(--teal);background:var(--teal-s)}.opt.bad{border-color:var(--red);background:var(--red-s)}
+.qexp{margin-top:10px;padding:12px 14px;border-radius:10px;background:var(--card2);font-size:14px;color:var(--ink2)}
+.score{font-family:var(--f-head);font-weight:700;font-size:56px;line-height:1}
+.cheat{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+.cheat div{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 16px;font-size:14px}
+.cheat div em{font-style:normal;font-family:var(--f-mono);font-size:20px;font-weight:700;color:var(--ice);display:block;line-height:1.1;margin-bottom:4px}
+.analogy-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:18px}
+.ag{border-radius:12px;padding:16px;border:1px solid var(--line);background:var(--card)}
+.ag .k{font-family:var(--f-mono);font-size:11px;letter-spacing:.12em}
+.ag h5{font-family:var(--f-head);font-size:18px;margin:2px 0 4px}
+.ag p{font-size:14px;color:var(--ink2);margin:0}
+.ag.a1{border-top:3px solid var(--amber)}.ag.a1 .k{color:var(--amber)}
+.ag.a2{border-top:3px solid var(--ice)}.ag.a2 .k{color:var(--ice)}
+.ag.a3{border-top:3px solid var(--teal)}.ag.a3 .k{color:var(--teal)}
+.ag.a4{border-top:3px solid var(--red)}.ag.a4 .k{color:var(--red)}
+footer{padding:40px 0;color:var(--ink3);font-size:13px;font-family:var(--f-mono)}
+.note-s{font-size:12px;color:var(--ink3);font-style:italic}
+@media (max-width:1000px){
+  .wrap{grid-template-columns:1fr;padding:16px}
+  nav.side{display:none}
+  .wwh,.grid2,.stepdesc .two{grid-template-columns:1fr}
+  .grid3,.analogy-grid{grid-template-columns:1fr}
+  .prog{display:none}
+}
+.road a.rm{display:flex;gap:8px;align-items:baseline;font-size:13px;padding:5px 10px;border-radius:8px;text-decoration:none;color:var(--ink2);border-left:2px solid transparent}
+.road a.rm:hover{background:var(--card);color:var(--ink)}
+.road a.rm em{font-style:normal;font-family:var(--f-mono);font-size:11px;min-width:20px}
+.road a.rm i{font-style:normal;font-family:var(--f-mono);font-size:9.5px;margin-left:auto;border:1px solid var(--line2);border-radius:99px;padding:0 6px;white-space:nowrap;color:var(--ink3)}
+.road a.rm.now{color:var(--ink);font-weight:600;border-left-color:var(--ice);background:var(--card);border-radius:0 8px 8px 0}
+.road a.rm.now i{border-color:var(--ice);color:var(--ice)}
+.road a.rm.ready em,.road a.rm.ready i{color:var(--teal)}.road a.rm.ready i{border-color:var(--teal)}
+.road a.rm.soon{color:var(--ink3)}
+.toast{position:fixed;bottom:24px;left:50%;transform:translate(-50%,20px);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;font-size:14px;opacity:0;transition:all .3s;z-index:60;pointer-events:none;max-width:90vw}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+.code div.pdone{box-shadow:inset 3px 0 var(--teal)}
+#pcCode{max-height:600px;position:relative}
+/* ===== Module 06 extras ===== */
+.jtree{font-family:var(--f-mono);font-size:13px;background:var(--card2);border-radius:10px;padding:12px 14px;line-height:1.75;overflow:auto;max-height:440px}
+.jtree .jl{white-space:pre}
+.jtree .jn{cursor:pointer;border-radius:4px;padding:0 3px;transition:background .15s}
+.jtree .jn:hover{background:var(--ice-s);outline:1px solid var(--ice)}
+.jtree .jn.sel{background:var(--amber-s);outline:2px solid var(--amber)}
+.jtree .jk{color:var(--ice)}.jtree .js{color:var(--teal)}.jtree .jnum{color:var(--amber)}.jtree .jb{color:var(--red)}.jtree .jnull{color:var(--ink3);font-style:italic}.jtree .jp{color:var(--ink3)}
+.ta{width:100%;min-height:150px;font-family:var(--f-mono);font-size:12px;padding:10px 12px;border-radius:8px;border:1px solid var(--line2);background:var(--card2);color:var(--ink);resize:vertical}
+.sel-i{font-family:var(--f-mono);font-size:13px;padding:6px 10px;border-radius:8px;border:1px solid var(--line2);background:var(--card);color:var(--ink)}
+.ft{width:100%;border-collapse:collapse;font-size:12.5px;font-family:var(--f-mono)}
+.ft th,.ft td{padding:5px 8px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top;white-space:nowrap}
+.ft th{font-size:10.5px;letter-spacing:.1em;color:var(--ink3);font-weight:400}
+.ft td.wrapc{white-space:normal;overflow-wrap:anywhere;max-width:260px}
+.ft tr.s0 td:first-child{box-shadow:inset 3px 0 var(--ice)}.ft tr.s1 td:first-child{box-shadow:inset 3px 0 var(--amber)}.ft tr.s2 td:first-child{box-shadow:inset 3px 0 var(--teal)}
+.ft tr.s0{background:color-mix(in srgb,var(--ice-s) 60%,transparent)}.ft tr.s1{background:color-mix(in srgb,var(--amber-s) 60%,transparent)}.ft tr.s2{background:color-mix(in srgb,var(--teal-s) 60%,transparent)}
+.ft tr.dim{opacity:.38}
+.ft tr.hot{outline:2px solid var(--amber);outline-offset:-2px}
+.nullc{color:var(--ink3);font-style:italic}
+.tblwrap{overflow:auto;max-height:380px;border:1px solid var(--line);border-radius:10px;background:var(--card)}
+.kv{display:grid;grid-template-columns:150px minmax(0,1fr);gap:4px 12px;font-size:14px}
+.kv b{font-family:var(--f-mono);font-size:11px;letter-spacing:.1em;color:var(--ink3);font-weight:400;padding-top:3px}
+.kv code{word-break:break-all}
+.seg{display:inline-flex;border:1px solid var(--line2);border-radius:99px;overflow:hidden}
+.seg button{border:0;background:transparent;color:var(--ink2);padding:5px 12px;font-size:13px}
+.seg button.on{background:var(--ink);color:var(--bg)}
+.tog{display:inline-flex;align-items:center;gap:8px;font-size:14px;color:var(--ink2);cursor:pointer;user-select:none}
+.tog input{accent-color:var(--ice);width:16px;height:16px}
+.mp{fill:var(--card2);stroke:var(--line2)}
+.blobr{fill:var(--red-s);stroke:var(--red)}
+.colr{fill:var(--teal-s);stroke:var(--teal)}
+.fmtcard{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media (max-width:1000px){.fmtcard,.kv{grid-template-columns:1fr}.grid2[style],.grid3[style]{grid-template-columns:1fr!important}}
+/* course-wide phone layout */
+@media (max-width:560px){
+  .top{flex-wrap:wrap;gap:8px;padding:10px 14px}
+  .top .pill,.top .prog-l,.top .prog{display:none}
+  .brand{flex:1}
+  .ctl{flex-wrap:wrap}.ctl label{min-width:0;flex:1 1 100%}.ctl .v{min-width:0;text-align:left}
+  table{display:block;overflow-x:auto;max-width:100%}
+  .grid2,.grid3,.analogy-grid,[style*="grid-template-columns"]{grid-template-columns:1fr!important}
+  .grid2>*,.grid3>*,.call>div{min-width:0}
+  p code,li code,td code{word-break:break-word}
+  .code,.sqlbox,.out,.term,pre{max-width:100%;overflow-x:auto}
+  .call{flex-direction:column;gap:6px}
+  main,section,.panel,.wwh .box,.mini{min-width:0;max-width:100%}
+}
+</style>
+</head>
+<body>
+<div class="top">
+  <div class="brand">SNOWFLAKE<b>//</b>INTERVIEW LAB</div>
+  <span class="pill">Module 06 · Semi-structured data</span>
+  <div class="prog"><i id="progBar"></i></div>
+  <span class="prog-l" id="progLbl">0% explored</span>
+  <button class="theme" id="themeBtn">Dark / light</button>
+</div>
+<div class="wrap">
+<nav class="side">
+  <h4>MODULE 06 · CHAPTERS</h4>
+  <a href="#intro"><span>00</span>Start here</a>
+  <a href="#shapes"><span>01</span>Data shapes &amp; formats</a>
+  <a href="#variant"><span>02</span>VARIANT, OBJECT, ARRAY</a>
+  <a href="#query"><span>03</span>Querying paths</a>
+  <a href="#flatten"><span>04</span>FLATTEN &amp; LATERAL</a>
+  <a href="#build"><span>05</span>Building JSON</a>
+  <a href="#load"><span>06</span>Loading files</a>
+  <a href="#perf"><span>07</span>Performance &amp; modeling</a>
+  <a href="#sql"><span>08</span>SQL lab</a>
+  <a href="#qa"><span>09</span>Interview Q&amp;A</a>
+  <a href="#quiz"><span>10</span>Quiz</a>
+  <a href="#cheat"><span>11</span>Cheat sheet</a>
+  <div class="road">
+    <h4>COURSE ROADMAP · CLICK TO OPEN</h4>
+    <a class="rm ready" href="../module01/"><em>01</em>Architecture<i>open</i></a>
+    <a class="rm ready" href="../module02/"><em>02</em>SnowSQL · unstructured · streams, tasks &amp; procedures<i>open</i></a>
+    <a class="rm ready" href="../module03/"><em>03</em>Performance tuning<i>open</i></a>
+    <a class="rm ready" href="../module04/"><em>04</em>Data ingestion (Snowpipe)<i>open</i></a>
+    <a class="rm ready" href="../module05/"><em>05</em>Dynamic tables &amp; transforms<i>open</i></a>
+    <a class="rm now" href="../module06/"><em>06</em>Semi-structured data<i>you are here</i></a>
+    <a class="rm ready" href="../module07/"><em>07</em>Data protection<i>open</i></a>
+    <a class="rm ready" href="../module08/"><em>08</em>Security &amp; governance<i>open</i></a>
+    <a class="rm ready" href="../module09/"><em>09</em>Cost optimization<i>open</i></a>
+    <a class="rm ready" href="../module10/"><em>10</em>Data sharing<i>open</i></a>
+    <a class="rm ready" href="../module11/"><em>11</em>Snowpark &amp; Cortex AI<i>open</i></a>
+    <a class="rm ready" href="../module12/"><em>12</em>Advanced SQL<i>open</i></a>
+    <a class="rm ready" href="../module13/"><em>13</em>Modeling &amp; tooling<i>open</i></a>
+    <a class="rm ready" href="../module14/"><em>14</em>System design &amp; behavioral<i>open</i></a>
+  </div>
+</nav>
+<main>
+
+<section id="intro">
+  <div class="eyebrow">MODULE 06 · SEMI-STRUCTURED DATA</div>
+  <h1>Messy JSON in.<br><span class="thin">Clean SQL out.</span></h1>
+  <p class="lead" style="margin-top:18px">APIs, event streams, mobile apps and SaaS exports rarely hand you neat CSV rows. They send JSON, Avro, Parquet or XML: nested, optional, and changing shape every few weeks. Snowflake lets you load that data <b>as-is</b> into a single <code>VARIANT</code> column and query it with SQL straight away. This module goes from "what is JSON" to how Snowflake stores VARIANT inside micro-partitions, why some JSON queries prune beautifully and others scan everything, and when a senior engineer "promotes" fields into real columns.</p>
+  <p style="margin-top:14px">Four everyday pictures to keep in your head:</p>
+  <div class="analogy-grid">
+    <div class="ag a1 rise"><div class="k">VARIANT</div><h5>A school backpack</h5><p>One bag that can hold anything: a book (string), a calculator (number), a pencil case full of smaller things (object), a stack of notebooks (array). The table only sees "one backpack per row".</p></div>
+    <div class="ag a2 rise" style="animation-delay:.1s"><div class="k">PATH NOTATION</div><h5>A postal address</h5><p><code>v:customer.address.city</code> is like "House → Floor 2 → Room 5". You follow the labels from the outside in. Spell a label wrong (or in the wrong case) and the letter never arrives: you get NULL.</p></div>
+    <div class="ag a3 rise" style="animation-delay:.2s"><div class="k">FLATTEN</div><h5>Unpacking a tiffin box</h5><p>One tiffin (one row) holds three containers (an array of three items). FLATTEN lays each container on the table as its own row, still labelled with whose tiffin it came from.</p></div>
+    <div class="ag a4 rise" style="animation-delay:.3s"><div class="k">COLUMNARIZATION</div><h5>Sorting a junk drawer</h5><p>Snowflake notices that almost every backpack has a "lunchbox" and a "water bottle", so it stores those in labelled trays (sub-columns). Rare or odd items stay loose in the drawer (the blob).</p></div>
+  </div>
+</section>
+
+<section id="shapes">
+  <div class="eyebrow">CHAPTER 01</div>
+  <h2>Data shapes &amp; formats <span class="thin">· structured, semi-structured, unstructured</span></h2>
+  <div class="wwh">
+    <div class="box what"><span class="tag">01 · WHAT IS IT</span>
+      <p><b>Structured</b> data fits a fixed table: every row has the same columns with the same types (a CSV of orders). <b>Semi-structured</b> data carries its own labels inside each record: keys and values, nesting, lists, and fields that may or may not be there (JSON, Avro, Parquet, ORC, XML). <b>Unstructured</b> data has no fields at all: PDFs, images, audio (covered in Module 02).</p>
+      <p>The key word for semi-structured is <b>self-describing</b>: each record tells you its own shape, so two records in the same file can look different.</p>
+    </div>
+    <div class="box why"><span class="tag">02 · WHY WE USE IT</span>
+      <ul class="dots">
+        <li><b>Sources produce it:</b> REST APIs, Kafka events, clickstreams, IoT devices and app logs speak JSON or Avro.</li>
+        <li><b>Schema changes are constant:</b> a developer adds <code>"promo_code"</code> to an event on Tuesday. With a fixed table, the load breaks. With VARIANT, the new key simply appears.</li>
+        <li><b>Nesting is natural:</b> an order <i>has</i> a list of items. JSON keeps that together; a flat table needs two tables and a join.</li>
+        <li><b>Land first, model later:</b> load raw data now (ELT), decide the typed model once you understand it.</li>
+      </ul>
+    </div>
+    <div class="box how"><span class="tag">03 · HOW IT WORKS · SCHEMA-ON-WRITE VS SCHEMA-ON-READ</span>
+      <div class="grid2">
+        <div class="mini"><h5>Schema-on-write (classic warehouse)</h5><p>You define <code>CREATE TABLE orders (id INT, amount NUMBER(10,2), ...)</code> <b>before</b> loading. Every row is checked against it at load time. Bad or unexpected fields fail the load or are dropped. Fast, predictable queries, but rigid.</p></div>
+        <div class="mini"><h5>Schema-on-read (VARIANT)</h5><p>You load the whole record into one <code>VARIANT</code> column. The "schema" is applied <b>when you query</b>: <code>v:amount::NUMBER(10,2)</code>. Nothing breaks when fields are added. The cost: types and structure are checked every time you read, and mistakes show up as NULLs instead of load errors.</p></div>
+      </div>
+      <p style="margin-top:10px">Snowflake supports both in one table: a common pattern is <code>raw_events (event_id STRING, load_ts TIMESTAMP_NTZ, payload VARIANT)</code>, so a few key fields are typed columns and everything else stays flexible.</p>
+    </div>
+  </div>
+  <div class="panel">
+    <div class="panel-h"><div class="t">EXPLORER · <b>FILE FORMATS SNOWFLAKE READS</b></div><span class="note-s">click a format</span></div>
+    <div class="tabs" id="fmtTabs"><button class="on" data-f="json">JSON</button><button data-f="avro">Avro</button><button data-f="parquet">Parquet</button><button data-f="orc">ORC</button><button data-f="xml">XML</button></div>
+    <div class="fmtcard">
+      <div><div class="sqlbox" id="fmtSample" style="min-height:190px"></div></div>
+      <div><table class="t" id="fmtFacts"></table></div>
+    </div>
+    <div class="insight" id="fmtIns"></div>
+  </div>
+  <div class="call trap"><b class="k">INTERVIEW TRAP</b><div>"Is Parquet semi-structured?" Parquet files <i>do</i> carry an embedded schema with typed columns, so they look structured. Snowflake still treats Parquet, Avro and ORC as <b>semi-structured file formats</b>: by default each record lands as one VARIANT value (read as <code>$1</code>), unless you load into typed columns with <code>MATCH_BY_COLUMN_NAME</code> or a <code>SELECT $1:col</code> transformation.</div></div>
+</section>
+
+<section id="variant">
+  <div class="eyebrow">CHAPTER 02</div>
+  <h2>VARIANT, OBJECT, ARRAY <span class="thin">· and what happens inside storage</span></h2>
+  <div class="wwh">
+    <div class="box what"><span class="tag">01 · WHAT IS IT</span>
+      <p>Snowflake has three semi-structured data types:</p>
+      <ul class="dots">
+        <li><b>VARIANT</b>: a universal container. One VARIANT value can hold a string, number, boolean, null, an OBJECT or an ARRAY. It remembers the type of what is inside (check it with <code>TYPEOF()</code>).</li>
+        <li><b>OBJECT</b>: a set of key-value pairs, like a JSON <code>{ }</code>. Keys are strings; values are VARIANT.</li>
+        <li><b>ARRAY</b>: an ordered list, like a JSON <code>[ ]</code>. Elements are VARIANT (so one array may mix types). Indexes start at <b>0</b>.</li>
+      </ul>
+      <p class="note-s">Size limit: a single VARIANT value has a maximum size. For years it was 16 MB; newer Snowflake releases have raised it. Check the current documentation for the exact limit and any conditions, rather than quoting a number in an interview with certainty.</p>
+    </div>
+    <div class="box why"><span class="tag">02 · WHY WE USE IT</span>
+      <p>VARIANT lets you load a JSON document <b>without declaring its shape</b>, keep every field (even ones you don't use yet), and still query any part with SQL. OBJECT and ARRAY are useful when you <i>build</i> JSON (for APIs, exports or compact storage) and when you want to say "this column is always an object" for clarity.</p>
+      <p>Most raw landing tables use just one column: <code>v VARIANT</code>.</p>
+    </div>
+    <div class="box how"><span class="tag">03 · HOW IT WORKS · TWO KINDS OF NULL</span>
+      <div class="grid2">
+        <div class="mini"><h5>SQL NULL</h5><p>"There is no value here." You get it when a path <b>doesn't exist</b>: <code>v:missing_key</code> returns SQL NULL. <code>IS NULL</code> is TRUE.</p></div>
+        <div class="mini"><h5>JSON null (VARIANT null)</h5><p>"The value exists and it is the JSON literal <code>null</code>." <code>v:coupon</code> on <code>{"coupon": null}</code> returns a VARIANT null, shown as <code>null</code>. <code>IS NULL</code> is <b>FALSE</b>! Test it with <code>IS_NULL_VALUE(v:coupon)</code>, and convert it to SQL NULL with <code>STRIP_NULL_VALUE()</code> or by casting (<code>v:coupon::STRING</code> returns SQL NULL).</p></div>
+      </div>
+      <p style="margin-top:10px"><b>Storage, in the backend.</b> A table with a VARIANT column is still stored in normal columnar <b>micro-partitions</b>. When data is written, Snowflake looks at the documents in each micro-partition and tries to <b>extract common paths into their own hidden sub-columns</b>, each stored in a typed, columnar way with its own metadata (such as min/max values). That means <code>WHERE v:country = 'IN'</code> can read only the <code>country</code> sub-column and can <b>prune</b> micro-partitions using its min/max, just like a normal column.</p>
+      <p>Paths that can't be extracted cleanly stay in the remaining <b>binary blob</b> for that row. According to Snowflake's documentation, things that typically stop extraction include: values with <b>inconsistent types</b> across rows (a number here, a string there), elements that contain a <b>JSON null</b> in some rows, and data <b>inside arrays</b>. Values such as dates in JSON are stored as <b>strings</b>, so filters on them are less efficient than on a real DATE column. The exact heuristics (how many paths, what share of rows) are internal and not fully documented, so describe it as "Snowflake tries to columnarize consistent paths" rather than as a fixed rule.</p>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-h"><div class="t">SIMULATOR · <b>WHICH PATHS GET COLUMNARIZED?</b></div><span class="note-s">illustrative model of documented behaviour, not Snowflake's exact algorithm</span></div>
+    <div class="row" style="margin-bottom:8px"><span class="note-s">Sample set:</span><div class="tabs" id="cSets" style="margin:0"><button class="on" data-s="clean">Clean events</button><button data-s="drift">Schema drift</button><button data-s="nulls">Nulls &amp; mixed types</button><button data-s="arrays">Arrays &amp; dates</button><button data-s="custom">Paste your own</button></div></div>
+    <div class="grid2" style="grid-template-columns:1fr 1.2fr">
+      <div>
+        <textarea class="ta" id="cText" spellcheck="false"></textarea>
+        <p class="note-s">One JSON document per line (NDJSON) or a JSON array of documents. Edit freely, then press Analyze.</p>
+        <div class="row" style="margin-top:6px"><button class="btn pri" id="cGo">Analyze</button><label class="tog"><input type="checkbox" id="cStrip"> load with STRIP_NULL_VALUES = TRUE</label></div>
+        <div class="ctl"><label>Min. presence to extract</label><input type="range" id="cMin" min="10" max="100" step="10" value="50"><span class="v" id="cMinV"></span></div>
+        <p class="note-s">The presence threshold is a teaching knob, not a real Snowflake parameter.</p>
+      </div>
+      <div>
+        <div class="tblwrap" style="max-height:300px"><table class="ft" id="cTable"></table></div>
+        <svg viewBox="0 0 560 150" id="cSvg" style="margin-top:10px"></svg>
+      </div>
+    </div>
+    <div class="ctl" style="margin-top:10px"><label>Test a filter on path</label><select class="sel-i" id="cFilter"></select></div>
+    <div class="sqlbox" id="cSql"></div>
+    <div class="insight" id="cIns"></div>
+  </div>
+  <div class="call trap"><b class="k">INTERVIEW TRAP</b><div>"I filtered <code>WHERE v:discount IS NULL</code> and got fewer rows than expected." Rows with <code>"discount": null</code> hold a <b>JSON null</b>, which is a real value, so <code>IS NULL</code> is FALSE for them. Write <code>WHERE v:discount IS NULL OR IS_NULL_VALUE(v:discount)</code>, or simply <code>WHERE v:discount::NUMBER IS NULL</code> (casting turns JSON null into SQL NULL).</div></div>
+  <div class="call pro"><b class="k">SENIOR ANGLE</b><div>If your source sends <code>null</code> for "not set", loading with <code>STRIP_NULL_VALUES = TRUE</code> removes those keys. Besides saving space, Snowflake's docs note that elements containing JSON nulls are not extracted into sub-columns, so stripping them can improve columnarization and pruning. Only do it if "key present with null" and "key absent" really mean the same thing for your business.</div></div>
+</section>
+
+<section id="query">
+  <div class="eyebrow">CHAPTER 03</div>
+  <h2>Querying paths <span class="thin">· colon, dot, brackets, casting</span></h2>
+  <div class="wwh">
+    <div class="box what"><span class="tag">01 · WHAT IS IT</span>
+      <p>To reach inside a VARIANT you write a <b>path</b>:</p>
+      <ul class="dots">
+        <li><code>v:customer</code>: the colon goes from the <b>column</b> to the <b>first-level key</b>.</li>
+        <li><code>v:customer.name</code>: dots go deeper into nested objects.</li>
+        <li><code>v:items[0]</code>: square brackets with a number pick an array element (0-based).</li>
+        <li><code>v['ship-to']</code> or <code>v:"ship-to"</code>: bracket notation or double quotes for keys with spaces, hyphens or other special characters.</li>
+        <li><code>GET(v, 'customer')</code>, <code>GET_PATH(v, 'customer.name')</code>: the function forms (the colon is shorthand for GET_PATH).</li>
+      </ul>
+    </div>
+    <div class="box why"><span class="tag">02 · WHY IT MATTERS</span>
+      <p>Paths are how every JSON query starts, and they are where most silent bugs live. A wrong path doesn't raise an error; it returns <b>NULL</b>. Interviewers love asking why <code>v:Name</code> returned nothing, or why the output shows <code>"Asha"</code> with quotes.</p>
+      <p>Casting (<code>::STRING</code>, <code>::NUMBER</code>, <code>::DATE</code>) turns a VARIANT into a normal SQL type so you can compare, join, sort and aggregate correctly.</p>
+    </div>
+    <div class="box how"><span class="tag">03 · HOW IT WORKS · FOUR RULES TO REMEMBER</span>
+      <div class="grid2">
+        <div class="mini"><h5>1 · Keys are case-sensitive</h5><p>The <b>column</b> name is not case-sensitive (<code>V:</code> = <code>v:</code>), but <b>element names are</b>: <code>v:Status</code> and <code>v:status</code> are different keys. Unknown key → SQL NULL, no error. <code>GET_IGNORE_CASE()</code> exists when you can't control the casing.</p></div>
+        <div class="mini"><h5>2 · A path returns VARIANT</h5><p><code>v:customer.name</code> is still a VARIANT holding a JSON string, so Snowsight shows it JSON-encoded: <code>"Asha"</code> <b>with quotes</b>. <code>v:customer.name::STRING</code> converts it to a real VARCHAR: <code>Asha</code>. Comparisons and joins should use the cast value.</p></div>
+        <div class="mini"><h5>3 · Cast safely</h5><p><code>v:qty::NUMBER</code> fails the whole query if one row has <code>"qty": "two"</code>. Use the TRY family on the string form: <code>TRY_TO_NUMBER(v:qty::STRING)</code>, <code>TRY_TO_DATE(v:dt::STRING)</code>, or <code>TRY_CAST(v:qty::STRING AS NUMBER)</code>. They return NULL instead of failing.</p></div>
+        <div class="mini"><h5>4 · Know the inner type</h5><p><code>TYPEOF(v:price)</code> returns names like <code>INTEGER</code>, <code>DECIMAL</code>, <code>DOUBLE</code>, <code>VARCHAR</code>, <code>BOOLEAN</code>, <code>OBJECT</code>, <code>ARRAY</code>, or <code>NULL_VALUE</code> for JSON null. Helpers: <code>IS_OBJECT</code>, <code>IS_ARRAY</code>, <code>IS_INTEGER</code>, <code>AS_VARCHAR</code>, <code>AS_NUMBER</code>…</p></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-h"><div class="t">SIMULATOR · <b>JSON EXPLORER</b> · click any key or value</div><span class="note-s">table <code>raw_orders(v VARIANT)</code> · results illustrative</span></div>
+    <div class="row" style="margin-bottom:8px"><span class="note-s">Document:</span><div class="tabs" id="jDocs" style="margin:0"><button class="on" data-d="0">Order</button><button data-d="1">Clickstream event</button><button data-d="2">API response</button></div>
+      <span class="note-s" style="margin-left:auto">Notation:</span><div class="seg" id="jNot"><button class="on" data-n="dot">colon / dot</button><button data-n="br">brackets</button><button data-n="fn">GET_PATH</button></div></div>
+    <div class="grid2" style="grid-template-columns:1fr 1.05fr">
+      <div class="jtree" id="jTree"></div>
+      <div>
+        <div class="explain" id="jOut"><b class="h">CLICK A NODE</b>Pick any key or value in the tree. You'll get the exact path expression, the raw VARIANT result, the cast result and the TYPEOF.</div>
+        <div class="row" style="margin-top:10px"><button class="btn" id="jCase">Try the wrong case</button><button class="btn" id="jMiss">Try a missing key</button></div>
+      </div>
+    </div>
+    <div class="insight" id="jIns"><b>Tip:</b> click a string value, then compare the "raw" and "cast" rows: that difference is the quotes question every interviewer asks.</div>
+  </div>
+  <div class="call trap"><b class="k">INTERVIEW TRAP</b><div>"My join on a JSON field returns no matches, but the values look identical." One side's JSON may hold <code>"10"</code> (a string) and the other <code>10</code> (a number). Compared as VARIANTs, the inner types differ, so they don't match. Rule of thumb: <b>cast before you join, group, sort or compare</b> (<code>v:customer_id::NUMBER = c.id</code>), so both sides are the same SQL type and the result is predictable.</div></div>
+</section>
+
+<section id="flatten">
+  <div class="eyebrow">CHAPTER 04</div>
+  <h2>FLATTEN &amp; LATERAL <span class="thin">· one row with a list → many rows</span></h2>
+  <div class="wwh">
+    <div class="box what"><span class="tag">01 · WHAT IS IT</span>
+      <p><b>FLATTEN</b> is a <b>table function</b>: give it an ARRAY or OBJECT and it returns <b>one row per element</b>. <b>LATERAL</b> lets that function see the columns of the row to its left, so each order's own <code>items</code> array is flattened and joined back to that order.</p>
+      <p>Output columns:</p>
+      <table class="t" style="margin-top:4px">
+        <tr><th>COLUMN</th><th>MEANING</th></tr>
+        <tr><td class="m">SEQ</td><td>A number identifying the input record (all rows exploded from the same input share it). Not guaranteed to be gap-free or ordered.</td></tr>
+        <tr><td class="m">KEY</td><td>The key name when flattening an OBJECT (NULL for array elements).</td></tr>
+        <tr><td class="m">PATH</td><td>Path to the element relative to the input, e.g. <code>[0]</code> or <code>[0].sku</code>.</td></tr>
+        <tr><td class="m">INDEX</td><td>The position when flattening an ARRAY (NULL for object fields).</td></tr>
+        <tr><td class="m">VALUE</td><td>The element itself, as VARIANT. This is the one you use most: <code>f.value:sku::STRING</code>.</td></tr>
+        <tr><td class="m">THIS</td><td>The element (array or object) being flattened at this level.</td></tr>
+      </table>
+    </div>
+    <div class="box why"><span class="tag">02 · WHY WE USE IT</span>
+      <p>Reports and joins need rows: "revenue per SKU", "count of tags per event". Arrays hide those rows inside a single cell. FLATTEN is how you turn <b>one order with 3 items</b> into <b>3 order-item rows</b> that you can GROUP BY, join to a product table, or load into a typed fact table.</p>
+      <p>The full signature: <code>FLATTEN(INPUT =&gt; expr, PATH =&gt; 'path', OUTER =&gt; FALSE, RECURSIVE =&gt; FALSE, MODE =&gt; 'BOTH')</code>. MODE can be <code>'OBJECT'</code>, <code>'ARRAY'</code> or <code>'BOTH'</code>.</p>
+    </div>
+    <div class="box how"><span class="tag">03 · HOW IT WORKS · THE TWO SWITCHES THAT CHANGE ROW COUNTS</span>
+      <div class="grid2">
+        <div class="mini"><h5>OUTER =&gt; TRUE</h5><p>By default, a row whose array is <b>empty, missing or NULL produces zero rows</b>, so the lateral join silently <b>drops that order</b>. With <code>OUTER =&gt; TRUE</code>, FLATTEN emits exactly one row for it, with NULL in KEY, INDEX and VALUE. It's the LEFT JOIN of the JSON world.</p></div>
+        <div class="mini"><h5>RECURSIVE =&gt; TRUE</h5><p>Normally FLATTEN expands only one level. Recursive expands <b>every nested level</b>: objects inside arrays inside objects. Great for discovering all paths in unknown JSON (<code>SELECT DISTINCT f.path</code>), but too noisy for normal reporting.</p></div>
+      </div>
+      <p style="margin-top:10px"><b>Backend:</b> FLATTEN runs on the warehouse as a table-function operator in the query plan (you'll see it as <b>Flatten</b> in the Query Profile, feeding a lateral join). Each input row is expanded in memory and the output can be many times larger than the input, so filter <b>before</b> flattening where you can, and select only the fields you need from <code>value</code>.</p>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-h"><div class="t">SIMULATOR · <b>WATCH FLATTEN EXPLODE ROWS</b></div><span class="note-s">sample data · output computed live in your browser</span></div>
+    <div class="row" style="gap:16px;margin-bottom:8px">
+      <span class="note-s">Mode:</span><div class="seg" id="fMode"><button class="on" data-m="items">FLATTEN items</button><button data-m="double">double: items → tags</button><button data-m="obj">FLATTEN an object</button></div>
+      <label class="tog"><input type="checkbox" id="fOuter"> OUTER =&gt; TRUE</label>
+      <label class="tog"><input type="checkbox" id="fRec"> RECURSIVE =&gt; TRUE</label>
+    </div>
+    <div class="grid2" style="grid-template-columns:.9fr 1.3fr">
+      <div>
+        <div class="note-s" style="margin-bottom:4px">INPUT · raw_orders (3 rows)</div>
+        <div class="tblwrap"><table class="ft" id="fIn"></table></div>
+        <div class="sqlbox" id="fSql" style="margin-top:10px"></div>
+      </div>
+      <div>
+        <div class="row" style="justify-content:space-between;margin-bottom:4px"><span class="note-s" id="fOutLbl">OUTPUT</span><span><button class="btn pri" id="fPlay">Play animation</button> <button class="btn" id="fAll">Show all</button></span></div>
+        <div class="tblwrap"><table class="ft" id="fOut"></table></div>
+      </div>
+    </div>
+    <div class="stats">
+      <div class="stat"><div class="k">INPUT ROWS</div><div class="n">3</div></div>
+      <div class="stat"><div class="k">OUTPUT ROWS</div><div class="n" id="fN">–</div></div>
+      <div class="stat"><div class="k">ORDERS DROPPED</div><div class="n" id="fDrop">–</div><div class="s">orders with no output row</div></div>
+    </div>
+    <div class="insight" id="fIns"></div>
+  </div>
+  <div class="call trap"><b class="k">INTERVIEW TRAP</b><div>"Our order count dropped after we added item-level reporting." Classic cause: <code>LATERAL FLATTEN(input =&gt; v:items)</code> without <code>OUTER =&gt; TRUE</code> drops every order whose <code>items</code> array is empty or missing. Second classic: counting <code>COUNT(*)</code> after flattening counts <b>items</b>, not orders; use <code>COUNT(DISTINCT order_id)</code>.</div></div>
+  <div class="call pro"><b class="k">SENIOR ANGLE</b><div>Nested arrays need a <b>double flatten</b>: <code>FROM raw_orders o, LATERAL FLATTEN(input =&gt; o.v:items) i, LATERAL FLATTEN(input =&gt; i.value:tags) t</code>. Each level multiplies rows, so 1M orders × 5 items × 4 tags = 20M rows. Push filters as early as possible, and in a pipeline, materialize the flattened grain once (a typed <code>order_items</code> table or dynamic table) instead of re-flattening in every dashboard query.</div></div>
+</section>
+
+<section id="build">
+  <div class="eyebrow">CHAPTER 05</div>
+  <h2>Building semi-structured data <span class="thin">· from rows back to JSON</span></h2>
+  <div class="wwh">
+    <div class="box what"><span class="tag">01 · WHAT IS IT</span>
+      <p>The reverse of flattening: functions that <b>create</b> VARIANT, OBJECT and ARRAY values.</p>
+      <ul class="dots">
+        <li><code>PARSE_JSON(str)</code> turns JSON text into VARIANT (errors on invalid JSON). <code>TRY_PARSE_JSON(str)</code> returns NULL instead.</li>
+        <li><code>OBJECT_CONSTRUCT('k1', v1, 'k2', v2)</code> builds an object; pairs whose value is SQL NULL are <b>left out</b>. <code>OBJECT_CONSTRUCT_KEEP_NULL</code> keeps them as JSON null. <code>OBJECT_CONSTRUCT(*)</code> turns a whole row into an object.</li>
+        <li><code>ARRAY_CONSTRUCT(a, b, c)</code> builds an array from values; <code>ARRAY_CONSTRUCT_COMPACT</code> drops NULLs.</li>
+        <li><code>ARRAY_AGG(x)</code> aggregates many rows into one array (NULLs skipped; add <code>WITHIN GROUP (ORDER BY …)</code> for order). <code>OBJECT_AGG(key, value)</code> aggregates rows into one object.</li>
+        <li><code>TO_JSON(variant)</code> serializes a VARIANT to a JSON string; <code>STRIP_NULL_VALUE(v)</code> turns a JSON null into SQL NULL.</li>
+      </ul>
+    </div>
+    <div class="box why"><span class="tag">02 · WHY WE USE IT</span>
+      <ul class="dots">
+        <li><b>API payloads and exports:</b> build one JSON document per customer to unload or send to a service.</li>
+        <li><b>Nesting for consumers:</b> "one row per order with its items as an array" is easier for apps than a join.</li>
+        <li><b>Auditing and logging:</b> store "before/after" snapshots of a row as an object.</li>
+        <li><b>Metadata tricks:</b> <code>ARRAY_AGG(OBJECT_CONSTRUCT(*))</code> is exactly what <code>CREATE TABLE … USING TEMPLATE</code> needs with INFER_SCHEMA (chapter 06).</li>
+      </ul>
+    </div>
+    <div class="box how"><span class="tag">03 · HOW IT WORKS · TRY EACH FUNCTION</span>
+      <p>Pick a function. The input table on the left is the same each time; the output is computed live so you can see exactly how NULLs, ordering and duplicates behave.</p>
+      <div class="tabs" id="bTabs" style="margin-top:8px">
+        <button class="on" data-b="oc">OBJECT_CONSTRUCT</button><button data-b="ock">…_KEEP_NULL</button><button data-b="ocs">OBJECT_CONSTRUCT(*)</button><button data-b="aa">ARRAY_AGG</button><button data-b="ao">ARRAY_AGG ordered DISTINCT</button><button data-b="oa">OBJECT_AGG</button><button data-b="ac">ARRAY_CONSTRUCT</button><button data-b="pj">PARSE vs TRY_PARSE</button><button data-b="tj">TO_JSON / STRIP_NULL_VALUE</button>
+      </div>
+      <div class="grid2" style="grid-template-columns:1fr 1.2fr">
+        <div><div class="note-s" style="margin-bottom:4px">INPUT · order_lines</div><div class="tblwrap"><table class="ft" id="bIn"></table></div></div>
+        <div><div class="sqlbox" id="bSql"></div><div class="out" id="bOut" style="margin-top:8px"></div></div>
+      </div>
+      <div class="insight" id="bIns"></div>
+    </div>
+  </div>
+  <div class="call trap"><b class="k">INTERVIEW TRAP</b><div>"Our API export is missing the <code>coupon</code> field for some customers and the frontend crashes." <code>OBJECT_CONSTRUCT</code> silently omits keys whose value is SQL NULL. If consumers expect every key to exist, use <code>OBJECT_CONSTRUCT_KEEP_NULL</code> (or <code>COALESCE</code> the value). Also: <code>OBJECT_AGG</code> fails if the same key appears twice in a group, so deduplicate first.</div></div>
+</section>
+
+<section id="load">
+  <div class="eyebrow">CHAPTER 06</div>
+  <h2>Loading semi-structured files <span class="thin">· JSON, Parquet, Avro, ORC, XML</span></h2>
+  <div class="wwh">
+    <div class="box what"><span class="tag">01 · WHAT IS IT</span>
+      <p>The same <code>COPY INTO</code> (and Snowpipe) you know from earlier modules, with a <b>file format</b> of <code>TYPE = JSON | AVRO | PARQUET | ORC | XML</code>. Two landing styles:</p>
+      <ul class="dots">
+        <li><b>Raw landing:</b> each record goes into one VARIANT column (<code>COPY INTO raw_events FROM @stage</code>, read as <code>$1</code>).</li>
+        <li><b>Typed landing:</b> fields go straight into real columns, using <code>MATCH_BY_COLUMN_NAME</code> (Parquet/Avro/ORC, and JSON) or a transformation <code>COPY INTO t FROM (SELECT $1:id::NUMBER, $1:name::STRING FROM @stage)</code>.</li>
+      </ul>
+    </div>
+    <div class="box why"><span class="tag">02 · WHY THE OPTIONS MATTER</span>
+      <ul class="dots">
+        <li><b>STRIP_OUTER_ARRAY = TRUE</b>: a file shaped <code>[ {...}, {...} ]</code> is otherwise one giant record (one row), which can hit the VARIANT size limit and makes FLATTEN mandatory.</li>
+        <li><b>STRIP_NULL_VALUES = TRUE</b>: drops keys whose value is JSON null.</li>
+        <li><b>INFER_SCHEMA</b>: reads file metadata (Parquet/Avro/ORC, and in current releases JSON and CSV too) and proposes column names and types, so you don't hand-write 80 columns.</li>
+        <li><b>XML</b>: Snowflake parses XML into VARIANT and you navigate it with <code>$</code>, <code>@</code> and <code>XMLGET</code>.</li>
+      </ul>
+    </div>
+    <div class="box how"><span class="tag">03 · HOW IT WORKS · BACKEND</span>
+      <p>The warehouse reads each staged file and its parser turns records into VARIANT values. For JSON, Snowflake accepts <b>newline-delimited</b> records (one document per line) or documents simply concatenated, and a single outer array (which <code>STRIP_OUTER_ARRAY</code> unwraps). For Parquet, the reader uses the file's own <b>schema and column chunks</b>; with <code>MATCH_BY_COLUMN_NAME</code> it maps file columns to table columns by name (<code>CASE_SENSITIVE</code> or <code>CASE_INSENSITIVE</code>), and table columns with no match are loaded as NULL. Once loaded, the data becomes micro-partitions like any other table, and the columnarization from chapter 02 happens at write time. Load metadata (the 64-day "already loaded" memory) works the same as for CSV.</p>
+      <p>With <code>ENABLE_SCHEMA_EVOLUTION = TRUE</code> on the table plus <code>MATCH_BY_COLUMN_NAME</code>, Snowflake can automatically add new columns it finds in incoming files (the loading role needs the right privileges). Check the docs for the exact conditions before relying on it.</p>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-h"><div class="t">SIMULATOR · <b>FILE FORMAT OPTIONS → WHAT LANDS IN THE TABLE</b></div><span class="note-s">illustrative output</span></div>
+    <div class="tabs" id="lTabs"><button class="on" data-l="json">JSON file</button><button data-l="parquet">Parquet file</button><button data-l="xml">XML file</button></div>
+    <div class="row" style="gap:16px;margin-bottom:8px" id="lOpts"></div>
+    <div class="grid2">
+      <div><div class="note-s" style="margin-bottom:4px" id="lFileLbl">STAGED FILE</div><div class="sqlbox" id="lFile" style="min-height:170px"></div><div class="sqlbox" id="lSql" style="margin-top:8px"></div></div>
+      <div><div class="note-s" style="margin-bottom:4px">RESULT</div><div class="tblwrap"><table class="ft" id="lOut"></table></div><div class="stats" style="margin-top:8px"><div class="stat"><div class="k">ROWS LOADED</div><div class="n" id="lRows">–</div></div><div class="stat"><div class="k">STATUS</div><div class="n" id="lStat" style="font-size:20px">–</div></div></div></div>
+    </div>
+    <div class="insight" id="lIns"></div>
+  </div>
+  <h3>INFER_SCHEMA in three steps</h3>
+  <div class="grid3">
+    <div class="mini"><h5>1 · Look</h5><p><code>SELECT * FROM TABLE(INFER_SCHEMA(LOCATION =&gt; '@pq_stage/orders/', FILE_FORMAT =&gt; 'pq_fmt'))</code> returns one row per detected column: <code>COLUMN_NAME</code>, <code>TYPE</code>, <code>NULLABLE</code>, <code>EXPRESSION</code>, <code>FILENAMES</code>, <code>ORDER_ID</code>. The file format must be a <b>named</b> file format object.</p></div>
+    <div class="mini"><h5>2 · Create</h5><p><code>CREATE TABLE orders USING TEMPLATE (SELECT ARRAY_AGG(OBJECT_CONSTRUCT(*)) FROM TABLE(INFER_SCHEMA(...)))</code> builds the table from those rows. Column names keep the file's case, so you may need to quote them later.</p></div>
+    <div class="mini"><h5>3 · Load</h5><p><code>COPY INTO orders FROM @pq_stage/orders/ FILE_FORMAT = (FORMAT_NAME = 'pq_fmt') MATCH_BY_COLUMN_NAME = CASE_INSENSITIVE</code>. Review the inferred types first: inference samples files, so wide or rare values may need manual adjustments.</p></div>
+  </div>
+  <div class="call trap"><b class="k">INTERVIEW TRAP</b><div>"COPY of a Parquet file into my 10-column table fails with <i>'… file format can produce one and only one column of type variant, object, or array'</i>." Without <code>MATCH_BY_COLUMN_NAME</code> or a <code>SELECT $1:…</code> transformation, semi-structured formats produce <b>one VARIANT column</b>, which only fits a single-column target. Add one of the two.</div></div>
+</section>
+
+<section id="perf">
+  <div class="eyebrow">CHAPTER 07</div>
+  <h2>Performance &amp; modeling <span class="thin">· query in place or promote?</span></h2>
+  <div class="wwh">
+    <div class="box what"><span class="tag">01 · WHAT IS IT</span>
+      <p>Two ways to serve JSON to analysts:</p>
+      <ul class="dots">
+        <li><b>Query in place</b>: keep only the raw VARIANT and write paths in every query (often hidden behind a <b>view</b> that casts and renames: <code>v:customer.id::NUMBER AS customer_id</code>).</li>
+        <li><b>Promote</b>: extract hot fields into real typed columns (in the landing table, or in a downstream table / dynamic table), and keep the VARIANT for everything else.</li>
+      </ul>
+    </div>
+    <div class="box why"><span class="tag">02 · WHY IT MATTERS</span>
+      <p>When paths are consistent, Snowflake's sub-column extraction makes VARIANT queries surprisingly fast. But when data drifts (types change, keys come and go, nulls appear, values live inside arrays, dates are strings), more data stays in the blob, pruning gets worse, and every query parses more. Promoted typed columns give stable pruning, correct types, clustering options, and simpler SQL for BI tools.</p>
+    </div>
+    <div class="box how"><span class="tag">03 · HOW TO DECIDE · A SENIOR CHECKLIST</span>
+      <div class="grid2">
+        <div class="mini"><h5>Promote a field when…</h5><p>It's used in <b>filters, joins or clustering</b>; it's a <b>date/timestamp</b> or a number stored as a string; it lives <b>inside an array</b> you flatten constantly; its type is inconsistent and needs cleaning once; or BI users need a simple column.</p></div>
+        <div class="mini"><h5>Keep it in VARIANT when…</h5><p>It's rarely queried; the schema changes often; you need to keep the full original payload for replay/audit; or it's exploratory data where the model isn't decided yet.</p></div>
+        <div class="mini"><h5>Handling schema drift</h5><p>Land raw VARIANT (never breaks) → typed view or dynamic table on top (casts with <code>TRY_</code> functions) → monitor new paths with <code>FLATTEN(…, RECURSIVE =&gt; TRUE)</code> + <code>SELECT DISTINCT path</code>, and alert on TYPEOF changes. Add new columns deliberately.</p></div>
+        <div class="mini"><h5>Search optimization on VARIANT</h5><p>For selective point lookups (<code>WHERE v:device_id::STRING = 'abc'</code>), <code>ALTER TABLE t ADD SEARCH OPTIMIZATION ON EQUALITY(v:device_id)</code> (Enterprise Edition or higher) builds a search access path that can skip micro-partitions. It has storage and maintenance costs; check the docs for supported predicates and casts.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-h"><div class="t">SIMULATOR · <b>RAW VARIANT VS PROMOTED COLUMNS AS DATA GROWS</b></div><span class="note-s">illustrative model, not a benchmark</span></div>
+    <div class="ctl"><label>Table size (rows)</label><input type="range" id="pRows" min="0" max="8" step="1" value="4"><span class="v" id="pRowsV"></span></div>
+    <div class="ctl"><label>Schema consistency</label><input type="range" id="pCons" min="0" max="100" step="5" value="80"><span class="v" id="pConsV"></span></div>
+    <div class="ctl"><label>Filter selectivity</label><input type="range" id="pSel" min="0" max="4" step="1" value="2"><span class="v" id="pSelV"></span></div>
+    <div class="ctl"><label>Queries per day</label><input type="range" id="pQ" min="10" max="2000" step="10" value="200"><span class="v" id="pQV"></span></div>
+    <svg viewBox="0 0 680 260" id="pSvg"></svg>
+    <div class="legend"><span><i style="background:var(--red)"></i>raw VARIANT (paths parsed at read)</span><span><i style="background:var(--teal)"></i>promoted typed columns</span><span><i style="background:var(--amber)"></i>current size</span></div>
+    <div class="stats">
+      <div class="stat"><div class="k">RAW · DATA SCANNED</div><div class="n" id="pRawS">–</div><div class="s" id="pRawT">–</div></div>
+      <div class="stat"><div class="k">PROMOTED · SCANNED</div><div class="n" id="pProS">–</div><div class="s" id="pProT">–</div></div>
+      <div class="stat"><div class="k">DAILY QUERY TIME SAVED</div><div class="n" id="pSave">–</div><div class="s">warehouse-minutes/day</div></div>
+      <div class="stat"><div class="k">PROMOTION OVERHEAD</div><div class="n" id="pCost">–</div><div class="s">extra load-time minutes/day</div></div>
+    </div>
+    <div class="insight" id="pIns"></div>
+  </div>
+  <div class="call pro"><b class="k">SENIOR ANGLE</b><div>The pattern most mature teams converge on: <b>bronze</b> = raw VARIANT plus a few metadata columns (file name via <code>METADATA$FILENAME</code>, load time); <b>silver</b> = a dynamic table or stream+task that flattens and casts into typed tables at the grain the business uses (order, order_item); <b>gold</b> = marts. Raw stays for replay when the parser has a bug; typed tables carry the query load.</div></div>
+</section>
+
+<section id="sql">
+  <div class="eyebrow">CHAPTER 08</div>
+  <h2>SQL lab <span class="thin">· click any line for an explanation</span></h2>
+  <div class="panel">
+    <div class="tabs" id="sqlTabs"></div>
+    <div class="grid2" style="grid-template-columns:1.35fr 1fr">
+      <div class="code" id="sqlCode"></div>
+      <div class="explain" id="sqlExp"><b class="h">CLICK A LINE</b>Each line is explained in plain English.</div>
+    </div>
+  </div>
+</section>
+
+<section id="qa">
+  <div class="eyebrow">CHAPTER 09</div>
+  <h2>Interview Q&amp;A <span class="thin">· answer out loud first, then open</span></h2>
+  <div class="tabs" id="qaTabs"><button class="on" data-f="all">All</button><button data-f="Types">Types &amp; storage</button><button data-f="Querying">Querying</button><button data-f="FLATTEN">FLATTEN</button><button data-f="Loading">Loading</button><button data-f="Modeling">Modeling</button></div>
+  <div id="qaList"></div>
+</section>
+
+<section id="quiz">
+  <div class="eyebrow">CHAPTER 10</div>
+  <h2>Quiz <span class="thin">· 14 questions</span></h2>
+  <div class="panel">
+    <div class="panel-h"><div class="t">QUESTION <b id="qzN">1</b> / 14</div><div class="t">SCORE <b id="qzS">0</b></div></div>
+    <div class="stepbar" id="qzBar"></div>
+    <div id="qzBody"></div>
+    <div class="row" style="margin-top:12px"><button class="btn" id="qzPrev">Back</button><button class="btn pri" id="qzNext">Next</button></div>
+  </div>
+</section>
+
+<section id="cheat">
+  <div class="eyebrow">CHAPTER 11</div>
+  <h2>Cheat sheet <span class="thin">· if you remember only these</span></h2>
+  <div class="cheat">
+    <div><em>VARIANT</em>Holds any value incl. OBJECT and ARRAY. Max size per value: check current docs (historically 16 MB, raised in newer releases).</div>
+    <div><em>v:a.b[0]</em>Colon after the column, dots for nesting, [n] for arrays (0-based), <code>v:"ship-to"</code> or <code>v['ship-to']</code> for special characters.</div>
+    <div><em>Case!</em>Column names: case-insensitive. JSON keys: <b>case-sensitive</b>. Wrong key → SQL NULL, no error.</div>
+    <div><em>::STRING</em>A path returns VARIANT (shown with quotes). Cast to get a real SQL value; cast before join / group / sort.</div>
+    <div><em>2 nulls</em>Missing key → SQL NULL. <code>"k": null</code> → JSON null (IS NULL is FALSE). Use IS_NULL_VALUE / STRIP_NULL_VALUE / cast.</div>
+    <div><em>TRY_</em><code>TRY_PARSE_JSON</code>, <code>TRY_TO_NUMBER(v:x::STRING)</code>, <code>TRY_TO_DATE</code>: NULL instead of a failed query.</div>
+    <div><em>FLATTEN</em>SEQ · KEY · PATH · INDEX · VALUE · THIS. Use <code>f.value:field::type</code>.</div>
+    <div><em>OUTER =&gt; TRUE</em>Keep rows whose array is empty/NULL (one row with NULL VALUE). Default drops them.</div>
+    <div><em>RECURSIVE</em>Expands all nested levels. Great for discovering paths, noisy for reporting.</div>
+    <div><em>OBJECT_CONSTRUCT</em>Skips SQL-NULL values; <code>_KEEP_NULL</code> keeps them. <code>(*)</code> = whole row. ARRAY_AGG skips NULLs.</div>
+    <div><em>STRIP_OUTER_ARRAY</em>File is <code>[{…},{…}]</code>? Set TRUE → one row per element instead of one giant row.</div>
+    <div><em>Promote</em>Filtered / joined / date / array fields → typed columns. Raw VARIANT stays for replay and rare fields.</div>
+  </div>
+  <div class="call analogy" style="margin-top:20px"><b class="k">NEXT MODULE</b><div><b><a href="../module07/" style="color:inherit">Module 07: Data protection →</a></b> Time Travel, Fail-safe, zero-copy cloning, replication and failover: how Snowflake keeps your data recoverable when someone runs the wrong DELETE.</div></div>
+</section>
+<footer>Snowflake Interview Lab · Module 06 · Semi-structured Data · Prepared for Saurav Patel</footer>
+</main>
+</div>
+
+<script>
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+const fmt = (n, d = 0) => Number(n).toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d });
+const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+const tabs = (sel, cb) => $$(sel + ' button').forEach(b => b.addEventListener('click', () => { $$(sel + ' button').forEach(x => x.classList.remove('on')); b.classList.add('on'); cb(b.dataset); }));
+
+/* theme + progress */
+const root = document.documentElement;
+root.dataset.theme = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+$('#themeBtn').onclick = () => { root.dataset.theme = root.dataset.theme === 'dark' ? 'light' : 'dark'; };
+const secs = $$('main section'), seen = new Set();
+const io = new IntersectionObserver(es => es.forEach(e => {
+  if (!e.isIntersecting) return;
+  seen.add(e.target.id);
+  $$('.side a').forEach(a => { const id = a.getAttribute('href').slice(1); a.classList.toggle('act', id === e.target.id); if (seen.has(id)) a.classList.add('seen'); });
+  const pct = Math.round(seen.size / secs.length * 100);
+  $('#progBar').style.width = pct + '%'; $('#progLbl').textContent = pct + '% explored';
+}), { rootMargin: '-40% 0px -55% 0px' });
+secs.forEach(s => io.observe(s));
+
+/* shared JSON helpers */
+const jType = v => v === null ? 'NULL_VALUE' : Array.isArray(v) ? 'ARRAY' : typeof v === 'object' ? 'OBJECT' : typeof v === 'boolean' ? 'BOOLEAN' : typeof v === 'number' ? (Number.isInteger(v) ? 'INTEGER' : 'DECIMAL') : 'VARCHAR';
+const isDateStr = v => typeof v === 'string' && /^\d{4}-\d{2}-\d{2}([T ]\d{2}:\d{2}(:\d{2})?)?/.test(v);
+const escA = s => esc(s).replace(/"/g, '&quot;');
+const isIdent = k => /^[A-Za-z_][A-Za-z0-9_]*$/.test(k);
+
+/* ===== 01 format explorer ===== */
+const FMT = {
+  json: { s: `{"order_id": 1001, "customer": {"name": "Asha"},
+ "items": [{"sku": "TEA-01", "qty": 2},
+           {"sku": "MUG-07", "qty": 1}]}
+{"order_id": 1002, "customer": {"name": "Ravi"},
+ "items": []}`,
+    f: [['Encoding', 'Plain text, human-readable'], ['Layout', 'Row by row (one document per record)'], ['Schema', 'None declared: each record describes itself'], ['Typical source', 'REST APIs, Kafka events, app logs'], ['Snowflake load', 'TYPE = JSON → one VARIANT per record']],
+    i: `<b>JSON</b> is the format you'll meet most. It's text, so it's large and slow to parse compared with binary formats, and it has no native date type: dates arrive as strings.` },
+  avro: { s: `-- Avro = binary rows + a JSON schema in the file header
+{"type": "record", "name": "Order",
+ "fields": [
+   {"name": "order_id", "type": "long"},
+   {"name": "customer", "type": "string"},
+   {"name": "promo",    "type": ["null", "string"]}
+ ]}
+-- followed by compact binary records`,
+    f: [['Encoding', 'Binary, compact'], ['Layout', 'Row-oriented'], ['Schema', 'Embedded JSON schema in the file header'], ['Typical source', 'Kafka with a schema registry, streaming pipelines'], ['Snowflake load', 'TYPE = AVRO → one VARIANT per record, or MATCH_BY_COLUMN_NAME']],
+    i: `<b>Avro</b> is row-oriented and schema-aware, which makes it great for streaming one record at a time (Kafka). Schema evolution rules (adding fields with defaults) are built into the format.` },
+  parquet: { s: `-- Parquet = columnar binary file
+row group 1
+  column order_id : INT64   [1001, 1002, 1003 ...]
+  column customer : BYTE_ARRAY (UTF8)
+  column amount   : DECIMAL(10,2)
+  (min/max statistics per column chunk)
+footer: schema + metadata`,
+    f: [['Encoding', 'Binary, compressed per column'], ['Layout', 'Columnar (row groups → column chunks)'], ['Schema', 'Embedded, typed, in the footer'], ['Typical source', 'Spark / data lake exports, Iceberg, pandas'], ['Snowflake load', 'TYPE = PARQUET → $1 VARIANT, or MATCH_BY_COLUMN_NAME / INFER_SCHEMA']],
+    i: `<b>Parquet</b> is the data-lake favourite: columnar like Snowflake's own storage, well compressed, with typed schema. Ideal for INFER_SCHEMA + MATCH_BY_COLUMN_NAME into typed tables.` },
+  orc: { s: `-- ORC = Optimized Row Columnar
+stripe 1
+  index data (min/max per column)
+  row data   (columnar streams)
+  stripe footer
+file footer: schema, stripe list, statistics`,
+    f: [['Encoding', 'Binary, compressed'], ['Layout', 'Columnar (stripes)'], ['Schema', 'Embedded, typed'], ['Typical source', 'Hive / Hadoop ecosystems'], ['Snowflake load', 'TYPE = ORC → $1 VARIANT, or MATCH_BY_COLUMN_NAME']],
+    i: `<b>ORC</b> is Parquet's cousin from the Hive world. In interviews, the main point is: columnar + embedded schema, loaded by Snowflake as semi-structured.` },
+  xml: { s: `<order id="1001">
+  <customer>Asha</customer>
+  <item sku="TEA-01" qty="2"/>
+  <item sku="MUG-07" qty="1"/>
+</order>`,
+    f: [['Encoding', 'Text with tags and attributes'], ['Layout', 'Hierarchical, row by row'], ['Schema', 'Optional (XSD), not enforced by Snowflake'], ['Typical source', 'Legacy enterprise systems, finance, SOAP APIs'], ['Snowflake load', 'TYPE = XML → VARIANT; navigate with $, @, XMLGET']],
+    i: `<b>XML</b> still appears in banking and legacy integrations. Snowflake stores it in VARIANT; <code>$</code> is the element content, <code>@</code> the tag name, <code>@attr</code> an attribute, and <code>XMLGET(v, 'tag', n)</code> fetches the n-th child element.` }
+};
+function fmtShow(k) {
+  const f = FMT[k];
+  $('#fmtSample').textContent = f.s;
+  $('#fmtFacts').innerHTML = '<tr><th>PROPERTY</th><th>' + k.toUpperCase() + '</th></tr>' + f.f.map(([a, b]) => `<tr><td>${a}</td><td>${b}</td></tr>`).join('');
+  $('#fmtIns').innerHTML = f.i;
+}
+tabs('#fmtTabs', d => fmtShow(d.f));
+fmtShow('json');
+
+/* ===== 02 columnarization simulator ===== */
+const CSETS = {
+  clean: [
+    { event_id: 'e1', ts: '2024-03-15T10:00:00Z', user: { id: 7, country: 'IN' }, amount: 19.99, device: 'ios' },
+    { event_id: 'e2', ts: '2024-03-15T10:01:10Z', user: { id: 9, country: 'US' }, amount: 5.5, device: 'web' },
+    { event_id: 'e3', ts: '2024-03-15T10:02:44Z', user: { id: 7, country: 'IN' }, amount: 42.25, device: 'android' },
+    { event_id: 'e4', ts: '2024-03-15T10:03:05Z', user: { id: 12, country: 'DE' }, amount: 8.75, device: 'web' },
+    { event_id: 'e5', ts: '2024-03-15T10:04:31Z', user: { id: 3, country: 'IN' }, amount: 61.5, device: 'ios' },
+    { event_id: 'e6', ts: '2024-03-15T10:05:12Z', user: { id: 21, country: 'BR' }, amount: 12.25, device: 'web' }
+  ],
+  drift: [
+    { event_id: 'e1', user: { id: 7 }, amount: 19.99, device: 'ios' },
+    { event_id: 'e2', user: { id: '9' }, amount: '5.50', device: 'web' },
+    { event_id: 'e3', user: { id: 7 }, amount: 42.25, device: 'android', promo_code: 'SPRING' },
+    { event_id: 'e4', user: { id: 12 }, amount: 8.75, deviceType: 'web' },
+    { event_id: 'e5', user: { id: 3 }, amount: 61.5, device: 'ios', app_version: '5.2.0' },
+    { event_id: 'e6', user: { id: 21 }, amount: 12.25, device: 'web' }
+  ],
+  nulls: [
+    { order_id: 1, status: 'shipped', discount: null, total: 120, gift: false },
+    { order_id: 2, status: 'pending', discount: 5, total: 80, gift: false },
+    { order_id: 3, status: true, discount: null, total: 45, gift: true },
+    { order_id: 4, status: 'shipped', discount: 10, total: 300, gift: false, coupon: 'NEW10' },
+    { order_id: 5, status: 'cancelled', discount: null, total: 15, gift: false },
+    { order_id: 6, status: 'shipped', discount: 0, total: 99, gift: null }
+  ],
+  arrays: [
+    { order_id: 1, order_date: '2024-03-01', items: [{ sku: 'TEA-01', qty: 2 }], tags: ['promo'] },
+    { order_id: 2, order_date: '2024-03-02', items: [{ sku: 'MUG-07', qty: 1 }, { sku: 'TEA-01', qty: 3 }], tags: [] },
+    { order_id: 3, order_date: '2024-03-02', items: [], tags: ['vip', 'gift'] },
+    { order_id: 4, order_date: '2024-03-04', items: [{ sku: 'POT-02', qty: 1 }], tags: ['promo'] },
+    { order_id: 5, order_date: '2024-03-05', items: [{ sku: 'TEA-09', qty: 6 }], tags: [] }
+  ]
+};
+CSETS.custom = [{ id: 1, name: 'paste', nested: { ok: true } }, { id: 2, name: 'your', nested: { ok: false } }, { id: 3, name: 'json here', nested: { ok: true }, extra: [1, 2] }];
+let cSet = 'clean', cRes = [];
+const toNd = arr => arr.map(o => JSON.stringify(o)).join('\n');
+function cParse(txt) {
+  const t = txt.trim(); if (!t) return { err: 'No documents.' };
+  try { if (t.startsWith('[')) { const a = JSON.parse(t); if (Array.isArray(a)) return { docs: a }; } } catch (e) { /* fall through to NDJSON */ }
+  const docs = [];
+  const lines = t.split('\n').map(s => s.trim()).filter(Boolean);
+  for (let i = 0; i < lines.length; i++) { try { docs.push(JSON.parse(lines[i])); } catch (e) { return { err: `Line ${i + 1} is not valid JSON (TRY_PARSE_JSON would return NULL for it).` }; } }
+  return { docs };
+}
+function cWalk(o, pre, inArr, acc, strip) {
+  Object.keys(o).forEach(k => {
+    const v = o[k];
+    if (strip && v === null) return;
+    const seg = isIdent(k) ? k : `"${k}"`;
+    const p = pre ? pre + '.' + seg : seg;
+    if (Array.isArray(v)) {
+      cAdd(acc, p, 'ARRAY', v, inArr, true);
+      v.forEach(el => { if (el && typeof el === 'object' && !Array.isArray(el)) cWalk(el, p + '[*]', true, acc, strip); else if (!(strip && el === null)) cAdd(acc, p + '[*]', jType(el), el, true, false); });
+    } else if (v && typeof v === 'object') cWalk(v, p, inArr, acc, strip);
+    else cAdd(acc, p, jType(v), v, inArr, false);
+  });
+}
+function cAdd(acc, p, t, v, inArr, isArr) {
+  if (!acc[p]) acc[p] = { p, docs: new Set(), types: new Set(), vals: [], inArr, isArr, nulls: 0 };
+  const a = acc[p]; a.docs.add(acc.__doc); a.types.add(t); if (t === 'NULL_VALUE') a.nulls++; else if (!isArr) a.vals.push(v);
+}
+function cAnalyze() {
+  const r = cParse($('#cText').value), min = +$('#cMin').value, strip = $('#cStrip').checked;
+  $('#cMinV').textContent = min + '% of rows';
+  if (r.err) { $('#cTable').innerHTML = `<tr><td class="wrapc" style="color:var(--red)">${esc(r.err)}</td></tr>`; $('#cSvg').innerHTML = ''; cRes = []; cFilterFill(); $('#cIns').innerHTML = '<b>Parse error.</b> ' + esc(r.err) + ' Fix the JSON and press Analyze.'; return; }
+  const acc = {}; r.docs.forEach((d, i) => { acc.__doc = i; if (d && typeof d === 'object' && !Array.isArray(d)) cWalk(d, '', false, acc, strip); });
+  delete acc.__doc;
+  const n = r.docs.length;
+  cRes = Object.values(acc).map(a => {
+    const pres = Math.round(a.docs.size / n * 100), types = [...a.types].filter(t => t !== 'NULL_VALUE');
+    let col = false, why;
+    if (a.inArr) why = 'inside an array: elements are not extracted';
+    else if (a.isArr) why = 'array value: kept in the blob';
+    else if (a.nulls > 0) why = `JSON null in ${a.nulls} row(s)`;
+    else if (types.length > 1) why = 'mixed types: ' + types.join(' / ');
+    else if (pres < min) why = `rare path (${pres}% of rows)`;
+    else { col = true; why = types[0] === 'VARCHAR' && a.vals.some(isDateStr) ? 'consistent, but a date stored as VARCHAR' : 'consistent type, frequent'; }
+    const nums = a.vals.filter(v => typeof v === 'number' || typeof v === 'string');
+    const sorted = nums.slice().sort((x, y) => (x > y ? 1 : x < y ? -1 : 0));
+    return { ...a, pres, types, col, why, mn: sorted[0], mx: sorted[sorted.length - 1] };
+  });
+  const cols = cRes.filter(x => x.col), blob = cRes.filter(x => !x.col);
+  $('#cTable').innerHTML = '<tr><th>PATH</th><th>IN ROWS</th><th>TYPE(S)</th><th>VERDICT</th><th>WHY</th></tr>' + cRes.map(x => `<tr><td>${esc(x.p)}</td><td>${x.pres}%</td><td>${x.types.join('/') || 'NULL_VALUE'}${x.nulls ? ' + null' : ''}</td><td><span class="badge ${x.col ? 'ok' : 'bad'}">${x.col ? 'SUB-COLUMN' : 'BLOB'}</span></td><td class="wrapc" style="font-family:var(--f-body)">${esc(x.why)}</td></tr>`).join('');
+  // svg
+  const W = 560, show = cols.slice(0, 6), bw = show.length ? Math.min(110, (W - 150) / show.length - 8) : 0;
+  let s = `<rect class="mp" x="2" y="2" width="${W - 4}" height="146" rx="10" stroke-width="1"/><text class="tm" x="14" y="20">ONE MICRO-PARTITION · ${n} rows (illustrative)</text>`;
+  show.forEach((c, i) => {
+    const x = 14 + i * (bw + 8);
+    const lab = c.p.length > 13 ? c.p.slice(0, 12) + '…' : c.p;
+    const mm = c.mn === undefined ? '' : (String(c.mn).slice(0, 10) + '…' + String(c.mx).slice(0, 10));
+    s += `<g class="rise" style="animation-delay:${i * 0.08}s"><rect class="colr" x="${x}" y="32" width="${bw}" height="102" rx="8" stroke-width="1.2"/><text class="tm" x="${x + bw / 2}" y="50" text-anchor="middle" style="fill:var(--teal);font-weight:700">${esc(lab)}</text><text class="tm" x="${x + bw / 2}" y="68" text-anchor="middle">${c.types[0]}</text><text class="tm" x="${x + bw / 2}" y="96" text-anchor="middle" style="font-size:9px">min/max</text><text class="tm" x="${x + bw / 2}" y="112" text-anchor="middle" style="font-size:9px">${esc(mm.slice(0, 22))}</text></g>`;
+  });
+  if (cols.length > 6) s += `<text class="tm" x="${14 + 6 * (bw + 8)}" y="90">+${cols.length - 6}</text>`;
+  s += `<rect class="blobr" x="${W - 132}" y="32" width="118" height="102" rx="8" stroke-width="1.2"/><text class="tm" x="${W - 73}" y="54" text-anchor="middle" style="fill:var(--red);font-weight:700">BLOB</text><text class="tm" x="${W - 73}" y="76" text-anchor="middle">${blob.length} path(s)</text><text class="tm" x="${W - 73}" y="96" text-anchor="middle" style="font-size:9px">parsed at read,</text><text class="tm" x="${W - 73}" y="110" text-anchor="middle" style="font-size:9px">no min/max</text>`;
+  $('#cSvg').innerHTML = s;
+  cFilterFill();
+}
+function cFilterFill() {
+  const leaves = cRes.filter(x => !x.isArr);
+  const prev = $('#cFilter').value;
+  $('#cFilter').innerHTML = leaves.map(x => `<option value="${escA(x.p)}">${esc(x.p)}</option>`).join('');
+  if (leaves.some(x => x.p === prev)) $('#cFilter').value = prev;
+  cFilterShow();
+}
+function cFilterShow() {
+  const x = cRes.find(r => r.p === $('#cFilter').value);
+  if (!x) { $('#cSql').textContent = '-- no filterable path'; $('#cIns').innerHTML = 'Analyze a document set to test filters.'; return; }
+  const t = x.types[0] || 'VARCHAR', cast = t === 'INTEGER' ? 'NUMBER' : t === 'DECIMAL' ? 'NUMBER(10,2)' : t === 'BOOLEAN' ? 'BOOLEAN' : 'STRING';
+  const sample = x.vals[0] === undefined ? "'x'" : typeof x.vals[0] === 'string' ? `'${x.vals[0]}'` : String(x.vals[0]);
+  const path = x.inArr ? null : 'v:' + x.p;
+  $('#cSql').textContent = path ? `SELECT COUNT(*)\nFROM raw_events\nWHERE ${path}::${cast} = ${sample};` : `-- path is inside an array: you must FLATTEN first\nSELECT COUNT(*)\nFROM raw_events e, LATERAL FLATTEN(input => e.v:${x.p.split('[*]')[0]}) f\nWHERE f.value${x.p.split('[*]')[1] ? ':' + x.p.split('[*]')[1].replace(/^\./, '') : ''}::${cast} = ${sample};`;
+  let msg;
+  if (x.col && x.why.includes('date')) msg = `<b>Sub-column, but a string.</b> <code>${esc(x.p)}</code> is extracted, so Snowflake can read just that sub-column and its min/max. But the values are VARCHAR: a filter like <code>v:${esc(x.p)}::DATE &gt;= '2024-03-01'</code> applies a cast to every value, so pruning is less reliable than on a real DATE column. This is a top candidate to <b>promote</b> into a typed column.`;
+  else if (x.col) msg = `<b>Prunable.</b> <code>${esc(x.p)}</code> is stored as its own typed sub-column with min/max metadata per micro-partition. Cloud services can skip micro-partitions whose range can't contain <code>${esc(sample)}</code> before the warehouse reads anything, and the warehouse only reads this one sub-column, not the whole document.`;
+  else if (x.inArr) msg = `<b>No pruning from metadata.</b> Values inside arrays stay in the blob, so every micro-partition is read, each document is parsed, and the array is exploded by FLATTEN before filtering. If this filter is common, flatten once into an <code>order_items</code> table with typed columns.`;
+  else msg = `<b>Full scan of the blob.</b> <code>${esc(x.p)}</code> was not extracted (${esc(x.why)}), so there is no min/max to prune with: every micro-partition must be read and the binary document parsed row by row to find the value. ${x.nulls ? 'Try ticking STRIP_NULL_VALUES and re-analyzing.' : x.types.length > 1 ? 'Fix the type upstream or promote it into a typed column with TRY_ casts.' : 'Rare paths are cheap to store but expensive to filter on.'}`;
+  $('#cIns').innerHTML = msg;
+}
+tabs('#cSets', d => { cSet = d.s; $('#cText').value = toNd(CSETS[d.s]); cAnalyze(); });
+$('#cGo').onclick = cAnalyze;
+$('#cStrip').onchange = cAnalyze;
+$('#cMin').oninput = cAnalyze;
+$('#cFilter').onchange = cFilterShow;
+$('#cText').value = toNd(CSETS.clean);
+cAnalyze();
+
+/* ===== 03 JSON explorer ===== */
+const JDOCS = [
+  { order_id: 1001, Status: 'shipped', placed_at: '2024-03-15T10:22:00Z', customer: { id: 77, name: 'Asha Rao', vip: true, address: { city: 'Pune', zip: '411001' } }, 'ship-to': { city: 'Mumbai' }, items: [{ sku: 'TEA-01', qty: 2, price: 4.5 }, { sku: 'MUG-07', qty: 1, price: 12.25 }], coupon: null },
+  { event: 'page_view', user: { user_id: 'u-42', is_logged_in: false }, page: { url: '/pricing', referrer: null }, 'device type': 'mobile', tags: ['promo', 'spring'], metrics: { load_ms: 812, scroll_pct: 0.65 } },
+  { data: { results: [{ id: 1, geo: { lat: 18.52, lon: 73.85 } }, { id: 2, geo: { lat: 19.07, lon: 72.87 } }] }, meta: { page: 1, has_more: true }, '@timestamp': '2024-03-15 09:00:00' }
+];
+let jD = 0, jN = 'dot', jSel = null;
+function jRender() {
+  const lines = [];
+  const pad = n => '  '.repeat(n);
+  const sv = (v, p) => {
+    const dp = escA(JSON.stringify(p));
+    if (v === null) return `<span class="jn jnull" data-p="${dp}">null</span>`;
+    if (typeof v === 'string') return `<span class="jn js" data-p="${dp}">"${esc(v)}"</span>`;
+    if (typeof v === 'number') return `<span class="jn jnum" data-p="${dp}">${v}</span>`;
+    return `<span class="jn jb" data-p="${dp}">${v}</span>`;
+  };
+  const walk = (v, p, ind, prefix, comma) => {
+    const c = comma ? '<span class="jp">,</span>' : '';
+    if (Array.isArray(v)) {
+      lines.push(pad(ind) + prefix + '<span class="jp">[</span>');
+      v.forEach((el, i) => walk(el, p.concat(i), ind + 1, `<span class="jn jp" data-p="${escA(JSON.stringify(p.concat(i)))}">[${i}]</span> `, i < v.length - 1));
+      lines.push(pad(ind) + '<span class="jp">]</span>' + c);
+    } else if (v && typeof v === 'object') {
+      const ks = Object.keys(v);
+      lines.push(pad(ind) + prefix + '<span class="jp">{</span>');
+      ks.forEach((k, i) => {
+        const pp = p.concat(k), key = `<span class="jn jk" data-p="${escA(JSON.stringify(pp))}">"${esc(k)}"</span><span class="jp">: </span>`;
+        const ch = v[k];
+        if (ch && typeof ch === 'object') walk(ch, pp, ind + 1, key, i < ks.length - 1);
+        else lines.push(pad(ind + 1) + key + sv(ch, pp) + (i < ks.length - 1 ? '<span class="jp">,</span>' : ''));
+      });
+      lines.push(pad(ind) + '<span class="jp">}</span>' + c);
+    } else lines.push(pad(ind) + prefix + sv(v, p) + c);
+  };
+  walk(JDOCS[jD], [], 0, '', false);
+  $('#jTree').innerHTML = lines.map(l => `<div class="jl">${l}</div>`).join('');
+  $$('#jTree .jn').forEach(s => s.onclick = () => { jSel = JSON.parse(s.dataset.p); jShow(); });
+  if (jSel) $$('#jTree .jn').forEach(s => s.classList.toggle('sel', s.dataset.p === JSON.stringify(jSel)));
+}
+function jPath(p, mode) {
+  if (!p.length) return 'v';
+  if (mode === 'br') return 'v' + p.map(s => typeof s === 'number' ? `[${s}]` : `['${s}']`).join('');
+  if (mode === 'fn') {
+    const str = p.map((s, i) => typeof s === 'number' ? `[${s}]` : (i ? '.' : '') + (isIdent(s) ? s : `"${s}"`)).join('');
+    return `GET_PATH(v, '${str}')`;
+  }
+  return 'v' + p.map((s, i) => typeof s === 'number' ? `[${s}]` : (i ? '.' : ':') + (isIdent(s) ? s : `"${s}"`)).join('');
+}
+function jGet(doc, p) { let v = doc; for (const s of p) { if (v === null || typeof v !== 'object' || !(s in v)) return undefined; v = v[s]; } return v; }
+function jShow(override, label) {
+  const p = override || jSel; if (!p) return;
+  $$('#jTree .jn').forEach(s => s.classList.toggle('sel', !override && s.dataset.p === JSON.stringify(p)));
+  const v = jGet(JDOCS[jD], p), expr = jPath(p, jN), t = v === undefined ? null : jType(v);
+  let cast = '', castRes = '', note = '';
+  if (v === undefined) { cast = expr + '::STRING'; castRes = '<span class="nullc">NULL</span> (SQL NULL)'; note = `The path doesn't exist in this document, so Snowflake returns <b>SQL NULL</b>: no error, no warning. ${label || ''}`; }
+  else if (t === 'VARCHAR') { const dt = isDateStr(v); cast = expr + (dt ? (v.length > 10 ? '::TIMESTAMP_NTZ' : '::DATE') : '::STRING'); castRes = dt ? esc(v.replace('T', ' ').replace('Z', '')) : esc(v); note = dt ? `JSON has no date type, so this is a <b>string</b> inside the VARIANT. Cast it explicitly (or use <code>TRY_TO_TIMESTAMP(${esc(expr)}::STRING)</code>) before comparing to dates.` : `Raw result shows <code>"${esc(v)}"</code> <b>with quotes</b> because it is still a VARIANT holding a JSON string. <code>::STRING</code> unwraps it into a real VARCHAR without quotes.`; }
+  else if (t === 'INTEGER') { cast = expr + '::NUMBER'; castRes = String(v); note = `A JSON integer. Cast with <code>::NUMBER</code> (or <code>::INT</code>) so joins and SUMs use a real number type.`; }
+  else if (t === 'DECIMAL') { cast = expr + '::NUMBER(10,2)'; castRes = v.toFixed(2); note = `A JSON number with a decimal point. Pick precision/scale explicitly: <code>::NUMBER(10,2)</code>, or <code>::FLOAT</code> for scientific values.`; }
+  else if (t === 'BOOLEAN') { cast = expr + '::BOOLEAN'; castRes = String(v).toUpperCase(); note = `JSON true/false. Cast with <code>::BOOLEAN</code> to filter with <code>WHERE … = TRUE</code>.`; }
+  else if (t === 'NULL_VALUE') { cast = expr + '::STRING'; castRes = '<span class="nullc">NULL</span> (SQL NULL)'; note = `The key exists and holds a <b>JSON null</b>. Raw result is a VARIANT null (<code>IS NULL</code> is FALSE, <code>IS_NULL_VALUE()</code> is TRUE). Casting converts it to SQL NULL.`; }
+  else if (t === 'ARRAY') { cast = `LATERAL FLATTEN(input => ${expr})`; castRes = `${v.length} element(s) → ${v.length} row(s)`; note = `An array. You can pick one element with <code>${esc(jPath(p.concat(0), 'dot'))}</code>, count with <code>ARRAY_SIZE(${esc(expr)})</code>, or explode all of them with FLATTEN (chapter 04).`; }
+  else { cast = 'OBJECT_KEYS(' + expr + ')'; castRes = escA(JSON.stringify(Object.keys(v))); note = `An object. Go deeper with a dot path, list its keys with <code>OBJECT_KEYS()</code>, or flatten it to get one row per key.`; }
+  const raw = v === undefined ? '<span class="nullc">NULL</span>' : escA(JSON.stringify(v).slice(0, 160));
+  const inArr = p.some(s => typeof s === 'number');
+  $('#jOut').innerHTML = `<b class="h">PATH EXPRESSION</b><div class="kv">
+    <b>SELECT</b><code>${esc(expr)}</code>
+    <b>RAW (VARIANT)</b><code>${raw}</code>
+    <b>TYPEOF</b><code>${t === null ? 'NULL' : t}</code>
+    <b>NEXT STEP</b><code>${esc(cast)}</code>
+    <b>RESULT</b><code>${castRes}</code></div><p style="font-size:14px;color:var(--ink2);margin-top:8px">${note}</p>`;
+  $('#jIns').innerHTML = inArr ? `<b>Hard-coded index alert:</b> <code>[${p.find(s => typeof s === 'number')}]</code> picks one position. Real arrays have different lengths per row, so production queries usually FLATTEN instead of indexing.` : !p.every(s => typeof s === 'number' || isIdent(s)) ? `<b>Special characters:</b> this key needs double quotes in colon/dot notation or brackets: <code>${esc(jPath(p, 'dot'))}</code> = <code>${esc(jPath(p, 'br'))}</code>.` : `<b>Same result, three spellings:</b> <code>${esc(jPath(p, 'dot'))}</code> · <code>${esc(jPath(p, 'br'))}</code> · <code>${esc(jPath(p, 'fn'))}</code>.`;
+}
+tabs('#jDocs', d => { jD = +d.d; jSel = null; jRender(); $('#jOut').innerHTML = '<b class="h">CLICK A NODE</b>Pick any key or value in the tree.'; });
+tabs('#jNot', d => { jN = d.n; if (jSel) jShow(); });
+$('#jCase').onclick = () => {
+  const base = jSel && jSel.some(s => typeof s === 'string') ? jSel : (jD === 0 ? ['Status'] : jD === 1 ? ['event'] : ['meta', 'page']);
+  let idx = -1; base.forEach((s, i) => { if (typeof s === 'string') idx = i; });
+  const k = base[idx], flip = k[0] === k[0].toUpperCase() ? k[0].toLowerCase() + k.slice(1) : k[0].toUpperCase() + k.slice(1);
+  const p = base.slice(); p[idx] = flip;
+  jShow(p, `Keys are <b>case-sensitive</b>: <code>${esc(k)}</code> exists but <code>${esc(flip)}</code> does not. (The column name <code>v</code> / <code>V</code> is not case-sensitive.) <code>GET_IGNORE_CASE()</code> helps when sources are inconsistent.`);
+};
+$('#jMiss').onclick = () => { const cur = jSel ? jGet(JDOCS[jD], jSel) : undefined; const base = cur && typeof cur === 'object' && !Array.isArray(cur) ? jSel : (jD === 0 ? ['customer'] : jD === 1 ? ['user'] : ['meta']); jShow(base.concat('loyalty_tier'), 'A typo or a field that only some documents have looks exactly like this. Check with <code>IS_NULL_VALUE</code> / <code>TYPEOF</code> or count non-null rows before trusting a path.'); };
+jRender();
+</script>
+
+<script>
+/* ===== 04 FLATTEN simulator ===== */
+const FROWS = [
+  { id: 1001, v: { customer: 'Asha', items: [{ sku: 'TEA-01', qty: 2, tags: ['organic', 'promo'] }, { sku: 'MUG-07', qty: 1, tags: [] }, { sku: 'POT-02', qty: 1, tags: ['gift'] }], meta: { channel: 'web', coupon: 'SPRING' } } },
+  { id: 1002, v: { customer: 'Ravi', items: [], meta: { channel: 'app' } } },
+  { id: 1003, v: { customer: 'Meera', items: [{ sku: 'TEA-09', qty: 6, tags: ['bulk'] }], meta: {} } }
+];
+const cell = (v, sql) => v === undefined || (sql && v === null) ? '<span class="nullc">NULL</span>' : esc(JSON.stringify(v).length > 46 ? JSON.stringify(v).slice(0, 44) + '…' : JSON.stringify(v));
+function flat(input, outer, rec) {
+  const rows = [];
+  const exp = (node, base) => {
+    if (Array.isArray(node)) node.forEach((el, i) => { const p = base + `[${i}]`; rows.push({ key: null, path: p, index: i, value: el, th: node }); if (rec && el && typeof el === 'object') exp(el, p); });
+    else if (node && typeof node === 'object') Object.keys(node).forEach(k => { const p = base ? base + '.' + k : k; rows.push({ key: k, path: p, index: null, value: node[k], th: node }); if (rec && node[k] && typeof node[k] === 'object') exp(node[k], p); });
+  };
+  exp(input, '');
+  if (!rows.length && outer) rows.push({ key: null, path: null, index: null, value: null, th: input === undefined ? null : input, outer: true });
+  return rows;
+}
+let fM = 'items', fT = null;
+function fBuild() {
+  const outer = $('#fOuter').checked, rec = $('#fRec').checked && fM !== 'double';
+  $('#fRec').disabled = fM === 'double';
+  $('#fIn').innerHTML = '<tr><th>ORDER_ID</th><th>V</th></tr>' + FROWS.map((r, i) => `<tr class="s${i}" id="fin${i}"><td>${r.id}</td><td class="wrapc">${esc(JSON.stringify(fM === 'obj' ? { meta: r.v.meta } : { items: r.v.items }))}</td></tr>`).join('');
+  const O = outer ? ',\n                     OUTER => TRUE' : '', R = rec ? ',\n                     RECURSIVE => TRUE' : '';
+  let out = [], head;
+  if (fM === 'double') {
+    head = ['ORDER_ID', 'I.INDEX', 'SKU', 'T.INDEX', 'TAG'];
+    FROWS.forEach((r, s) => flat(r.v.items, outer, false).forEach(i => {
+      const sku = i.value && i.value.sku;
+      flat(i.value ? i.value.tags : undefined, outer, false).forEach(t => out.push({ s, c: [r.id, i.index, sku === undefined ? undefined : sku, t.index, t.value === null && t.outer ? undefined : t.value] }));
+    }));
+    $('#fSql').textContent = `SELECT o.order_id, i.index, i.value:sku::STRING AS sku,\n       t.index, t.value::STRING AS tag\nFROM raw_orders o,\n     LATERAL FLATTEN(input => o.v:items${O.replace(/\n {21}/, ' ')}) i,\n     LATERAL FLATTEN(input => i.value:tags${O.replace(/\n {21}/, ' ')}) t;`;
+  } else {
+    head = ['ORDER_ID', 'SEQ', 'KEY', 'PATH', 'INDEX', 'VALUE', 'THIS'];
+    const src = fM === 'obj' ? 'meta' : 'items';
+    FROWS.forEach((r, s) => flat(r.v[src], outer, rec).forEach(x => out.push({ s, c: [r.id, s + 1, x.key, x.path, x.index, x.outer ? undefined : x.value, x.th], raw: true })));
+    $('#fSql').textContent = `SELECT o.order_id, f.seq, f.key, f.path,\n       f.index, f.value, f.this\nFROM raw_orders o,\n     LATERAL FLATTEN(input => o.v:${src}${O}${R}) f;`;
+  }
+  const nullc = '<span class="nullc">NULL</span>';
+  $('#fOut').innerHTML = '<tr>' + head.map(h => `<th>${h}</th>`).join('') + '</tr>' + out.map((r, k) => `<tr class="s${r.s} dim" data-s="${r.s}" id="fo${k}">` + r.c.map((c, j) => {
+    if (c === undefined || c === null) return `<td>${nullc}</td>`;
+    if (j === 0 || (typeof c === 'number' && !(fM !== 'double' && j === 5))) return `<td>${c}</td>`;
+    if (fM !== 'double' && (j === 2 || j === 3)) return `<td>${esc(c)}</td>`;
+    if (fM === 'double') return `<td>${esc(c)}</td>`;
+    return `<td class="wrapc">${cell(c)}</td>`;
+  }).join('') + '</tr>').join('');
+  $('#fN').textContent = out.length;
+  const kept = new Set(out.map(r => r.s)), dropped = FROWS.filter((_, i) => !kept.has(i)).map(r => r.id);
+  $('#fDrop').textContent = dropped.length;
+  $('#fOutLbl').textContent = `OUTPUT · ${out.length} rows`;
+  let ins;
+  if (fM === 'double') ins = outer ? `<b>Double flatten with OUTER on both levels:</b> order 1002 (no items) and MUG-07 (no tags) survive as rows with NULLs. Rows = sum over items of max(1, tags). Without OUTER you'd silently lose both.` : `<b>Double flatten:</b> each item row is flattened again on its own <code>tags</code>. MUG-07 has an empty tag list, so it vanishes, and order 1002 vanishes at the first level. ${dropped.length} order(s) dropped. Tick OUTER to keep them.`;
+  else if (rec) ins = `<b>RECURSIVE:</b> every nested level becomes a row (${out.length} rows from 3 orders). The PATH column shows exactly where each value lives, like <code>[0].tags[1]</code>. Run <code>SELECT DISTINCT REGEXP_REPLACE(f.path, '\\\\[[0-9]+\\\\]', '[]')</code> over this to discover a JSON schema.`;
+  else if (fM === 'obj') ins = `<b>Flattening an OBJECT</b> fills KEY (the key name) and leaves INDEX NULL. Order 1003 has an empty object <code>{}</code>, so it ${outer ? 'is kept by OUTER with NULL KEY and VALUE' : 'produces no rows and disappears'}. This is how you pivot unknown keys into rows (key/value pairs).`;
+  else ins = outer ? `<b>OUTER =&gt; TRUE:</b> order 1002 has an empty array but is kept as one row with NULL KEY, INDEX and VALUE, like a LEFT JOIN. ${out.length} rows, 0 orders lost.` : `<b>Default (OUTER =&gt; FALSE):</b> 3 orders became ${out.length} rows, and order 1002 (empty <code>items</code>) is <b>gone</b>. If you count orders from this result you'll under-count. Tick OUTER.`;
+  $('#fIns').innerHTML = ins;
+  return out.length;
+}
+function fStop() { clearInterval(fT); fT = null; $('#fPlay').textContent = 'Play animation'; $$('#fIn tr').forEach(r => r.classList.remove('hot')); }
+function fPlay() {
+  if (fT) { fStop(); return; }
+  const n = fBuild(); let k = 0;
+  $('#fPlay').textContent = '❚❚ Pause';
+  fT = setInterval(() => {
+    if (k >= n) { fStop(); return; }
+    $$('#fOut tr').forEach(r => r.classList.remove('hot'));
+    const tr = $('#fo' + k); tr.classList.remove('dim'); tr.classList.add('hot', 'rise');
+    $$('#fIn tr').forEach(r => r.classList.toggle('hot', r.id === 'fin' + tr.dataset.s));
+    tr.scrollIntoView({ block: 'nearest' });
+    k++;
+  }, 380);
+}
+function fShowAll() { fStop(); $$('#fOut tr').forEach(r => { r.classList.remove('dim', 'hot'); }); }
+tabs('#fMode', d => { fM = d.m; fStop(); fBuild(); fShowAll(); });
+$('#fOuter').onchange = () => { fStop(); fBuild(); fShowAll(); };
+$('#fRec').onchange = () => { fStop(); fBuild(); fShowAll(); };
+$('#fPlay').onclick = fPlay;
+$('#fAll').onclick = fShowAll;
+fBuild(); fShowAll();
+
+/* ===== 05 building playground ===== */
+const BL = [
+  { customer: 'Asha', sku: 'TEA-01', qty: 2, coupon: 'SPRING' },
+  { customer: 'Asha', sku: 'MUG-07', qty: 1, coupon: null },
+  { customer: 'Ravi', sku: 'TEA-01', qty: 3, coupon: null },
+  { customer: 'Asha', sku: 'TEA-01', qty: 1, coupon: 'SPRING' },
+  { customer: 'Ravi', sku: null, qty: 1, coupon: null },
+  { customer: 'Meera', sku: 'POT-02', qty: 1, coupon: null }
+];
+const sortObj = o => Object.keys(o).sort().reduce((a, k) => (a[k] = o[k], a), {});
+const showV = v => JSON.stringify(v);
+const grp = () => { const g = {}; BL.forEach(r => (g[r.customer] = g[r.customer] || []).push(r)); return g; };
+const BF = {
+  oc: () => ({ sql: `SELECT customer,\n       OBJECT_CONSTRUCT('sku', sku, 'qty', qty, 'coupon', coupon) AS line\nFROM order_lines;`, out: BL.map(r => { const o = {}; ['sku', 'qty', 'coupon'].forEach(k => { if (r[k] !== null) o[k] = r[k]; }); return `${r.customer.padEnd(6)} | ${showV(sortObj(o))}`; }), ins: `<b>SQL NULL values are omitted:</b> rows without a coupon have no <code>coupon</code> key at all, and Ravi's second line has no <code>sku</code>. Consumers must treat "missing key" as null.` }),
+  ock: () => ({ sql: `SELECT customer,\n       OBJECT_CONSTRUCT_KEEP_NULL('sku', sku, 'qty', qty, 'coupon', coupon) AS line\nFROM order_lines;`, out: BL.map(r => `${r.customer.padEnd(6)} | ${showV(sortObj({ sku: r.sku, qty: r.qty, coupon: r.coupon }))}`), ins: `<b>KEEP_NULL</b> writes SQL NULLs as JSON <code>null</code>, so every object has the same keys. Use it for API contracts where clients expect a fixed shape.` }),
+  ocs: () => ({ sql: `SELECT OBJECT_CONSTRUCT(*) AS row_obj\nFROM order_lines;`, out: BL.map(r => { const o = {}; Object.keys(r).forEach(k => { if (r[k] !== null) o[k.toUpperCase()] = r[k]; }); return showV(sortObj(o)); }), ins: `<b>(*)</b> turns each whole row into an object, using the column names (uppercase for normal unquoted identifiers) as keys. NULL columns are still omitted. Handy for audit snapshots and for <code>USING TEMPLATE</code>.` }),
+  aa: () => { const g = grp(); return { sql: `SELECT customer, ARRAY_AGG(sku) AS skus\nFROM order_lines\nGROUP BY customer;`, out: Object.keys(g).map(c => `${c.padEnd(6)} | ${showV(g[c].map(r => r.sku).filter(x => x !== null))}`), ins: `<b>ARRAY_AGG skips NULLs</b> (Ravi has 2 lines but only 1 SKU in the array) and keeps duplicates (Asha's TEA-01 twice). Without <code>WITHIN GROUP (ORDER BY …)</code> the element order is <b>not guaranteed</b>.` }; },
+  ao: () => { const g = grp(); return { sql: `SELECT customer,\n       ARRAY_AGG(DISTINCT sku) WITHIN GROUP (ORDER BY sku) AS skus\nFROM order_lines\nGROUP BY customer;`, out: Object.keys(g).map(c => `${c.padEnd(6)} | ${showV([...new Set(g[c].map(r => r.sku).filter(x => x !== null))].sort())}`), ins: `<b>DISTINCT + WITHIN GROUP</b> gives a deterministic, de-duplicated array. When you combine them, the ORDER BY must use the same expression as the DISTINCT.` }; },
+  oa: () => { const g = {}; BL.filter(r => r.sku !== null).forEach(r => { g[r.customer] = g[r.customer] || {}; g[r.customer][r.sku] = (g[r.customer][r.sku] || 0) + r.qty; }); return { sql: `SELECT customer,\n       OBJECT_AGG(sku, total_qty::VARIANT) AS qty_by_sku\nFROM (SELECT customer, sku, SUM(qty) AS total_qty\n      FROM order_lines\n      WHERE sku IS NOT NULL\n      GROUP BY customer, sku)\nGROUP BY customer;`, out: Object.keys(g).map(c => `${c.padEnd(6)} | ${showV(sortObj(g[c]))}`), ins: `<b>OBJECT_AGG(key, value)</b> pivots rows into one object per group. The key must be a string and the value a VARIANT (hence <code>::VARIANT</code>). Asha has TEA-01 on two lines, so the inner query sums first: feeding duplicate keys into OBJECT_AGG in one group raises an error.` }; },
+  ac: () => ({ sql: `SELECT ARRAY_CONSTRUCT(sku, qty, coupon)         AS arr,\n       ARRAY_CONSTRUCT_COMPACT(sku, qty, coupon) AS arr_compact\nFROM order_lines;`, out: BL.map(r => { const a = [r.sku, r.qty, r.coupon].map(x => x === null ? 'undefined' : JSON.stringify(x)); return `[${a.join(', ')}]`.padEnd(28) + ' | ' + showV([r.sku, r.qty, r.coupon].filter(x => x !== null)); }), ins: `<b>ARRAY_CONSTRUCT keeps positions</b>: a SQL NULL argument still occupies a slot (Snowsight displays it as <code>undefined</code>). <b>ARRAY_CONSTRUCT_COMPACT</b> drops NULLs, so positions shift. Pick based on whether position has meaning.` }),
+  pj: () => ({ sql: `-- raw_text(t STRING) holds 3 strings\nSELECT t,\n       TRY_PARSE_JSON(t) AS v,\n       TYPEOF(TRY_PARSE_JSON(t)) AS ty\nFROM raw_text;`, out: [`'{"id": 1, "ok": true}'  | {"id":1,"ok":true} | OBJECT`, `'[1, 2, 3]'              | [1,2,3]            | ARRAY`, `'{id: 1,'                | NULL               | NULL`, ``, `-- PARSE_JSON(t) on the same table:`, `-- the whole query FAILS on row 3 (invalid JSON).`], ins: `<b>PARSE_JSON vs TRY_PARSE_JSON:</b> one bad string makes <code>PARSE_JSON</code> fail the entire statement. <code>TRY_PARSE_JSON</code> returns NULL for that row, so you can route bad records to a quarantine table: <code>WHERE TRY_PARSE_JSON(t) IS NULL AND t IS NOT NULL</code>.`, input: true }),
+  tj: () => ({ sql: `SELECT TO_JSON(OBJECT_CONSTRUCT_KEEP_NULL('sku', sku, 'coupon', coupon)) AS json_text,\n       STRIP_NULL_VALUE(PARSE_JSON('{"c": null}'):c)                   AS stripped\nFROM order_lines LIMIT 3;`, out: BL.slice(0, 3).map(r => `'${showV(sortObj({ sku: r.sku, coupon: r.coupon }))}'`.padEnd(38) + ' | NULL'), ins: `<b>TO_JSON</b> returns a VARCHAR (text), not a VARIANT: use it when writing to a string column, an external system, or a hash (<code>MD5(TO_JSON(v))</code> to detect changed documents). <b>STRIP_NULL_VALUE</b> turns a JSON null into SQL NULL so <code>IS NULL</code> and COALESCE behave.` })
+};
+function bShow(k) {
+  const r = BF[k]();
+  $('#bIn').innerHTML = r.input ? '<tr><th>T (STRING)</th></tr><tr><td>{"id": 1, "ok": true}</td></tr><tr><td>[1, 2, 3]</td></tr><tr><td style="color:var(--red)">{id: 1,</td></tr>' :
+    '<tr><th>CUSTOMER</th><th>SKU</th><th>QTY</th><th>COUPON</th></tr>' + BL.map(x => `<tr><td>${x.customer}</td><td>${x.sku === null ? '<span class="nullc">NULL</span>' : x.sku}</td><td>${x.qty}</td><td>${x.coupon === null ? '<span class="nullc">NULL</span>' : x.coupon}</td></tr>`).join('');
+  $('#bSql').textContent = r.sql;
+  $('#bOut').textContent = '-- result (illustrative)\n' + r.out.join('\n');
+  $('#bIns').innerHTML = r.ins;
+}
+tabs('#bTabs', d => bShow(d.b));
+bShow('oc');
+
+/* ===== 06 loading simulator ===== */
+const LREC = [{ id: 1, name: 'Asha', promo: null }, { id: 2, name: 'Ravi', promo: 'SPRING' }, { id: 3, name: 'Meera', promo: null }];
+const LS = { tab: 'json', shape: 'arr', soa: false, snv: false, mbc: false, tgt: 'typed', soe: false };
+function lOpts() {
+  const o = $('#lOpts');
+  if (LS.tab === 'json') o.innerHTML = `<span class="note-s">File shape:</span><div class="seg" id="lShape"><button data-v="arr" class="${LS.shape === 'arr' ? 'on' : ''}">[ {...}, {...} ] array</button><button data-v="nd" class="${LS.shape === 'nd' ? 'on' : ''}">NDJSON (one per line)</button></div><label class="tog"><input type="checkbox" id="lSoa" ${LS.soa ? 'checked' : ''}> STRIP_OUTER_ARRAY = TRUE</label><label class="tog"><input type="checkbox" id="lSnv" ${LS.snv ? 'checked' : ''}> STRIP_NULL_VALUES = TRUE</label>`;
+  else if (LS.tab === 'parquet') o.innerHTML = `<span class="note-s">Target table:</span><div class="seg" id="lTgt"><button data-v="variant" class="${LS.tgt === 'variant' ? 'on' : ''}">raw (v VARIANT)</button><button data-v="typed" class="${LS.tgt === 'typed' ? 'on' : ''}">typed (4 columns)</button></div><label class="tog"><input type="checkbox" id="lMbc" ${LS.mbc ? 'checked' : ''} ${LS.tgt === 'variant' ? 'disabled' : ''}> MATCH_BY_COLUMN_NAME = CASE_INSENSITIVE</label>`;
+  else o.innerHTML = `<label class="tog"><input type="checkbox" id="lSoe" ${LS.soe ? 'checked' : ''}> STRIP_OUTER_ELEMENT = TRUE</label>`;
+  $$('#lShape button').forEach(b => b.onclick = () => { LS.shape = b.dataset.v; lOpts(); });
+  $$('#lTgt button').forEach(b => b.onclick = () => { LS.tgt = b.dataset.v; lOpts(); });
+  if ($('#lSoa')) $('#lSoa').onchange = e => { LS.soa = e.target.checked; lDraw(); };
+  if ($('#lSnv')) $('#lSnv').onchange = e => { LS.snv = e.target.checked; lDraw(); };
+  if ($('#lMbc')) $('#lMbc').onchange = e => { LS.mbc = e.target.checked; lDraw(); };
+  if ($('#lSoe')) $('#lSoe').onchange = e => { LS.soe = e.target.checked; lDraw(); };
+  lDraw();
+}
+function lDraw() {
+  let file, sql, head, rows, status = 'LOADED', ins;
+  const clean = r => LS.snv ? Object.fromEntries(Object.entries(r).filter(([, v]) => v !== null)) : r;
+  if (LS.tab === 'json') {
+    $('#lFileLbl').textContent = 'STAGED FILE · @json_stage/customers.json';
+    file = LS.shape === 'arr' ? '[\n' + LREC.map(r => '  ' + JSON.stringify(r)).join(',\n') + '\n]' : LREC.map(r => JSON.stringify(r)).join('\n');
+    sql = `CREATE OR REPLACE FILE FORMAT json_fmt\n  TYPE = JSON\n  STRIP_OUTER_ARRAY = ${LS.soa ? 'TRUE' : 'FALSE'}\n  STRIP_NULL_VALUES = ${LS.snv ? 'TRUE' : 'FALSE'};\n\nCOPY INTO raw_customers (v)\nFROM @json_stage/customers.json\nFILE_FORMAT = (FORMAT_NAME = 'json_fmt');`;
+    head = ['ROW', 'V (VARIANT)'];
+    if (LS.shape === 'arr' && !LS.soa) { rows = [[1, JSON.stringify(LREC.map(clean))]]; ins = `<b>One giant row.</b> Without STRIP_OUTER_ARRAY the whole <code>[ … ]</code> is a single document. You'd need FLATTEN on every query, and a big file can exceed the maximum VARIANT size and fail. Tick STRIP_OUTER_ARRAY.`; }
+    else { rows = LREC.map((r, i) => [i + 1, JSON.stringify(clean(r))]); ins = LS.shape === 'nd' ? `<b>NDJSON</b> already has one document per line, so each line becomes one row. STRIP_OUTER_ARRAY has no effect here. ${LS.snv ? 'STRIP_NULL_VALUES removed the <code>promo: null</code> keys.' : ''}` : `<b>STRIP_OUTER_ARRAY</b> unwrapped the outer brackets: each element is now its own row (3 rows), ready for <code>v:name::STRING</code>. ${LS.snv ? 'STRIP_NULL_VALUES also dropped the <code>"promo": null</code> keys, so <code>v:promo</code> is now SQL NULL (missing) rather than JSON null.' : 'Notice <code>"promo": null</code> is kept as a JSON null.'}`; }
+  } else if (LS.tab === 'parquet') {
+    $('#lFileLbl').textContent = 'STAGED FILE · @pq_stage/orders.parquet (schema shown)';
+    file = `message schema {\n  required int64  id;\n  optional binary name (STRING);\n  optional double amount;\n}\n-- 3 rows: (1,'Asha',19.99) (2,'Ravi',5.5) (3,'Meera',42.25)`;
+    const data = [[1, 'Asha', 19.99], [2, 'Ravi', 5.5], [3, 'Meera', 42.25]];
+    if (LS.tgt === 'variant') {
+      sql = `CREATE TABLE raw_orders_pq (v VARIANT);\n\nCOPY INTO raw_orders_pq\nFROM @pq_stage/orders.parquet\nFILE_FORMAT = (TYPE = PARQUET);`;
+      head = ['ROW', 'V (VARIANT)']; rows = data.map((d, i) => [i + 1, JSON.stringify({ amount: d[2], id: d[0], name: d[1] })]);
+      ins = `<b>Raw landing:</b> each Parquet row arrives as one object in the VARIANT column, read as <code>$1</code> during the load. Query it with <code>v:amount::NUMBER(10,2)</code>, exactly like JSON.`;
+    } else {
+      sql = `CREATE TABLE orders_pq (ID NUMBER, NAME STRING,\n  AMOUNT NUMBER(10,2), CREATED_AT TIMESTAMP_NTZ);\n\nCOPY INTO orders_pq\nFROM @pq_stage/orders.parquet\nFILE_FORMAT = (TYPE = PARQUET)${LS.mbc ? '\nMATCH_BY_COLUMN_NAME = CASE_INSENSITIVE' : ''};`;
+      head = ['ID', 'NAME', 'AMOUNT', 'CREATED_AT'];
+      if (!LS.mbc) { rows = []; status = 'ERROR'; ins = `<b>Load fails:</b> a semi-structured file format produces <b>one</b> VARIANT column by default, which can't fill a 4-column table (the error says the format "can produce one and only one column of type variant, object, or array"). Fix: MATCH_BY_COLUMN_NAME, or <code>COPY INTO orders_pq FROM (SELECT $1:id, $1:name, $1:amount, NULL FROM @pq_stage)</code>.`; }
+      else { rows = data.map(d => [d[0], d[1], d[2].toFixed(2), null]); ins = `<b>MATCH_BY_COLUMN_NAME</b> maps file columns <code>id/name/amount</code> to <code>ID/NAME/AMOUNT</code> ignoring case. <code>CREATED_AT</code> has no match in the file, so it's loaded as NULL. Extra file columns with no table column are ignored (unless schema evolution is enabled).`; }
+    }
+  } else {
+    $('#lFileLbl').textContent = 'STAGED FILE · @xml_stage/orders.xml';
+    file = `<orders>\n  <order id="1"><customer>Asha</customer><total>19.99</total></order>\n  <order id="2"><customer>Ravi</customer><total>5.50</total></order>\n</orders>`;
+    sql = `COPY INTO raw_xml (v)\nFROM @xml_stage/orders.xml\nFILE_FORMAT = (TYPE = XML STRIP_OUTER_ELEMENT = ${LS.soe ? 'TRUE' : 'FALSE'});\n\nSELECT GET(v, '@')                            AS tag,\n       GET(v, '@id')::STRING                  AS order_id,\n       XMLGET(v, 'customer'):"$"::STRING      AS customer\nFROM raw_xml;`;
+    head = ['TAG', 'ORDER_ID', 'CUSTOMER'];
+    if (LS.soe) { rows = [['order', '1', 'Asha'], ['order', '2', 'Ravi']]; ins = `<b>STRIP_OUTER_ELEMENT</b> removed <code>&lt;orders&gt;</code>, so each <code>&lt;order&gt;</code> became its own row. <code>@</code> is the tag name, <code>@id</code> an attribute, and <code>XMLGET(v, 'customer'):"$"</code> the child element's content.`; }
+    else { rows = [['orders', null, null]]; ins = `<b>One row for the whole document.</b> The root is <code>&lt;orders&gt;</code>, which has no <code>id</code> attribute or direct <code>customer</code> child, so those return NULL. You'd need <code>LATERAL FLATTEN(input =&gt; v:"$")</code> to reach each order, or tick STRIP_OUTER_ELEMENT.`; }
+  }
+  $('#lFile').textContent = file; $('#lSql').textContent = sql;
+  $('#lOut').innerHTML = '<tr>' + head.map(h => `<th>${h}</th>`).join('') + '</tr>' + (rows.length ? rows.map(r => '<tr>' + r.map(c => c === null ? '<td><span class="nullc">NULL</span></td>' : `<td class="wrapc">${esc(c)}</td>`).join('') + '</tr>').join('') : `<tr><td colspan="${head.length}" style="color:var(--red)">0 rows · COPY failed</td></tr>`);
+  $('#lRows').textContent = rows.length;
+  $('#lStat').innerHTML = `<span class="badge ${status === 'LOADED' ? 'ok' : 'bad'}">${status}</span>`;
+  $('#lIns').innerHTML = ins;
+}
+tabs('#lTabs', d => { LS.tab = d.l; lOpts(); });
+lOpts();
+
+/* ===== 07 performance model ===== */
+const PROWS = [1e6, 1e7, 5e7, 1e8, 5e8, 1e9, 2e9, 5e9, 1e10];
+const PSEL = [[0.9, 'broad · ~90% partitions read'], [0.5, 'medium · ~50%'], [0.2, 'selective · ~20%'], [0.05, 'narrow · ~5%'], [0.01, 'needle · ~1%']];
+const rowsLbl = n => n >= 1e9 ? fmt(n / 1e9) + ' B' : fmt(n / 1e6) + ' M';
+const bytesLbl = b => b >= 1e12 ? fmt(b / 1e12, 1) + ' TB' : b >= 1e9 ? fmt(b / 1e9, 1) + ' GB' : fmt(b / 1e6) + ' MB';
+function pModel(rows, cons, keep) {
+  const e = cons / 100, F = 3, colB = 12, blobB = 200;
+  const rawCol = rows * e * F * colB * keep;
+  const rawBlob = rows * (1 - e) * blobB;
+  const pro = rows * F * colB * keep;
+  const tRaw = 0.3 + rawCol / 1e9 + rawBlob / 0.3e9, tPro = 0.3 + pro / 1e9;
+  return { rawB: rawCol + rawBlob, proB: pro, tRaw, tPro };
+}
+const tLbl = s => s >= 3600 ? fmt(s / 3600, 1) + ' h' : s >= 60 ? fmt(s / 60, 1) + ' min' : fmt(s, 1) + ' s';
+function pDraw() {
+  const ri = +$('#pRows').value, cons = +$('#pCons').value, si = +$('#pSel').value, q = +$('#pQ').value;
+  const rows = PROWS[ri], keep = PSEL[si][0];
+  $('#pRowsV').textContent = rowsLbl(rows) + ' rows'; $('#pConsV').textContent = cons + '% consistent'; $('#pSelV').textContent = PSEL[si][1]; $('#pQV').textContent = fmt(q) + ' / day';
+  const m = pModel(rows, cons, keep);
+  $('#pRawS').textContent = bytesLbl(m.rawB); $('#pRawT').textContent = '≈ ' + tLbl(m.tRaw) + ' per query';
+  $('#pProS').textContent = bytesLbl(m.proB); $('#pProT').textContent = '≈ ' + tLbl(m.tPro) + ' per query';
+  const saved = (m.tRaw - m.tPro) * q / 60;
+  const dailyRows = rows / 30, overhead = 5 + (dailyRows * 200 / 0.05e9) / 60;
+  $('#pSave').textContent = fmt(saved, saved < 10 ? 1 : 0); $('#pCost').textContent = fmt(overhead, overhead < 10 ? 1 : 0);
+  // chart (log-log)
+  const X0 = 60, X1 = 660, Y0 = 220, Y1 = 20;
+  const lx = n => X0 + (Math.log10(n) - 6) / 4 * (X1 - X0);
+  const all = PROWS.map(n => pModel(n, cons, keep));
+  const tmin = 0.1, tmax = Math.max(...all.map(a => a.tRaw)) * 1.5;
+  const ly = t => Y0 - (Math.log10(Math.max(t, tmin)) - Math.log10(tmin)) / (Math.log10(tmax) - Math.log10(tmin)) * (Y0 - Y1);
+  let s = `<line class="arr" x1="${X0}" y1="${Y0}" x2="${X1}" y2="${Y0}"/><line class="arr" x1="${X0}" y1="${Y0}" x2="${X0}" y2="${Y1}"/>`;
+  [1e6, 1e7, 1e8, 1e9, 1e10].forEach(n => s += `<text class="tm" x="${lx(n)}" y="${Y0 + 16}" text-anchor="middle">${rowsLbl(n)}</text><line x1="${lx(n)}" y1="${Y0}" x2="${lx(n)}" y2="${Y0 + 4}" class="arr"/>`);
+  [1, 10, 60, 600, 3600, 36000].filter(t => t < tmax).forEach(t => s += `<text class="tm" x="${X0 - 6}" y="${ly(t) + 4}" text-anchor="end">${tLbl(t)}</text><line x1="${X0}" y1="${ly(t)}" x2="${X1}" y2="${ly(t)}" stroke="var(--line)"/>`);
+  const path = k => PROWS.map((n, i) => `${i ? 'L' : 'M'}${lx(n).toFixed(1)} ${ly(all[i][k]).toFixed(1)}`).join(' ');
+  s += `<path d="${path('tRaw')}" fill="none" stroke="var(--red)" stroke-width="2.4"/><path d="${path('tPro')}" fill="none" stroke="var(--teal)" stroke-width="2.4"/>`;
+  s += `<line x1="${lx(rows)}" y1="${Y1}" x2="${lx(rows)}" y2="${Y0}" stroke="var(--amber)" stroke-dasharray="4 4" stroke-width="1.5"/><circle cx="${lx(rows)}" cy="${ly(m.tRaw)}" r="5" fill="var(--red)" class="pulse"/><circle cx="${lx(rows)}" cy="${ly(m.tPro)}" r="5" fill="var(--teal)"/>`;
+  s += `<text class="tm" x="${X1}" y="${Y1 - 4}" text-anchor="end">query time per run (log scale) · illustrative</text>`;
+  $('#pSvg').innerHTML = s;
+  const ratio = m.tRaw / m.tPro;
+  let ins;
+  if (ratio < 2) ins = cons >= 90 ? `<b>Raw is fine here.</b> With ~${cons}% consistent paths, Snowflake can columnarize most of the data, so raw VARIANT is within ${fmt(ratio, 1)}× of typed columns. A typed <b>view</b> over the raw table gives analysts clean columns without a second copy.` : `<b>Raw is fine at this size.</b> The table is small enough that parsing the blob costs only ${fmt(ratio, 1)}× a typed scan. Query in place (ideally through a typed view) and revisit as the table grows.`;
+  else if (saved < overhead) ins = `<b>Not worth promoting yet.</b> Promotion would save ~${fmt(saved, 1)} warehouse-min/day but cost ~${fmt(overhead, 1)} min/day of extra load work. Few queries or small data: keep querying in place.`;
+  else ins = `<b>Promote.</b> Raw VARIANT is ~${fmt(ratio, 1)}× slower per query because ${100 - cons}% of the data sits in the blob (no pruning, parsed at read). At ${fmt(q)} queries/day that's ~${fmt(saved)} warehouse-minutes saved for ~${fmt(overhead, 1)} min of extra load work. Promote the filtered fields to typed columns (dynamic table or COPY transformation).`;
+  $('#pIns').innerHTML = ins + ' <span class="note-s">Model assumptions: 3 fields read, ~12 B per typed value, ~200 B per blob row, blob parsed at ~0.3 GB/s vs 1 GB/s columnar scan, promotion = ~5 fixed warehouse-min/day for the refresh pipeline plus parsing new rows.</span>';
+}
+['#pRows', '#pCons', '#pSel', '#pQ'].forEach(id => $(id).oninput = pDraw);
+pDraw();
+</script>
+
+<script>
+/* ===== 08 SQL lab ===== */
+const SQL = [
+  { t: 'Paths & casting', l: [
+    [`CREATE OR REPLACE TABLE raw_orders (v VARIANT);`, `A raw landing table with a single VARIANT column. Any JSON document fits.`],
+    [`INSERT INTO raw_orders`, `Insert sample documents. (INSERT … VALUES can't call PARSE_JSON directly, so we use SELECT.)`],
+    [`SELECT PARSE_JSON('{"order_id": 1001, "Status": "shipped", "customer": {"name": "Asha", "vip": true}, "ship-to": {"city": "Mumbai"}, "items": [{"sku": "TEA-01", "qty": 2, "price": 4.5}]}');`, `PARSE_JSON turns the JSON text into a VARIANT value.`],
+    [``, ``],
+    [`SELECT v:order_id::NUMBER          AS order_id,`, `Colon = column to first-level key. ::NUMBER casts the VARIANT into a real number.`],
+    [`       v:Status::STRING            AS status,`, `Keys are case-sensitive: v:status (lowercase) would return NULL here.`],
+    [`       v:customer.name::STRING     AS customer_name,`, `Dot goes one level deeper. ::STRING removes the JSON quotes ("Asha" → Asha).`],
+    [`       v:customer.vip::BOOLEAN     AS is_vip,`, `JSON true/false cast to a SQL BOOLEAN.`],
+    [`       v:"ship-to".city::STRING    AS ship_city,`, `Keys with special characters (hyphen, space, @) need double quotes in path notation.`],
+    [`       v['ship-to']['city']::STRING AS ship_city_2,`, `Bracket notation: same result, often clearer for special keys.`],
+    [`       v:items[0].sku::STRING      AS first_sku,`, `[0] picks the first array element (arrays are 0-based). Fine for exploring; use FLATTEN for real work.`],
+    [`       GET_PATH(v, 'items[0].price')::NUMBER(10,2) AS first_price,`, `GET_PATH is the function form of the colon path. Pick precision and scale for money.`],
+    [`       TYPEOF(v:items)             AS items_type,`, `Returns ARRAY. TYPEOF tells you what is inside a VARIANT: OBJECT, ARRAY, VARCHAR, INTEGER, DECIMAL, BOOLEAN, NULL_VALUE…`],
+    [`       ARRAY_SIZE(v:items)         AS item_count`, `Number of elements in the array.`],
+    [`FROM raw_orders`, `Read from the raw table.`],
+    [`WHERE v:Status::STRING = 'shipped';`, `Filter on the cast value. Casting before comparing keeps types predictable.`]
+  ] },
+  { t: 'Nulls & TRY_', l: [
+    [`SELECT v:coupon                        AS raw_coupon,`, `If the document has "coupon": null, this is a VARIANT null (displayed as null), not SQL NULL.`],
+    [`       v:coupon IS NULL                AS is_sql_null,`, `FALSE for a JSON null (the value exists), TRUE only when the key is missing.`],
+    [`       IS_NULL_VALUE(v:coupon)         AS is_json_null,`, `TRUE only for a JSON null. Returns NULL if the key is missing.`],
+    [`       STRIP_NULL_VALUE(v:coupon)      AS coupon_or_sql_null,`, `Converts a JSON null to SQL NULL; other values pass through unchanged.`],
+    [`       v:coupon::STRING                AS coupon_str,`, `Casting also turns a JSON null into SQL NULL.`],
+    [`       TRY_TO_NUMBER(v:qty::STRING)    AS qty_safe,`, `If one row has "qty": "two", ::NUMBER would fail the whole query. TRY_TO_NUMBER returns NULL for that row instead.`],
+    [`       TRY_TO_DATE(v:order_date::STRING, 'YYYY-MM-DD') AS order_dt,`, `JSON has no date type: dates arrive as strings. Parse them safely with an explicit format.`],
+    [`       TRY_CAST(v:amount::STRING AS NUMBER(10,2)) AS amount_safe`, `TRY_CAST works on string input, so cast the VARIANT to STRING first.`],
+    [`FROM raw_orders;`, `All of these work row by row on the raw table.`],
+    [``, ``],
+    [`SELECT TRY_PARSE_JSON(raw_text) AS v`, `Parse text that might be invalid JSON: bad rows become NULL instead of failing the query.`],
+    [`FROM landing_text`, `A table holding raw JSON strings (for example, from a CSV column or a Kafka payload).`],
+    [`WHERE TRY_PARSE_JSON(raw_text) IS NULL AND raw_text IS NOT NULL;`, `This finds the broken records, so you can quarantine them and alert.`]
+  ] },
+  { t: 'FLATTEN variants', l: [
+    [`SELECT o.v:order_id::NUMBER     AS order_id,`, `Columns from the parent row are still available after the lateral join.`],
+    [`       i.index                  AS line_no,`, `INDEX: position of the element in the array (0, 1, 2…).`],
+    [`       i.value:sku::STRING      AS sku,`, `VALUE is the array element (a VARIANT). Navigate into it with a path and cast.`],
+    [`       i.value:qty::NUMBER      AS qty`, `Same pattern for every field you need.`],
+    [`FROM raw_orders o,`, `The comma before LATERAL works like a join to the table function.`],
+    [`     LATERAL FLATTEN(input => o.v:items) i;`, `One output row per element of each order's items array. Orders with empty or missing items are DROPPED.`],
+    [``, ``],
+    [`SELECT o.v:order_id::NUMBER AS order_id, i.value:sku::STRING AS sku`, `Same query, but keep every order.`],
+    [`FROM raw_orders o,`, `Start from the raw table; the lateral FLATTEN calls follow.`],
+    [`     LATERAL FLATTEN(input => o.v:items, OUTER => TRUE) i;`, `OUTER => TRUE emits one row with NULL VALUE for orders whose items array is empty or missing: the LEFT JOIN of FLATTEN.`],
+    [``, ``],
+    [`SELECT o.v:order_id::NUMBER AS order_id, i.value:sku::STRING AS sku, t.value::STRING AS tag`, `Nested arrays: every item has its own tags array.`],
+    [`FROM raw_orders o,`, `Start from the raw table; the lateral FLATTEN calls follow.`],
+    [`     LATERAL FLATTEN(input => o.v:items) i,`, `First level: items.`],
+    [`     LATERAL FLATTEN(input => i.value:tags) t;`, `Second level: the tags of each item. Row count multiplies at each level.`],
+    [``, ``],
+    [`SELECT DISTINCT REGEXP_REPLACE(f.path, '\\\\[[0-9]+\\\\]', '[]') AS json_path, TYPEOF(f.value) AS type`, `Schema discovery: list every distinct path and type, with array positions collapsed to [].`],
+    [`FROM raw_orders o,`, `Start from the raw table; the lateral FLATTEN calls follow.`],
+    [`     LATERAL FLATTEN(input => o.v, RECURSIVE => TRUE) f`, `RECURSIVE => TRUE walks every nested level of the document.`],
+    [`ORDER BY json_path;`, `Great for documenting an unfamiliar API payload or spotting schema drift.`],
+    [``, ``],
+    [`SELECT f.key, f.value::STRING AS val`, `Flattening an OBJECT: KEY holds each key name, INDEX is NULL.`],
+    [`FROM raw_orders o, TABLE(FLATTEN(input => o.v:customer)) f;`, `TABLE(FLATTEN(...)) is an equivalent way to write the table function call.`]
+  ] },
+  { t: 'Build JSON', l: [
+    [`SELECT customer_id,`, `Build one document per customer from relational tables.`],
+    [`       OBJECT_CONSTRUCT(`, `Creates an OBJECT from key/value pairs.`],
+    [`         'customer_id', customer_id,`, `Key names are string literals; values are any expression.`],
+    [`         'name',        name,`, `Another key/value pair.`],
+    [`         'segment',     segment)        AS customer_obj,`, `If segment is NULL, the key is left out of the object.`],
+    [`       OBJECT_CONSTRUCT_KEEP_NULL('name', name, 'segment', segment) AS fixed_shape,`, `KEEP_NULL writes JSON null instead, so every object has the same keys.`],
+    [`       OBJECT_CONSTRUCT(*)            AS whole_row`, `(*) converts the entire row into an object keyed by column names.`],
+    [`FROM customers;`, `One object per customer row.`],
+    [``, ``],
+    [`SELECT o.order_id,`, `Re-nest order lines under their order.`],
+    [`       ARRAY_AGG(OBJECT_CONSTRUCT('sku', l.sku, 'qty', l.qty))`, `Aggregate one object per line into an array per order.`],
+    [`         WITHIN GROUP (ORDER BY l.line_no) AS items,`, `Without WITHIN GROUP the order inside the array is not guaranteed.`],
+    [`       OBJECT_AGG(l.sku, l.qty::VARIANT)  AS qty_by_sku,`, `OBJECT_AGG builds {sku: qty}. The value must be VARIANT. A duplicate key in a group raises an error.`],
+    [`       ARRAY_CONSTRUCT(o.channel, o.region) AS labels,`, `ARRAY_CONSTRUCT builds a small array from values (ARRAY_CONSTRUCT_COMPACT drops NULLs).`],
+    [`       TO_JSON(OBJECT_CONSTRUCT('id', o.order_id, 'total', o.total)) AS payload_text`, `TO_JSON returns the JSON as VARCHAR text, ready for an API call or hashing.`],
+    [`FROM orders o`, `Order header table.`],
+    [`JOIN order_lines l ON l.order_id = o.order_id`, `One row per line before aggregation.`],
+    [`GROUP BY o.order_id, o.channel, o.region, o.total;`, `One output row (one document) per order.`]
+  ] },
+  { t: 'Load JSON', l: [
+    [`CREATE OR REPLACE FILE FORMAT json_fmt`, `A reusable named file format for JSON files.`],
+    [`  TYPE = JSON`, `Parse files as JSON (newline-delimited, concatenated, or a single outer array).`],
+    [`  STRIP_OUTER_ARRAY = TRUE`, `If a file is [ {...}, {...} ], load each element as its own row instead of one giant row.`],
+    [`  STRIP_NULL_VALUES = FALSE`, `Keep keys with JSON null values. TRUE would drop them (only if missing = null for your business).`],
+    [`  IGNORE_UTF8_ERRORS = FALSE;`, `Fail on invalid UTF-8 rather than silently replacing characters.`],
+    [``, ``],
+    [`CREATE OR REPLACE TABLE raw_events (`, `Landing table: a few metadata columns plus the raw document.`],
+    [`  file_name STRING, file_row NUMBER, load_ts TIMESTAMP_LTZ, v VARIANT);`, `Lineage columns make debugging and replays much easier.`],
+    [``, ``],
+    [`COPY INTO raw_events (file_name, file_row, load_ts, v)`, `Load with a transformation so we can add metadata columns.`],
+    [`FROM (SELECT METADATA$FILENAME, METADATA$FILE_ROW_NUMBER, CURRENT_TIMESTAMP(), $1`, `$1 is the parsed JSON document; METADATA$ columns describe where each row came from.`],
+    [`      FROM @json_stage/events/)`, `Source path in the stage.`],
+    [`FILE_FORMAT = (FORMAT_NAME = 'json_fmt')`, `Use the named format defined above.`],
+    [`ON_ERROR = 'CONTINUE';`, `Skip bad records and keep loading; check the errors afterwards.`],
+    [``, ``],
+    [`COPY INTO events_typed (event_id, user_id, event_ts)`, `Or load straight into typed columns.`],
+    [`FROM (SELECT $1:event_id::STRING, $1:user.id::NUMBER, $1:ts::TIMESTAMP_NTZ FROM @json_stage/events/)`, `Paths and casts inside the COPY transformation promote fields at load time.`],
+    [`FILE_FORMAT = (FORMAT_NAME = 'json_fmt');`, `Same named file format.`],
+    [``, ``],
+    [`SELECT file_name, status, row_count, error_count, first_error_message`, `Check how each file loaded: status, rows loaded, errors and the first error (important with ON_ERROR = CONTINUE).`],
+    [`FROM TABLE(INFORMATION_SCHEMA.COPY_HISTORY(TABLE_NAME => 'RAW_EVENTS', START_TIME => DATEADD('hour', -1, CURRENT_TIMESTAMP())));`, `COPY_HISTORY for this table over the last hour.`]
+  ] },
+  { t: 'Parquet & INFER_SCHEMA', l: [
+    [`CREATE OR REPLACE FILE FORMAT pq_fmt TYPE = PARQUET;`, `INFER_SCHEMA needs a named file format object.`],
+    [``, ``],
+    [`SELECT column_name, type, nullable, expression`, `Inspect what Snowflake detects in the files before creating anything.`],
+    [`FROM TABLE(INFER_SCHEMA(`, `Table function that reads file metadata (the Parquet footer schema).`],
+    [`  LOCATION    => '@pq_stage/orders/',`, `Stage path containing the files.`],
+    [`  FILE_FORMAT => 'pq_fmt'));`, `Name of the file format, as a string.`],
+    [``, ``],
+    [`CREATE OR REPLACE TABLE orders_pq`, `Create the table from the inferred columns…`],
+    [`  USING TEMPLATE (`, `…USING TEMPLATE expects an array of column-definition objects.`],
+    [`    SELECT ARRAY_AGG(OBJECT_CONSTRUCT(*))`, `Turn each INFER_SCHEMA row into an object and aggregate them: chapter 05 in action.`],
+    [`    FROM TABLE(INFER_SCHEMA(LOCATION => '@pq_stage/orders/', FILE_FORMAT => 'pq_fmt')));`, `Same inference call as above.`],
+    [``, ``],
+    [`ALTER TABLE orders_pq SET ENABLE_SCHEMA_EVOLUTION = TRUE;`, `Optional: allow COPY to add new columns found in future files (check docs for conditions and required privileges).`],
+    [``, ``],
+    [`COPY INTO orders_pq`, `Load the Parquet data into the typed table.`],
+    [`FROM @pq_stage/orders/`, `Every file under this stage path.`],
+    [`FILE_FORMAT = (FORMAT_NAME = 'pq_fmt')`, `Parse them as Parquet.`],
+    [`MATCH_BY_COLUMN_NAME = CASE_INSENSITIVE;`, `Map file columns to table columns by name, ignoring case. Unmatched table columns get NULL.`],
+    [``, ``],
+    [`SELECT $1:order_id::NUMBER, $1:amount::NUMBER(10,2)`, `You can also query staged Parquet directly, before loading.`],
+    [`FROM @pq_stage/orders/ (FILE_FORMAT => 'pq_fmt') LIMIT 10;`, `Each staged row is exposed as $1, a VARIANT object.`],
+    [``, ``],
+    [`SELECT GET(x.v, '@id')::STRING AS order_id, XMLGET(x.v, 'customer'):"$"::STRING AS customer`, `XML basics: @id is an attribute, XMLGET fetches a child element, "$" is its content.`],
+    [`FROM raw_xml x;`, `raw_xml was loaded with FILE_FORMAT = (TYPE = XML STRIP_OUTER_ELEMENT = TRUE).`]
+  ] },
+  { t: 'Model & optimize', l: [
+    [`CREATE OR REPLACE VIEW orders_v AS`, `Option 1: a typed view over the raw table. No copy of data; paths are parsed at query time.`],
+    [`SELECT v:order_id::NUMBER          AS order_id,`, `Analysts see normal columns with good names and types.`],
+    [`       TRY_TO_TIMESTAMP_NTZ(v:placed_at::STRING) AS placed_at,`, `TRY_ protects the view from one bad record breaking every dashboard.`],
+    [`       v:customer.id::NUMBER       AS customer_id,`, `A nested field promoted to a clean, typed column name.`],
+    [`       v                           AS payload`, `Keep the raw document available for rare fields.`],
+    [`FROM raw_orders;`, `The view reads the raw table every time it is queried.`],
+    [``, ``],
+    [`CREATE OR REPLACE DYNAMIC TABLE order_items_dt`, `Option 2: promote into a typed, flattened table that refreshes automatically (Module 05).`],
+    [`  TARGET_LAG = '15 minutes' WAREHOUSE = transform_wh`, `How fresh it must be, and which warehouse refreshes it.`],
+    [`AS`, `The query that defines the dynamic table follows.`],
+    [`SELECT o.v:order_id::NUMBER AS order_id, i.index AS line_no,`, `Flatten once here, so dashboards never need to.`],
+    [`       i.value:sku::STRING AS sku, i.value:qty::NUMBER AS qty,`, `Item fields come from each flattened element.`],
+    [`       TRY_TO_TIMESTAMP_NTZ(o.v:placed_at::STRING)::DATE AS order_date`, `Promote the date: real DATE values prune well and can be used for clustering.`],
+    [`FROM raw_orders o, LATERAL FLATTEN(input => o.v:items) i;`, `Note: no OUTER here, so orders without items are excluded on purpose (they have no lines).`],
+    [``, ``],
+    [`ALTER TABLE raw_events ADD SEARCH OPTIMIZATION ON EQUALITY(v:device_id);`, `Speeds up selective point lookups on a VARIANT path (Enterprise Edition+). Costs storage and background maintenance.`],
+    [``, ``],
+    [`SELECT TYPEOF(v:amount) AS t, COUNT(*) AS n`, `Schema-drift check: how many rows hold each type for one field?`],
+    [`FROM raw_events`, `The landing table with the VARIANT column.`],
+    [`WHERE load_ts > DATEADD('day', -1, CURRENT_TIMESTAMP())`, `Look only at yesterday's loads.`],
+    [`GROUP BY 1;`, `If VARCHAR shows up next to DECIMAL, the source changed: alert before dashboards break.`]
+  ] }
+];
+const KW = /\b(CREATE|OR|REPLACE|TABLE|VIEW|DYNAMIC|TARGET_LAG|ON|IF|NOT|EXISTS|ALTER|SET|SELECT|FROM|WHERE|GROUP|BY|ORDER|AS|COUNT|INSERT|INTO|VALUES|AND|IS|NULL|JOIN|COPY|FILE|FORMAT|TYPE|LATERAL|FLATTEN|DISTINCT|LIMIT|WITHIN|USING|TEMPLATE|ADD|SEARCH|OPTIMIZATION|EQUALITY|WAREHOUSE|TRUE|FALSE|VARIANT|STRING|NUMBER|BOOLEAN|PARSE_JSON|TRY_PARSE_JSON|GET_PATH|GET|TYPEOF|ARRAY_SIZE|OBJECT_CONSTRUCT|OBJECT_CONSTRUCT_KEEP_NULL|ARRAY_AGG|OBJECT_AGG|ARRAY_CONSTRUCT|TO_JSON|IS_NULL_VALUE|STRIP_NULL_VALUE|TRY_TO_NUMBER|TRY_TO_DATE|TRY_CAST|TRY_TO_TIMESTAMP_NTZ|INFER_SCHEMA|XMLGET|VALIDATE|DATEADD|CURRENT_TIMESTAMP|REGEXP_REPLACE|OUTER|RECURSIVE|INPUT|MATCH_BY_COLUMN_NAME|STRIP_OUTER_ARRAY|STRIP_NULL_VALUES)\b/g;
+const hl = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/('[^']*')/g, '\u0001$1\u0002').replace(KW, '<span class="kw">$1</span>').replace(/\b(\d+)\b/g, '<span class="num">$1</span>').replace(/\u0001([^\u0002]*)\u0002/g, (m, a) => '<span class="str">' + a.replace(/<[^>]+>/g, '') + '</span>');
+let sqlI = 0;
+function sqlShow(i) {
+  sqlI = i;
+  $$('#sqlTabs button').forEach((b, k) => b.classList.toggle('on', k === i));
+  $('#sqlCode').innerHTML = SQL[i].l.map(([l], k) => `<div data-k="${k}"><em>${k + 1}</em>${hl(l) || ' '}</div>`).join('');
+  $('#sqlExp').innerHTML = '<b class="h">CLICK A LINE</b>Each line is explained in plain English.';
+  $$('#sqlCode div').forEach(d => d.onclick = () => {
+    const e = SQL[sqlI].l[d.dataset.k][1]; if (!e) return;
+    $$('#sqlCode div').forEach(x => x.classList.remove('on')); d.classList.add('on');
+    $('#sqlExp').innerHTML = `<b class="h">LINE ${+d.dataset.k + 1}</b>${esc(e)}`;
+  });
+}
+$('#sqlTabs').innerHTML = SQL.map(s => `<button>${s.t}</button>`).join('');
+$$('#sqlTabs button').forEach((b, i) => b.onclick = () => sqlShow(i));
+sqlShow(0);
+
+/* ===== 09 Q&A ===== */
+const QA = [
+  ['Types', 'b', `What are VARIANT, OBJECT and ARRAY in Snowflake?`, `<p><b>VARIANT</b> is a universal type that can hold any value, including OBJECT and ARRAY, and remembers its inner type (<code>TYPEOF</code>). <b>OBJECT</b> is a collection of key-value pairs (keys are strings, values are VARIANT), like a JSON object. <b>ARRAY</b> is an ordered, 0-indexed list of VARIANT values. Raw JSON is usually loaded into a single VARIANT column. A single VARIANT value has a maximum size: historically 16 MB, raised in newer releases, so check the current docs for the exact figure.</p>`],
+  ['Types', 't', `What's the difference between SQL NULL and JSON null in a VARIANT?`, `<p>A <b>missing key</b> returns SQL NULL. A key whose value is the JSON literal <code>null</code> returns a <b>VARIANT null</b>: a real value, so <code>IS NULL</code> is FALSE. Detect it with <code>IS_NULL_VALUE()</code>; convert it with <code>STRIP_NULL_VALUE()</code> or by casting (<code>::STRING</code> gives SQL NULL). At load time, <code>STRIP_NULL_VALUES = TRUE</code> removes keys with null values entirely. <code>TYPEOF</code> returns <code>NULL_VALUE</code> for a JSON null.</p>`],
+  ['Types', 't', `How does Snowflake store a VARIANT column internally? Can queries on it prune?`, `<p>VARIANT data is stored in regular columnar micro-partitions. At write time, Snowflake tries to <b>extract frequently occurring, consistently typed paths into separate hidden sub-columns</b>, stored columnar with their own metadata (like min/max). Queries on those paths read only the sub-column and can prune micro-partitions. Data that isn't extracted (for example paths with inconsistent types, elements containing JSON nulls, values inside arrays) stays in a binary blob, which has to be read and parsed, with no pruning on those paths. The exact extraction heuristics are internal, so I'd describe the behaviour rather than quote fixed thresholds.</p>`],
+  ['Types', 's', `Queries filtering on a JSON date field got slow after a new source system was onboarded. Why might that be?`, `<p>Likely the new source sends that field in a <b>different type or format</b> (for example an epoch number instead of an ISO string, or nulls), so the path is no longer consistently typed in new micro-partitions. Snowflake then can't extract it as a sub-column there, so those partitions can't be pruned and the blob must be parsed. Even before, dates in JSON are strings, which prune less well than DATE. Fix: normalize and <b>promote</b> the field into a typed <code>DATE/TIMESTAMP</code> column (COPY transformation or dynamic table with <code>TRY_TO_TIMESTAMP</code>), and add a drift check on <code>TYPEOF</code>.</p>`],
+  ['Querying', 'b', `How do you access nested JSON fields? Show the notations.`, `<p><code>v:customer.name</code> (colon for the first level, dots for nesting), <code>v:items[0].sku</code> (0-based array index), <code>v['customer']['name']</code> (bracket notation), <code>v:"ship-to".city</code> (double quotes for special characters), and the functions <code>GET(v, 'customer')</code> and <code>GET_PATH(v, 'customer.name')</code>. Every path returns a VARIANT, so cast the result: <code>::STRING</code>, <code>::NUMBER(10,2)</code>, <code>::DATE</code>.</p>`],
+  ['Querying', 't', `Why does SELECT v:name return "Asha" with quotes, and how do you remove them?`, `<p>The path returns a <b>VARIANT</b> containing a JSON string, and VARIANT values are displayed JSON-encoded, hence the quotes. Casting with <code>v:name::STRING</code> (or <code>AS_VARCHAR(v:name)</code>) extracts a real VARCHAR without quotes. Always cast before joining, grouping or comparing to other columns.</p>`],
+  ['Querying', 't', `Are JSON keys case-sensitive in Snowflake?`, `<p><b>Yes.</b> The column name is case-insensitive (<code>V:</code> = <code>v:</code>), but element names in the path are case-sensitive: <code>v:Status</code> and <code>v:status</code> are different keys, and the wrong one silently returns NULL. When sources are inconsistent, use <code>GET_IGNORE_CASE()</code>, or normalize keys in the pipeline.</p>`],
+  ['Querying', 's', `A nightly report fails with "Numeric value 'N/A' is not recognized". How do you fix it without losing the whole run?`, `<p>Some documents contain a non-numeric string in a field being cast with <code>::NUMBER</code>, and one bad value fails the whole statement. Use <code>TRY_TO_NUMBER(v:amount::STRING)</code> (or <code>TRY_CAST(v:amount::STRING AS NUMBER(10,2))</code>) so bad values become NULL. Then add a data-quality query that counts <code>WHERE v:amount IS NOT NULL AND TRY_TO_NUMBER(v:amount::STRING) IS NULL</code>, route those records to a quarantine table, and alert the source team.</p>`],
+  ['FLATTEN', 'b', `What does FLATTEN return? Name its output columns.`, `<p>FLATTEN is a table function that explodes an ARRAY or OBJECT into one row per element. Columns: <b>SEQ</b> (input record id), <b>KEY</b> (key name for objects), <b>PATH</b> (path to the element), <b>INDEX</b> (position for arrays), <b>VALUE</b> (the element as VARIANT) and <b>THIS</b> (the element being flattened). It's used with <code>LATERAL</code> so each row's own array is expanded: <code>FROM t, LATERAL FLATTEN(input =&gt; t.v:items) f</code>.</p>`],
+  ['FLATTEN', 't', `After flattening, our order count dropped. What happened?`, `<p>By default FLATTEN produces <b>zero rows</b> for an empty, missing or NULL array, so the lateral join removes those orders. Use <code>OUTER =&gt; TRUE</code> to keep one row (with NULL KEY, INDEX and VALUE) per such order. Also check that you count <code>COUNT(DISTINCT order_id)</code>, since after flattening each row is an item, not an order.</p>`],
+  ['FLATTEN', 't', `What does RECURSIVE => TRUE do and when would you use it?`, `<p>It expands <b>all nested levels</b>, not just the first: objects inside arrays inside objects, each emitted as a row with its full PATH (like <code>[0].tags[1]</code>). Use it to discover the schema of unknown JSON (<code>SELECT DISTINCT path, TYPEOF(value)</code>) or to detect drift. It's rarely right for reporting, because it mixes levels and creates many rows.</p>`],
+  ['FLATTEN', 's', `Each order has items, and each item has a list of discounts. Produce one row per discount, keeping items with no discounts.`, `<p>Double flatten with OUTER at the second level (and at the first, if orders without items should stay): <code>FROM raw_orders o, LATERAL FLATTEN(input =&gt; o.v:items) i, LATERAL FLATTEN(input =&gt; i.value:discounts, OUTER =&gt; TRUE) d</code>, selecting <code>i.value:sku::STRING</code> and <code>d.value:code::STRING</code>. Mention the row multiplication (orders × items × discounts), filter early, and materialize the item grain in a table if many reports need it.</p>`],
+  ['Loading', 'b', `How do you load a JSON file where all records are inside one top-level array?`, `<p>Use a JSON file format with <code>STRIP_OUTER_ARRAY = TRUE</code>, so each element of the array becomes its own row. Without it the entire file is one VARIANT value, which forces FLATTEN on every query and can exceed the maximum VARIANT size for large files. Newline-delimited JSON (one document per line) doesn't need this option.</p>`],
+  ['Loading', 't', `How do you load Parquet into a typed table? What does INFER_SCHEMA do?`, `<p>By default Parquet loads as one VARIANT per row (<code>$1</code>). For typed tables use <code>MATCH_BY_COLUMN_NAME = CASE_INSENSITIVE</code> (or <code>CASE_SENSITIVE</code>) on the COPY, or a transformation <code>SELECT $1:col::TYPE</code>. <b>INFER_SCHEMA</b> reads file metadata and returns detected column names, types and expressions; combine it with <code>CREATE TABLE … USING TEMPLATE (SELECT ARRAY_AGG(OBJECT_CONSTRUCT(*)) FROM TABLE(INFER_SCHEMA(...)))</code> to generate the DDL. It needs a named file format. Review inferred types before production use.</p>`],
+  ['Loading', 't', `How do you query XML in Snowflake?`, `<p>Load it with <code>TYPE = XML</code> into a VARIANT (optionally <code>STRIP_OUTER_ELEMENT = TRUE</code> to get one row per second-level element). Then <code>"$"</code> is an element's content, <code>"@"</code> its tag name, <code>GET(v, '@attr')</code> an attribute, and <code>XMLGET(v, 'child', n)</code> the n-th child element with that tag. Example: <code>XMLGET(v, 'customer'):"$"::STRING</code>. For repeated children, FLATTEN <code>v:"$"</code>.</p>`],
+  ['Loading', 's', `A source team adds new fields to their JSON every sprint. Design ingestion so nothing breaks and analysts still get typed columns.`, `<p>Land raw: <code>raw_events(file_name, load_ts, v VARIANT)</code> via Snowpipe or COPY, so new fields never break the load. Build a typed layer on top (a view or dynamic table) using explicit paths with <code>TRY_</code> casts. Run a daily drift job: <code>FLATTEN(v, RECURSIVE =&gt; TRUE)</code> to list new paths and <code>TYPEOF</code> changes, then alert. Promote new fields deliberately when someone needs them; the raw VARIANT keeps history for backfills. For Parquet/Avro sources, <code>ENABLE_SCHEMA_EVOLUTION</code> with <code>MATCH_BY_COLUMN_NAME</code> can add columns automatically.</p>`],
+  ['Modeling', 't', `When would you flatten JSON into typed columns instead of querying VARIANT directly?`, `<p>Promote fields that are used in <b>filters, joins, clustering or aggregations</b>; dates/timestamps and numbers stored as strings; data inside arrays that's flattened frequently; and fields with inconsistent types that need cleaning once. Keep rarely used, fast-changing or audit-only fields in VARIANT. Typed columns give reliable pruning, correct types and simpler BI SQL; the cost is pipeline code and maintenance. Querying in place via a typed view is fine when paths are consistent and query volume is modest.</p>`],
+  ['Modeling', 's', `How would you speed up selective lookups like WHERE v:device_id::STRING = 'abc' on a multi-billion-row event table?`, `<p>First check pruning in the Query Profile. Options: (1) <b>promote</b> device_id into a typed column and consider clustering if the access pattern justifies it; (2) <b>search optimization</b> on the path: <code>ALTER TABLE events ADD SEARCH OPTIMIZATION ON EQUALITY(v:device_id)</code> (Enterprise Edition+), which builds a search access path for point lookups at extra storage and maintenance cost; (3) make sure the field is consistently typed and not inside an array, so it can be columnarized. Measure before and after with partitions scanned vs total.</p>`]
+];
+const LV = { b: 'FUNDAMENTAL', t: 'TRICKY', s: 'SCENARIO' };
+function qa(f) { $('#qaList').innerHTML = QA.filter(q => f === 'all' || q[0] === f).map(([tp, l, q, a]) => `<details class="qa"><summary><span class="lv ${l}">${LV[l]}</span><span class="tp">${tp.toUpperCase()}</span>${q}</summary><div class="ans">${a}</div></details>`).join(''); }
+tabs('#qaTabs', d => qa(d.f));
+qa('all');
+
+/* ===== 10 quiz ===== */
+const QZ = [
+  ["Which type can hold a string, a number, an OBJECT or an ARRAY?",["OBJECT","ARRAY","VARCHAR","VARIANT"],3,"VARIANT is the universal semi-structured type. OBJECT and ARRAY are specific shapes that VARIANT can contain."],
+  ["The document is {\"Status\": \"shipped\"}. What does v:status return?",["'shipped'","\"shipped\"","SQL NULL","An error"],2,"JSON keys are case-sensitive. status (lowercase) doesn't exist, so the result is SQL NULL with no error."],
+  ["Why does SELECT v:name show \"Asha\" with double quotes?",["The result is still a VARIANT holding a JSON string; ::STRING removes the quotes","The data was loaded incorrectly","Snowsight adds quotes to all strings","Because name is a reserved word"],0,"Paths return VARIANT, which is displayed JSON-encoded. Casting to STRING gives a plain VARCHAR."],
+  ["For {\"coupon\": null}, what is v:coupon IS NULL?",["TRUE","FALSE","NULL","Error"],1,"It's a JSON (VARIANT) null, a real value. IS_NULL_VALUE(v:coupon) is TRUE; casting to STRING gives SQL NULL."],
+  ["How do you reference a key named ship-to?",["v:ship-to","v.ship_to","GET(v, ship-to)","v:\"ship-to\" or v['ship-to']"],3,"Keys with special characters need double quotes in path notation, or bracket notation."],
+  ["A field sometimes contains \"N/A\" instead of a number. Which expression won't fail the query?",["v:amount::NUMBER","CAST(v:amount AS NUMBER)","TRY_TO_NUMBER(v:amount::STRING)","TO_NUMBER(v:amount)"],2,"TRY_ functions return NULL for unconvertible values. Cast the VARIANT to STRING first."],
+  ["Three orders, one with an empty items array. LATERAL FLATTEN(input => v:items) with default options: what happens to that order?",["It is dropped from the result","One row with NULL VALUE","The query errors","It appears twice"],0,"By default zero elements = zero rows, so the lateral join drops it. OUTER => TRUE keeps one row with NULLs."],
+  ["Which FLATTEN output column holds the array element itself?",["THIS","KEY","VALUE","SEQ"],2,"VALUE is the element (VARIANT). THIS is the container being flattened, KEY the key name for objects, INDEX the array position."],
+  ["What does RECURSIVE => TRUE add?",["Retries on error","Sorting of the output","Deduplication","Expansion of all nested levels, not just the first"],3,"Recursive flattening walks every nested object and array, emitting the PATH of each element. Ideal for schema discovery."],
+  ["OBJECT_CONSTRUCT('a', 1, 'b', NULL) returns…",["{\"a\": 1}","{\"a\": 1, \"b\": null}","NULL","An error"],0,"OBJECT_CONSTRUCT omits pairs whose value is SQL NULL. OBJECT_CONSTRUCT_KEEP_NULL would keep \"b\": null."],
+  ["A JSON file is shaped [ {...}, {...}, {...} ]. Which option loads one row per element?",["STRIP_NULL_VALUES = TRUE","STRIP_OUTER_ARRAY = TRUE","SKIP_HEADER = 1","MATCH_BY_COLUMN_NAME"],1,"STRIP_OUTER_ARRAY removes the outer brackets so each element becomes its own row."],
+  ["COPY of a Parquet file into a 5-column typed table fails. Which addition fixes it most directly?",["STRIP_OUTER_ARRAY = TRUE","FORCE = TRUE","ON_ERROR = CONTINUE","MATCH_BY_COLUMN_NAME = CASE_INSENSITIVE"],3,"Semi-structured formats produce one VARIANT column by default. MATCH_BY_COLUMN_NAME (or a SELECT $1:… transformation) maps fields to columns."],
+  ["Which part of VARIANT data is least likely to be extracted into a prunable sub-column?",["A top-level integer present in every row","A string field with the same type everywhere","Values inside an array","A boolean present in every row"],2,"Per Snowflake's guidance, data inside arrays is not extracted, along with inconsistently typed elements and elements containing JSON nulls."],
+  ["In XML loaded into VARIANT, what does XMLGET(v, 'customer'):\"$\" return?",["The content of the first <customer> child element","The tag name","All attributes","The number of customers"],0,"XMLGET returns the child element; \"$\" is its content and \"@\" would be its tag name."]
+];
+let qi = 0; const qAns = Array(QZ.length).fill(null);
+QZ.forEach((_, i) => { const s = document.createElement('span'); s.onclick = () => qShow(i); $('#qzBar').appendChild(s); });
+function qShow(i) {
+  qi = i; const [q, opts, ok, ex] = QZ[i], a = qAns[i];
+  $('#qzN').textContent = i + 1;
+  [...$('#qzBar').children].forEach((s, k) => { s.classList.toggle('on', qAns[k] !== null); s.style.outline = k === i ? '2px solid var(--ice)' : ''; });
+  $('#qzBody').innerHTML = `<h3 style="margin-top:6px">${esc(q)}</h3>` + opts.map((o, k) => `<button class="opt ${a !== null ? (k === ok ? 'ok' : (k === a ? 'bad' : '')) : ''}" data-k="${k}">${String.fromCharCode(65 + k)}. ${esc(o)}</button>`).join('') + (a !== null ? `<div class="qexp"><b>${a === ok ? 'Correct.' : 'Not quite.'}</b> ${esc(ex)}</div>` : '');
+  $$('#qzBody .opt').forEach(b => b.onclick = () => { if (qAns[qi] !== null) return; qAns[qi] = +b.dataset.k; qShow(qi); $('#qzS').textContent = qAns.filter((x, j) => x === QZ[j][2]).length; });
+  $('#qzNext').textContent = i === QZ.length - 1 ? 'See result' : 'Next';
+}
+function qResult() {
+  const s = qAns.filter((x, j) => x === QZ[j][2]).length;
+  const msg = s >= QZ.length - 2 ? 'Interview-ready on semi-structured data.' : s >= Math.round(QZ.length * 0.6) ? 'Solid. Replay the JSON explorer and the FLATTEN simulator, then retry.' : 'Walk through chapters 02 to 04 again (nulls, paths, FLATTEN), then retry.';
+  $('#qzBody').innerHTML = `<div class="score">${s} / ${QZ.length}</div><p style="margin-top:8px">${msg}</p><button class="btn pri" id="qzAgain" style="margin-top:10px">Retry quiz</button>`;
+  $('#qzAgain').onclick = () => { qAns.fill(null); $('#qzS').textContent = 0; qShow(0); };
+}
+$('#qzNext').onclick = () => qi === QZ.length - 1 ? qResult() : qShow(qi + 1);
+$('#qzPrev').onclick = () => qShow(Math.max(0, qi - 1));
+qShow(0);
+</script>
+<div class="toast" id="toast"></div>
+<script>
+(() => {
+  const t = document.getElementById('toast'); let h;
+  document.querySelectorAll('.road a.soon').forEach(a => a.addEventListener('click', e => {
+    e.preventDefault();
+    t.textContent = `Module ${a.dataset.m} isn't built yet. Ask for it in chat and it will be added here.`;
+    t.classList.add('on'); clearTimeout(h); h = setTimeout(() => t.classList.remove('on'), 2800);
+  }));
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,1423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Snowflake Interview Lab · Module 10 · Data Sharing &amp; Collaboration</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/space-grotesk@5/300.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/space-grotesk@5/700.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/ibm-plex-sans@5/300.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/ibm-plex-sans@5/400.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/ibm-plex-sans@5/600.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/jetbrains-mono@5/400.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/jetbrains-mono@5/700.css">
+<style>
+:root{
+  --bg:#F2F6FA; --card:#FFFFFF; --card2:#E9EFF5; --ink:#0B1B2B; --ink2:#46596B; --ink3:#7F90A2;
+  --line:rgba(11,27,43,.12); --line2:rgba(11,27,43,.22);
+  --ice:#0A86C2; --ice-s:#DCEFF9; --amber:#B86F00; --amber-s:#FFF0D4; --teal:#0B8A6A; --teal-s:#DAF3EB;
+  --red:#C93C3C; --red-s:#FCE4E4; --grid:rgba(10,134,194,.06);
+  --f-head:"Space Grotesk",sans-serif; --f-body:"IBM Plex Sans",sans-serif; --f-mono:"JetBrains Mono",monospace;
+  --r:10px;
+}
+[data-theme="dark"]{
+  --bg:#08121D; --card:#0F1D2C; --card2:#16293B; --ink:#E5EDF5; --ink2:#9DB0C3; --ink3:#687D91;
+  --line:rgba(229,237,245,.10); --line2:rgba(229,237,245,.22);
+  --ice:#4CC3F0; --ice-s:rgba(76,195,240,.13); --amber:#FFB938; --amber-s:rgba(255,185,56,.13); --teal:#3FD3A8; --teal-s:rgba(63,211,168,.13);
+  --red:#FF7070; --red-s:rgba(255,112,112,.14); --grid:rgba(76,195,240,.05);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:var(--f-body);color:var(--ink);line-height:1.7;font-size:16px;
+  background:radial-gradient(1200px 600px at 85% -10%, var(--ice-s), transparent 60%),radial-gradient(900px 500px at -10% 30%, var(--teal-s), transparent 60%),
+  linear-gradient(var(--grid) 1px, transparent 1px) 0 0/32px 32px,linear-gradient(90deg, var(--grid) 1px, transparent 1px) 0 0/32px 32px,var(--bg);background-attachment:fixed}
+code,.mono{font-family:var(--f-mono);font-size:.88em}
+p code,li code,td code{background:var(--card2);padding:1px 6px;border-radius:5px}
+button{font-family:var(--f-body);cursor:pointer}
+.top{position:sticky;top:0;z-index:30;display:flex;align-items:center;gap:16px;padding:12px 28px;border-bottom:1px solid var(--line);background:color-mix(in srgb,var(--bg) 82%,transparent);backdrop-filter:saturate(1.4) blur(8px)}
+.brand{font-family:var(--f-mono);font-weight:700;letter-spacing:.06em;font-size:13px}.brand b{color:var(--ice)}
+.pill{font-family:var(--f-mono);font-size:12px;padding:3px 10px;border-radius:99px;border:1px solid var(--line2);color:var(--ink2)}
+.prog{flex:1;height:4px;background:var(--card2);border-radius:4px;overflow:hidden;max-width:360px;margin-left:auto}
+.prog i{display:block;height:100%;width:0;background:var(--ice);transition:width .4s}
+.prog-l{font-family:var(--f-mono);font-size:12px;color:var(--ink2);min-width:84px}
+.theme{border:1px solid var(--line2);background:var(--card);color:var(--ink);border-radius:8px;padding:5px 10px;font-size:13px}
+.wrap{display:grid;grid-template-columns:270px minmax(0,1fr);gap:36px;max-width:1340px;margin:0 auto;padding:28px}
+nav.side{position:sticky;top:76px;align-self:start;max-height:calc(100vh - 96px);overflow:auto;padding-right:6px}
+.side h4{font-family:var(--f-mono);font-size:11px;letter-spacing:.14em;color:var(--ink3);margin:6px 0 10px;font-weight:400}
+.side a{display:flex;gap:10px;align-items:baseline;padding:6px 10px;border-radius:8px;color:var(--ink2);text-decoration:none;font-size:14px;border-left:2px solid transparent}
+.side a span{font-family:var(--f-mono);font-size:11px;color:var(--ink3)}
+.side a:hover{background:var(--card)}
+.side a.act{color:var(--ink);background:var(--card);border-left-color:var(--ice);border-radius:0 8px 8px 0}
+.side a.seen span{color:var(--teal)}
+.road{margin-top:22px;border-top:1px solid var(--line);padding-top:14px}
+.road div{font-size:13px;color:var(--ink3);padding:3px 10px;display:flex;gap:8px}
+.road div.now{color:var(--ink);font-weight:600}.road div.done{color:var(--teal)}
+.road div em{font-style:normal;font-family:var(--f-mono);font-size:11px;min-width:20px}
+main{min-width:0}
+section{padding:36px 0 44px;border-bottom:1px dashed var(--line2);scroll-margin-top:70px}
+.eyebrow{font-family:var(--f-mono);font-size:12px;letter-spacing:.16em;color:var(--ice);margin-bottom:6px}
+h1{font-family:var(--f-head);font-weight:700;font-size:clamp(40px,6vw,76px);line-height:1;letter-spacing:-.03em}
+h1 .thin,h2 .thin{font-weight:300;color:var(--ink2)}
+h2{font-family:var(--f-head);font-weight:700;font-size:clamp(28px,3.4vw,40px);letter-spacing:-.02em;line-height:1.1;margin-bottom:12px}
+h3{font-family:var(--f-head);font-weight:700;font-size:20px;margin:26px 0 10px;letter-spacing:-.01em}
+.lead{font-size:18px;font-weight:300;color:var(--ink2);max-width:820px}
+p{margin:8px 0}
+ul.dots{margin:8px 0 8px 20px}ul.dots li{margin:4px 0}
+.wwh{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:20px 0}
+.wwh .box{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:18px 20px;position:relative;overflow:hidden}
+.wwh .box.how{grid-column:1/-1}
+.wwh .tag{font-family:var(--f-mono);font-size:11px;letter-spacing:.14em;display:inline-block;padding:2px 8px;border-radius:5px;margin-bottom:8px}
+.box.what .tag{background:var(--ice-s);color:var(--ice)}.box.why .tag{background:var(--amber-s);color:var(--amber)}.box.how .tag{background:var(--teal-s);color:var(--teal)}
+.box::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px}
+.box.what::before{background:var(--ice)}.box.why::before{background:var(--amber)}.box.how::before{background:var(--teal)}
+.call{display:flex;gap:14px;padding:14px 18px;border-radius:var(--r);margin:14px 0;border:1px solid var(--line)}
+.call b.k{font-family:var(--f-mono);font-size:11px;letter-spacing:.12em;white-space:nowrap;padding-top:3px}
+.call.analogy{background:var(--ice-s)}.call.analogy b.k{color:var(--ice)}
+.call.trap{background:var(--red-s)}.call.trap b.k{color:var(--red)}
+.call.pro{background:var(--teal-s)}.call.pro b.k{color:var(--teal)}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px;margin:18px 0}
+.panel-h{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+.panel-h .t{font-family:var(--f-mono);font-size:12px;letter-spacing:.12em;color:var(--ink2)}.panel-h .t b{color:var(--ink)}
+.btn{border:1px solid var(--line2);background:var(--card);color:var(--ink);padding:7px 14px;border-radius:8px;font-size:14px;transition:all .15s}
+.btn:hover{border-color:var(--ice);color:var(--ice)}
+.btn.pri{background:var(--ice);color:var(--card);border-color:var(--ice)}.btn.pri:hover{color:var(--card);filter:brightness(1.08)}
+.btn.warn{border-color:var(--red);color:var(--red)}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.ctl{display:flex;align-items:center;gap:12px;font-size:14px;color:var(--ink2);margin:8px 0}
+.ctl label{min-width:150px}.ctl input[type=range]{flex:1;accent-color:var(--ice)}
+.ctl .v{font-family:var(--f-mono);font-size:13px;color:var(--ink);min-width:110px;text-align:right}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:14px 0}
+.stat{background:var(--card2);border-radius:10px;padding:12px 14px}
+.stat .k{font-family:var(--f-mono);font-size:11px;color:var(--ink3);letter-spacing:.08em}
+.stat .n{font-family:var(--f-head);font-weight:700;font-size:28px;line-height:1.2}
+.stat .s{font-size:12px;color:var(--ink2)}
+.sqlbox{font-family:var(--f-mono);font-size:13px;background:var(--card2);border-radius:8px;padding:10px 14px;white-space:pre-wrap;color:var(--ink);border-left:3px solid var(--ice);overflow:auto}
+.insight{font-size:14px;padding:10px 14px;border-radius:8px;background:var(--amber-s);color:var(--ink);margin-top:10px}.insight b{color:var(--amber)}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+.tabs button{border:1px solid var(--line2);background:transparent;color:var(--ink2);padding:6px 12px;border-radius:99px;font-size:13px}
+.tabs button.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}.grid2>div{min-width:0}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.mini{background:var(--card2);border-radius:10px;padding:14px}
+.mini h5{font-family:var(--f-head);font-size:15px;margin-bottom:4px}
+.mini p{font-size:14px;color:var(--ink2);margin:0}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:13px;color:var(--ink2);margin:8px 0}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:-1px;margin-right:6px}
+table.t{width:100%;border-collapse:collapse;font-size:14px}
+table.t th,table.t td{padding:7px 10px;border-bottom:1px solid var(--line);text-align:left}
+table.t th{font-family:var(--f-mono);font-size:11px;letter-spacing:.1em;color:var(--ink3);font-weight:400}
+table.t td.m{font-family:var(--f-mono);font-size:12px}
+svg{width:100%;height:auto;display:block}
+svg .t{font-family:var(--f-body);font-size:14px;fill:var(--ink)}
+svg .ts{font-family:var(--f-body);font-size:12px;fill:var(--ink2)}
+svg .th{font-family:var(--f-head);font-size:14px;font-weight:700;fill:var(--ink)}
+svg .tm{font-family:var(--f-mono);font-size:11px;fill:var(--ink2)}
+.L-cs{fill:var(--amber-s);stroke:var(--amber)}.L-cp{fill:var(--ice-s);stroke:var(--ice)}.L-st{fill:var(--teal-s);stroke:var(--teal)}
+.neutral{fill:var(--card);stroke:var(--line2)}
+.arr{stroke:var(--ink3);stroke-width:1.2;fill:none}
+.fn{transition:opacity .3s}
+.flow.playing .fn{opacity:.25}
+.flow.playing .fn.on{opacity:1}
+.fn.on rect{stroke-width:2.4}
+.edge{stroke:var(--ink3);stroke-width:1.4;fill:none;transition:opacity .3s}
+.flow.playing .edge{opacity:.2}
+.flow.playing .edge.on{opacity:1;stroke:var(--ice);stroke-width:2.4;stroke-dasharray:7 5}
+@media (prefers-reduced-motion:no-preference){
+  .flow.playing .edge.on{animation:dash .8s linear infinite}
+  @keyframes dash{to{stroke-dashoffset:-24}}
+  .pulse{animation:pulse 1.2s ease-in-out infinite}
+  @keyframes pulse{0%,100%{opacity:.35}50%{opacity:1}}
+  .rise{animation:rise .5s both}
+  @keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+  .grow{transform-box:fill-box;transform-origin:left center;animation:grow .6s both}
+  @keyframes grow{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+}
+.stepbar{display:flex;gap:6px;margin:12px 0}
+.stepbar span{flex:1;height:4px;border-radius:4px;background:var(--card2);cursor:pointer}
+.stepbar span.on{background:var(--ice)}
+.stepdesc{min-height:120px;background:var(--card2);border-radius:10px;padding:14px 16px}
+.stepdesc h4{font-family:var(--f-head);font-size:17px;margin-bottom:6px}
+.stepdesc .two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.stepdesc .two div{font-size:14px;color:var(--ink2)}
+.stepdesc .two b.l{display:block;font-family:var(--f-mono);font-size:11px;letter-spacing:.12em;margin-bottom:4px}
+.stepdesc .two .you b.l{color:var(--ice)}.stepdesc .two .be b.l{color:var(--teal)}
+.term{background:#0A141F;color:#D6E2EE;font-family:var(--f-mono);font-size:12.5px;border-radius:12px;padding:14px 16px;height:340px;overflow:auto;border:1px solid #1E3247}
+.term div{white-space:pre;line-height:1.5}
+.term .tin{color:#FFB938}.term .terr{color:#FF7A7A}.term .tok{color:#3FD3A8}.term .tdim{color:#6F8499}
+.tbar{display:flex;gap:6px;align-items:center;margin-bottom:8px}
+.tbar i{width:10px;height:10px;border-radius:50%;display:inline-block}
+.tinput{display:flex;gap:8px;margin-top:8px}
+.tinput input{flex:1;font-family:var(--f-mono);font-size:13px;padding:8px 10px;border-radius:8px;border:1px solid var(--line2);background:var(--card);color:var(--ink)}
+.cmds{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}
+.cmds button{font-family:var(--f-mono);font-size:11.5px;border:1px solid var(--line2);background:var(--card);color:var(--ink);padding:5px 9px;border-radius:7px;text-align:left}
+.cmds button:hover{border-color:var(--amber);color:var(--amber)}
+.cmds button small{display:block;font-family:var(--f-body);font-size:11px;color:var(--ink3)}
+.explain{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 16px;min-height:90px;font-size:14.5px}
+.explain b.h{font-family:var(--f-mono);font-size:12px;color:var(--ice);letter-spacing:.1em;display:block;margin-bottom:4px}
+.gantt-l{font-family:var(--f-mono);font-size:11px;fill:var(--ink2)}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font-family:var(--f-mono);font-size:12px;border:1px solid var(--line2);padding:5px 10px;border-radius:99px;cursor:pointer;user-select:none;background:var(--card);color:var(--ink2)}
+.chip.on{background:var(--ice-s);border-color:var(--ice);color:var(--ice)}
+.chip.now{outline:2px solid var(--amber);outline-offset:2px}
+.fcard{border:1px solid var(--line2);border-radius:10px;padding:10px 12px;cursor:pointer;background:var(--card);text-align:left;color:var(--ink)}
+.fcard.on{border-color:var(--ice);background:var(--ice-s)}
+.fcard b{display:block;font-family:var(--f-mono);font-size:12px}
+.fcard small{color:var(--ink3);font-size:12px}
+.out{font-family:var(--f-mono);font-size:12px;background:var(--card2);border-radius:8px;padding:10px 14px;white-space:pre-wrap;border-left:3px solid var(--teal);max-height:260px;overflow:auto}
+.chunk{border:1px solid var(--line2);border-radius:8px;padding:8px 10px;font-size:13px;margin:6px 0;background:var(--card)}
+.chunk em{font-style:normal;background:var(--amber-s);color:var(--ink);border-bottom:2px solid var(--amber)}
+.chunk b{font-family:var(--f-mono);font-size:11px;color:var(--ice);margin-right:8px}
+.act-i{color:var(--teal);font-family:var(--f-mono);font-size:12px;font-weight:700}
+.act-d{color:var(--red);font-family:var(--f-mono);font-size:12px;font-weight:700}
+.badge{font-family:var(--f-mono);font-size:11px;padding:2px 8px;border-radius:99px;white-space:nowrap}
+.badge.ok{background:var(--teal-s);color:var(--teal)}.badge.bad{background:var(--red-s);color:var(--red)}.badge.mid{background:var(--amber-s);color:var(--amber)}.badge.off{background:var(--card2);color:var(--ink3)}
+.flash{animation:flash 1s}
+@keyframes flash{0%{box-shadow:0 0 0 3px var(--amber)}100%{box-shadow:0 0 0 0 transparent}}
+.tn rect{fill:var(--card);stroke:var(--line2);transition:all .3s}
+.tn.run rect{fill:var(--amber-s);stroke:var(--amber);stroke-width:2.4}
+.tn.ok rect{fill:var(--teal-s);stroke:var(--teal);stroke-width:2}
+.tn.skip rect{fill:var(--card2);stroke:var(--ink3);stroke-dasharray:5 4}
+.tn.fail rect{fill:var(--red-s);stroke:var(--red);stroke-width:2}
+.tn .st{font-family:var(--f-mono);font-size:10px;fill:var(--ink3)}
+.log{max-height:240px;overflow:auto}
+.pk{transition:transform .8s cubic-bezier(.5,.05,.3,1)}
+.code{font-family:var(--f-mono);font-size:13px;background:var(--card2);border-radius:10px;padding:10px 0;overflow:auto}
+.code div{padding:2px 16px 2px 0;cursor:pointer;white-space:pre;display:block}
+.code div em{font-style:normal;color:var(--ink3);width:40px;text-align:right;padding-right:14px;display:inline-block;user-select:none}
+.code div:hover{background:var(--ice-s)}
+.code div.on{background:var(--ice-s);box-shadow:inset 3px 0 var(--ice)}
+.kw{color:var(--ice);font-weight:700}.str{color:var(--teal)}.num{color:var(--amber)}
+.qa{border:1px solid var(--line);border-radius:10px;margin:8px 0;background:var(--card);overflow:hidden}
+.qa summary{list-style:none;cursor:pointer;padding:14px 18px;display:flex;gap:12px;align-items:baseline;font-weight:600}
+.qa summary::-webkit-details-marker{display:none}
+.qa summary .lv{font-family:var(--f-mono);font-size:10px;letter-spacing:.1em;padding:2px 8px;border-radius:99px;flex:none;font-weight:400}
+.lv.b{background:var(--teal-s);color:var(--teal)}.lv.t{background:var(--red-s);color:var(--red)}.lv.s{background:var(--amber-s);color:var(--amber)}
+.qa summary .tp{font-family:var(--f-mono);font-size:10px;color:var(--ink3);flex:none;font-weight:400}
+.qa summary::after{content:"+";margin-left:auto;font-family:var(--f-mono);color:var(--ink3)}
+.qa[open] summary::after{content:"−"}
+.qa .ans{padding:0 18px 16px;color:var(--ink2);font-size:15px;border-top:1px solid var(--line)}
+.qa .ans p:first-child{margin-top:12px}
+.opt{display:block;width:100%;text-align:left;padding:12px 14px;margin:8px 0;border:1px solid var(--line2);border-radius:10px;background:var(--card);color:var(--ink);font-size:15px}
+.opt:hover{border-color:var(--ice)}
+.opt.ok{border-color:var(--teal);background:var(--teal-s)}.opt.bad{border-color:var(--red);background:var(--red-s)}
+.qexp{margin-top:10px;padding:12px 14px;border-radius:10px;background:var(--card2);font-size:14px;color:var(--ink2)}
+.score{font-family:var(--f-head);font-weight:700;font-size:56px;line-height:1}
+.cheat{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+.cheat div{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 16px;font-size:14px}
+.cheat div em{font-style:normal;font-family:var(--f-mono);font-size:20px;font-weight:700;color:var(--ice);display:block;line-height:1.1;margin-bottom:4px}
+.analogy-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:18px}
+.ag{border-radius:12px;padding:16px;border:1px solid var(--line);background:var(--card)}
+.ag .k{font-family:var(--f-mono);font-size:11px;letter-spacing:.12em}
+.ag h5{font-family:var(--f-head);font-size:18px;margin:2px 0 4px}
+.ag p{font-size:14px;color:var(--ink2);margin:0}
+.ag.a1{border-top:3px solid var(--amber)}.ag.a1 .k{color:var(--amber)}
+.ag.a2{border-top:3px solid var(--ice)}.ag.a2 .k{color:var(--ice)}
+.ag.a3{border-top:3px solid var(--teal)}.ag.a3 .k{color:var(--teal)}
+.ag.a4{border-top:3px solid var(--red)}.ag.a4 .k{color:var(--red)}
+footer{padding:40px 0;color:var(--ink3);font-size:13px;font-family:var(--f-mono)}
+.note-s{font-size:12px;color:var(--ink3);font-style:italic}
+@media (max-width:1000px){
+  .wrap{grid-template-columns:1fr;padding:16px}
+  nav.side{display:none}
+  .wwh,.grid2,.stepdesc .two{grid-template-columns:1fr}
+  .grid3,.analogy-grid{grid-template-columns:1fr}
+  .prog{display:none}
+}
+.road a.rm{display:flex;gap:8px;align-items:baseline;font-size:13px;padding:5px 10px;border-radius:8px;text-decoration:none;color:var(--ink2);border-left:2px solid transparent}
+.road a.rm:hover{background:var(--card);color:var(--ink)}
+.road a.rm em{font-style:normal;font-family:var(--f-mono);font-size:11px;min-width:20px}
+.road a.rm i{font-style:normal;font-family:var(--f-mono);font-size:9.5px;margin-left:auto;border:1px solid var(--line2);border-radius:99px;padding:0 6px;white-space:nowrap;color:var(--ink3)}
+.road a.rm.now{color:var(--ink);font-weight:600;border-left-color:var(--ice);background:var(--card);border-radius:0 8px 8px 0}
+.road a.rm.now i{border-color:var(--ice);color:var(--ice)}
+.road a.rm.ready em,.road a.rm.ready i{color:var(--teal)}.road a.rm.ready i{border-color:var(--teal)}
+.road a.rm.soon{color:var(--ink3)}
+.toast{position:fixed;bottom:24px;left:50%;transform:translate(-50%,20px);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;font-size:14px;opacity:0;transition:all .3s;z-index:60;pointer-events:none;max-width:90vw}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+.code div.pdone{box-shadow:inset 3px 0 var(--teal)}
+#pcCode{max-height:600px;position:relative}
+/* ===== module 10 additions ===== */
+tr.rowchg td{background:var(--amber-s)}
+.sel{font-family:var(--f-mono);font-size:13px;padding:6px 10px;border-radius:8px;border:1px solid var(--line2);background:var(--card);color:var(--ink);max-width:100%}
+.gchips .chip{display:inline-flex;gap:6px;align-items:center}
+.gchips .chip::before{content:"";width:10px;height:10px;border-radius:3px;border:1px solid var(--line2);background:var(--card2)}
+.gchips .chip.on::before{background:var(--ice);border-color:var(--ice)}
+.qbtns{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
+.qbtns button{font-family:var(--f-mono);font-size:11.5px;border:1px solid var(--line2);background:var(--card);color:var(--ink);padding:6px 10px;border-radius:7px}
+.qbtns button:hover{border-color:var(--teal);color:var(--teal)}
+.qbtns button.cur{border-color:var(--teal);background:var(--teal-s);color:var(--teal)}
+.shbox rect{transition:all .3s}
+.sh-ok rect.bx{stroke:var(--teal);stroke-width:2.2}
+.sh-off{opacity:.35}
+.ping{fill:var(--amber)}
+@media (prefers-reduced-motion:no-preference){
+  .ping.go{animation:ping 1.1s ease-out both}
+  @keyframes ping{0%{opacity:1;transform:translateX(0)}100%{opacity:0;transform:translateX(var(--dx,300px))}}
+  .crrow{animation:rise .4s both}
+}
+.ping{transform-box:fill-box}
+.lockrow{font-family:var(--f-mono);font-size:11.5px;padding:3px 8px;border-radius:6px;background:var(--card2);margin:3px 0;display:flex;justify-content:space-between;gap:8px;color:var(--ink2)}
+.lockrow.hit{background:var(--teal-s);color:var(--ink)}
+.lockrow b{font-weight:400;color:var(--ink3)}
+.crcols{display:grid;grid-template-columns:1fr 1.2fr 1fr;gap:14px;align-items:start}
+.crcols>div{min-width:0}
+.crmid{background:var(--card2);border-radius:12px;padding:14px;border:1px dashed var(--line2)}
+.blurlist{max-height:250px;overflow:auto;position:relative}
+.lcard{border:1px solid var(--line2);border-radius:14px;padding:16px 18px;background:linear-gradient(135deg,var(--ice-s),transparent 70%),var(--card)}
+.lcard h5{font-family:var(--f-head);font-size:20px;margin:4px 0}
+.lcard .row{gap:6px}
+.mapdot{transition:all .3s}
+.mapdot.on{stroke:var(--ink);stroke-width:2.5}
+.kbd{font-family:var(--f-mono);font-size:12px;background:var(--card2);border:1px solid var(--line2);border-radius:5px;padding:1px 6px}
+.costbar{transition:width .4s}
+@media (max-width:1000px){
+  .crcols{grid-template-columns:1fr}
+  .top{flex-wrap:wrap;padding:10px 16px;gap:8px 12px}
+  .ctl{flex-wrap:wrap}.ctl label{min-width:0;flex:1 1 100%}.ctl .v{min-width:0}
+}
+/* course-wide phone layout */
+@media (max-width:560px){
+  .top{flex-wrap:wrap;gap:8px;padding:10px 14px}
+  .top .pill,.top .prog-l,.top .prog{display:none}
+  .brand{flex:1}
+  .ctl{flex-wrap:wrap}.ctl label{min-width:0;flex:1 1 100%}.ctl .v{min-width:0;text-align:left}
+  table{display:block;overflow-x:auto;max-width:100%}
+  .grid2,.grid3,.analogy-grid,[style*="grid-template-columns"]{grid-template-columns:1fr!important}
+  .grid2>*,.grid3>*,.call>div{min-width:0}
+  p code,li code,td code{word-break:break-word}
+  .code,.sqlbox,.out,.term,pre{max-width:100%;overflow-x:auto}
+  .call{flex-direction:column;gap:6px}
+  main,section,.panel,.wwh .box,.mini{min-width:0;max-width:100%}
+}
+</style>
+</head>
+<body>
+<div class="top">
+  <div class="brand">SNOWFLAKE<b>//</b>INTERVIEW LAB</div>
+  <span class="pill">Module 10 · Data sharing</span>
+  <div class="prog"><i id="progBar"></i></div>
+  <span class="prog-l" id="progLbl">0% explored</span>
+  <button class="theme" id="themeBtn">Dark / light</button>
+</div>
+<div class="wrap">
+<nav class="side">
+  <h4>MODULE 10 · CHAPTERS</h4>
+  <a href="#intro"><span>00</span>Start here</a>
+  <a href="#share"><span>01</span>Secure Data Sharing</a>
+  <a href="#reader"><span>02</span>Reader accounts</a>
+  <a href="#region"><span>03</span>Cross-region &amp; cross-cloud</a>
+  <a href="#listings"><span>04</span>Listings &amp; Marketplace</a>
+  <a href="#cleanroom"><span>05</span>Data Clean Rooms</a>
+  <a href="#nativeapps"><span>06</span>Native Apps</a>
+  <a href="#gov"><span>07</span>Governance in sharing</a>
+  <a href="#sql"><span>08</span>SQL lab</a>
+  <a href="#qa"><span>09</span>Interview Q&amp;A</a>
+  <a href="#quiz"><span>10</span>Quiz</a>
+  <a href="#cheat"><span>11</span>Cheat sheet</a>
+  <div class="road">
+    <h4>COURSE ROADMAP · CLICK TO OPEN</h4>
+    <a class="rm ready" href="../module01/"><em>01</em>Architecture<i>open</i></a>
+    <a class="rm ready" href="../module02/"><em>02</em>SnowSQL · unstructured · streams, tasks &amp; procedures<i>open</i></a>
+    <a class="rm ready" href="../module03/"><em>03</em>Performance tuning<i>open</i></a>
+    <a class="rm ready" href="../module04/"><em>04</em>Data ingestion (Snowpipe)<i>open</i></a>
+    <a class="rm ready" href="../module05/"><em>05</em>Dynamic tables &amp; transforms<i>open</i></a>
+    <a class="rm ready" href="../module06/"><em>06</em>Semi-structured data<i>open</i></a>
+    <a class="rm ready" href="../module07/"><em>07</em>Data protection<i>open</i></a>
+    <a class="rm ready" href="../module08/"><em>08</em>Security &amp; governance<i>open</i></a>
+    <a class="rm ready" href="../module09/"><em>09</em>Cost optimization<i>open</i></a>
+    <a class="rm now" href="../module10/"><em>10</em>Data sharing<i>you are here</i></a>
+    <a class="rm ready" href="../module11/"><em>11</em>Snowpark &amp; Cortex AI<i>open</i></a>
+    <a class="rm ready" href="../module12/"><em>12</em>Advanced SQL<i>open</i></a>
+    <a class="rm ready" href="../module13/"><em>13</em>Modeling &amp; tooling<i>open</i></a>
+    <a class="rm ready" href="../module14/"><em>14</em>System design &amp; behavioral<i>open</i></a>
+  </div>
+</nav>
+<main>
+
+<section id="intro">
+  <div class="eyebrow">MODULE 10 · DATA SHARING &amp; COLLABORATION</div>
+  <h1>Share the data.<br><span class="thin">Never the copy.</span></h1>
+  <p class="lead" style="margin-top:18px">Every company needs to give data to someone: a partner, a customer, a supplier, another business unit. The old way was to <b>export a file, send it, and let them load it</b>. This module shows how Snowflake lets another account query your data <b>live, in place, with no copy and no pipeline</b>, and how the same idea grows into listings, the Marketplace, clean rooms and Native Apps.</p>
+
+  <div class="wwh">
+    <div class="box what"><span class="tag">01 · WHAT IS THE PROBLEM?</span>
+      <p>Think about sending a report to a colleague. You can <b>email the file as an attachment</b>: they get a copy, it's out of date the moment you change your version, and you've lost control of who forwards it. Or you can <b>share a Google Doc link</b>: there's only one document, they always see the latest version, and you can remove their access whenever you want.</p>
+      <p>Traditional data exchange is the email attachment: <b>FTP/SFTP drops, CSV extracts, S3 bucket copies, API pulls</b>. Snowflake Secure Data Sharing is the Google Doc link.</p>
+    </div>
+    <div class="box why"><span class="tag">02 · WHY SHARING WITHOUT COPYING MATTERS</span>
+      <ul class="dots">
+        <li><b>No ETL:</b> no export job, no file transfer, no load job on the other side. Nothing to schedule, monitor or fix at 3 a.m.</li>
+        <li><b>No stale copies:</b> the consumer reads the same data you see, as soon as your transaction commits.</li>
+        <li><b>No duplicate storage:</b> the bytes stay in your account. Ten consumers do not mean ten copies.</li>
+        <li><b>Governance stays with the owner:</b> you choose exactly which tables, columns and rows go out, and you can revoke access instantly.</li>
+      </ul>
+    </div>
+    <div class="box how"><span class="tag">03 · HOW IS THAT EVEN POSSIBLE?</span>
+      <p>Remember Module 1: Snowflake separates <b>storage</b> (micro-partitions in cloud object storage), <b>compute</b> (virtual warehouses) and <b>cloud services</b> (metadata, security, optimizer). Because the data files are immutable and the "which files make up this table" list is just <b>metadata</b>, Snowflake can let another account's warehouse read <i>your</i> micro-partitions. All that's actually shared is a set of <b>permissions recorded in cloud services</b>. The consumer brings their own compute, so their queries never slow down your warehouses.</p>
+    </div>
+  </div>
+
+  <p style="margin-top:6px">Five new characters for this module:</p>
+  <div class="analogy-grid">
+    <div class="ag a1 rise"><div class="k">SECURE SHARE</div><h5>A library reading room</h5><p>Visitors read the original book on site. Nobody photocopies it, and the librarian decides which shelves they may open.</p></div>
+    <div class="ag a2 rise" style="animation-delay:.1s"><div class="k">READER ACCOUNT</div><h5>A guest pass</h5><p>Your friend has no membership, so you buy them a guest pass. They can read, but you pay for it, and they can only visit your shelves.</p></div>
+    <div class="ag a3 rise" style="animation-delay:.2s"><div class="k">LISTING / MARKETPLACE</div><h5>A shop window</h5><p>The same data, packaged with a description, sample queries and terms, shown to chosen accounts or to everyone, even in other cities (regions).</p></div>
+    <div class="ag a4 rise" style="animation-delay:.3s"><div class="k">CLEAN ROOM</div><h5>The friendly matchmaker</h5><p>Tells two people "you have 37 friends in common" without showing either of them the other's contact list.</p></div>
+  </div>
+  <div class="call analogy"><b class="k">ONE MORE</b><div><b>Native App = a vending machine installed in your office.</b> The provider builds and stocks the machine (code and logic), you place it in your building (your account), and it works on your own data without the provider ever walking in.</div></div>
+</section>
+
+<section id="share">
+  <div class="eyebrow">CHAPTER 01</div>
+  <h2>Secure Data Sharing <span class="thin">· providers, consumers and the share object</span></h2>
+  <div class="wwh">
+    <div class="box what"><span class="tag">01 · WHAT IS IT</span>
+      <p>Secure Data Sharing lets one Snowflake account (the <b>provider</b>) give another account (the <b>consumer</b>) <b>read-only access to selected objects</b> without copying or moving any data.</p>
+      <ul class="dots">
+        <li>A <b>share</b> is a named Snowflake object (<code>CREATE SHARE</code>). Think of it as an envelope of privileges: "USAGE on this database, USAGE on this schema, SELECT on these tables and secure views", plus the list of consumer accounts allowed to open it.</li>
+        <li>The consumer turns the share into a <b>read-only database</b> in their account with <code>CREATE DATABASE … FROM SHARE</code>, then queries it with their own warehouse like any other database.</li>
+        <li>A share points at objects from <b>one database</b>. Secure views in that database can still reference other databases if you grant <code>REFERENCE_USAGE</code> on those databases to the share.</li>
+      </ul>
+    </div>
+    <div class="box why"><span class="tag">02 · WHY WE USE IT</span>
+      <ul class="dots">
+        <li><b>Live data:</b> provider DML is visible to consumers as soon as it commits.</li>
+        <li><b>Zero copy:</b> no storage is duplicated and nothing has to be kept in sync.</li>
+        <li><b>Clear cost split:</b> the <b>provider pays storage</b> (it's their data), the <b>consumer pays compute</b> (their warehouse runs the queries). Sharing itself has no extra charge for direct shares in the same region.</li>
+        <li><b>Fine-grained and revocable:</b> share only a secure view with some columns and rows, and remove a grant or an account at any time with immediate effect.</li>
+        <li>Typical uses: sending data to customers and partners, sharing between business units that have separate accounts, and receiving third-party data (weather, financial, demographic) without building ingestion.</li>
+      </ul>
+    </div>
+    <div class="box how"><span class="tag">03 · HOW IT WORKS IN THE BACKEND</span>
+      <div class="grid3">
+        <div class="mini"><h5>1 · Metadata, not data</h5><p>When you <code>GRANT SELECT ON TABLE orders TO SHARE s</code>, cloud services records a privilege. No micro-partition is touched. Creating a share and adding a 50 TB table takes about the same time as adding a 5 MB one.</p></div>
+        <div class="mini"><h5>2 · Consumer compiles, provider's files are read</h5><p>When the consumer queries, <i>their</i> cloud services layer compiles the plan using the provider's table metadata (partition list, min/max stats), prunes, and <i>their</i> warehouse reads the provider's micro-partitions directly from storage in the same region.</p></div>
+        <div class="mini"><h5>3 · Always the latest version</h5><p>Every committed DML creates a new table version (new micro-partition list). The consumer's next query simply resolves to the newest version, which is why updates show up "instantly" without any refresh job.</p></div>
+      </div>
+      <p style="margin-top:10px"><b>What can go into a share?</b> Databases, schemas, tables (including external, Iceberg and dynamic tables in current releases), <b>secure views</b>, <b>secure materialized views</b> and <b>secure UDFs</b>. Snowflake keeps extending this list, so phrase it as "tables and secure objects, check the current docs for newer object types" in an interview. By default a share accepts only <b>secure</b> views and functions, which leads to the next point.</p>
+    </div>
+  </div>
+
+  <div class="panel" id="shPanel">
+    <div class="panel-h"><div class="t">SIMULATOR · <b>PROVIDER → SHARE → CONSUMER</b></div><button class="btn" id="shReset">Reset</button></div>
+    <div class="note-s" style="margin-bottom:6px">1 · Provider grants to SALES_SHARE (click to toggle):</div>
+    <div class="chips gchips" id="shGrants">
+      <span class="chip on" data-g="db">GRANT USAGE ON DATABASE sales_db</span>
+      <span class="chip on" data-g="sc">GRANT USAGE ON SCHEMA sales_db.public</span>
+      <span class="chip on" data-g="ord">GRANT SELECT ON TABLE orders</span>
+      <span class="chip" data-g="vw">GRANT SELECT ON VIEW v_region_sales</span>
+      <span class="chip" data-g="cust">GRANT SELECT ON TABLE customers (PII)</span>
+      <span class="chip on" data-g="acct">ALTER SHARE … ADD ACCOUNTS = partner_org.partner_acct</span>
+    </div>
+    <div class="row" style="margin:10px 0 4px"><span class="note-s" style="min-width:150px">v_region_sales is a:</span><div class="tabs" id="shVType" style="margin:0"><button class="on" data-v="secure">SECURE VIEW</button><button data-v="regular">regular VIEW</button></div></div>
+    <svg viewBox="0 0 680 230" class="flow" id="shFlow">
+      <path class="edge" id="she1" d="M200 85 L262 85"/>
+      <path class="edge" id="she2" d="M418 85 L480 85"/>
+      <path class="edge" id="she3" d="M110 150 L110 178"/>
+      <path class="edge" id="she4" d="M570 150 Q570 200 230 200" stroke-dasharray="4 4"/>
+      <g class="fn" id="shn-p"><rect class="L-st" x="20" y="20" width="180" height="130" rx="12" stroke-width="1"/><text class="th" x="110" y="40" text-anchor="middle" dominant-baseline="central">PROVIDER account</text><text class="tm" x="110" y="62" text-anchor="middle">sales_db.public</text><text class="tm" x="110" y="82" text-anchor="middle" id="shP1">orders · 3 rows</text><text class="tm" x="110" y="100" text-anchor="middle">customers (PII)</text><text class="tm" x="110" y="118" text-anchor="middle">v_region_sales</text><text class="ts" x="110" y="138" text-anchor="middle">pays STORAGE</text></g>
+      <g class="fn" id="shn-s"><rect class="L-cs" x="262" y="40" width="156" height="90" rx="12" stroke-width="1"/><text class="th" x="340" y="62" text-anchor="middle" dominant-baseline="central">SALES_SHARE</text><text class="ts" x="340" y="84" text-anchor="middle" id="shSObj">3 grants</text><text class="ts" x="340" y="104" text-anchor="middle" id="shSAcc">1 consumer account</text></g>
+      <g class="fn" id="shn-c"><rect class="L-cp" x="480" y="20" width="180" height="130" rx="12" stroke-width="1"/><text class="th" x="570" y="40" text-anchor="middle" dominant-baseline="central">CONSUMER account</text><text class="tm" x="570" y="62" text-anchor="middle">partner_sales (read-only)</text><text class="tm" x="570" y="82" text-anchor="middle" id="shC1">orders · visible</text><text class="tm" x="570" y="104" text-anchor="middle">own warehouse PARTNER_WH</text><text class="ts" x="570" y="138" text-anchor="middle">pays COMPUTE</text></g>
+      <g class="fn" id="shn-st"><rect class="neutral" x="20" y="178" width="210" height="44" rx="10" stroke-width="1"/><text class="ts" x="125" y="200" text-anchor="middle" dominant-baseline="central">micro-partitions (provider storage)</text></g>
+      <text class="tm" x="430" y="218" text-anchor="middle">consumer warehouse reads the SAME files · 0 bytes copied</text>
+      <circle class="ping" id="shPing" cx="200" cy="85" r="6" opacity="0"/>
+    </svg>
+    <div class="note-s" style="margin:6px 0 2px">2 · Provider changes data:</div>
+    <div class="row"><button class="btn" id="shUpd">UPDATE orders SET status = 'SHIPPED' WHERE order_id = 1002</button><button class="btn" id="shIns">INSERT a new order</button></div>
+    <div class="note-s" style="margin:10px 0 2px">3 · Consumer runs (in partner_sales):</div>
+    <div class="qbtns" id="shQ">
+      <button data-q="ord">SELECT * FROM public.orders</button>
+      <button data-q="vw">SELECT * FROM public.v_region_sales</button>
+      <button data-q="cust">SELECT * FROM public.customers</button>
+      <button data-q="ddl">SELECT GET_DDL('VIEW','public.v_region_sales')</button>
+      <button data-q="dml">DELETE FROM public.orders</button>
+      <button data-q="tt">SELECT * FROM public.orders AT(OFFSET =&gt; -3600)</button>
+    </div>
+    <div class="grid2">
+      <div><div class="note-s">Provider: sales_db.public.orders</div><table class="t" id="shPT"></table></div>
+      <div><div class="note-s">Consumer result</div><div id="shCT"></div></div>
+    </div>
+    <div class="stats">
+      <div class="stat"><div class="k">BYTES COPIED</div><div class="n">0</div><div class="s">sharing is metadata-only</div></div>
+      <div class="stat"><div class="k">OBJECTS IN SHARE</div><div class="n" id="shNObj">3</div></div>
+      <div class="stat"><div class="k">CONSUMER CAN SEE</div><div class="n" id="shNVis" style="font-size:20px">orders</div></div>
+      <div class="stat"><div class="k">FRESHNESS</div><div class="n" style="font-size:20px">on commit</div><div class="s">no refresh job</div></div>
+    </div>
+    <div class="insight" id="shIns2">Run <b>SELECT * FROM public.orders</b> as the consumer, then press <b>UPDATE</b> as the provider and watch the consumer side.</div>
+  </div>
+
+  <h3>Setting it up · step by step</h3>
+  <div class="panel">
+    <div class="panel-h"><div class="t">STEPPER · <b>FROM CREATE SHARE TO THE FIRST CONSUMER QUERY</b></div></div>
+    <svg viewBox="0 0 680 150" class="flow" id="stFlow">
+      <path class="edge" id="ste1" d="M100 55 L120 55"/><path class="edge" id="ste2" d="M210 55 L230 55"/><path class="edge" id="ste3" d="M320 55 L360 55"/><path class="edge" id="ste4" d="M450 55 L470 55"/><path class="edge" id="ste5" d="M560 55 L580 55"/>
+      <line x1="340" y1="10" x2="340" y2="140" stroke="var(--line2)" stroke-dasharray="5 5"/>
+      <text class="tm" x="170" y="130" text-anchor="middle">PROVIDER ACCOUNT</text><text class="tm" x="510" y="130" text-anchor="middle">CONSUMER ACCOUNT</text>
+      <g class="fn" id="stn1"><rect class="L-st" x="10" y="25" width="90" height="60" rx="10" stroke-width="1"/><text class="th" x="55" y="48" text-anchor="middle" dominant-baseline="central">CREATE</text><text class="ts" x="55" y="66" text-anchor="middle" dominant-baseline="central">SHARE</text></g>
+      <g class="fn" id="stn2"><rect class="L-st" x="120" y="25" width="90" height="60" rx="10" stroke-width="1"/><text class="th" x="165" y="48" text-anchor="middle" dominant-baseline="central">GRANT</text><text class="ts" x="165" y="66" text-anchor="middle" dominant-baseline="central">to share</text></g>
+      <g class="fn" id="stn3"><rect class="L-st" x="230" y="25" width="90" height="60" rx="10" stroke-width="1"/><text class="th" x="275" y="48" text-anchor="middle" dominant-baseline="central">ADD</text><text class="ts" x="275" y="66" text-anchor="middle" dominant-baseline="central">ACCOUNTS</text></g>
+      <g class="fn" id="stn4"><rect class="L-cp" x="360" y="25" width="90" height="60" rx="10" stroke-width="1"/><text class="th" x="405" y="48" text-anchor="middle" dominant-baseline="central">SHOW</text><text class="ts" x="405" y="66" text-anchor="middle" dominant-baseline="central">SHARES</text></g>
+      <g class="fn" id="stn5"><rect class="L-cp" x="470" y="25" width="90" height="60" rx="10" stroke-width="1"/><text class="th" x="515" y="48" text-anchor="middle" dominant-baseline="central">CREATE DB</text><text class="ts" x="515" y="66" text-anchor="middle" dominant-baseline="central">FROM SHARE</text></g>
+      <g class="fn" id="stn6"><rect class="L-cp" x="580" y="25" width="90" height="60" rx="10" stroke-width="1"/><text class="th" x="625" y="48" text-anchor="middle" dominant-baseline="central">GRANT</text><text class="ts" x="625" y="66" text-anchor="middle" dominant-baseline="central">+ query</text></g>
+    </svg>
+    <div class="stepbar" id="stBar"></div>
+    <div class="stepdesc" id="stDesc"></div>
+    <div class="row" style="margin-top:12px"><button class="btn" id="stPrev">Back</button><button class="btn pri" id="stNext">Start</button><button class="btn" id="stReset">Reset</button></div>
+  </div>
+
+  <h3>Why must shared views be <i>secure</i> views?</h3>
+  <div class="grid2">
+    <div class="mini"><h5>1 · The definition is hidden</h5><p>For a regular view, anyone with access can run <code>GET_DDL</code> or look at <code>SHOW VIEWS</code> and read the SQL, including your table names, join logic and the <code>WHERE tenant = …</code> filter. For a secure view, only the owning role sees the definition. Consumers see columns, not logic.</p></div>
+    <div class="mini"><h5>2 · The optimizer can't leak hidden rows</h5><p>With a regular view the optimizer may push a consumer's filter or function <i>below</i> the view's own filter for speed. A cleverly written function (for example, one that raises an error on certain values) could then reveal rows the view should hide. Secure views block those optimizations, so the view's filter is always applied first.</p></div>
+  </div>
+  <div class="call trap"><b class="k">INTERVIEW TRAP</b><div>"Secure views are always slower." Not always, but they <b>can be</b>, because some optimizations are disabled. Use them where hiding logic or rows matters (sharing, row-level filters), not everywhere. Also: a consumer <b>cannot</b> do Time Travel, cloning or DML on a shared database. It's read-only, and history stays with the provider.</div></div>
+  <div class="call pro"><b class="k">SENIOR ANGLE</b><div><b>Database roles in shares.</b> Granting <code>IMPORTED PRIVILEGES</code> on a shared database gives a consumer role <i>everything</i> in it. For finer control, the provider creates <b>database roles</b> inside the shared database (for example <code>sales_db.analyst_r</code> and <code>sales_db.finance_r</code>), grants different objects to each, and grants the database roles to the share. The consumer admin then maps each database role to their own account roles (<code>GRANT DATABASE ROLE partner_sales.finance_r TO ROLE fin_team</code>). One share, different access levels in the consumer account.</div></div>
+</section>
+
+<section id="reader">
+  <div class="eyebrow">CHAPTER 02</div>
+  <h2>Reader accounts <span class="thin">· sharing with someone who has no Snowflake</span></h2>
+  <div class="wwh">
+    <div class="box what"><span class="tag">01 · WHAT IS IT</span>
+      <p>A <b>reader account</b> (also called a <b>managed account</b>) is a small Snowflake account that <b>the provider creates and owns</b> for a consumer who isn't a Snowflake customer. The provider creates it with <code>CREATE MANAGED ACCOUNT … TYPE = READER</code>, adds it to a share, and hands the login details to the consumer.</p>
+      <p>Inside the reader account the consumer can log in with Snowsight or connect a BI tool, and query the shared data, using warehouses that are set up in that account (usually by the provider).</p>
+    </div>
+    <div class="box why"><span class="tag">02 · WHY WE USE IT</span>
+      <ul class="dots">
+        <li>The partner is a small company, a regulator or an internal team that will never sign a Snowflake contract.</li>
+        <li>You still want the benefits of sharing (live, no files) instead of falling back to CSV exports.</li>
+        <li>You control the whole environment: users, warehouses and spend limits.</li>
+      </ul>
+    </div>
+    <div class="box how"><span class="tag">03 · HOW IT WORKS · WHO PAYS FOR WHAT</span>
+      <p>The reader account belongs to the provider's organization billing-wise: <b>all compute used in the reader account is billed to the provider</b>, on top of the storage the provider already pays for. That's the big difference from a full consumer account, where the consumer pays for their own queries. So providers usually create a small warehouse with a short auto-suspend and attach a <b>resource monitor</b> to cap spend.</p>
+      <div class="grid3" style="margin-top:10px">
+        <div class="mini"><h5>Read-mostly by design</h5><p>A reader account exists to query data shared by <b>the provider that created it</b>. It can't load its own data or modify shared data, and it can't become a provider and share data onward.</p></div>
+        <div class="mini"><h5>Admin tasks still exist</h5><p>Someone has to create users, roles and warehouses inside it. Usually the provider does this with the admin user it created, or delegates it to the consumer admin.</p></div>
+        <div class="mini"><h5>A stepping stone</h5><p>If the consumer later buys Snowflake, add their full account to the share and drop the reader account. Their queries then run on their own bill.</p></div>
+      </div>
+      <p class="note-s" style="margin-top:8px">Exact reader-account restrictions and per-provider limits can change. Check the current docs before quoting a specific number.</p>
+    </div>
+  </div>
+  <div class="panel">
+    <div class="panel-h"><div class="t">WIDGET · <b>COST RESPONSIBILITY: FULL ACCOUNT VS READER ACCOUNT</b></div><span class="note-s">Illustrative model, not a benchmark. Uses example prices ($3/credit, $23/TB-month); real prices depend on edition, region and contract.</span></div>
+    <div class="row" style="margin-bottom:8px"><span class="note-s" style="min-width:150px">Consumer type:</span><div class="tabs" id="rcType" style="margin:0"><button class="on" data-v="full">Full Snowflake account</button><button data-v="reader">Reader account (provider-managed)</button></div></div>
+    <div class="ctl"><label>Consumers</label><input type="range" id="rcN" min="1" max="20" value="3"><span class="v" id="rcNV"></span></div>
+    <div class="ctl"><label>Query hours / day each</label><input type="range" id="rcH" min="1" max="24" value="4"><span class="v" id="rcHV"></span></div>
+    <div class="ctl"><label>Warehouse size</label><input type="range" id="rcW" min="0" max="3" value="0"><span class="v" id="rcWV"></span></div>
+    <div class="ctl"><label>Shared data size</label><input type="range" id="rcTB" min="1" max="50" value="5"><span class="v" id="rcTBV"></span></div>
+    <div class="ctl"><label>Resource monitor cap</label><input type="range" id="rcCap" min="0" max="10" value="0"><span class="v" id="rcCapV"></span></div>
+    <svg viewBox="0 0 680 120" id="rcSvg"></svg>
+    <div class="stats">
+      <div class="stat"><div class="k">PROVIDER PAYS / MONTH</div><div class="n" id="rcP">–</div><div class="s" id="rcPs"></div></div>
+      <div class="stat"><div class="k">CONSUMERS PAY / MONTH</div><div class="n" id="rcC">–</div><div class="s" id="rcCs"></div></div>
+      <div class="stat"><div class="k">STORAGE COPIES</div><div class="n">1</div><div class="s">same for both models</div></div>
+    </div>
+    <div class="insight" id="rcIns"></div>
+  </div>
+  <table class="t">
+    <tr><th></th><th>FULL CONSUMER ACCOUNT</th><th>READER ACCOUNT</th></tr>
+    <tr><td><b>Who owns the account</b></td><td>The consumer (their own contract)</td><td>The provider (created with CREATE MANAGED ACCOUNT)</td></tr>
+    <tr><td><b>Who pays compute</b></td><td>Consumer</td><td>Provider</td></tr>
+    <tr><td><b>Who pays storage of shared data</b></td><td>Provider</td><td>Provider</td></tr>
+    <tr><td><b>Can join shared data with its own data</b></td><td>Yes, in their own databases</td><td>Not really: it's meant for querying the provider's shares</td></tr>
+    <tr><td><b>Can consume shares from other providers</b></td><td>Yes</td><td>No, only from the provider that created it</td></tr>
+    <tr><td><b>Can share data onward</b></td><td>Their own data, yes; re-sharing shared data, no</td><td>No</td></tr>
+  </table>
+  <div class="call trap"><b class="k">INTERVIEW TRAP</b><div>"Who pays when a reader account runs queries?" The <b>provider</b>. Many candidates say "the consumer, because consumers always pay compute". That rule is true only for <b>full</b> consumer accounts.</div></div>
+</section>
+
+<section id="region">
+  <div class="eyebrow">CHAPTER 03</div>
+  <h2>Cross-region &amp; cross-cloud <span class="thin">· when the consumer lives somewhere else</span></h2>
+  <div class="wwh">
+    <div class="box what"><span class="tag">01 · WHAT IS IT</span>
+      <p>A Snowflake account lives in <b>one cloud and one region</b>, for example AWS us-east-1 or Azure West Europe. A <b>direct share</b> only works between accounts in the <b>same region</b> of the same cloud, because the consumer's warehouse reads the provider's files directly from that region's storage.</p>
+      <p>To reach a consumer in another region or another cloud, the data has to be <b>replicated</b> there first. Snowflake gives you two ways to do it:</p>
+      <ul class="dots"><li><b>Replication + share:</b> replicate the database to another account <i>you own</i> (same organization) in the target region, then share from that account.</li><li><b>Listing with Cross-Cloud Auto-Fulfillment:</b> publish a listing and let Snowflake replicate the data to the consumer's region automatically when needed.</li></ul>
+    </div>
+    <div class="box why"><span class="tag">02 · WHY IT WORKS THIS WAY</span>
+      <p>Reading micro-partitions across continents for every query would be slow, expensive (egress on every scan) and could break data-residency rules. Replicating once and refreshing incrementally keeps queries local and makes the cost predictable.</p>
+      <p>The trade-off: a replicated share is <b>not instant</b> any more. Consumers see data as of the last refresh, and the provider pays for the <b>data transfer</b> and for <b>storage and refresh compute</b> in the second region.</p>
+    </div>
+    <div class="box how"><span class="tag">03 · HOW IT WORKS · CHOOSE TWO REGIONS</span>
+      <div class="row" style="margin:4px 0 8px">
+        <span class="note-s">Provider account:</span><select class="sel" id="rgP"></select>
+        <span class="note-s" style="margin-left:8px">Consumer account:</span><select class="sel" id="rgC"></select>
+      </div>
+      <div class="row" style="margin-bottom:8px">
+        <span class="note-s">Consumer has a Snowflake account?</span><div class="tabs" id="rgHas" style="margin:0"><button class="on" data-v="1">Yes</button><button data-v="0">No</button></div>
+        <span class="note-s" style="margin-left:8px">How many consumers there?</span><div class="tabs" id="rgMany" style="margin:0"><button class="on" data-v="1">One partner</button><button data-v="n">Many / unknown</button></div>
+      </div>
+      <svg viewBox="0 0 680 280" id="rgMap"></svg>
+      <div class="legend"><span><i style="background:#FF9900"></i>AWS</span><span><i style="background:#0089D6"></i>Azure</span><span><i style="background:#34A853"></i>Google Cloud</span><span class="note-s">Map positions are approximate.</span></div>
+      <div class="stats">
+        <div class="stat"><div class="k">MECHANISM</div><div class="n" id="rgMech" style="font-size:19px">–</div></div>
+        <div class="stat"><div class="k">FRESHNESS</div><div class="n" id="rgFresh" style="font-size:19px">–</div></div>
+        <div class="stat"><div class="k">EXTRA COST (PROVIDER)</div><div class="n" id="rgCost" style="font-size:19px">–</div></div>
+      </div>
+      <div class="insight" id="rgIns"></div>
+    </div>
+  </div>
+  <div class="grid2">
+    <div class="mini"><h5>Replication + share (you control it)</h5><p>Create a replication group (or use database replication) from the source account to a secondary account in the target region, schedule refreshes, then <code>CREATE SHARE</code> in the secondary account on the replica database. Good for one or a few known partners, or for sharing between your own business units across regions.</p></div>
+    <div class="mini"><h5>Listing + Cross-Cloud Auto-Fulfillment (Snowflake handles it)</h5><p>You publish the data as a listing and enable auto-fulfillment. When a consumer in another region gets the listing, Snowflake replicates the data product to that region for you and keeps it refreshed on the schedule you set. Good for many consumers, or ones you don't know yet (Marketplace).</p></div>
+  </div>
+  <div class="call trap"><b class="k">INTERVIEW TRAP</b><div>"Can I share directly from AWS us-east-1 to an Azure account in the same city?" <b>No.</b> Snowflake regions are cloud-specific, so AWS us-east-1 and Azure East US 2 are different regions. Any cross-cloud or cross-region consumer needs replication or an auto-fulfilled listing.</div></div>
+  <div class="call pro"><b class="k">SENIOR ANGLE</b><div>Mention <b>residency and cost governance</b>: replicating customer data to another region can break data-residency commitments, so share only a filtered secure view. Also set the refresh frequency to what the consumer really needs: hourly refreshes of a large, frequently changing table can cost more than the consumer's queries.</div></div>
+</section>
+
+<section id="listings">
+  <div class="eyebrow">CHAPTER 04</div>
+  <h2>Listings &amp; Marketplace <span class="thin">· data as a product</span></h2>
+  <div class="wwh">
+    <div class="box what"><span class="tag">01 · WHAT IS IT</span>
+      <p>A <b>listing</b> wraps a share (or a Native App) in a <b>product page</b>: title, description, data dictionary, sample SQL, refresh frequency, terms of use, and optionally a price. Providers create listings in <b>Provider Studio</b> in Snowsight.</p>
+      <ul class="dots">
+        <li><b>Private listing:</b> offered only to specific accounts you name, such as your customers or partners. It's like a direct share with extra polish, plus cross-region auto-fulfillment.</li>
+        <li><b>Public listing on the Snowflake Marketplace:</b> anyone with a Snowflake account can discover it. Providers have to be approved for public listings.</li>
+      </ul>
+    </div>
+    <div class="box why"><span class="tag">02 · WHY WE USE IT</span>
+      <ul class="dots">
+        <li><b>Self-service:</b> consumers find it, read the docs and click "Get" without a ticket to your team.</li>
+        <li><b>Reach other regions</b> without managing replication yourself (auto-fulfillment).</li>
+        <li><b>Monetize:</b> eligible providers can sell data or apps through the Marketplace.</li>
+        <li><b>Usage insight:</b> providers get analytics on who requested, got and queried their listing.</li>
+      </ul>
+    </div>
+    <div class="box how"><span class="tag">03 · HOW IT WORKS</span>
+      <p>Under the hood it's still Secure Data Sharing: the consumer clicks <b>Get</b>, chooses a database name, and Snowflake creates a read-only database from the listing's share in their account (replicated to their region first if needed). Access types you'll hear about:</p>
+      <div class="grid3">
+        <div class="mini"><h5>Free</h5><p>Instant access once the consumer accepts the terms.</p></div>
+        <div class="mini"><h5>Limited trial / paid</h5><p>Trial access or paid plans billed through Snowflake. Availability depends on provider eligibility and region.</p></div>
+        <div class="mini"><h5>Personalized / by request</h5><p>The consumer requests access, and the provider approves and may prepare consumer-specific data, such as their own records only.</p></div>
+      </div>
+      <p style="margin-top:10px"><b>Usage metrics:</b> providers can see listing analytics in Provider Studio and query views in the <code>SNOWFLAKE.DATA_SHARING_USAGE</code> schema, such as <code>LISTING_ACCESS_HISTORY</code> and listing consumption views. These give counts and which objects were accessed by which consumer account. They don't give the consumer's query text. View names and latency evolve, so say "data sharing usage views" if you're unsure of the exact name.</p>
+    </div>
+  </div>
+  <div class="panel">
+    <div class="panel-h"><div class="t">BUILDER · <b>DESIGN A LISTING</b></div><span class="note-s">Simplified: options and eligibility vary, so check Provider Studio for what your account can offer.</span></div>
+    <div class="row" style="margin-bottom:6px"><span class="note-s" style="min-width:120px">Audience:</span><div class="tabs" id="lsAud" style="margin:0"><button class="on" data-v="priv">Private (named accounts)</button><button data-v="pub">Public Marketplace</button></div></div>
+    <div class="row" style="margin-bottom:6px"><span class="note-s" style="min-width:120px">Pricing:</span><div class="tabs" id="lsPrice" style="margin:0"><button class="on" data-v="free">Free</button><button data-v="trial">Limited trial</button><button data-v="paid">Paid</button></div></div>
+    <div class="row" style="margin-bottom:6px"><span class="note-s" style="min-width:120px">Access:</span><div class="tabs" id="lsAcc" style="margin:0"><button class="on" data-v="inst">Instant (standard)</button><button data-v="pers">Personalized (by request)</button></div></div>
+    <div class="row" style="margin-bottom:10px"><span class="note-s" style="min-width:120px">Regions:</span><div class="tabs" id="lsReg" style="margin:0"><button class="on" data-v="one">Provider region only</button><button data-v="auto">Cross-Cloud Auto-Fulfillment</button></div></div>
+    <div class="grid2">
+      <div class="lcard" id="lsCard"></div>
+      <div><div class="note-s">What happens for the consumer</div><ol class="dots" id="lsJourney" style="margin-left:20px"></ol></div>
+    </div>
+    <div class="insight" id="lsIns"></div>
+  </div>
+  <div class="call pro"><b class="k">SENIOR ANGLE</b><div>Treat a listing like a <b>product with a contract</b>: stable schemas (version breaking changes in new views instead of altering columns), a documented refresh SLA, sample queries, and a deprecation policy. Interviewers for senior roles like hearing "data product" thinking, not just the GRANT syntax.</div></div>
+</section>
+
+<section id="cleanroom">
+  <div class="eyebrow">CHAPTER 05</div>
+  <h2>Data Clean Rooms <span class="thin">· collaborate without revealing raw rows</span></h2>
+  <div class="wwh">
+    <div class="box what"><span class="tag">01 · WHAT IS IT</span>
+      <p>A <b>data clean room</b> is a controlled environment where two or more parties can <b>analyze their combined data</b> (for example "how many of my customers also saw your ad?") while <b>neither side can see the other's raw rows</b>. Only approved, aggregated results come out.</p>
+      <p>Snowflake offers <b>Snowflake Data Clean Rooms</b> as a managed product (built on the Native App Framework), and the building blocks underneath are features you can also use yourself: secure sharing, secure views and functions, and privacy policies such as <b>aggregation policies</b> and <b>projection policies</b>.</p>
+    </div>
+    <div class="box why"><span class="tag">02 · WHY WE USE IT</span>
+      <ul class="dots">
+        <li><b>Advertising and media:</b> audience overlap, campaign reach and attribution between an advertiser and a publisher.</li>
+        <li><b>Retail and CPG:</b> a brand and a retailer measure joint customers without exchanging customer lists.</li>
+        <li><b>Healthcare and finance:</b> joint research or fraud signals where raw records can't legally leave the owner.</li>
+        <li>It replaces the risky old method of sending hashed email lists to a third party.</li>
+      </ul>
+    </div>
+    <div class="box how"><span class="tag">03 · HOW IT WORKS (CONCEPTUALLY)</span>
+      <ul class="dots">
+        <li><b>Data stays put:</b> each party's data stays in its own account. The clean room uses sharing, so there's no bulk copy.</li>
+        <li><b>Only approved queries run:</b> analyses are defined as <b>templates</b> (parameterized SQL that both sides approve), such as an overlap count or reach by segment. Free-form <code>SELECT *</code> against the other party's data is not allowed.</li>
+        <li><b>Aggregation thresholds:</b> results are returned only for groups with at least <i>k</i> individuals. Small groups are suppressed, because a group of one is just a person.</li>
+        <li><b>Join keys are protected:</b> joins typically use hashed or tokenized identifiers, and policies can prevent the join key itself from being projected in output.</li>
+        <li>Some offerings add extra techniques such as differential privacy noise. Details vary by product and release, so describe them as optional.</li>
+      </ul>
+    </div>
+  </div>
+  <div class="panel">
+    <div class="panel-h"><div class="t">SIMULATOR · <b>CLEAN ROOM: RETAILER × STREAMING SERVICE</b></div><span class="note-s">Sample, made-up data. Identifiers are fake hashes.</span></div>
+    <div class="row" style="margin-bottom:6px"><span class="note-s" style="min-width:140px">Approved template:</span><div class="tabs" id="crTpl" style="margin:0"><button class="on" data-v="count">Overlap count</button><button data-v="region">Overlap by region</button><button data-v="seg">Overlap by region × plan</button><button data-v="raw">SELECT * (raw join)</button></div></div>
+    <div class="ctl"><label>Min group size (k)</label><input type="range" id="crK" min="1" max="10" value="5"><span class="v" id="crKV"></span></div>
+    <div class="crcols" style="margin-top:8px">
+      <div><div class="note-s">SHOPCO (retailer) · 40 customers</div><div class="blurlist" id="crA"></div></div>
+      <div class="crmid">
+        <svg viewBox="0 0 300 110" id="crSvg">
+          <rect x="75" y="15" width="150" height="70" rx="12" class="L-cs" stroke-width="1.4"/>
+          <text class="th" x="150" y="40" text-anchor="middle">CLEAN ROOM</text>
+          <text class="tm" x="150" y="58" text-anchor="middle">approved templates</text>
+          <text class="tm" x="150" y="74" text-anchor="middle" id="crSvgK">k ≥ 5</text>
+          <path class="edge" d="M10 50 L75 50"/><path class="edge" d="M290 50 L225 50"/><path class="edge" d="M150 85 L150 105" id="crOutE"/>
+        </svg>
+        <div class="sqlbox" id="crSql" style="font-size:12px"></div>
+        <div id="crOut" style="margin-top:8px"></div>
+      </div>
+      <div><div class="note-s">STREAMCO (streaming) · 36 viewers</div><div class="blurlist" id="crB"></div></div>
+    </div>
+    <div class="stats">
+      <div class="stat"><div class="k">TRUE OVERLAP</div><div class="n" id="crTrue">–</div><div class="s">known only to the engine</div></div>
+      <div class="stat"><div class="k">GROUPS RETURNED</div><div class="n" id="crRet">–</div></div>
+      <div class="stat"><div class="k">GROUPS SUPPRESSED</div><div class="n" id="crSup">–</div><div class="s">below k</div></div>
+      <div class="stat"><div class="k">RAW ROWS REVEALED</div><div class="n" id="crRaw">0</div></div>
+    </div>
+    <div class="insight" id="crIns"></div>
+  </div>
+  <div class="sqlbox">-- Building block you can use yourself (Enterprise Edition feature; check docs for the current syntax and limits)
+CREATE AGGREGATION POLICY min_group_5
+  AS () RETURNS AGGREGATION_CONSTRAINT -&gt;
+  AGGREGATION_CONSTRAINT(MIN_GROUP_SIZE =&gt; 5);
+
+ALTER TABLE shopco_customers SET AGGREGATION POLICY min_group_5;
+-- queries on this table must now aggregate, and groups smaller than 5 are folded into a NULL "remainder" group</div>
+  <div class="call trap"><b class="k">INTERVIEW TRAP</b><div>"Hashing the emails is enough, so why do we need a clean room?" Because hashes of emails are <b>easy to reverse</b> by hashing a list of known emails and matching. And even with perfect hashing, an unrestricted query like "overlap where zip = 94105 and age = 37" can single out one person. Clean rooms combine <b>restricted templates + thresholds + no raw output</b>.</div></div>
+</section>
+
+<section id="nativeapps">
+  <div class="eyebrow">CHAPTER 06</div>
+  <h2>Native Apps <span class="thin">· sharing logic, not just data</span></h2>
+  <div class="wwh">
+    <div class="box what"><span class="tag">01 · WHAT IS IT</span>
+      <p>The <b>Snowflake Native App Framework</b> lets a provider package <b>code plus (optionally) data</b> into an application that consumers <b>install inside their own Snowflake account</b>. The app can contain stored procedures, UDFs, views, tasks, a Streamlit UI and, in newer releases, containers.</p>
+      <ul class="dots">
+        <li><b>Application package</b>: the provider-side container holding versions of the app.</li>
+        <li><b>Manifest file</b> (<code>manifest.yml</code>): describes the app, its setup script, and the privileges or references it will ask the consumer for.</li>
+        <li><b>Setup script</b> (<code>setup.sql</code>): runs in the consumer account when the app is installed or upgraded, and creates the app's objects.</li>
+        <li><b>Versions and patches</b> plus a <b>release directive</b>: which version consumers get.</li>
+      </ul>
+    </div>
+    <div class="box why"><span class="tag">02 · WHY WE USE IT</span>
+      <ul class="dots">
+        <li><b>Bring the code to the data:</b> the consumer's sensitive data never leaves their account. The app runs next to it.</li>
+        <li><b>Protect the provider's IP:</b> the consumer can use the app without reading its source (depending on how objects are exposed).</li>
+        <li><b>One distribution channel:</b> publish through private listings or the Marketplace, with versioned upgrades.</li>
+        <li>Examples: a data-quality scanner, a forecasting tool, an identity-resolution engine, or the managed clean room product itself.</li>
+      </ul>
+    </div>
+    <div class="box how"><span class="tag">03 · HOW IT WORKS · FROM BUILD TO INSTALL (click Next)</span>
+      <svg viewBox="0 0 680 220" class="flow" id="naFlow">
+        <path class="edge" id="nae1" d="M130 60 L160 60"/><path class="edge" id="nae2" d="M290 60 L320 60"/><path class="edge" id="nae3" d="M450 60 L480 60"/>
+        <path class="edge" id="nae4" d="M545 92 L545 128"/><path class="edge" id="nae5" d="M480 160 L450 160"/><path class="edge" id="nae6" d="M320 160 L290 160"/>
+        <line x1="10" y1="110" x2="670" y2="110" stroke="var(--line2)" stroke-dasharray="5 5"/>
+        <text class="tm" x="16" y="104">PROVIDER ACCOUNT</text><text class="tm" x="16" y="214">CONSUMER ACCOUNT</text>
+        <g class="fn" id="nan1"><rect class="neutral" x="10" y="28" width="120" height="64" rx="10" stroke-width="1"/><text class="th" x="70" y="50" text-anchor="middle" dominant-baseline="central">1 · Code on stage</text><text class="ts" x="70" y="70" text-anchor="middle" dominant-baseline="central">manifest · setup.sql</text></g>
+        <g class="fn" id="nan2"><rect class="L-st" x="160" y="28" width="130" height="64" rx="10" stroke-width="1"/><text class="th" x="225" y="50" text-anchor="middle" dominant-baseline="central">2 · App package</text><text class="ts" x="225" y="70" text-anchor="middle" dominant-baseline="central">+ shared data</text></g>
+        <g class="fn" id="nan3"><rect class="L-st" x="320" y="28" width="130" height="64" rx="10" stroke-width="1"/><text class="th" x="385" y="50" text-anchor="middle" dominant-baseline="central">3 · Version</text><text class="ts" x="385" y="70" text-anchor="middle" dominant-baseline="central">release directive</text></g>
+        <g class="fn" id="nan4"><rect class="L-cs" x="480" y="28" width="130" height="64" rx="10" stroke-width="1"/><text class="th" x="545" y="50" text-anchor="middle" dominant-baseline="central">4 · Listing</text><text class="ts" x="545" y="70" text-anchor="middle" dominant-baseline="central">private / public</text></g>
+        <g class="fn" id="nan5"><rect class="L-cp" x="480" y="128" width="130" height="64" rx="10" stroke-width="1"/><text class="th" x="545" y="150" text-anchor="middle" dominant-baseline="central">5 · Install</text><text class="ts" x="545" y="170" text-anchor="middle" dominant-baseline="central">CREATE APPLICATION</text></g>
+        <g class="fn" id="nan6"><rect class="L-cp" x="320" y="128" width="130" height="64" rx="10" stroke-width="1"/><text class="th" x="385" y="150" text-anchor="middle" dominant-baseline="central">6 · Setup runs</text><text class="ts" x="385" y="170" text-anchor="middle" dominant-baseline="central">app objects created</text></g>
+        <g class="fn" id="nan7"><rect class="L-cp" x="160" y="128" width="130" height="64" rx="10" stroke-width="1"/><text class="th" x="225" y="150" text-anchor="middle" dominant-baseline="central">7 · Grant &amp; use</text><text class="ts" x="225" y="170" text-anchor="middle" dominant-baseline="central">on consumer data</text></g>
+      </svg>
+      <div class="stepbar" id="naBar"></div>
+      <div class="stepdesc" id="naDesc"></div>
+      <div class="row" style="margin-top:12px"><button class="btn" id="naPrev">Back</button><button class="btn pri" id="naNext">Start</button><button class="btn" id="naReset">Reset</button></div>
+    </div>
+  </div>
+  <table class="t">
+    <tr><th></th><th>SECURE SHARE</th><th>LISTING</th><th>NATIVE APP</th></tr>
+    <tr><td><b>What travels</b></td><td>Access to data (metadata grants)</td><td>A share or app, plus a product page</td><td>Code, plus optional shared data</td></tr>
+    <tr><td><b>Where the logic runs</b></td><td>Consumer's own queries</td><td>Consumer's own queries</td><td>Inside the app, in the consumer account</td></tr>
+    <tr><td><b>Consumer's data used?</b></td><td>No (but they can join it themselves)</td><td>No (same as share)</td><td>Yes, if the consumer grants the app access</td></tr>
+    <tr><td><b>Upgrades</b></td><td>Change objects in place</td><td>Change the underlying share</td><td>New version or patch + release directive</td></tr>
+  </table>
+  <div class="call trap"><b class="k">INTERVIEW TRAP</b><div>"Can a Native App read all my tables once installed?" <b>No.</b> An installed app gets only the privileges the consumer explicitly grants or binds (through references declared in the manifest). The consumer stays in control. Keep the wording conceptual: the exact permission model has grown over releases.</div></div>
+</section>
+
+<section id="gov">
+  <div class="eyebrow">CHAPTER 07</div>
+  <h2>Governance in sharing <span class="thin">· who sees which rows, and for how long</span></h2>
+  <div class="wwh">
+    <div class="box what"><span class="tag">01 · WHAT IS IT</span>
+      <p>Sharing doesn't switch off your security. The provider's <b>masking policies</b>, <b>row access policies</b> and secure-view filters are <b>enforced when consumers query</b> the shared objects, because the policy belongs to the object, not to the account that queries it.</p>
+      <p>The classic pattern is the <b>multi-tenant share</b>: one table holds data for many customers, one secure view filters rows by <code>CURRENT_ACCOUNT()</code>, and every consumer account automatically sees only its own rows.</p>
+    </div>
+    <div class="box why"><span class="tag">02 · WHY WE USE IT</span>
+      <ul class="dots">
+        <li><b>One object for 500 customers</b> instead of 500 views or 500 shares, so onboarding a customer is just one row in an entitlements table plus <code>ADD ACCOUNTS</code>.</li>
+        <li><b>Defence in depth:</b> PII stays masked even if a view is granted by mistake.</li>
+        <li><b>Instant off-boarding:</b> remove an account or revoke a grant and access stops on the next query.</li>
+        <li><b>Audit:</b> show regulators exactly what each consumer can see.</li>
+      </ul>
+    </div>
+    <div class="box how"><span class="tag">03 · HOW IT WORKS</span>
+      <p>In the consumer's session, <code>CURRENT_ACCOUNT()</code> returns the <b>consumer's</b> account locator, so a secure view can join to an entitlements table: <code>WHERE e.consumer_account = CURRENT_ACCOUNT()</code>. The provider can test this without a real consumer with <code>ALTER SESSION SET SIMULATED_DATA_SHARING_CONSUMER = '&lt;account&gt;'</code>.</p>
+      <p><b>Careful with role-based logic:</b> your account's role names mean nothing in the consumer account, so policies written as <code>CURRENT_ROLE() IN ('PII_READER')</code> won't behave as you expect for consumers (they typically fall through to the masked branch). Base sharing logic on <code>CURRENT_ACCOUNT()</code>, or on <b>shared database roles</b> checked with <code>IS_DATABASE_ROLE_IN_SESSION()</code>. Check the docs for the exact behaviour of context functions in shared queries.</p>
+    </div>
+  </div>
+  <div class="panel">
+    <div class="panel-h"><div class="t">SIMULATOR · <b>MULTI-TENANT SECURE VIEW</b> · shared_sales_v</div><button class="btn" id="gvReset">Reset</button></div>
+    <div class="row" style="margin-bottom:6px"><span class="note-s" style="min-width:150px">Query runs in account:</span><div class="tabs" id="gvAcct" style="margin:0"><button class="on" data-v="AB12345">AB12345 (Tenant A)</button><button data-v="CD67890">CD67890 (Tenant B)</button><button data-v="EF13579">EF13579 (not mapped)</button><button data-v="PROV">Provider, no simulation</button></div></div>
+    <div class="row" style="margin-bottom:6px"><span class="note-s" style="min-width:150px">Email masking policy:</span><div class="tabs" id="gvMask" style="margin:0"><button class="on" data-v="acct">Based on CURRENT_ACCOUNT()</button><button data-v="role">Based on CURRENT_ROLE()</button><button data-v="off">No policy</button></div></div>
+    <div class="row" style="margin-bottom:10px"><span class="note-s" style="min-width:150px">Access control:</span><button class="btn warn" id="gvRevoke">ALTER SHARE … REMOVE ACCOUNTS = AB12345</button><span class="badge off" id="gvRevState">AB12345 in share</span></div>
+    <div class="grid2">
+      <div><div class="note-s">Entitlements (provider-only table)</div><table class="t" id="gvEnt"></table><div class="sqlbox" id="gvSql" style="margin-top:10px;font-size:12px"></div></div>
+      <div><div class="note-s">Result of SELECT * FROM shared_sales_v</div><div id="gvOut"></div></div>
+    </div>
+    <div class="insight" id="gvIns"></div>
+  </div>
+  <h3>Revoking and monitoring</h3>
+  <div class="grid3">
+    <div class="mini"><h5>Revoke</h5><p><code>REVOKE SELECT ON VIEW … FROM SHARE s</code> removes one object, <code>ALTER SHARE s REMOVE ACCOUNTS = …</code> removes one consumer, and <code>DROP SHARE s</code> removes everyone. Changes take effect on the consumer's next query. There's no copy left behind to chase.</p></div>
+    <div class="mini"><h5>Inspect</h5><p><code>SHOW SHARES</code> (outbound and inbound), <code>DESC SHARE s</code> and <code>SHOW GRANTS TO SHARE s</code> list exactly what's exposed and to whom. Review them periodically, like access reviews for users.</p></div>
+    <div class="mini"><h5>Monitor</h5><p>For listings, providers get consumer-level usage through the data sharing usage views and Provider Studio. For direct shares, visibility into consumer queries is limited, since the consumer's query history is theirs. Consumers audit their own reads with <code>ACCOUNT_USAGE.ACCESS_HISTORY</code>.</p></div>
+  </div>
+  <div class="call trap"><b class="k">INTERVIEW TRAP</b><div>"Can the consumer re-share my data to a third account?" <b>No.</b> Objects in a database created from a share can't be added to the consumer's own shares. The consumer could still <b>copy</b> the data with CTAS into their own table (and then share that), so contracts and masking still matter. Sharing controls access, not what a legitimate user does with results.</div></div>
+  <div class="call pro"><b class="k">SENIOR ANGLE</b><div><b>Business Critical caveat:</b> by default, a provider on Business Critical edition can't share to a consumer on a lower edition. This can be overridden per consumer with the <code>SHARE_RESTRICTIONS</code> option on <code>ADD ACCOUNTS</code>, which needs a special privilege. Mention it as a compliance decision, not a technical shortcut.</div></div>
+</section>
+
+<section id="sql">
+  <div class="eyebrow">CHAPTER 08</div>
+  <h2>SQL lab <span class="thin">· click any line for an explanation</span></h2>
+  <p class="note-s">Account names such as <code>partner_org.partner_acct</code> and locators such as <code>AB12345</code> are placeholders. Run provider statements in the provider account and consumer statements in the consumer account.</p>
+  <div class="panel">
+    <div class="tabs" id="sqlTabs"></div>
+    <div class="grid2" style="grid-template-columns:1.35fr 1fr">
+      <div class="code" id="sqlCode"></div>
+      <div class="explain" id="sqlExp"><b class="h">CLICK A LINE</b>Each line is explained in plain English.</div>
+    </div>
+  </div>
+</section>
+
+<section id="qa">
+  <div class="eyebrow">CHAPTER 09</div>
+  <h2>Interview Q&amp;A <span class="thin">· answer out loud first, then open</span></h2>
+  <div class="tabs" id="qaTabs"><button class="on" data-f="all">All</button><button data-f="Sharing">Sharing</button><button data-f="Reader">Reader accounts</button><button data-f="Regions">Regions</button><button data-f="Listings">Listings</button><button data-f="Clean rooms">Clean rooms</button><button data-f="Native Apps">Native Apps</button><button data-f="Governance">Governance</button></div>
+  <div id="qaList"></div>
+</section>
+
+<section id="quiz">
+  <div class="eyebrow">CHAPTER 10</div>
+  <h2>Quiz <span class="thin">· 14 questions</span></h2>
+  <div class="panel">
+    <div class="panel-h"><div class="t">QUESTION <b id="qzN">1</b> / 14</div><div class="t">SCORE <b id="qzS">0</b></div></div>
+    <div class="stepbar" id="qzBar"></div>
+    <div id="qzBody"></div>
+    <div class="row" style="margin-top:12px"><button class="btn" id="qzPrev">Back</button><button class="btn pri" id="qzNext">Next</button></div>
+  </div>
+</section>
+
+<section id="cheat">
+  <div class="eyebrow">CHAPTER 11</div>
+  <h2>Cheat sheet <span class="thin">· if you remember only these</span></h2>
+  <div class="cheat">
+    <div><em>0 bytes copied</em>A share is metadata: privileges recorded in cloud services. The consumer reads the provider's micro-partitions directly.</div>
+    <div><em>Storage ↔ compute</em>Provider pays storage. Consumer pays compute with their own warehouse. Reader account: provider pays both.</div>
+    <div><em>Live</em>Provider commits are visible on the consumer's next query. No refresh job (same region).</div>
+    <div><em>Read-only</em>Shared database: no DML, no Time Travel, no clone, no re-sharing. The consumer can CTAS into their own tables.</div>
+    <div><em>GRANT … TO SHARE</em>USAGE on database + schema, SELECT on tables and secure views. REFERENCE_USAGE for other databases used by views.</div>
+    <div><em>FROM SHARE</em><code>CREATE DATABASE x FROM SHARE org.acct.share</code>, then <code>GRANT IMPORTED PRIVILEGES</code> or shared database roles.</div>
+    <div><em>Secure views</em>Hide the definition and block optimizations that could leak filtered rows. Required for sharing views by default.</div>
+    <div><em>Database roles</em>Different access levels inside one share. The consumer maps them to their own roles.</div>
+    <div><em>Same region only</em>Direct shares don't cross regions or clouds. Use replication + share, or a listing with Cross-Cloud Auto-Fulfillment.</div>
+    <div><em>Listings</em>Private (named accounts) or public Marketplace. Free, trial, paid or by request. Usage views for providers.</div>
+    <div><em>Clean room</em>Approved templates, aggregation threshold k, no raw rows out. Hashing alone isn't privacy.</div>
+    <div><em>CURRENT_ACCOUNT()</em>Multi-tenant row filter in a secure view. Test with SIMULATED_DATA_SHARING_CONSUMER. Avoid CURRENT_ROLE() for consumers.</div>
+  </div>
+  <div class="call analogy" style="margin-top:20px"><b class="k">NEXT MODULE</b><div><b><a href="../module11/" style="color:var(--ice)">Module 11: Snowpark &amp; Cortex AI →</a></b> DataFrames that run inside Snowflake, Python UDFs and procedures, and Cortex AI functions, search and agents. Native Apps from this module often package exactly this kind of code.</div></div>
+</section>
+<footer>Snowflake Interview Lab · Module 10 · Data Sharing &amp; Collaboration · Prepared for Saurav Patel</footer>
+</main>
+</div>
+
+<script>
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+const fmt = (n, d = 0) => Number(n).toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d });
+const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+const tabs = (sel, cb) => $$(sel + ' button').forEach(b => b.addEventListener('click', () => { $$(sel + ' button').forEach(x => x.classList.remove('on')); b.classList.add('on'); cb(b.dataset); }));
+
+/* theme + progress */
+const root = document.documentElement;
+root.dataset.theme = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+$('#themeBtn').onclick = () => { root.dataset.theme = root.dataset.theme === 'dark' ? 'light' : 'dark'; };
+const secs = $$('main section'), seen = new Set();
+const io = new IntersectionObserver(es => es.forEach(e => {
+  if (!e.isIntersecting) return;
+  seen.add(e.target.id);
+  $$('.side a').forEach(a => { const id = a.getAttribute('href').slice(1); a.classList.toggle('act', id === e.target.id); if (seen.has(id)) a.classList.add('seen'); });
+  const pct = Math.round(seen.size / secs.length * 100);
+  $('#progBar').style.width = pct + '%'; $('#progLbl').textContent = pct + '% explored';
+}), { rootMargin: '-40% 0px -55% 0px' });
+secs.forEach(s => io.observe(s));
+const flashEl = el => { if (!el) return; el.classList.remove('flash'); void el.offsetWidth; el.classList.add('flash'); };
+const tbl = (head, rows, cls = []) => `<table class="t"><tr>${head.map(h => `<th>${h}</th>`).join('')}</tr>${rows.map((r, i) => `<tr class="${cls[i] || ''}">${r.map(c => `<td class="m">${c}</td>`).join('')}</tr>`).join('')}</table>`;
+
+/* ===== 01 share simulator ===== */
+const SH_NAMES = { ord: 'orders', vw: 'v_region_sales', cust: 'customers' };
+let SH;
+function shInit() {
+  SH = { g: new Set(['db', 'sc', 'ord', 'acct']), vt: 'secure', q: null, next: 1004, chg: null,
+    orders: [{ id: 1001, region: 'EMEA', amt: 120.00, st: 'PLACED' }, { id: 1002, region: 'APAC', amt: 75.50, st: 'PLACED' }, { id: 1003, region: 'AMER', amt: 310.00, st: 'SHIPPED' }] };
+}
+shInit();
+const shInShare = o => SH.g.has(o) && !(o === 'vw' && SH.vt === 'regular');
+function shAccess(o) {
+  if (!SH.g.has('acct')) return { ok: false, err: `Share 'PROVIDER_ORG.PROVIDER_ACCT.SALES_SHARE' does not exist or not authorized.`, why: `The consumer account was never added to the share, so it doesn't even appear in the consumer's <code>SHOW SHARES</code>. Nothing can be mounted.` };
+  if (!SH.g.has('db')) return { ok: false, err: `Database 'PARTNER_SALES' does not exist or not authorized.`, why: `Without <code>USAGE</code> on the database the share has nothing to mount. Grant the database to the share first (that's the normal order of steps).` };
+  if (!SH.g.has('sc')) return { ok: false, err: `Schema 'PARTNER_SALES.PUBLIC' does not exist or not authorized.`, why: `The database is visible but the schema isn't. Every level needs <code>USAGE</code>: database, then schema, then <code>SELECT</code> on the object.` };
+  if (o && !shInShare(o)) return { ok: false, err: `Object 'PARTNER_SALES.PUBLIC.${SH_NAMES[o].toUpperCase()}' does not exist or not authorized.`, why: o === 'vw' && SH.g.has('vw') ? `The grant of a <b>regular</b> view to the share failed, so it isn't in the share. By default shares accept only secure views.` : `Not granted to the share, so for the consumer it simply doesn't exist. Note the wording: Snowflake doesn't even confirm that the object exists.` };
+  return { ok: true };
+}
+function shResult() {
+  const q = SH.q; if (!q) return `<div class="note-s" style="padding:8px 0">(pick a consumer query)</div>`;
+  if (q === 'dml') { const a = shAccess('ord'); return a.ok ? `<div class="explain"><b class="h" style="color:var(--red)">ERROR</b>Shared databases are read-only: DML isn't allowed on <code>PARTNER_SALES</code> (illustrative message).</div>` : `<div class="explain"><b class="h" style="color:var(--red)">ERROR</b>${esc(a.err)}</div>`; }
+  if (q === 'tt') { const a = shAccess('ord'); return a.ok ? `<div class="explain"><b class="h" style="color:var(--red)">ERROR</b>Time Travel isn't supported on objects in a shared database (illustrative message). History stays with the provider.</div>` : `<div class="explain"><b class="h" style="color:var(--red)">ERROR</b>${esc(a.err)}</div>`; }
+  if (q === 'ddl') { const a = shAccess('vw'); return a.ok ? `<div class="explain"><b class="h">RESULT</b>The definition isn't returned to the consumer: the text of a <b>secure</b> view is visible only to its owner role. The consumer sees the columns, never the SQL or the tables behind it.</div>` : `<div class="explain"><b class="h" style="color:var(--red)">ERROR</b>${esc(a.err)}</div>`; }
+  const a = shAccess(q);
+  if (!a.ok) return `<div class="explain"><b class="h" style="color:var(--red)">ERROR</b>${esc(a.err)}</div>`;
+  if (q === 'ord') return tbl(['ORDER_ID', 'REGION', 'AMOUNT', 'STATUS'], SH.orders.map(r => [r.id, r.region, fmt(r.amt, 2), r.st]), SH.orders.map(r => r.id === SH.chg ? 'rowchg' : ''));
+  if (q === 'vw') { const m = {}; SH.orders.forEach(r => m[r.region] = (m[r.region] || 0) + r.amt); return tbl(['REGION', 'TOTAL_SALES'], Object.entries(m).map(([k, v]) => [k, fmt(v, 2)])); }
+  if (q === 'cust') return tbl(['CUSTOMER_ID', 'NAME', 'EMAIL'], [['C-01', 'Sample User A', 'a@example.com'], ['C-02', 'Sample User B', 'b@example.com']]);
+}
+function shWhy() {
+  const q = SH.q; if (!q) return null;
+  const o = q === 'ddl' ? 'vw' : (q === 'dml' || q === 'tt') ? 'ord' : q;
+  const a = shAccess(o);
+  if (!a.ok) return a.why;
+  return { ord: `The consumer's warehouse read the provider's micro-partitions directly. Now press <b>UPDATE</b> as the provider: the next consumer query sees it, with no refresh.`, vw: `A <b>secure view</b> exposes only region totals: no order IDs and no customers. Sharing views instead of base tables is the standard way to share a curated subset.`, cust: `You just shared a PII table. In real life, share a secure view with masked or removed columns instead, and apply a masking policy as a second line of defence.`, ddl: `Secure views protect your logic: table names, joins and tenant filters stay private.`, dml: `Consumers can never write to a shared database. If they need to enrich the data, they CTAS or join into their <b>own</b> database.`, tt: `No Time Travel, no cloning, no streams-style history reads on the shared database: the provider controls history.` }[q];
+}
+function shDraw(msg) {
+  $$('#shGrants .chip').forEach(c => c.classList.toggle('on', SH.g.has(c.dataset.g)));
+  const objs = ['db', 'sc', 'ord', 'vw', 'cust'].filter(shInShare), canMount = !shAccess(null).err;
+  $('#shSObj').textContent = objs.length + ' grant' + (objs.length === 1 ? '' : 's');
+  $('#shSAcc').textContent = SH.g.has('acct') ? '1 consumer account' : 'no consumer accounts';
+  $('#shNObj').textContent = objs.length;
+  const vis = canMount ? ['ord', 'vw', 'cust'].filter(shInShare).map(o => SH_NAMES[o]) : [];
+  $('#shNVis').textContent = vis.length ? vis.join(', ') : 'nothing';
+  $('#shC1').textContent = vis.length ? vis.length + ' object(s) visible' : 'nothing visible';
+  $('#shP1').textContent = 'orders · ' + SH.orders.length + ' rows';
+  const svg = $('#shFlow'); svg.classList.add('playing');
+  ['shn-p', 'shn-s', 'shn-st'].forEach(id => $('#' + id).classList.add('on'));
+  $('#shn-c').classList.toggle('on', canMount);
+  $('#she1').classList.toggle('on', objs.length > 0); $('#she3').classList.add('on');
+  $('#she2').classList.toggle('on', canMount); $('#she4').classList.toggle('on', canMount);
+  $('#shPT').innerHTML = '<tr><th>ORDER_ID</th><th>REGION</th><th>AMOUNT</th><th>STATUS</th></tr>' + SH.orders.map(r => `<tr class="${r.id === SH.chg ? 'rowchg' : ''}"><td class="m">${r.id}</td><td class="m">${r.region}</td><td class="m">${fmt(r.amt, 2)}</td><td class="m">${r.st}</td></tr>`).join('');
+  $('#shCT').innerHTML = shResult();
+  $$('#shQ button').forEach(b => b.classList.toggle('cur', b.dataset.q === SH.q));
+  const w = msg || shWhy(); if (w) $('#shIns2').innerHTML = w;
+}
+function shPing() {
+  const p = $('#shPing'); p.style.setProperty('--dx', '280px'); p.classList.remove('go'); void p.getBoundingClientRect(); p.setAttribute('opacity', '1'); p.classList.add('go');
+  setTimeout(() => p.setAttribute('opacity', '0'), 1150);
+}
+$$('#shGrants .chip').forEach(c => c.onclick = () => {
+  const g = c.dataset.g; SH.g.has(g) ? SH.g.delete(g) : SH.g.add(g);
+  let m = null;
+  if (g === 'vw' && SH.g.has('vw') && SH.vt === 'regular') m = `<b>GRANT failed:</b> by default a share only accepts <b>secure</b> views (newer releases let you relax this with a share-level property; check current docs). Switch the view to SECURE VIEW.`;
+  else if (g === 'acct' && !SH.g.has('acct')) m = `<b>REMOVE ACCOUNTS:</b> access ends on the consumer's very next query. There's no copy left behind in their account to chase down.`;
+  else if (g === 'cust' && SH.g.has('cust')) m = `<b>Careful:</b> you just added a PII table to the share. Prefer a secure view that drops or masks sensitive columns.`;
+  shDraw(m);
+});
+tabs('#shVType', d => { SH.vt = d.v; shDraw(d.v === 'regular' ? (SH.g.has('vw') ? `A <b>regular</b> view can't be granted to a share by default, so v_region_sales has dropped out of the share. Regular views expose their SQL and allow optimizations that could leak filtered rows.` : `Regular view selected. Try granting it to the share.`) : `<b>Secure view:</b> definition hidden from consumers, and the optimizer can't push consumer predicates past its filters.`); });
+$$('#shQ button').forEach(b => b.onclick = () => { SH.q = b.dataset.q; SH.chg = null; shDraw(); flashEl($('#shCT')); });
+$('#shUpd').onclick = () => {
+  const r = SH.orders.find(x => x.id === 1002); r.st = r.st === 'PLACED' ? 'SHIPPED' : r.st === 'SHIPPED' ? 'DELIVERED' : 'PLACED'; SH.chg = 1002; shPing();
+  const live = shAccess('ord').ok && (SH.q === 'ord' || SH.q === 'vw');
+  shDraw(live ? `<b>Provider committed an UPDATE</b>, which created a new table version. The consumer's result already shows <b>${r.st}</b>. Nothing was copied or refreshed: the consumer's query simply resolved to the newest micro-partition list.` : `Provider committed the UPDATE (order 1002 is now <b>${r.st}</b>). Run <b>SELECT * FROM public.orders</b> as the consumer to see it, if the consumer has access.`);
+  if (live) flashEl($('#shCT'));
+};
+$('#shIns').onclick = () => {
+  const regs = ['EMEA', 'APAC', 'AMER'], id = SH.next++; SH.orders.push({ id, region: regs[id % 3], amt: 40 + (id * 37) % 260, st: 'PLACED' }); SH.chg = id; shPing();
+  const live = shAccess('ord').ok && (SH.q === 'ord' || SH.q === 'vw');
+  shDraw(live ? `<b>New order ${id} inserted</b> by the provider and visible to the consumer immediately${SH.q === 'vw' ? ' (the view totals changed too)' : ''}. The new micro-partition lives in the <b>provider's</b> storage and is billed to the provider.` : `Order ${id} inserted on the provider side.`);
+  if (live) flashEl($('#shCT'));
+};
+$('#shReset').onclick = () => { shInit(); $$('#shVType button').forEach((b, i) => b.classList.toggle('on', i === 0)); shDraw(`Reset. Run <b>SELECT * FROM public.orders</b> as the consumer, then press <b>UPDATE</b> as the provider.`); };
+shDraw(`Run <b>SELECT * FROM public.orders</b> as the consumer, then press <b>UPDATE</b> as the provider and watch the consumer side.`);
+
+/* ===== 01b setup stepper ===== */
+const ST = [
+  { n: ['stn1'], e: [], h: '1 · CREATE SHARE (provider)', you: `<code>USE ROLE ACCOUNTADMIN;</code> (or a role granted <code>CREATE SHARE</code>) then <code>CREATE SHARE sales_share COMMENT = 'Orders for partners';</code>`, be: `Cloud services creates an empty share object in the provider account's metadata: a name, an owner and an empty list of privileges and accounts. No storage, no compute.` },
+  { n: ['stn1', 'stn2'], e: ['ste1'], h: '2 · GRANT privileges to the share', you: `<code>GRANT USAGE ON DATABASE sales_db TO SHARE sales_share;</code><br><code>GRANT USAGE ON SCHEMA sales_db.public TO SHARE sales_share;</code><br><code>GRANT SELECT ON VIEW sales_db.public.v_region_sales TO SHARE sales_share;</code>`, be: `Privileges are granted <b>directly to the share</b>, not to a role. Each grant is a metadata row. If a secure view reads tables in another database, also <code>GRANT REFERENCE_USAGE ON DATABASE other_db TO SHARE …</code>.` },
+  { n: ['stn2', 'stn3'], e: ['ste2'], h: '3 · ADD ACCOUNTS', you: `<code>ALTER SHARE sales_share ADD ACCOUNTS = partner_org.partner_acct;</code>`, be: `The consumer account (identified as organization.account, or by locator) is now entitled to the share. It must be in the <b>same region</b> as the provider for a direct share.` },
+  { n: ['stn3', 'stn4'], e: ['ste3'], h: '4 · Consumer discovers the share', you: `In the consumer account: <code>SHOW SHARES;</code> (kind = INBOUND), or browse <i>Data Products → Private Sharing</i> in Snowsight. <code>DESC SHARE provider_org.provider_acct.sales_share;</code> lists the objects inside.`, be: `The consumer's cloud services layer reads the share's metadata across accounts. The consumer can see <b>what</b> is shared but can't query anything yet.` },
+  { n: ['stn4', 'stn5'], e: ['ste4'], h: '5 · CREATE DATABASE … FROM SHARE', you: `<code>CREATE DATABASE partner_sales FROM SHARE provider_org.provider_acct.sales_share;</code>`, be: `This creates a <b>read-only database</b> that is just a pointer to the provider's objects. Takes a second whether the data is 5 MB or 50 TB, because no data moves. One database per share per consumer account.` },
+  { n: ['stn5', 'stn6'], e: ['ste5'], h: '6 · Grant inside the consumer account, then query', you: `<code>GRANT IMPORTED PRIVILEGES ON DATABASE partner_sales TO ROLE analyst;</code> (or grant shared <b>database roles</b>), then <code>SELECT * FROM partner_sales.public.v_region_sales;</code> on the consumer's own warehouse.`, be: `The consumer's warehouse reads the provider's micro-partitions, and the consumer pays the credits. The provider's warehouses are never used. Provider policies (masking, row access, secure-view filters) are applied during compilation.` }
+];
+let sti = -1;
+ST.forEach((_, i) => { const s = document.createElement('span'); s.onclick = () => stGo(i); $('#stBar').appendChild(s); });
+function stGo(i) {
+  sti = i;
+  $('#stFlow').classList.toggle('playing', i >= 0);
+  [...$('#stBar').children].forEach((s, k) => s.classList.toggle('on', k <= i));
+  if (i < 0) { $$('#stFlow .fn,#stFlow .edge').forEach(x => x.classList.remove('on')); $('#stDesc').innerHTML = '<h4>Ready</h4><div style="font-size:14px;color:var(--ink2)">Press Start to follow a share from creation to the first consumer query.</div>'; $('#stNext').textContent = 'Start'; return; }
+  const st = ST[i];
+  $$('#stFlow .fn').forEach(g => g.classList.toggle('on', st.n.includes(g.id)));
+  $$('#stFlow .edge').forEach(e => e.classList.toggle('on', st.e.includes(e.id)));
+  $('#stDesc').innerHTML = `<h4>${st.h}</h4><div class="two"><div class="you"><b class="l">WHAT YOU DO</b>${st.you}</div><div class="be"><b class="l">WHAT HAPPENS IN THE BACKEND</b>${st.be}</div></div>`;
+  $('#stNext').textContent = i === ST.length - 1 ? 'Replay' : 'Next';
+}
+$('#stNext').onclick = () => stGo(sti === ST.length - 1 ? 0 : sti + 1);
+$('#stPrev').onclick = () => stGo(Math.max(-1, sti - 1));
+$('#stReset').onclick = () => stGo(-1);
+stGo(-1);
+
+/* ===== 02 reader account cost widget ===== */
+const RC_SZ = [['X-Small', 1], ['Small', 2], ['Medium', 4], ['Large', 8]];
+let rcType = 'full';
+function rcDraw() {
+  const n = +$('#rcN').value, h = +$('#rcH').value, w = RC_SZ[+$('#rcW').value], tb = +$('#rcTB').value, capI = +$('#rcCap').value;
+  $('#rcNV').textContent = n + (n === 1 ? ' consumer' : ' consumers'); $('#rcHV').textContent = h + ' h/day'; $('#rcWV').textContent = w[0] + ' · ' + w[1] + ' cr/h'; $('#rcTBV').textContent = tb + ' TB';
+  const cap = capI * 100; $('#rcCapV').textContent = capI ? cap + ' cr/month each' : 'none';
+  const PRICE = 3, STOR = 23;
+  let credEach = h * w[1] * 30, capped = false;
+  if (rcType === 'reader' && cap && credEach > cap) { credEach = cap; capped = true; }
+  const compute = n * credEach * PRICE, storage = tb * STOR;
+  const prov = storage + (rcType === 'reader' ? compute : 0), cons = rcType === 'full' ? compute : 0;
+  $('#rcP').textContent = '$' + fmt(prov); $('#rcC').textContent = '$' + fmt(cons);
+  $('#rcPs').textContent = rcType === 'reader' ? `storage $${fmt(storage)} + reader compute $${fmt(compute)}` : `storage only ($${fmt(storage)})`;
+  $('#rcCs').textContent = rcType === 'full' ? `${fmt(n * credEach)} credits on their own warehouses` : 'nothing: provider pays';
+  const mx = Math.max(prov, cons, 1), W = v => Math.max(2, v / mx * 470);
+  const sW = W(storage), cW = W(compute);
+  $('#rcSvg').innerHTML = `<text class="tm" x="0" y="30">PROVIDER</text><rect x="110" y="16" width="${sW}" height="22" rx="4" fill="var(--teal)" class="grow"/>` +
+    (rcType === 'reader' ? `<rect x="${110 + sW}" y="16" width="${cW}" height="22" rx="4" fill="var(--red)" class="grow"/>` : '') +
+    `<text class="tm" x="${Math.min(600, 118 + sW + (rcType === 'reader' ? cW : 0))}" y="31">$${fmt(prov)}</text>` +
+    `<text class="tm" x="0" y="80">CONSUMERS</text>` + (rcType === 'full' ? `<rect x="110" y="66" width="${cW}" height="22" rx="4" fill="var(--ice)" class="grow"/>` : '') +
+    `<text class="tm" x="${Math.min(600, 118 + (rcType === 'full' ? cW : 0))}" y="81">$${fmt(cons)}</text>` +
+    `<text class="tm" x="110" y="112">teal: storage · red: reader compute · blue: consumer compute</text>`;
+  let ins;
+  if (rcType === 'full') ins = `<b>Full accounts:</b> each consumer pays for their own ${fmt(n * credEach)} credits. You pay only the $${fmt(storage)} storage you'd pay anyway. Adding consumers costs you <b>nothing extra</b>, and their heavy queries never touch your warehouses.`;
+  else ins = `<b>Reader accounts:</b> you pay <b>everything</b>, $${fmt(prov)}/month here. ${capped ? 'The resource monitor cap is limiting the spend: queries are cut off once each reader hits its quota, so plan the quota with the consumer.' : (capI ? 'The cap is above actual usage, so it isn\'t biting yet.' : 'No resource monitor: one curious analyst on a Large warehouse can run up your bill. Set a cap.')} Consider charging the consumer back, or moving them to their own account when usage grows.`;
+  $('#rcIns').innerHTML = ins + ' <span class="note-s">(illustrative model, not a benchmark)</span>';
+}
+['#rcN', '#rcH', '#rcW', '#rcTB', '#rcCap'].forEach(s => $(s).addEventListener('input', rcDraw));
+tabs('#rcType', d => { rcType = d.v; rcDraw(); });
+rcDraw();
+</script>
+
+<script>
+/* ===== 03 region chooser ===== */
+const RG = [
+  { id: 'aws-usw2', c: 'AWS', n: 'AWS us-west-2 (Oregon)', x: 105, y: 92 },
+  { id: 'gcp-usc1', c: 'GCP', n: 'Google Cloud us-central1 (Iowa)', x: 165, y: 100 },
+  { id: 'aws-use1', c: 'AWS', n: 'AWS us-east-1 (N. Virginia)', x: 205, y: 110 },
+  { id: 'az-eus2', c: 'Azure', n: 'Azure East US 2 (Virginia)', x: 214, y: 124 },
+  { id: 'aws-euw1', c: 'AWS', n: 'AWS eu-west-1 (Ireland)', x: 330, y: 72 },
+  { id: 'az-weu', c: 'Azure', n: 'Azure West Europe (Netherlands)', x: 352, y: 76 },
+  { id: 'aws-euc1', c: 'AWS', n: 'AWS eu-central-1 (Frankfurt)', x: 364, y: 88 },
+  { id: 'aws-aps1', c: 'AWS', n: 'AWS ap-south-1 (Mumbai)', x: 478, y: 150 },
+  { id: 'az-aue', c: 'Azure', n: 'Azure Australia East (Sydney)', x: 610, y: 228 }
+];
+const RG_COL = { AWS: '#FF9900', Azure: '#0089D6', GCP: '#34A853' };
+const rgById = id => RG.find(r => r.id === id);
+['#rgP', '#rgC'].forEach((s, k) => { $(s).innerHTML = RG.map(r => `<option value="${r.id}">${r.n}</option>`).join(''); $(s).value = k ? 'aws-euw1' : 'aws-use1'; });
+let rgHas = true, rgMany = false;
+function rgDraw() {
+  const P = rgById($('#rgP').value), C = rgById($('#rgC').value), same = P.id === C.id, xcloud = P.c !== C.c;
+  let s = `<rect x="0" y="0" width="680" height="280" rx="12" fill="var(--card2)"/>`;
+  s += `<path d="M40 60 Q120 30 230 55 L250 140 Q200 190 150 170 L90 150 Q50 110 40 60 Z" fill="var(--card)" stroke="var(--line2)"/>`;
+  s += `<path d="M175 185 L235 190 L215 265 L190 265 Z" fill="var(--card)" stroke="var(--line2)"/>`;
+  s += `<path d="M310 50 Q360 35 420 50 L410 110 Q370 120 330 105 Z" fill="var(--card)" stroke="var(--line2)"/>`;
+  s += `<path d="M335 125 L420 125 L405 230 L360 235 Z" fill="var(--card)" stroke="var(--line2)"/>`;
+  s += `<path d="M425 45 Q560 30 650 70 L630 150 Q560 175 470 170 Q430 120 425 45 Z" fill="var(--card)" stroke="var(--line2)"/>`;
+  s += `<path d="M570 200 Q620 190 655 210 L645 255 L580 255 Z" fill="var(--card)" stroke="var(--line2)"/>`;
+  let mech, fresh, cost, ins, lines = '';
+  if (!rgHas) {
+    mech = 'Reader account'; fresh = 'Live'; cost = 'Reader compute';
+    lines = `<path d="M${P.x} ${P.y} Q${(P.x + C.x) / 2} ${Math.min(P.y, C.y) - 50} ${C.x} ${C.y}" stroke="var(--ink3)" stroke-width="1.6" fill="none" stroke-dasharray="3 5"/><text class="tm" x="${(P.x + C.x) / 2}" y="${Math.min(P.y, C.y) - 30}" text-anchor="middle">user logs in over the internet</text>`;
+    ins = `The consumer has no Snowflake account, so create a <b>reader account</b>. It's created in <b>your</b> region (${esc(P.n)}), so a normal direct share works, and the consumer's users simply log in to it from wherever they are. Remember: you pay its compute.`;
+  } else if (same) {
+    mech = 'Direct share'; fresh = 'Live (on commit)'; cost = 'None';
+    lines = `<circle cx="${P.x}" cy="${P.y}" r="16" fill="none" stroke="var(--teal)" stroke-width="2" class="pulse"/>`;
+    ins = `Same cloud, same region: a <b>direct share</b> works. The consumer's warehouse reads your micro-partitions in place. No replication, no extra cost, always current.`;
+  } else {
+    mech = rgMany ? 'Listing + auto-fulfillment' : 'Replication + share';
+    fresh = 'As of last refresh'; cost = 'Transfer + storage';
+    const mx = (P.x + C.x) / 2, my = Math.min(P.y, C.y) - 45;
+    lines = `<path class="edge on" d="M${P.x} ${P.y} Q${mx} ${my} ${C.x} ${C.y}" style="stroke:var(--amber);stroke-width:2.2;stroke-dasharray:7 5;opacity:1"/>` +
+      `<circle cx="${C.x}" cy="${C.y}" r="14" fill="none" stroke="var(--amber)" stroke-width="2"/><text class="tm" x="${C.x}" y="${C.y + 30}" text-anchor="middle" style="fill:var(--amber)">${rgMany ? 'auto-fulfilled copy' : 'your replica account'}</text>` +
+      `<text class="tm" x="${mx}" y="${my + 10}" text-anchor="middle" style="fill:var(--amber)">${rgMany ? 'Snowflake replicates the listing data' : 'replication group refresh'}</text>`;
+    ins = `${xcloud ? '<b>Cross-cloud</b>' : '<b>Cross-region</b>'}: a direct share is <b>not possible</b>. ` + (rgMany
+      ? `With many or unknown consumers, publish a <b>listing with Cross-Cloud Auto-Fulfillment</b>. Snowflake replicates the data product to ${esc(C.n)} when a consumer there gets it, and refreshes it on the schedule you set.`
+      : `For one known partner, <b>replicate</b> the database to an account you own in ${esc(C.n)} (replication group with a refresh schedule), then create a share there and add the partner. A private listing with auto-fulfillment is the managed alternative.`) +
+      ` Either way the provider pays the data transfer${xcloud ? ' (cross-cloud egress)' : ''}, the storage of the copy and the refresh compute, and consumers see data as of the last refresh.`;
+  }
+  RG.forEach(r => { const on = r.id === P.id || r.id === C.id; s += `<circle class="mapdot ${on ? 'on' : ''}" cx="${r.x}" cy="${r.y}" r="${on ? 8 : 5}" fill="${RG_COL[r.c]}" opacity="${on ? 1 : .55}"/>`; });
+  s += lines;
+  s += `<text class="tm" x="${P.x}" y="${P.y - 14}" text-anchor="middle" style="fill:var(--ink);font-weight:700">PROVIDER</text>`;
+  if (!same) s += `<text class="tm" x="${C.x}" y="${C.y - 14}" text-anchor="middle" style="fill:var(--ink);font-weight:700">CONSUMER</text>`;
+  else s += `<text class="tm" x="${P.x}" y="${P.y + 28}" text-anchor="middle" style="fill:var(--teal)">+ CONSUMER (same region)</text>`;
+  $('#rgMap').innerHTML = s;
+  $('#rgMech').textContent = mech; $('#rgFresh').textContent = fresh; $('#rgCost').textContent = cost; $('#rgIns').innerHTML = ins;
+}
+['#rgP', '#rgC'].forEach(s => $(s).addEventListener('change', rgDraw));
+tabs('#rgHas', d => { rgHas = d.v === '1'; rgDraw(); });
+tabs('#rgMany', d => { rgMany = d.v === 'n'; rgDraw(); });
+rgDraw();
+
+/* ===== 04 listing builder ===== */
+const LS = { aud: 'priv', price: 'free', acc: 'inst', reg: 'one' };
+function lsDraw() {
+  const { aud, price, acc, reg } = LS;
+  const badge = (t, c) => `<span class="badge ${c}">${t}</span>`;
+  $('#lsCard').innerHTML = `<div class="tm" style="font-family:var(--f-mono);font-size:11px;color:var(--ink3)">${aud === 'pub' ? 'SNOWFLAKE MARKETPLACE' : 'PRIVATE LISTING · 3 NAMED ACCOUNTS'}</div><h5>Daily Retail Sales Index (sample)</h5><p style="font-size:14px;color:var(--ink2)">Store-level daily sales aggregates, refreshed every morning. Includes a data dictionary and five sample queries.</p><div class="row" style="margin-top:8px">${badge(price === 'free' ? 'FREE' : price === 'trial' ? 'LIMITED TRIAL' : 'PAID', price === 'free' ? 'ok' : 'mid')}${badge(acc === 'inst' ? 'INSTANT ACCESS' : 'REQUEST ACCESS', acc === 'inst' ? 'ok' : 'mid')}${badge(reg === 'auto' ? 'AVAILABLE IN OTHER REGIONS' : 'PROVIDER REGION ONLY', reg === 'auto' ? 'ok' : 'off')}</div><button class="btn pri" style="margin-top:12px" tabindex="-1">${acc === 'inst' ? 'Get' : 'Request'}</button>`;
+  const j = [];
+  j.push(aud === 'pub' ? 'Finds the listing by searching the Marketplace.' : 'Sees the listing under private offers, because their account was named.');
+  if (price !== 'free') j.push(price === 'trial' ? 'Starts a time- or usage-limited trial, then chooses to buy or let it lapse.' : 'Accepts the pricing plan. Charges are billed through Snowflake.');
+  j.push(acc === 'pers' ? 'Submits a request. The provider reviews it and may prepare consumer-specific data before granting.' : 'Accepts the terms and clicks Get.');
+  j.push(reg === 'auto' ? 'If they are in another region, Snowflake fulfills the data there first (replication managed by Snowflake), then mounts it.' : 'If they are in another region, they can\'t get it: the listing is only fulfilled in the provider region.');
+  j.push('A read-only database appears in their account. They query it with their own warehouse.');
+  $('#lsJourney').innerHTML = j.map(x => `<li>${x}</li>`).join('');
+  const w = [];
+  if (aud === 'pub') w.push('Public listings require the provider to be approved for the Marketplace.');
+  if (price === 'paid') w.push('Paid listings depend on provider eligibility and region, so check what your account supports.');
+  if (acc === 'pers') w.push('Personalized listings put a human approval step in the loop, which is good for licensed or customer-specific data.');
+  if (reg === 'auto') w.push('Auto-fulfillment means you pay for replication and storage in each remote region where consumers exist. Set the refresh frequency deliberately.');
+  if (aud === 'priv' && reg === 'one' && price === 'free' && acc === 'inst') w.push('This is basically a direct share with a product page. Great for known partners in your region.');
+  $('#lsIns').innerHTML = '<b>Notes:</b> ' + w.join(' ') + ' Providers then track usage through listing analytics and the data sharing usage views.';
+}
+['aud', 'price', 'acc', 'reg'].forEach(k => tabs('#ls' + { aud: 'Aud', price: 'Price', acc: 'Acc', reg: 'Reg' }[k], d => { LS[k] = d.v; lsDraw(); }));
+lsDraw();
+
+/* ===== 05 clean room ===== */
+let crSeed = 7;
+const crRnd = () => (crSeed = (crSeed * 9301 + 49297) % 233280) / 233280;
+const crHash = () => Array.from({ length: 8 }, () => '0123456789abcdef'[Math.floor(crRnd() * 16)]).join('');
+const CR_REG = ['North', 'South', 'East', 'West'];
+const CR_OVER_REG = [0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 2, 2, 2, 3, 3];
+const CR_OVER_PLAN = ['Premium', 'Basic', 'Premium', 'Basic', 'Basic', 'Premium', 'Basic', 'Basic', 'Premium', 'Basic', 'Basic', 'Premium', 'Basic', 'Premium', 'Basic', 'Basic', 'Premium'];
+const crShared = CR_OVER_REG.map((r, i) => ({ h: crHash(), region: CR_REG[r], plan: CR_OVER_PLAN[i] }));
+const crA = crShared.map(x => ({ h: x.h, region: x.region, hit: true }));
+while (crA.length < 40) crA.push({ h: crHash(), region: CR_REG[Math.floor(crRnd() * 4)], hit: false });
+const crB = crShared.map(x => ({ h: x.h, plan: x.plan, hit: true }));
+while (crB.length < 36) crB.push({ h: crHash(), plan: crRnd() > .5 ? 'Premium' : 'Basic', hit: false });
+const crShuffle = a => { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(crRnd() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+crShuffle(crA); crShuffle(crB);
+$('#crA').innerHTML = crA.map(r => `<div class="lockrow ${r.hit ? 'hit' : ''}"><span>sha256:${r.h}…</span><b>${r.region}</b></div>`).join('');
+$('#crB').innerHTML = crB.map(r => `<div class="lockrow ${r.hit ? 'hit' : ''}"><span>sha256:${r.h}…</span><b>${r.plan}</b></div>`).join('');
+let crTpl = 'count';
+const CR_SQL = {
+  count: `-- template: overlap_count (approved by both parties)\nSELECT COUNT(DISTINCT a.hashed_email) AS overlap\nFROM shopco.customers a\nJOIN streamco.viewers b ON a.hashed_email = b.hashed_email;`,
+  region: `-- template: overlap_by_dimension(dim = region)\nSELECT a.region, COUNT(DISTINCT a.hashed_email) AS overlap\nFROM shopco.customers a\nJOIN streamco.viewers b ON a.hashed_email = b.hashed_email\nGROUP BY a.region;`,
+  seg: `-- template: overlap_by_dimension(dims = region, plan)\nSELECT a.region, b.plan, COUNT(DISTINCT a.hashed_email) AS overlap\nFROM shopco.customers a\nJOIN streamco.viewers b ON a.hashed_email = b.hashed_email\nGROUP BY a.region, b.plan;`,
+  raw: `-- ad-hoc query (not an approved template)\nSELECT a.*, b.*\nFROM shopco.customers a\nJOIN streamco.viewers b ON a.hashed_email = b.hashed_email;`
+};
+function crDraw() {
+  const k = +$('#crK').value; $('#crKV').textContent = 'k = ' + k; $('#crSvgK').textContent = 'k ≥ ' + k;
+  $('#crSql').textContent = CR_SQL[crTpl];
+  $('#crTrue').textContent = crShared.length;
+  let ret = 0, sup = 0, out, ins;
+  if (crTpl === 'raw') {
+    out = `<div class="explain"><b class="h" style="color:var(--red)">REJECTED</b>This query isn't an approved template. Row-level output from the other party's data is never returned.</div>`;
+    ins = `<b>Blocked.</b> In a clean room you can't type free-form SQL against the partner's data. Only templates both sides approved can run, and they return aggregates. That's the core difference from a normal share.`;
+    $('#crRet').textContent = 0; $('#crSup').textContent = '–';
+  } else {
+    const g = {};
+    crShared.forEach(x => { const key = crTpl === 'count' ? 'ALL' : crTpl === 'region' ? x.region : x.region + ' · ' + x.plan; g[key] = (g[key] || 0) + 1; });
+    const rows = Object.entries(g).sort();
+    let rem = 0;
+    const body = rows.map(([key, n], i) => { if (n >= k) { ret++; return `<tr class="crrow" style="animation-delay:${i * 60}ms"><td class="m">${key}</td><td class="m">${n}</td></tr>`; } sup++; rem += n; return `<tr class="crrow" style="animation-delay:${i * 60}ms"><td class="m" style="color:var(--ink3)">${key}</td><td><span class="badge bad">suppressed (&lt; ${k})</span></td></tr>`; }).join('');
+    out = `<table class="t"><tr><th>${crTpl === 'count' ? 'GROUP' : crTpl === 'region' ? 'REGION' : 'REGION · PLAN'}</th><th>OVERLAP</th></tr>${body}</table>`;
+    $('#crRet').textContent = ret; $('#crSup').textContent = sup;
+    if (k === 1) ins = `<b>k = 1 is dangerous.</b> A group of one is an individual: combine "East · Premium = 1" with anything else you know and you may have identified a person. Real clean rooms enforce a minimum well above 1.`;
+    else if (crTpl === 'count') ins = `<b>Overlap = ${crShared.length}.</b> Both companies learn how many customers they share, but neither learns <i>which</i> ones. The highlighted rows show what the engine matched internally; neither party ever sees that highlight.`;
+    else ins = sup ? `<b>${sup} of ${rows.length} groups suppressed</b> because they have fewer than ${k} people. The finer you slice (region → region × plan), the smaller the groups and the more gets hidden. That's the privacy and utility trade-off.` : `All ${rows.length} groups have at least ${k} people, so all are returned. Raise k or slice finer to see suppression kick in.`;
+  }
+  $('#crOut').innerHTML = out; $('#crRaw').textContent = 0; $('#crIns').innerHTML = ins;
+}
+$('#crK').addEventListener('input', crDraw);
+tabs('#crTpl', d => { crTpl = d.v; crDraw(); });
+crDraw();
+
+/* ===== 06 native apps stepper ===== */
+const NA = [
+  { n: ['nan1'], e: [], h: '1 · Write the app files', you: `Put <code>manifest.yml</code>, <code>setup.sql</code>, and optionally Streamlit and Python files on a stage. The manifest names the setup script and declares the privileges and references the app will request.`, be: `Just files on a stage in the provider account. Nothing is installable yet.` },
+  { n: ['nan1', 'nan2'], e: ['nae1'], h: '2 · Create the application package', you: `<code>CREATE APPLICATION PACKAGE sales_insights_pkg;</code> If the app ships data too, create a schema in the package, add views and <code>GRANT … TO SHARE IN APPLICATION PACKAGE sales_insights_pkg</code>.`, be: `The application package is the provider-side container that holds versions, plus any provider data the app may read, using the same sharing mechanism as a normal share.` },
+  { n: ['nan2', 'nan3'], e: ['nae2'], h: '3 · Add a version and set the release directive', you: `Register a version (and later patches) from the staged files, then set the default <b>release directive</b> so consumers get, for example, version V1 patch 2. Test locally first by installing the package in your own account.`, be: `Snowflake snapshots the staged code for that version. Upgrades later move installed apps to the new version or patch, and the setup script runs again to migrate objects.` },
+  { n: ['nan3', 'nan4'], e: ['nae3'], h: '4 · Publish as a listing', you: `Attach the package to a <b>private listing</b> (named customers) or a <b>public Marketplace listing</b>. Public apps go through a security review by Snowflake.`, be: `Same listing machinery as data products: a product page, terms, optional pricing, and cross-region fulfillment.` },
+  { n: ['nan4', 'nan5'], e: ['nae4'], h: '5 · Consumer installs the app', you: `The consumer clicks Get, or runs <code>CREATE APPLICATION sales_insights FROM LISTING …</code>. It looks like a database-like object in their account.`, be: `An <b>application object</b> is created in the <b>consumer account</b>. It's owned by the consumer, but its contents are controlled by the app.` },
+  { n: ['nan5', 'nan6'], e: ['nae5'], h: '6 · The setup script runs', you: `Nothing to do: installation runs <code>setup.sql</code> automatically.`, be: `The setup script creates the app's schemas, views, procedures, UDFs, Streamlit app and <b>application roles</b> inside the application object. The consumer grants application roles to their own roles to give users access.` },
+  { n: ['nan6', 'nan7'], e: ['nae6'], h: '7 · Grant access and use it on your own data', you: `The consumer grants the app the privileges it requested, or binds a reference to their table (for example <code>my_db.sales.orders</code>), then opens the Streamlit UI or calls its procedures.`, be: `The app's code runs <b>in the consumer account</b> on consumer compute. Consumer data <b>never leaves</b> their account, and the provider doesn't see it unless the consumer explicitly opts in (for example to event sharing for logs). Keep this conceptual in interviews: the framework's features keep growing.` }
+];
+let nai = -1;
+NA.forEach((_, i) => { const s = document.createElement('span'); s.onclick = () => naGo(i); $('#naBar').appendChild(s); });
+function naGo(i) {
+  nai = i;
+  $('#naFlow').classList.toggle('playing', i >= 0);
+  [...$('#naBar').children].forEach((s, k) => s.classList.toggle('on', k <= i));
+  if (i < 0) { $$('#naFlow .fn,#naFlow .edge').forEach(x => x.classList.remove('on')); $('#naDesc').innerHTML = '<h4>Ready</h4><div style="font-size:14px;color:var(--ink2)">Press Start to follow an app from the provider\'s stage to running inside a consumer account.</div>'; $('#naNext').textContent = 'Start'; return; }
+  const st = NA[i];
+  $$('#naFlow .fn').forEach(g => g.classList.toggle('on', st.n.includes(g.id)));
+  $$('#naFlow .edge').forEach(e => e.classList.toggle('on', st.e.includes(e.id)));
+  $('#naDesc').innerHTML = `<h4>${st.h}</h4><div class="two"><div class="you"><b class="l">WHAT YOU DO</b>${st.you}</div><div class="be"><b class="l">WHAT HAPPENS IN THE BACKEND</b>${st.be}</div></div>`;
+  $('#naNext').textContent = i === NA.length - 1 ? 'Replay' : 'Next';
+}
+$('#naNext').onclick = () => naGo(nai === NA.length - 1 ? 0 : nai + 1);
+$('#naPrev').onclick = () => naGo(Math.max(-1, nai - 1));
+$('#naReset').onclick = () => naGo(-1);
+naGo(-1);
+
+/* ===== 07 governance multi-tenant ===== */
+const GV_ENT = [['AB12345', 'TENANT_A', 'TRUE'], ['CD67890', 'TENANT_B', 'FALSE'], ['GH24680', 'TENANT_C', 'FALSE']];
+const GV_ROWS = [['TENANT_A', 5001, 120, 'ana@example.com'], ['TENANT_B', 5002, 80, 'bo@example.com'], ['TENANT_A', 5003, 45, 'cy@example.com'], ['TENANT_C', 5004, 300, 'di@example.com'], ['TENANT_B', 5005, 60, 'ed@example.com'], ['TENANT_A', 5006, 210, 'fa@example.com']];
+let GV;
+const gvInit = () => { GV = { acct: 'AB12345', mask: 'acct', revoked: false }; };
+gvInit();
+const gvMaskEmail = e => e.replace(/^[^@]+/, '*****');
+function gvDraw() {
+  const { acct, mask, revoked } = GV;
+  $('#gvEnt').innerHTML = '<tr><th>CONSUMER_ACCOUNT</th><th>TENANT_ID</th><th>PII_ALLOWED</th></tr>' + GV_ENT.map(r => `<tr class="${r[0] === acct ? 'rowchg' : ''}"><td class="m">${r[0]}</td><td class="m">${r[1]}</td><td class="m">${r[2]}</td></tr>`).join('');
+  const sim = acct === 'PROV' ? '-- provider session, no simulation: CURRENT_ACCOUNT() = PR00001' : (acct === 'AB12345' || acct === 'CD67890' || acct === 'EF13579') ? `-- running in consumer ${acct}: CURRENT_ACCOUNT() = '${acct}'` : '';
+  const pol = mask === 'acct' ? `CREATE MASKING POLICY email_mask AS (v STRING) RETURNS STRING ->\n  CASE WHEN EXISTS (SELECT 1 FROM entitlements e\n         WHERE e.consumer_account = CURRENT_ACCOUNT() AND e.pii_allowed)\n       THEN v ELSE REGEXP_REPLACE(v, '^[^@]+', '*****') END;` : mask === 'role' ? `CREATE MASKING POLICY email_mask AS (v STRING) RETURNS STRING ->\n  CASE WHEN CURRENT_ROLE() IN ('PII_READER') THEN v\n       ELSE REGEXP_REPLACE(v, '^[^@]+', '*****') END;` : `-- no masking policy on EMAIL`;
+  $('#gvSql').textContent = `CREATE SECURE VIEW shared_sales_v AS\nSELECT s.tenant_id, s.order_id, s.amount, s.email\nFROM sales_all s\nJOIN entitlements e ON s.tenant_id = e.tenant_id\nWHERE e.consumer_account = CURRENT_ACCOUNT();\n\n${pol}\n\n${sim}`;
+  $('#gvRevState').textContent = revoked ? 'AB12345 removed' : 'AB12345 in share';
+  $('#gvRevState').className = 'badge ' + (revoked ? 'bad' : 'off');
+  $('#gvRevoke').textContent = revoked ? 'ALTER SHARE … ADD ACCOUNTS = AB12345' : 'ALTER SHARE … REMOVE ACCOUNTS = AB12345';
+  let out, ins;
+  if (acct === 'AB12345' && revoked) {
+    out = `<div class="explain"><b class="h" style="color:var(--red)">ERROR</b>The shared database is no longer available to this account (illustrative message).</div>`;
+    ins = `<b>Revoked instantly.</b> Removing the account from the share cut access on the very next query. No files to delete, no copies to chase. (Anything the consumer already copied into their own tables is a contract matter, not a technical one.)`;
+  } else {
+    const ent = GV_ENT.find(r => r[0] === acct), tenant = ent ? ent[1] : null, pii = ent ? ent[2] === 'TRUE' : false;
+    const rows = GV_ROWS.filter(r => r[0] === tenant);
+    const showPII = mask === 'off' ? true : mask === 'acct' ? pii : false;
+    out = rows.length ? tbl(['TENANT_ID', 'ORDER_ID', 'AMOUNT', 'EMAIL'], rows.map(r => [r[0], r[1], r[2], showPII ? r[3] : gvMaskEmail(r[3])])) : `<div class="explain"><b class="h">0 ROWS</b>No entitlement row matches CURRENT_ACCOUNT(), so the join returns nothing.</div>`;
+    if (acct === 'PROV') ins = `<b>0 rows for the provider</b>, because the provider's own locator isn't in the entitlements table. To test what a consumer will see, the provider runs <code>ALTER SESSION SET SIMULATED_DATA_SHARING_CONSUMER = 'AB12345';</code> and queries the view.`;
+    else if (!ent) ins = `<b>Fail-closed:</b> EF13579 was added to the share but nobody created its entitlement row, so it sees <b>nothing</b> rather than everything. That's exactly how a multi-tenant view should fail.`;
+    else if (mask === 'role') ins = `<b>Role-based masking in a share:</b> your role names mean nothing in ${acct}, so the CURRENT_ROLE() branch never matches and email stays masked even for the tenant that paid for PII. Base sharing logic on CURRENT_ACCOUNT() or shared database roles.`;
+    else if (mask === 'off') ins = `<b>No masking:</b> ${tenant} sees raw emails. The row filter still isolates tenants, but you lost the second line of defence for PII.`;
+    else ins = `<b>${acct} → ${tenant}:</b> ${rows.length} of ${GV_ROWS.length} rows, isolated by the secure view. Email is ${pii ? '<b>unmasked</b> because this tenant has PII_ALLOWED = TRUE' : '<b>masked</b> because PII_ALLOWED = FALSE'}. One view and one share serve every tenant.`;
+  }
+  $('#gvOut').innerHTML = out; $('#gvIns').innerHTML = ins; flashEl($('#gvOut'));
+}
+tabs('#gvAcct', d => { GV.acct = d.v; gvDraw(); });
+tabs('#gvMask', d => { GV.mask = d.v; gvDraw(); });
+$('#gvRevoke').onclick = () => { GV.revoked = !GV.revoked; gvDraw(); };
+$('#gvReset').onclick = () => { gvInit(); $$('#gvAcct button,#gvMask button').forEach(b => b.classList.remove('on')); $('#gvAcct button').classList.add('on'); $('#gvMask button').classList.add('on'); gvDraw(); };
+gvDraw();
+</script>
+
+<script>
+/* ===== 08 SQL lab ===== */
+const SQL = [
+  { t: 'Provider: create share', l: [
+    ['USE ROLE ACCOUNTADMIN;', 'Creating shares needs ACCOUNTADMIN, or a role that has been granted the CREATE SHARE privilege. Many teams create a dedicated SHARE_ADMIN role.'],
+    ['', ''],
+    ['CREATE SECURE VIEW sales_db.public.v_region_sales AS', 'A SECURE view: its definition is hidden from consumers and the optimizer will not push consumer filters past its logic. Shares expect secure views by default.'],
+    ['  SELECT region, SUM(amount) AS total_sales', 'Expose only what the partner needs: region totals, not order-level detail or customer columns.'],
+    ['  FROM sales_db.public.orders', 'The base table stays private. It does not need to be granted to the share for the view to work.'],
+    ['  GROUP BY region;', 'Aggregate so no individual order is visible.'],
+    ['', ''],
+    ['CREATE SHARE sales_share', 'Creates an empty share object: just metadata in cloud services. No storage, no compute.'],
+    ["  COMMENT = 'Curated sales data for partners';", 'Always describe what the share is for. Your future self doing an access review will thank you.'],
+    ['', ''],
+    ['GRANT USAGE ON DATABASE sales_db TO SHARE sales_share;', 'Step 1 of the privilege chain: the share can "enter" the database. A share points at exactly one database.'],
+    ['GRANT USAGE ON SCHEMA sales_db.public TO SHARE sales_share;', 'Step 2: USAGE on the schema. Without it every object inside looks like it does not exist.'],
+    ['GRANT SELECT ON TABLE sales_db.public.orders TO SHARE sales_share;', 'Step 3: SELECT on a table. Granted directly to the share, not to a role.'],
+    ['GRANT SELECT ON VIEW sales_db.public.v_region_sales TO SHARE sales_share;', 'SELECT on the secure view. Granting a regular (non-secure) view fails by default.'],
+    ['', ''],
+    ['-- a secure view in sales_db that reads tables in another database:', 'Comment: the next line is only needed when a shared view references objects outside the shared database.'],
+    ['GRANT REFERENCE_USAGE ON DATABASE ref_db TO SHARE sales_share;', 'Lets views in the share reference objects in ref_db without sharing ref_db itself. The consumer still sees only the view.'],
+    ['', ''],
+    ['GRANT SELECT ON ALL TABLES IN SCHEMA sales_db.public TO SHARE sales_share;', 'Bulk grant of all EXISTING tables in the schema. Tables created later must be granted explicitly; do not rely on future grants for shares (check current docs).'],
+    ['SHOW GRANTS TO SHARE sales_share;', 'Lists every privilege in the share. Run it before adding accounts to confirm you are not exposing more than intended.']
+  ] },
+  { t: 'Provider: consumers & revoke', l: [
+    ['ALTER SHARE sales_share ADD ACCOUNTS = partner_org.partner_acct;', 'Entitle a consumer account, identified as organization_name.account_name. For a direct share it must be in the same region as the provider.'],
+    ['ALTER SHARE sales_share ADD ACCOUNTS = partner_org.partner_acct2, other_org.bi_acct;', 'Several accounts at once, comma-separated. One share can serve many consumers.'],
+    ['', ''],
+    ["SHOW SHARES LIKE 'SALES_SHARE';", 'Shows the share with kind = OUTBOUND, the database it exposes and the list of consumer accounts.'],
+    ['DESC SHARE sales_share;', 'Lists the objects in the share (database, schemas, tables, views) and their types.'],
+    ['', ''],
+    ['REVOKE SELECT ON TABLE sales_db.public.orders FROM SHARE sales_share;', 'Remove one object. Consumers lose access to it on their next query, while the rest of the share keeps working.'],
+    ['ALTER SHARE sales_share REMOVE ACCOUNTS = partner_org.partner_acct2;', 'Off-board one consumer. Their database created from the share stops working immediately.'],
+    ['-- dropping the share cuts off every consumer at once:', 'Comment: DROP is the big red button.'],
+    ['DROP SHARE sales_share;', 'Removes the share for all consumers. Their imported databases become unusable. The underlying data in sales_db is untouched.']
+  ] },
+  { t: 'Consumer: mount & query', l: [
+    ['USE ROLE ACCOUNTADMIN;', 'In the CONSUMER account. Creating a database from a share needs ACCOUNTADMIN or a role with the IMPORT SHARE and CREATE DATABASE privileges.'],
+    ['SHOW SHARES;', 'Inbound shares appear with kind = INBOUND, showing the provider account and share name.'],
+    ['DESC SHARE provider_org.provider_acct.sales_share;', 'Preview what the share contains before mounting it.'],
+    ['', ''],
+    ['CREATE DATABASE partner_sales', 'Create a local, read-only database name for the share. You choose the name.'],
+    ['  FROM SHARE provider_org.provider_acct.sales_share;', 'It is a pointer to the provider objects: instant, zero bytes copied, no storage cost for the consumer.'],
+    ['', ''],
+    ['GRANT IMPORTED PRIVILEGES ON DATABASE partner_sales TO ROLE analyst;', 'Shared databases use IMPORTED PRIVILEGES instead of normal per-object grants. This gives the role everything in the share. Use database roles for finer control.'],
+    ['', ''],
+    ['USE ROLE analyst;', 'Switch to the role that will query.'],
+    ['USE WAREHOUSE partner_wh;', 'The CONSUMER warehouse runs the query and the consumer pays the credits.'],
+    ['SELECT region, total_sales', 'Query shared objects like any other database.'],
+    ['FROM partner_sales.public.v_region_sales', 'Three-part name: local database name, then the schema and view as named by the provider.'],
+    ['ORDER BY total_sales DESC;', 'Results always reflect the provider latest committed data.'],
+    ['', ''],
+    ['-- enrich with your own data: write results into YOUR database', 'Comment: you cannot write into the shared database, but you can join it with your own tables.'],
+    ['CREATE TABLE my_db.analytics.region_targets AS', 'CTAS into a database you own. This is a real copy, stored and billed in the consumer account.'],
+    ['SELECT v.region, v.total_sales, t.target', 'Columns from the shared view and from your own table.'],
+    ['FROM partner_sales.public.v_region_sales v', 'Shared (read-only) side of the join.'],
+    ['JOIN my_db.analytics.targets t ON t.region = v.region;', 'Your own data. Joining shared and local data in one query is a key benefit of sharing over file exports.']
+  ] },
+  { t: 'Multi-tenant secure view', l: [
+    ['CREATE TABLE sales_db.admin.entitlements (', 'A mapping table that the provider keeps private: which consumer account may see which tenant.'],
+    ['  consumer_account STRING,', 'The value CURRENT_ACCOUNT() returns in the consumer session (the account locator).'],
+    ['  tenant_id STRING', 'The tenant key used in the big shared table.'],
+    [');', 'End of table definition.'],
+    ['INSERT INTO sales_db.admin.entitlements VALUES', 'Onboarding a new customer = one row here + ADD ACCOUNTS on the share.'],
+    ["  ('AB12345', 'TENANT_A'),", 'Placeholder locator AB12345 sees TENANT_A rows.'],
+    ["  ('CD67890', 'TENANT_B');", 'Placeholder locator CD67890 sees TENANT_B rows.'],
+    ['', ''],
+    ['CREATE OR REPLACE SECURE VIEW sales_db.public.shared_sales_v AS', 'Must be SECURE: otherwise consumers could read the filter logic, and optimizer tricks could leak other tenants rows.'],
+    ['SELECT s.tenant_id, s.order_id, s.order_date, s.amount', 'Only the columns consumers should see.'],
+    ['FROM sales_db.public.sales_all s', 'One big table holding every tenant data.'],
+    ['JOIN sales_db.admin.entitlements e', 'Join to the mapping table. It lives in the same database, so it does not need to be granted to the share.'],
+    ['  ON s.tenant_id = e.tenant_id', 'Match rows to tenants.'],
+    ['WHERE e.consumer_account = CURRENT_ACCOUNT();', 'The magic line: in a consumer session CURRENT_ACCOUNT() returns the CONSUMER locator, so each account sees only its own rows. Unmapped accounts see zero rows (fail-closed).'],
+    ['', ''],
+    ['GRANT USAGE ON DATABASE sales_db TO SHARE tenant_share;', 'Usual privilege chain on a share created earlier for tenants.'],
+    ['GRANT USAGE ON SCHEMA sales_db.public TO SHARE tenant_share;', 'Schema usage. Note: the admin schema holding entitlements is NOT granted.'],
+    ['GRANT SELECT ON VIEW sales_db.public.shared_sales_v TO SHARE tenant_share;', 'Only the view is shared. Base table and mapping table stay private.'],
+    ['', ''],
+    ["ALTER SESSION SET SIMULATED_DATA_SHARING_CONSUMER = 'AB12345';", 'Provider-side testing: makes secure views behave as if the query came from consumer AB12345, so CURRENT_ACCOUNT()-based logic can be verified before go-live.'],
+    ['SELECT COUNT(*) FROM sales_db.public.shared_sales_v;', 'Should return only TENANT_A rows. Repeat for each locator as part of a release test.'],
+    ['ALTER SESSION UNSET SIMULATED_DATA_SHARING_CONSUMER;', 'Back to normal provider behaviour.']
+  ] },
+  { t: 'Database roles in a share', l: [
+    ['-- provider account', 'Comment: run these in the provider account.'],
+    ['CREATE DATABASE ROLE sales_db.analyst_r;', 'A database role lives INSIDE a database, so it can travel with a share. Account roles cannot be shared.'],
+    ['CREATE DATABASE ROLE sales_db.finance_r;', 'A second access level for the same share.'],
+    ['GRANT USAGE ON SCHEMA sales_db.public TO DATABASE ROLE sales_db.analyst_r;', 'Each database role needs its own schema usage.'],
+    ['GRANT SELECT ON VIEW sales_db.public.v_region_sales TO DATABASE ROLE sales_db.analyst_r;', 'Analysts get only the aggregated secure view.'],
+    ['GRANT USAGE ON SCHEMA sales_db.public TO DATABASE ROLE sales_db.finance_r;', 'Finance also needs schema usage.'],
+    ['GRANT SELECT ON TABLE sales_db.public.orders TO DATABASE ROLE sales_db.finance_r;', 'Finance gets order-level detail.'],
+    ['GRANT USAGE ON DATABASE sales_db TO SHARE sales_share;', 'The share still needs USAGE on the database.'],
+    ['GRANT DATABASE ROLE sales_db.analyst_r TO SHARE sales_share;', 'Add the database role (with all its privileges) to the share.'],
+    ['GRANT DATABASE ROLE sales_db.finance_r TO SHARE sales_share;', 'Both access levels now travel in one share.'],
+    ['', ''],
+    ['-- consumer account', 'Comment: run these in the consumer account.'],
+    ['CREATE DATABASE partner_sales FROM SHARE provider_org.provider_acct.sales_share;', 'Mount the share as usual.'],
+    ['GRANT DATABASE ROLE partner_sales.analyst_r TO ROLE bi_users;', 'Map the provider-defined access level to the consumer own account role. BI users see only the view.'],
+    ['GRANT DATABASE ROLE partner_sales.finance_r TO ROLE finance_team;', 'Finance sees the detail table. Compare with IMPORTED PRIVILEGES, which would give everyone everything.']
+  ] },
+  { t: 'Reader account', l: [
+    ['USE ROLE ACCOUNTADMIN;', 'In the PROVIDER account: creating managed accounts needs ACCOUNTADMIN (or the CREATE ACCOUNT privilege for managed accounts).'],
+    ['CREATE MANAGED ACCOUNT partner_reader', 'Creates a reader account owned and paid for by the provider.'],
+    ['  ADMIN_NAME = partner_admin,', 'The first admin user inside the reader account.'],
+    ["  ADMIN_PASSWORD = 'Ch4nge-Me-Str0ng!',", 'Placeholder password. Use a strong one, share it securely, and force a change at first login.'],
+    ['  TYPE = READER,', 'READER is the managed account type used for data sharing.'],
+    ["  COMMENT = 'Reader account for a partner without Snowflake';", 'Document who it is for. Reader accounts are easy to forget, and they cost you money.'],
+    ['', ''],
+    ['SHOW MANAGED ACCOUNTS;', 'Shows the reader account locator and URL. Give the URL to the consumer.'],
+    ['ALTER SHARE sales_share ADD ACCOUNTS = RE12345;', 'Add the reader account to the share using the locator from SHOW MANAGED ACCOUNTS (RE12345 is a placeholder).'],
+    ['', ''],
+    ['-- then, logged in to the reader account as partner_admin:', 'Comment: the following statements run INSIDE the reader account.'],
+    ['CREATE WAREHOUSE reader_wh WAREHOUSE_SIZE = XSMALL AUTO_SUSPEND = 60 AUTO_RESUME = TRUE;', 'A small warehouse with a short auto-suspend. Every credit it burns is billed to the provider.'],
+    ['CREATE RESOURCE MONITOR reader_cap WITH CREDIT_QUOTA = 50', 'Cap monthly spend at 50 credits (example value).'],
+    ['  TRIGGERS ON 90 PERCENT DO SUSPEND;', 'Suspend the warehouse when 90% of the quota is used, so the bill cannot run away.'],
+    ['ALTER WAREHOUSE reader_wh SET RESOURCE_MONITOR = reader_cap;', 'Attach the monitor to the warehouse.'],
+    ['CREATE DATABASE partner_sales FROM SHARE provider_org.provider_acct.sales_share;', 'Mount the share inside the reader account. Use the provider identifier exactly as SHOW SHARES displays it there.']
+  ] },
+  { t: 'Cross-region: replicate + share', l: [
+    ['-- in the SOURCE account (AWS us-east-1); replication must be enabled for both accounts by ORGADMIN', 'Comment: an organization administrator first enables replication for the source and target accounts.'],
+    ['CREATE REPLICATION GROUP sales_rg', 'A replication group replicates a set of objects together, consistently, on a schedule.'],
+    ['  OBJECT_TYPES = DATABASES', 'What kinds of objects to replicate. Shares can also be included (OBJECT_TYPES = DATABASES, SHARES).'],
+    ['  ALLOWED_DATABASES = sales_db', 'Which databases are in the group.'],
+    ['  ALLOWED_ACCOUNTS = myorg.acct_eu', 'The target account you own in the other region (same organization).'],
+    ["  REPLICATION_SCHEDULE = '60 MINUTE';", 'Refresh every hour. This is the consumer freshness: data is up to about an hour old, not live.'],
+    ['', ''],
+    ['-- in the TARGET account myorg.acct_eu (AWS eu-west-1)', 'Comment: switch to the account in the consumer region.'],
+    ['CREATE REPLICATION GROUP sales_rg', 'Create the secondary group in the target account...'],
+    ['  AS REPLICA OF myorg.acct_us.sales_rg;', '...as a replica of the primary group. This creates a read-only secondary sales_db.'],
+    ['ALTER REPLICATION GROUP sales_rg REFRESH;', 'Run the first refresh now instead of waiting for the schedule. The initial copy transfers all data; later refreshes are incremental.'],
+    ['', ''],
+    ['CREATE SHARE sales_share_eu;', 'A share in the target account, so consumers in this region get a normal same-region direct share.'],
+    ['GRANT USAGE ON DATABASE sales_db TO SHARE sales_share_eu;', 'Grant the replicated (secondary) database to the local share.'],
+    ['GRANT USAGE ON SCHEMA sales_db.public TO SHARE sales_share_eu;', 'Schema usage as usual.'],
+    ['GRANT SELECT ON VIEW sales_db.public.v_region_sales TO SHARE sales_share_eu;', 'Share the secure view that came across with the replica.'],
+    ['ALTER SHARE sales_share_eu ADD ACCOUNTS = partner_org.partner_eu;', 'The EU partner, in eu-west-1, can now mount it. The provider pays replication transfer, storage and refresh compute in this region.']
+  ] }
+];
+const KW = /\b(CREATE|OR|REPLACE|SECURE|VIEW|SHARE|SHARES|DATABASE|SCHEMA|ROLE|TABLE|TABLES|ALL|IN|ON|TO|FROM|GRANT|REVOKE|USAGE|SELECT|IMPORTED|PRIVILEGES|REFERENCE_USAGE|ALTER|ADD|REMOVE|ACCOUNTS|SHOW|GRANTS|DESC|DROP|LIKE|USE|WAREHOUSE|AS|SUM|COUNT|GROUP|BY|ORDER|JOIN|WHERE|INSERT|INTO|VALUES|SESSION|SET|UNSET|COMMENT|MANAGED|ACCOUNT|ADMIN_NAME|ADMIN_PASSWORD|TYPE|READER|RESOURCE|MONITOR|WITH|CREDIT_QUOTA|TRIGGERS|PERCENT|DO|SUSPEND|REPLICATION|REFRESH|REPLICA|OF|OBJECT_TYPES|DATABASES|ALLOWED_DATABASES|ALLOWED_ACCOUNTS|REPLICATION_SCHEDULE|CURRENT_ACCOUNT|STRING|ACCOUNTADMIN|WAREHOUSE_SIZE|AUTO_SUSPEND|AUTO_RESUME|TRUE|XSMALL)\b/g;
+const hl = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/('[^']*')/g, '\u0001$1\u0002').replace(KW, '<span class="kw">$1</span>').replace(/\b(\d+)\b/g, '<span class="num">$1</span>').replace(/\u0001([^\u0002]*)\u0002/g, (m, a) => '<span class="str">' + a.replace(/<[^>]+>/g, '') + '</span>');
+let sqlI = 0;
+function sqlShow(i) {
+  sqlI = i;
+  $$('#sqlTabs button').forEach((b, k) => b.classList.toggle('on', k === i));
+  $('#sqlCode').innerHTML = SQL[i].l.map(([l], k) => `<div data-k="${k}"><em>${k + 1}</em>${l.trim().startsWith('--') ? `<span style="color:var(--ink3)">${esc(l)}</span>` : hl(l) || ' '}</div>`).join('');
+  $('#sqlExp').innerHTML = '<b class="h">CLICK A LINE</b>Each line is explained in plain English.';
+  $$('#sqlCode div').forEach(d => d.onclick = () => {
+    const e = SQL[sqlI].l[d.dataset.k][1]; if (!e) return;
+    $$('#sqlCode div').forEach(x => x.classList.remove('on')); d.classList.add('on');
+    $('#sqlExp').innerHTML = `<b class="h">LINE ${+d.dataset.k + 1}</b>${esc(e)}`;
+  });
+}
+$('#sqlTabs').innerHTML = SQL.map(s => `<button>${s.t}</button>`).join('');
+$$('#sqlTabs button').forEach((b, i) => b.onclick = () => sqlShow(i));
+sqlShow(0);
+
+/* ===== 09 Q&A ===== */
+const QA = [
+  ['Sharing', 'b', `What is Secure Data Sharing, and is any data copied?`, `<p>It lets a provider account give consumer accounts read-only access to selected objects (tables, secure views, secure UDFs and so on) through a <b>share</b> object. <b>No data is copied</b>: a share is a set of privileges recorded in cloud services. The consumer creates a read-only database from the share, and their warehouse reads the provider's micro-partitions directly. It's possible because Snowflake separates storage, compute and metadata.</p>`],
+  ['Sharing', 'b', `Who pays for what in a data share?`, `<p>The <b>provider pays storage</b> for the shared data (it's their data). The <b>consumer pays compute</b> for queries run on their own warehouses. Direct sharing in the same region has no separate sharing fee. Exceptions: in a <b>reader account</b> the provider pays compute too, and for cross-region sharing the provider pays replication transfer, storage and refresh costs in the remote region.</p>`],
+  ['Sharing', 't', `Why must views in a share be secure views?`, `<p>Two reasons. (1) A secure view's <b>definition is hidden</b> from non-owners, so consumers can't see table names, joins or tenant-filter logic. (2) The optimizer <b>won't apply optimizations that could expose filtered rows</b>, such as pushing a consumer's predicate or UDF below the view's filter, where a crafted function could leak hidden values. By default shares accept only secure views. Newer releases have an option to relax that, but the default is what you should explain.</p>`],
+  ['Sharing', 't', `What can't a consumer do with a shared database?`, `<p>It's read-only: no INSERT, UPDATE, DELETE or DDL inside it, no Time Travel, no cloning, and no re-sharing of its objects to other accounts. The consumer <i>can</i> query it, join it with their own data, create views in their own databases on top of it, and copy results into their own tables with CTAS. Copies are then their data (and their storage cost).</p>`],
+  ['Sharing', 't', `IMPORTED PRIVILEGES vs database roles in a share?`, `<p><code>GRANT IMPORTED PRIVILEGES ON DATABASE shared_db TO ROLE r</code> is all-or-nothing: the role gets everything in the share. With <b>database roles</b>, the provider creates roles inside the shared database, grants different objects to each, and grants those database roles to the share. The consumer maps each one to their own account roles with <code>GRANT DATABASE ROLE shared_db.finance_r TO ROLE finance_team</code>. That's one share with several access levels, and the provider defines the access levels.</p>`],
+  ['Sharing', 's', `A partner says your shared table shows yesterday's numbers. How do you troubleshoot?`, `<p>For a same-region direct share, consumers read the latest committed version, so first check the <b>provider pipeline</b>: did today's load commit (task history, COPY history)? Is the shared object a view over a stale table or a dynamic table with a long target lag? If the partner is in another region, the data comes through <b>replication or auto-fulfillment</b>, so check the refresh schedule and the last successful refresh. Finally, rule out consumer-side issues: they may be querying their own CTAS copy instead of the shared database, or a BI extract cache.</p>`],
+  ['Reader', 'b', `What is a reader account and when would you use one?`, `<p>A managed account that the provider creates (<code>CREATE MANAGED ACCOUNT … TYPE = READER</code>) for a consumer who has no Snowflake account. The provider adds it to shares, and the consumer's users log in to query. Use it for small partners, regulators or one-off recipients, as a better alternative to CSV exports.</p>`],
+  ['Reader', 't', `Who pays for queries in a reader account, and how do you control it?`, `<p>The <b>provider</b> pays all compute in the reader account, as well as storage. Control it with small warehouses, short auto-suspend, <b>resource monitors</b> with a credit quota and a SUSPEND trigger, and limited users. If usage grows, encourage the consumer to get their own account (then they pay their compute) or arrange a chargeback.</p>`],
+  ['Regions', 't', `Can you directly share data with an account in another region or cloud?`, `<p><b>No.</b> Direct shares work only within the same region of the same cloud. For other regions: (1) <b>replicate</b> the database (replication group or database replication) to an account you own in the target region, then share from there; or (2) publish a <b>listing with Cross-Cloud Auto-Fulfillment</b> so Snowflake replicates the data product to consumer regions. Either way the provider pays transfer and remote storage and refresh, and data is as fresh as the last refresh.</p>`],
+  ['Regions', 's', `You must share a 20 TB dataset with 40 customers spread across AWS, Azure and GCP regions. Design it.`, `<p>Use a <b>listing</b> (private, or public if it's a product) with <b>Cross-Cloud Auto-Fulfillment</b>, so you don't run 40 manual replication setups. Share a <b>secure view layer</b>, not raw tables, with a <code>CURRENT_ACCOUNT()</code> entitlement filter if customers see different subsets. Set the refresh frequency to the business SLA (for example daily) to control replication cost, cluster the base tables on common filter columns so consumer queries prune well, and monitor consumption through the data sharing usage views. Document the schema contract and versioning in the listing.</p>`],
+  ['Listings', 'b', `Listing vs direct share?`, `<p>A direct share is the raw mechanism: grants plus accounts, same region only. A <b>listing</b> wraps a share or Native App with a product page (description, data dictionary, sample queries, terms), can reach other regions through auto-fulfillment, can be <b>private</b> (named accounts) or <b>public</b> on the Marketplace, can be free, trial or paid, and gives the provider usage analytics. Underneath, the consumer still gets a read-only database from a share.</p>`],
+  ['Listings', 't', `How does a provider know how its shared data is used?`, `<p>For listings: Provider Studio analytics, plus views in <code>SNOWFLAKE.DATA_SHARING_USAGE</code> (such as listing access history and consumption views) showing which consumer accounts accessed which objects, and how often. The provider doesn't see consumers' query text, since that's the consumer's query history. For plain direct shares, visibility is much more limited, which is one reason teams move to listings.</p>`],
+  ['Clean rooms', 'b', `What is a data clean room?`, `<p>An environment where two or more parties analyze combined data, such as audience overlap, <b>without seeing each other's raw records</b>. Only approved analyses (templates) can run, results are aggregated, and groups below a minimum size are suppressed. Snowflake offers a managed Data Clean Rooms product, and its building blocks include secure sharing plus privacy policies like aggregation and projection policies.</p>`],
+  ['Clean rooms', 't', `Why isn't sharing hashed emails good enough for privacy?`, `<p>Hashes of common identifiers can be reversed with a dictionary: hash a list of known emails and match. And even without reversing, unrestricted queries can <b>single out individuals</b> by combining filters (zip + age + overlap = 1). Clean rooms restrict <i>which queries</i> run, enforce <b>aggregation thresholds</b>, block raw-row output, and can prevent join keys from being projected.</p>`],
+  ['Native Apps', 'b', `What is the Snowflake Native App Framework?`, `<p>A way to package <b>code (and optionally data)</b> as an application that consumers install in their own account. Provider side: an <b>application package</b>, a <b>manifest</b>, a <b>setup script</b>, and <b>versions/patches</b> with a release directive. Consumer side: <code>CREATE APPLICATION</code> (usually from a listing), after which the setup script creates the app's objects and application roles. The consumer grants the app access to their data. Logic runs next to the consumer's data, so that data doesn't leave their account.</p>`],
+  ['Native Apps', 't', `Share vs Native App: when do you choose an app?`, `<p>Choose a <b>share</b> when the product is the <b>data</b> itself and consumers write their own queries. Choose a <b>Native App</b> when the product is <b>logic</b>: a model, a scoring procedure, a data-quality tool, a UI. It's also the right choice when the app must work on the <b>consumer's</b> private data, which should never be sent to the provider, or when you want to protect proprietary code and ship versioned upgrades.</p>`],
+  ['Governance', 't', `How do you share one table with 200 customers so each sees only their own rows?`, `<p>Keep one base table with a <code>tenant_id</code>, and a private <b>entitlements</b> table mapping consumer account locators to tenants. Create a <b>secure view</b> joining them with <code>WHERE e.consumer_account = CURRENT_ACCOUNT()</code>, and share only that view. Add each customer with one entitlements row plus <code>ALTER SHARE … ADD ACCOUNTS</code>. Unmapped accounts see zero rows (fail-closed). Test with <code>ALTER SESSION SET SIMULATED_DATA_SHARING_CONSUMER</code>. A row access policy with the same mapping logic is an alternative.</p>`],
+  ['Governance', 't', `Do masking and row access policies apply to consumers? Any traps?`, `<p>Yes. Policies are attached to the provider's objects and are enforced when consumers query them. The trap: <b>role-based conditions</b> like <code>CURRENT_ROLE() IN ('PII_READER')</code> refer to <i>your</i> roles, which don't exist in the consumer account, so consumers typically fall into the masked branch. For shared data, base conditions on <code>CURRENT_ACCOUNT()</code> or on shared <b>database roles</b> (<code>IS_DATABASE_ROLE_IN_SESSION</code>), and check the docs for exact context-function behaviour in shares.</p>`],
+  ['Governance', 's', `A contract with a partner ends today. What exactly do you do?`, `<p><code>ALTER SHARE s REMOVE ACCOUNTS = partner</code> (or revoke specific objects, or <code>DROP SHARE</code> if it was theirs alone), effective on their next query. Remove their entitlement rows, so a future accidental re-add still shows zero rows. Drop any reader account you created for them. Review <code>SHOW GRANTS TO SHARE</code> for leftovers, and record the change for audit. Remember that anything they already copied with CTAS is outside your technical control, which is a legal and contract matter.</p>`]
+];
+const LV = { b: 'FUNDAMENTAL', t: 'TRICKY', s: 'SCENARIO' };
+function qa(f) { $('#qaList').innerHTML = QA.filter(q => f === 'all' || q[0] === f).map(([tp, l, q, a]) => `<details class="qa"><summary><span class="lv ${l}">${LV[l]}</span><span class="tp">${tp.toUpperCase()}</span>${q}</summary><div class="ans">${a}</div></details>`).join(''); }
+tabs('#qaTabs', d => qa(d.f));
+qa('all');
+
+/* ===== 10 quiz ===== */
+const QZ = [
+  [`What is physically copied when you add a 10 TB table to a share?`, [`All 10 TB, to the consumer's region`, `Only the micro-partitions changed in the last 24 hours`, `Nothing: the share records privileges as metadata`, `A compressed snapshot`], 2, `Sharing is metadata-only. The consumer's warehouse reads the provider's existing micro-partitions.`],
+  [`In a direct share between two full Snowflake accounts, who pays for the consumer's queries?`, [`The provider`, `The consumer, on their own warehouse`, `Split 50/50`, `Snowflake, because sharing is free`], 1, `Consumers bring their own compute. The provider pays only storage.`],
+  [`Who pays for compute in a reader account?`, [`The reader account's users`, `The provider that created it`, `Nobody: reader accounts are free`, `Snowflake Marketplace`], 1, `Reader accounts are provider-managed, and all their compute is billed to the provider.`],
+  [`Which statement mounts a share in the consumer account?`, [`IMPORT SHARE provider.share`, `CREATE DATABASE x FROM SHARE provider_org.provider_acct.share`, `CREATE SHARE x FROM provider`, `COPY INTO x FROM SHARE`], 1, `CREATE DATABASE … FROM SHARE creates a read-only database pointing at the provider's objects.`],
+  [`By default, which kind of view can be granted to a share?`, [`Any view`, `Only materialized views`, `Secure views`, `Views are never shareable`], 2, `Shares expect secure objects by default, so the definition is hidden and the optimizer can't leak filtered rows.`],
+  [`A provider runs UPDATE on a shared table in the same region. When does the consumer see it?`, [`After the next nightly refresh`, `On their next query after the provider's commit`, `After they re-create the database`, `Only after REFRESH SHARE`], 1, `Each commit creates a new table version, and the consumer's next query resolves to it. No refresh is needed.`],
+  [`Your consumer is on Azure West Europe, and you are on AWS us-east-1. What works?`, [`A direct share`, `Replication to your own account in that region and sharing from there, or a listing with auto-fulfillment`, `A reader account in Azure`, `It is impossible`], 1, `Direct shares are same-region only. Cross-region or cross-cloud needs replication or Cross-Cloud Auto-Fulfillment.`],
+  [`Which function makes one secure view return different rows to each consumer account?`, [`CURRENT_ROLE()`, `CURRENT_USER()`, `CURRENT_ACCOUNT()`, `CURRENT_REGION()`], 2, `In a consumer session CURRENT_ACCOUNT() returns the consumer's locator. Join it to an entitlements table.`],
+  [`How can a provider test a CURRENT_ACCOUNT()-based secure view without a real consumer?`, [`It can't`, `ALTER SESSION SET SIMULATED_DATA_SHARING_CONSUMER = '<locator>'`, `USE ROLE CONSUMER`, `EXPLAIN SHARE`], 1, `That session parameter makes secure views behave as if the query came from the given consumer account.`],
+  [`What does GRANT IMPORTED PRIVILEGES ON DATABASE shared_db TO ROLE r give?`, [`Write access to the shared database`, `Access to everything in the share`, `Only the first schema`, `Ownership of the share`], 1, `It's all-or-nothing. Use database roles in the share for different access levels.`],
+  [`Which is NOT possible on a database created from a share?`, [`Joining it with your own tables`, `Creating a view in your own database on top of it`, `Time Travel queries on its tables`, `Running it on your own warehouse`], 2, `Shared databases don't support Time Travel or cloning, and they're read-only.`],
+  [`In a data clean room with a minimum group size of 5, a template returns a group with 3 people. What happens?`, [`It's shown with a warning`, `It's suppressed or folded into a remainder group`, `Raw rows are shown instead`, `The query fails permanently`], 1, `Aggregation thresholds hide small groups because they could identify individuals.`],
+  [`In the Native App Framework, what runs in the consumer account when an app is installed?`, [`The manifest is emailed to the provider`, `The setup script, which creates the app's objects`, `A full copy of the provider's database`, `Nothing until the provider approves`], 1, `Installing runs setup.sql inside the new application object in the consumer account.`],
+  [`A provider's masking policy uses CURRENT_ROLE() IN ('PII_READER'). What do consumers typically see?`, [`Unmasked values`, `Masked values, because the provider's role names don't apply in their account`, `An error`, `Whatever their ACCOUNTADMIN chooses`], 1, `Base sharing logic on CURRENT_ACCOUNT() or shared database roles instead of provider role names.`]
+];
+let qi = 0; const qAns = Array(QZ.length).fill(null);
+QZ.forEach((_, i) => { const s = document.createElement('span'); s.onclick = () => qShow(i); $('#qzBar').appendChild(s); });
+function qShow(i) {
+  qi = i; const [q, opts, ok, ex] = QZ[i], a = qAns[i];
+  $('#qzN').textContent = i + 1;
+  [...$('#qzBar').children].forEach((s, k) => { s.classList.toggle('on', qAns[k] !== null); s.style.outline = k === i ? '2px solid var(--ice)' : ''; });
+  $('#qzBody').innerHTML = `<h3 style="margin-top:6px">${esc(q)}</h3>` + opts.map((o, k) => `<button class="opt ${a !== null ? (k === ok ? 'ok' : (k === a ? 'bad' : '')) : ''}" data-k="${k}">${String.fromCharCode(65 + k)}. ${esc(o)}</button>`).join('') + (a !== null ? `<div class="qexp"><b>${a === ok ? 'Correct.' : 'Not quite.'}</b> ${esc(ex)}</div>` : '');
+  $$('#qzBody .opt').forEach(b => b.onclick = () => { if (qAns[qi] !== null) return; qAns[qi] = +b.dataset.k; qShow(qi); $('#qzS').textContent = qAns.filter((x, j) => x === QZ[j][2]).length; });
+  $('#qzNext').textContent = i === QZ.length - 1 ? 'See result' : 'Next';
+}
+function qResult() {
+  const s = qAns.filter((x, j) => x === QZ[j][2]).length;
+  const msg = s >= QZ.length - 2 ? 'Interview-ready on data sharing and collaboration.' : s >= Math.round(QZ.length * 0.6) ? 'Solid. Replay the share and governance simulators, then retry.' : 'Walk through the share simulator, the region chooser and the multi-tenant view again, then retry.';
+  $('#qzBody').innerHTML = `<div class="score">${s} / ${QZ.length}</div><p style="margin-top:8px">${msg}</p><button class="btn pri" id="qzAgain" style="margin-top:10px">Retry quiz</button>`;
+  $('#qzAgain').onclick = () => { qAns.fill(null); $('#qzS').textContent = 0; qShow(0); };
+}
+$('#qzNext').onclick = () => qi === QZ.length - 1 ? qResult() : qShow(qi + 1);
+$('#qzPrev').onclick = () => qShow(Math.max(0, qi - 1));
+qShow(0);
+</script>
+<div class="toast" id="toast"></div>
+<script>
+(() => {
+  const t = document.getElementById('toast'); let h;
+  document.querySelectorAll('.road a.soon').forEach(a => a.addEventListener('click', e => {
+    e.preventDefault();
+    t.textContent = `Module ${a.dataset.m} isn't built yet. Ask for it in chat and it will be added here.`;
+    t.classList.add('on'); clearTimeout(h); h = setTimeout(() => t.classList.remove('on'), 2800);
+  }));
+})();
+</script>
+</body>
+</html>

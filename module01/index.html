@@ -1,0 +1,1429 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Snowflake Interview Lab · Module 01 · Architecture</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/space-grotesk@5/300.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/space-grotesk@5/700.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/ibm-plex-sans@5/300.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/ibm-plex-sans@5/400.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/ibm-plex-sans@5/600.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/jetbrains-mono@5/400.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/jetbrains-mono@5/700.css">
+<style>
+:root{
+  --bg:#F2F6FA; --card:#FFFFFF; --card2:#E9EFF5; --ink:#0B1B2B; --ink2:#46596B; --ink3:#7F90A2;
+  --line:rgba(11,27,43,.12); --line2:rgba(11,27,43,.22);
+  --ice:#0A86C2; --ice-s:#DCEFF9; --amber:#B86F00; --amber-s:#FFF0D4; --teal:#0B8A6A; --teal-s:#DAF3EB;
+  --red:#C93C3C; --red-s:#FCE4E4; --grid:rgba(10,134,194,.06);
+  --f-head:"Space Grotesk",sans-serif; --f-body:"IBM Plex Sans",sans-serif; --f-mono:"JetBrains Mono",monospace;
+  --r:10px;
+}
+[data-theme="dark"]{
+  --bg:#08121D; --card:#0F1D2C; --card2:#16293B; --ink:#E5EDF5; --ink2:#9DB0C3; --ink3:#687D91;
+  --line:rgba(229,237,245,.10); --line2:rgba(229,237,245,.22);
+  --ice:#4CC3F0; --ice-s:rgba(76,195,240,.13); --amber:#FFB938; --amber-s:rgba(255,185,56,.13); --teal:#3FD3A8; --teal-s:rgba(63,211,168,.13);
+  --red:#FF7070; --red-s:rgba(255,112,112,.14); --grid:rgba(76,195,240,.05);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:var(--f-body);font-weight:400;color:var(--ink);line-height:1.7;font-size:16px;
+  background:
+    radial-gradient(1200px 600px at 85% -10%, var(--ice-s), transparent 60%),
+    radial-gradient(900px 500px at -10% 30%, var(--amber-s), transparent 60%),
+    linear-gradient(var(--grid) 1px, transparent 1px) 0 0/32px 32px,
+    linear-gradient(90deg, var(--grid) 1px, transparent 1px) 0 0/32px 32px,
+    var(--bg);
+  background-attachment:fixed;}
+code,.mono{font-family:var(--f-mono);font-size:.88em}
+p code,li code,td code{background:var(--card2);padding:1px 6px;border-radius:5px}
+button{font-family:var(--f-body);cursor:pointer}
+
+/* layout */
+.top{position:sticky;top:0;z-index:30;display:flex;align-items:center;gap:16px;padding:12px 28px;border-bottom:1px solid var(--line);
+  background:color-mix(in srgb,var(--bg) 82%,transparent);backdrop-filter:saturate(1.4) blur(8px)}
+.brand{font-family:var(--f-mono);font-weight:700;letter-spacing:.06em;font-size:13px}
+.brand b{color:var(--ice)}
+.pill{font-family:var(--f-mono);font-size:12px;padding:3px 10px;border-radius:99px;border:1px solid var(--line2);color:var(--ink2)}
+.prog{flex:1;height:4px;background:var(--card2);border-radius:4px;overflow:hidden;max-width:360px;margin-left:auto}
+.prog i{display:block;height:100%;width:0;background:var(--ice);transition:width .4s}
+.prog-l{font-family:var(--f-mono);font-size:12px;color:var(--ink2);min-width:84px}
+.theme{border:1px solid var(--line2);background:var(--card);color:var(--ink);border-radius:8px;padding:5px 10px;font-size:13px}
+.wrap{display:grid;grid-template-columns:270px minmax(0,1fr);gap:36px;max-width:1340px;margin:0 auto;padding:28px}
+nav.side{position:sticky;top:76px;align-self:start;max-height:calc(100vh - 96px);overflow:auto;padding-right:6px}
+.side h4{font-family:var(--f-mono);font-size:11px;letter-spacing:.14em;color:var(--ink3);margin:6px 0 10px;font-weight:400}
+.side a{display:flex;gap:10px;align-items:baseline;padding:6px 10px;border-radius:8px;color:var(--ink2);text-decoration:none;font-size:14px;border-left:2px solid transparent}
+.side a span{font-family:var(--f-mono);font-size:11px;color:var(--ink3)}
+.side a:hover{background:var(--card)}
+.side a.act{color:var(--ink);background:var(--card);border-left-color:var(--ice);border-radius:0 8px 8px 0}
+.side a.seen span{color:var(--teal)}
+.road{margin-top:22px;border-top:1px solid var(--line);padding-top:14px}
+.road div{font-size:13px;color:var(--ink3);padding:3px 10px;display:flex;gap:8px}
+.road div.now{color:var(--ink);font-weight:600}
+.road div em{font-style:normal;font-family:var(--f-mono);font-size:11px;min-width:20px}
+main{min-width:0}
+section{padding:36px 0 44px;border-bottom:1px dashed var(--line2);scroll-margin-top:70px}
+.eyebrow{font-family:var(--f-mono);font-size:12px;letter-spacing:.16em;color:var(--ice);margin-bottom:6px}
+h1{font-family:var(--f-head);font-weight:700;font-size:clamp(40px,6vw,76px);line-height:1;letter-spacing:-.03em}
+h1 .thin{font-weight:300;color:var(--ink2)}
+h2{font-family:var(--f-head);font-weight:700;font-size:clamp(28px,3.4vw,40px);letter-spacing:-.02em;line-height:1.1;margin-bottom:12px}
+h2 .thin{font-weight:300;color:var(--ink2)}
+h3{font-family:var(--f-head);font-weight:700;font-size:20px;margin:26px 0 10px;letter-spacing:-.01em}
+.lead{font-size:18px;font-weight:300;color:var(--ink2);max-width:820px}
+p{margin:8px 0}
+ul.dots{margin:8px 0 8px 20px}
+ul.dots li{margin:4px 0}
+
+/* what why how */
+.wwh{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:20px 0}
+.wwh .box{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:18px 20px;position:relative;overflow:hidden}
+.wwh .box.how{grid-column:1/-1}
+.wwh .tag{font-family:var(--f-mono);font-size:11px;letter-spacing:.14em;display:inline-block;padding:2px 8px;border-radius:5px;margin-bottom:8px}
+.box.what .tag{background:var(--ice-s);color:var(--ice)}
+.box.why .tag{background:var(--amber-s);color:var(--amber)}
+.box.how .tag{background:var(--teal-s);color:var(--teal)}
+.box::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px}
+.box.what::before{background:var(--ice)} .box.why::before{background:var(--amber)} .box.how::before{background:var(--teal)}
+.call{display:flex;gap:14px;padding:14px 18px;border-radius:var(--r);margin:14px 0;border:1px solid var(--line)}
+.call b.k{font-family:var(--f-mono);font-size:11px;letter-spacing:.12em;white-space:nowrap;padding-top:3px}
+.call.analogy{background:var(--ice-s)} .call.analogy b.k{color:var(--ice)}
+.call.trap{background:var(--red-s)} .call.trap b.k{color:var(--red)}
+.call.pro{background:var(--teal-s)} .call.pro b.k{color:var(--teal)}
+
+/* panels */
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px;margin:18px 0}
+.panel-h{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+.panel-h .t{font-family:var(--f-mono);font-size:12px;letter-spacing:.12em;color:var(--ink2)}
+.panel-h .t b{color:var(--ink)}
+.btn{border:1px solid var(--line2);background:var(--card);color:var(--ink);padding:7px 14px;border-radius:8px;font-size:14px;transition:all .15s}
+.btn:hover{border-color:var(--ice);color:var(--ice)}
+.btn.pri{background:var(--ice);color:var(--card);border-color:var(--ice)}
+.btn.pri:hover{color:var(--card);filter:brightness(1.08)}
+.btn.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.ctl{display:flex;align-items:center;gap:12px;font-size:14px;color:var(--ink2);margin:8px 0}
+.ctl label{min-width:150px}
+.ctl input[type=range]{flex:1;accent-color:var(--ice)}
+.ctl .v{font-family:var(--f-mono);font-size:13px;color:var(--ink);min-width:110px;text-align:right}
+select{font-family:var(--f-body);font-size:14px;padding:6px 8px;border-radius:8px;border:1px solid var(--line2);background:var(--card);color:var(--ink)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:14px 0}
+.stat{background:var(--card2);border-radius:10px;padding:12px 14px}
+.stat .k{font-family:var(--f-mono);font-size:11px;color:var(--ink3);letter-spacing:.08em}
+.stat .n{font-family:var(--f-head);font-weight:700;font-size:28px;line-height:1.2}
+.stat .s{font-size:12px;color:var(--ink2)}
+.sqlbox{font-family:var(--f-mono);font-size:13px;background:var(--card2);border-radius:8px;padding:10px 14px;white-space:pre-wrap;color:var(--ink);border-left:3px solid var(--ice)}
+.insight{font-size:14px;padding:10px 14px;border-radius:8px;background:var(--amber-s);color:var(--ink);margin-top:10px}
+.insight b{color:var(--amber)}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+.tabs button{border:1px solid var(--line2);background:transparent;color:var(--ink2);padding:6px 12px;border-radius:99px;font-size:13px}
+.tabs button.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.mini{background:var(--card2);border-radius:10px;padding:14px}
+.mini h5{font-family:var(--f-head);font-size:15px;margin-bottom:4px}
+.mini p{font-size:14px;color:var(--ink2);margin:0}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:13px;color:var(--ink2);margin:8px 0}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:-1px;margin-right:6px}
+table.t{width:100%;border-collapse:collapse;font-size:14px}
+table.t th,table.t td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:left}
+table.t th{font-family:var(--f-mono);font-size:11px;letter-spacing:.1em;color:var(--ink3);font-weight:400}
+
+/* svg */
+svg{width:100%;height:auto;display:block}
+svg .t{font-family:var(--f-body);font-size:14px;fill:var(--ink)}
+svg .ts{font-family:var(--f-body);font-size:12px;fill:var(--ink2)}
+svg .th{font-family:var(--f-head);font-size:14px;font-weight:700;fill:var(--ink)}
+svg .tm{font-family:var(--f-mono);font-size:11px;fill:var(--ink2)}
+.L-cs{fill:var(--amber-s);stroke:var(--amber)} .L-cp{fill:var(--ice-s);stroke:var(--ice)} .L-st{fill:var(--teal-s);stroke:var(--teal)}
+.neutral{fill:var(--card);stroke:var(--line2)}
+.arr{stroke:var(--ink3);stroke-width:1.2;fill:none}
+.jg{transition:opacity .3s}
+.journey.playing .jg{opacity:.28}
+.journey.playing .jg.on{opacity:1}
+.jg.on rect{stroke-width:2.2}
+.mp{fill:var(--card);stroke:var(--teal);stroke-width:1}
+.mp.hot{fill:var(--amber)}
+.mp.cold{opacity:.25}
+#pk{transition:transform .7s cubic-bezier(.6,.05,.3,1)}
+@media (prefers-reduced-motion:no-preference){
+  .pulse{animation:pulse 1.4s ease-in-out infinite}
+  @keyframes pulse{0%,100%{opacity:.25}50%{opacity:1}}
+  .rise{animation:rise .6s both}
+  @keyframes rise{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+}
+.stepbar{display:flex;gap:6px;margin:12px 0}
+.stepbar span{flex:1;height:4px;border-radius:4px;background:var(--card2);cursor:pointer}
+.stepbar span.on{background:var(--ice)}
+.stepdesc{min-height:120px;background:var(--card2);border-radius:10px;padding:14px 16px}
+.stepdesc h4{font-family:var(--f-head);font-size:17px;margin-bottom:4px}
+.stepdesc p{font-size:15px;color:var(--ink2);margin:0}
+
+/* pruning */
+.parts{display:grid;grid-template-columns:repeat(8,1fr);gap:8px;margin:12px 0}
+.part{border:1px solid var(--line2);border-radius:8px;padding:8px;font-family:var(--f-mono);font-size:11px;transition:all .3s;background:var(--card)}
+.part b{display:block;font-size:12px;color:var(--ink)}
+.part .rng{color:var(--ink2)}
+.part .bar{height:6px;border-radius:3px;background:var(--card2);margin-top:6px;position:relative;overflow:hidden}
+.part .bar i{position:absolute;top:0;bottom:0;background:var(--teal)}
+.part.scan{border-color:var(--amber);background:var(--amber-s)}
+.part.scan b{color:var(--amber)}
+.part.prune{opacity:.35}
+.cols{display:flex;gap:6px;flex-wrap:wrap}
+.cols label{font-family:var(--f-mono);font-size:12px;border:1px solid var(--line2);padding:4px 10px;border-radius:99px;cursor:pointer;user-select:none}
+.cols input{display:none}
+.cols label.sel{background:var(--ice-s);border-color:var(--ice);color:var(--ice)}
+.colviz{display:flex;height:34px;border-radius:8px;overflow:hidden;border:1px solid var(--line);margin-top:8px}
+.colviz div{display:flex;align-items:center;justify-content:center;font-family:var(--f-mono);font-size:10px;color:var(--ink2);border-right:1px solid var(--line);transition:all .3s}
+.colviz div.sel{background:var(--ice-s);color:var(--ice)}
+
+/* immutability */
+.imm{display:flex;gap:10px;flex-wrap:wrap;margin:12px 0;min-height:96px}
+.mpc{width:120px;border:1px solid var(--teal);background:var(--teal-s);border-radius:8px;padding:8px;font-family:var(--f-mono);font-size:11px;transition:all .4s}
+.mpc b{display:block;font-size:13px;color:var(--teal)}
+.mpc.retired{border-style:dashed;border-color:var(--ink3);background:repeating-linear-gradient(45deg,transparent 0 6px,var(--card2) 6px 12px);color:var(--ink3)}
+.mpc.retired b{color:var(--ink3)}
+.mpc.new{border-color:var(--amber);background:var(--amber-s)}
+.mpc.new b{color:var(--amber)}
+.mpc.tt{outline:2px solid var(--ice);outline-offset:2px}
+
+/* sizes bars */
+.bars{display:grid;grid-template-columns:repeat(10,1fr);gap:6px;align-items:end;height:170px;margin-top:10px}
+.bars .b{display:flex;flex-direction:column;justify-content:flex-end;height:100%;cursor:pointer}
+.bars .b i{display:block;border-radius:5px 5px 0 0;background:var(--ice-s);border:1px solid var(--ice);transition:height .4s}
+.bars .b.sel i{background:var(--ice)}
+.bars .b.spill i{border-color:var(--red);background:var(--red-s)}
+.bars .b.sel.spill i{background:var(--red)}
+.bars .b em{font-style:normal;font-family:var(--f-mono);font-size:10px;text-align:center;color:var(--ink2);margin-top:4px}
+.bars .b small{font-family:var(--f-mono);font-size:10px;text-align:center;color:var(--ink3)}
+
+/* clusters */
+.clusters{display:flex;flex-wrap:wrap;gap:10px;margin:12px 0}
+.cl{border:1px solid var(--ice);background:var(--ice-s);border-radius:10px;padding:8px;width:118px;transition:all .3s}
+.cl.off{border-style:dashed;border-color:var(--line2);background:transparent;opacity:.5}
+.cl h6{font-family:var(--f-mono);font-size:11px;color:var(--ice);font-weight:400;margin-bottom:6px}
+.cl.off h6{color:var(--ink3)}
+.slots{display:grid;grid-template-columns:repeat(4,1fr);gap:4px}
+.slots i{height:18px;border-radius:4px;border:1px solid var(--line2)}
+.slots i.busy{background:var(--ice);border-color:var(--ice)}
+.queue{display:flex;flex-wrap:wrap;gap:4px;min-height:24px;padding:8px;border:1px dashed var(--red);border-radius:8px;align-items:center}
+.queue i{width:14px;height:14px;border-radius:50%;background:var(--red)}
+.queue .ql{font-family:var(--f-mono);font-size:11px;color:var(--red);margin-right:8px}
+
+/* cache */
+.clog{max-height:240px;overflow:auto}
+.qbtn{display:block;width:100%;text-align:left;font-family:var(--f-mono);font-size:12px;padding:8px 10px;border:1px solid var(--line2);border-radius:8px;background:var(--card);color:var(--ink);margin:6px 0}
+.qbtn:hover{border-color:var(--ice)}
+.qbtn small{display:block;font-family:var(--f-body);font-size:12px;color:var(--ink3)}
+.state{font-size:13px}
+.state div{display:flex;justify-content:space-between;gap:8px;padding:5px 0;border-bottom:1px solid var(--line)}
+.state b{font-family:var(--f-mono);font-weight:400}
+.badge{font-family:var(--f-mono);font-size:11px;padding:2px 8px;border-radius:99px;white-space:nowrap}
+.badge.rc{background:var(--amber-s);color:var(--amber)}
+.badge.md{background:var(--amber-s);color:var(--amber)}
+.badge.ssd{background:var(--ice-s);color:var(--ice)}
+.badge.rs{background:var(--teal-s);color:var(--teal)}
+.badge.mix{background:var(--card2);color:var(--ink2)}
+.badge.on{background:var(--teal-s);color:var(--teal)}
+.badge.off{background:var(--card2);color:var(--ink3)}
+
+/* editions */
+.ed th.col{cursor:pointer}
+.ed td.c{text-align:center;font-family:var(--f-mono);font-size:12px}
+.ed .yes{display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--teal)}
+.ed .no{display:inline-block;width:10px;height:2px;background:var(--ink3);vertical-align:middle}
+.ed tr.f{cursor:pointer}
+.ed tr.f:hover td{background:var(--card2)}
+.ed .hl{background:var(--ice-s)}
+.ed tr.note td{font-size:13px;color:var(--ink2);background:var(--card2)}
+
+/* sql lab */
+.code{font-family:var(--f-mono);font-size:13px;background:var(--card2);border-radius:10px;padding:10px 0;overflow:auto}
+.code div{padding:2px 16px 2px 0;cursor:pointer;white-space:pre;display:block}
+.code div em{font-style:normal;color:var(--ink3);width:40px;text-align:right;padding-right:14px;display:inline-block;user-select:none}
+.code div:hover{background:var(--ice-s)}
+.code div.on{background:var(--ice-s);box-shadow:inset 3px 0 var(--ice)}
+.kw{color:var(--ice);font-weight:700}.str{color:var(--teal)}.num{color:var(--amber)}.cm{color:var(--ink3);font-style:italic}
+.explain{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 16px;min-height:110px;font-size:15px}
+.explain b{font-family:var(--f-mono);font-size:12px;color:var(--ice);letter-spacing:.1em;display:block;margin-bottom:4px}
+
+/* qa */
+.qa{border:1px solid var(--line);border-radius:10px;margin:8px 0;background:var(--card);overflow:hidden}
+.qa summary{list-style:none;cursor:pointer;padding:14px 18px;display:flex;gap:12px;align-items:baseline;font-weight:600}
+.qa summary::-webkit-details-marker{display:none}
+.qa summary .lv{font-family:var(--f-mono);font-size:10px;letter-spacing:.1em;padding:2px 8px;border-radius:99px;flex:none;font-weight:400}
+.lv.b{background:var(--teal-s);color:var(--teal)} .lv.t{background:var(--red-s);color:var(--red)} .lv.s{background:var(--amber-s);color:var(--amber)}
+.qa summary::after{content:"+";margin-left:auto;font-family:var(--f-mono);color:var(--ink3)}
+.qa[open] summary::after{content:"−"}
+.qa .ans{padding:0 18px 16px 18px;color:var(--ink2);font-size:15px;border-top:1px solid var(--line)}
+.qa .ans p:first-child{margin-top:12px}
+
+/* quiz */
+.quiz .q{display:none}
+.quiz .q.on{display:block}
+.opt{display:block;width:100%;text-align:left;padding:12px 14px;margin:8px 0;border:1px solid var(--line2);border-radius:10px;background:var(--card);color:var(--ink);font-size:15px}
+.opt:hover{border-color:var(--ice)}
+.opt.ok{border-color:var(--teal);background:var(--teal-s)}
+.opt.bad{border-color:var(--red);background:var(--red-s)}
+.qexp{display:none;margin-top:10px;padding:12px 14px;border-radius:10px;background:var(--card2);font-size:14px;color:var(--ink2)}
+.qexp.on{display:block}
+.score{font-family:var(--f-head);font-weight:700;font-size:56px;line-height:1}
+
+.cheat{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+.cheat div{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 16px;font-size:14px}
+.cheat div em{font-style:normal;font-family:var(--f-mono);font-size:22px;font-weight:700;color:var(--ice);display:block;line-height:1}
+.analogy-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:18px}
+.ag{border-radius:12px;padding:16px;border:1px solid var(--line);background:var(--card)}
+.ag .k{font-family:var(--f-mono);font-size:11px;letter-spacing:.12em}
+.ag h5{font-family:var(--f-head);font-size:18px;margin:2px 0 4px}
+.ag p{font-size:14px;color:var(--ink2);margin:0}
+.ag.cs{border-top:3px solid var(--amber)} .ag.cs .k{color:var(--amber)}
+.ag.cp{border-top:3px solid var(--ice)} .ag.cp .k{color:var(--ice)}
+.ag.st{border-top:3px solid var(--teal)} .ag.st .k{color:var(--teal)}
+footer{padding:40px 0;color:var(--ink3);font-size:13px;font-family:var(--f-mono)}
+.note-s{font-size:12px;color:var(--ink3);font-style:italic}
+
+@media (max-width:1000px){
+  .wrap{grid-template-columns:1fr;padding:16px}
+  nav.side{position:static;max-height:none;display:none}
+  .wwh,.grid2{grid-template-columns:1fr}
+  .grid3,.analogy-grid{grid-template-columns:1fr}
+  .parts{grid-template-columns:repeat(4,1fr)}
+  .prog{display:none}
+}
+.road a.rm{display:flex;gap:8px;align-items:baseline;font-size:13px;padding:5px 10px;border-radius:8px;text-decoration:none;color:var(--ink2);border-left:2px solid transparent}
+.road a.rm:hover{background:var(--card);color:var(--ink)}
+.road a.rm em{font-style:normal;font-family:var(--f-mono);font-size:11px;min-width:20px}
+.road a.rm i{font-style:normal;font-family:var(--f-mono);font-size:9.5px;margin-left:auto;border:1px solid var(--line2);border-radius:99px;padding:0 6px;white-space:nowrap;color:var(--ink3)}
+.road a.rm.now{color:var(--ink);font-weight:600;border-left-color:var(--ice);background:var(--card);border-radius:0 8px 8px 0}
+.road a.rm.now i{border-color:var(--ice);color:var(--ice)}
+.road a.rm.ready em,.road a.rm.ready i{color:var(--teal)}.road a.rm.ready i{border-color:var(--teal)}
+.road a.rm.soon{color:var(--ink3)}
+.toast{position:fixed;bottom:24px;left:50%;transform:translate(-50%,20px);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;font-size:14px;opacity:0;transition:all .3s;z-index:60;pointer-events:none;max-width:90vw}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+@media (max-width:560px){
+  .top{flex-wrap:wrap;gap:8px;padding:10px 14px}
+  .top .pill,.top .prog-l{display:none}
+  .ctl{flex-wrap:wrap}.ctl label{min-width:0}.ctl .v{min-width:0;text-align:left}
+  table.t{display:block;overflow-x:auto}
+  .call{flex-direction:column;gap:6px}
+  .tabs button{font-size:12px}
+}
+/* course-wide phone layout */
+@media (max-width:560px){
+  .top{flex-wrap:wrap;gap:8px;padding:10px 14px}
+  .top .pill,.top .prog-l,.top .prog{display:none}
+  .brand{flex:1}
+  .ctl{flex-wrap:wrap}.ctl label{min-width:0;flex:1 1 100%}.ctl .v{min-width:0;text-align:left}
+  table{display:block;overflow-x:auto;max-width:100%}
+  .grid2,.grid3,.analogy-grid,[style*="grid-template-columns"]{grid-template-columns:1fr!important}
+  .grid2>*,.grid3>*,.call>div{min-width:0}
+  p code,li code,td code{word-break:break-word}
+  .code,.sqlbox,.out,.term,pre{max-width:100%;overflow-x:auto}
+  .call{flex-direction:column;gap:6px}
+  main,section,.panel,.wwh .box,.mini{min-width:0;max-width:100%}
+}
+</style>
+</head>
+<body>
+<div class="top">
+  <div class="brand">SNOWFLAKE<b>//</b>INTERVIEW LAB</div>
+  <span class="pill">Module 01 of 14 · Architecture</span>
+  <div class="prog"><i id="progBar"></i></div>
+  <span class="prog-l" id="progLbl">0% explored</span>
+  <button class="theme" id="themeBtn">Dark / light</button>
+</div>
+
+<div class="wrap">
+<nav class="side" id="side">
+  <h4>MODULE 01 · CHAPTERS</h4>
+  <a href="#intro"><span>00</span>Start here</a>
+  <a href="#big"><span>01</span>The big picture</a>
+  <a href="#storage"><span>02</span>Storage &amp; micro-partitions</a>
+  <a href="#compute"><span>03</span>Compute: warehouses, scale up</a>
+  <a href="#scaleout"><span>04</span>Scale out: multi-cluster</a>
+  <a href="#cloud"><span>05</span>Cloud services layer</a>
+  <a href="#cache"><span>06</span>The three caches</a>
+  <a href="#billing"><span>07</span>How billing works</a>
+  <a href="#editions"><span>08</span>Editions</a>
+  <a href="#sql"><span>09</span>SQL lab</a>
+  <a href="#qa"><span>10</span>Interview Q&amp;A</a>
+  <a href="#quiz"><span>11</span>Quiz</a>
+  <a href="#cheat"><span>12</span>Cheat sheet</a>
+  <div class="road">
+    <h4>COURSE ROADMAP · CLICK TO OPEN</h4>
+    <a class="rm now" href="../module01/"><em>01</em>Architecture<i>you are here</i></a>
+    <a class="rm ready" href="../module02/"><em>02</em>SnowSQL · unstructured · streams, tasks &amp; procedures<i>open</i></a>
+    <a class="rm ready" href="../module03/"><em>03</em>Performance tuning<i>open</i></a>
+    <a class="rm ready" href="../module04/"><em>04</em>Data ingestion (Snowpipe)<i>open</i></a>
+    <a class="rm ready" href="../module05/"><em>05</em>Dynamic tables &amp; transforms<i>open</i></a>
+    <a class="rm ready" href="../module06/"><em>06</em>Semi-structured data<i>open</i></a>
+    <a class="rm ready" href="../module07/"><em>07</em>Data protection<i>open</i></a>
+    <a class="rm ready" href="../module08/"><em>08</em>Security &amp; governance<i>open</i></a>
+    <a class="rm ready" href="../module09/"><em>09</em>Cost optimization<i>open</i></a>
+    <a class="rm ready" href="../module10/"><em>10</em>Data sharing<i>open</i></a>
+    <a class="rm ready" href="../module11/"><em>11</em>Snowpark &amp; Cortex AI<i>open</i></a>
+    <a class="rm ready" href="../module12/"><em>12</em>Advanced SQL<i>open</i></a>
+    <a class="rm ready" href="../module13/"><em>13</em>Modeling &amp; tooling<i>open</i></a>
+    <a class="rm ready" href="../module14/"><em>14</em>System design &amp; behavioral<i>open</i></a>
+  </div>
+</nav>
+
+<main>
+<!-- ============ 00 INTRO ============ -->
+<section id="intro">
+  <div class="eyebrow">MODULE 01 · ARCHITECTURE</div>
+  <h1>How Snowflake<br><span class="thin">actually works.</span></h1>
+  <p class="lead" style="margin-top:18px">Almost every Snowflake interview question traces back to this module, whether it's about performance, cost, caching, cloning or Time Travel. If you understand the three layers and micro-partitions, the rest of Snowflake starts to make sense.</p>
+  <p style="margin-top:14px">Every chapter follows the same pattern: <b style="color:var(--ice)">What is it</b>, then <b style="color:var(--amber)">Why we use it</b>, then <b style="color:var(--teal)">How it works</b>. Each one also has a simulator to play with. Throughout the module we'll use one analogy: <b>Snowflake is a restaurant.</b></p>
+  <div class="analogy-grid">
+    <div class="ag cs rise" style="animation-delay:.05s"><div class="k">CLOUD SERVICES = THE MANAGER</div><h5>Front desk &amp; manager</h5><p>Checks your reservation (login), reads the order (parses the SQL), decides the cooking plan (optimizer) and keeps the inventory book (metadata). Never cooks.</p></div>
+    <div class="ag cp rise" style="animation-delay:.15s"><div class="k">COMPUTE = KITCHENS</div><h5>Independent kitchens</h5><p>Each kitchen (virtual warehouse) has its own chefs. Bigger kitchen = more chefs. More kitchens = more orders cooked at the same time. You pay only while a kitchen is open.</p></div>
+    <div class="ag st rise" style="animation-delay:.25s"><div class="k">STORAGE = THE PANTRY</div><h5>One shared pantry</h5><p>A single, effectively unlimited pantry (cloud object storage) where ingredients sit in small labelled boxes (micro-partitions). Every kitchen takes from the same pantry.</p></div>
+  </div>
+  <div class="call pro"><b class="k">WHAT 6-YR CANDIDATES MUST SHOW</b><div>At this level, being able to recite the three layers isn't enough. You need to explain <i>trade-offs</i>: why a query was slow, why a bill went up, why the cache didn't help, and which knob you'd change. Every chapter ends with the interview angle for that topic.</div></div>
+</section>
+
+<!-- ============ 01 BIG PICTURE ============ -->
+<section id="big">
+  <div class="eyebrow">CHAPTER 01</div>
+  <h2>The big picture <span class="thin">· three layers</span></h2>
+  <div class="wwh">
+    <div class="box what"><span class="tag">01 · WHAT IS IT</span>
+      <p>Snowflake is a <b>fully managed cloud data platform</b> (a data warehouse delivered as SaaS). It runs on AWS, Azure or Google Cloud. There's nothing for you to install, tune, patch or index. You write SQL and Snowflake handles the infrastructure.</p>
+      <p>Its design is called <b>multi-cluster shared data</b>: <b>three independent layers</b> (storage, compute and cloud services), each of which scales on its own.</p>
+    </div>
+    <div class="box why"><span class="tag">02 · WHY WE USE IT</span>
+      <p>Traditional warehouses (Teradata, Oracle, on-prem Hadoop) lock storage and compute together. That caused three problems:</p>
+      <ul class="dots">
+        <li><b>Contention:</b> the 9 AM dashboards and the nightly ETL fight over the same CPUs.</li>
+        <li><b>Paying for peak:</b> you buy hardware for your busiest hour and it sits idle the rest of the time.</li>
+        <li><b>Slow scaling:</b> adding nodes means reshuffling data, which can take days.</li>
+      </ul>
+      <p>Snowflake separates storage from compute, so each team gets its own compute, you pay per second, and resizing takes seconds.</p>
+    </div>
+    <div class="box how"><span class="tag">03 · HOW IT WORKS · COMPARE THE THREE DESIGNS</span>
+      <p>Click through the three architectures. Snowflake's design is described as a <b>hybrid</b>: it takes the "one central copy of data" idea from shared-disk and the "independent nodes doing the work in parallel" idea from shared-nothing.</p>
+      <div class="tabs" id="archTabs">
+        <button class="on" data-a="0">Shared-disk (old)</button>
+        <button data-a="1">Shared-nothing (old)</button>
+        <button data-a="2">Snowflake: multi-cluster shared data</button>
+      </div>
+      <div id="arch0">
+        <svg viewBox="0 0 680 230">
+          <g><rect class="neutral" x="110" y="24" width="120" height="50" rx="8"/><text class="th" x="170" y="44" text-anchor="middle" dominant-baseline="central">Node 1</text><text class="ts" x="170" y="62" text-anchor="middle" dominant-baseline="central">CPU + RAM</text></g>
+          <g><rect class="neutral" x="280" y="24" width="120" height="50" rx="8"/><text class="th" x="340" y="44" text-anchor="middle" dominant-baseline="central">Node 2</text><text class="ts" x="340" y="62" text-anchor="middle" dominant-baseline="central">CPU + RAM</text></g>
+          <g><rect class="neutral" x="450" y="24" width="120" height="50" rx="8"/><text class="th" x="510" y="44" text-anchor="middle" dominant-baseline="central">Node 3</text><text class="ts" x="510" y="62" text-anchor="middle" dominant-baseline="central">CPU + RAM</text></g>
+          <path class="arr" d="M170 74 L320 150"/><path class="arr" d="M340 74 L340 150"/><path class="arr" d="M510 74 L360 150"/>
+          <rect class="L-st" x="250" y="152" width="180" height="52" rx="10" stroke-width="1"/>
+          <text class="th" x="340" y="172" text-anchor="middle" dominant-baseline="central">One shared disk</text>
+          <text class="ts" x="340" y="190" text-anchor="middle" dominant-baseline="central">all nodes queue here</text>
+          <circle class="pulse" cx="440" cy="160" r="6" fill="var(--red)"/>
+          <text class="ts" x="452" y="164" style="fill:var(--red)">I/O bottleneck</text>
+        </svg>
+        <div class="grid2"><div class="mini"><h5>Good</h5><p>A single copy of the data, so it's simple to manage.</p></div><div class="mini"><h5>Bad</h5><p>Every node competes for the same disk. Adding nodes increases contention instead of fixing it.</p></div></div>
+      </div>
+      <div id="arch1" hidden>
+        <svg viewBox="0 0 680 230">
+          <g><rect class="neutral" x="110" y="24" width="120" height="50" rx="8"/><text class="th" x="170" y="44" text-anchor="middle" dominant-baseline="central">Node 1</text><text class="ts" x="170" y="62" text-anchor="middle" dominant-baseline="central">CPU + RAM</text></g>
+          <g><rect class="neutral" x="280" y="24" width="120" height="50" rx="8"/><text class="th" x="340" y="44" text-anchor="middle" dominant-baseline="central">Node 2</text><text class="ts" x="340" y="62" text-anchor="middle" dominant-baseline="central">CPU + RAM</text></g>
+          <g><rect class="neutral" x="450" y="24" width="120" height="50" rx="8"/><text class="th" x="510" y="44" text-anchor="middle" dominant-baseline="central">Node 3</text><text class="ts" x="510" y="62" text-anchor="middle" dominant-baseline="central">CPU + RAM</text></g>
+          <path class="arr" d="M170 74 L170 120"/><path class="arr" d="M340 74 L340 120"/><path class="arr" d="M510 74 L510 120"/>
+          <rect class="L-st" x="115" y="122" width="110" height="46" rx="8"/><text class="th" x="170" y="139" text-anchor="middle" dominant-baseline="central">Disk 1</text><text class="ts" x="170" y="156" text-anchor="middle" dominant-baseline="central">rows A–H</text>
+          <rect class="L-st" x="285" y="122" width="110" height="46" rx="8"/><text class="th" x="340" y="139" text-anchor="middle" dominant-baseline="central">Disk 2</text><text class="ts" x="340" y="156" text-anchor="middle" dominant-baseline="central">rows I–P</text>
+          <rect class="L-st" x="455" y="122" width="110" height="46" rx="8"/><text class="th" x="510" y="139" text-anchor="middle" dominant-baseline="central">Disk 3</text><text class="ts" x="510" y="156" text-anchor="middle" dominant-baseline="central">rows Q–Z</text>
+          <text class="ts" x="340" y="200" text-anchor="middle">Add a 4th node, and every row has to be redistributed (resharded)</text>
+        </svg>
+        <div class="grid2"><div class="mini"><h5>Good</h5><p>Each node reads its own disk, so it scales well for parallel scans (e.g. Teradata, Redshift classic).</p></div><div class="mini"><h5>Bad</h5><p>Storage and compute are locked together. You can't add CPU without adding disk, scaling means reshuffling the data, and all workloads share the same nodes.</p></div></div>
+      </div>
+      <div id="arch2" hidden>
+        <svg viewBox="0 0 680 270">
+          <rect class="L-cs" x="40" y="14" width="600" height="46" rx="10" stroke-width="1"/>
+          <text class="th" x="340" y="30" text-anchor="middle" dominant-baseline="central">Cloud services: the shared brain</text>
+          <text class="ts" x="340" y="47" text-anchor="middle" dominant-baseline="central">auth · optimizer · metadata · transactions</text>
+          <path class="arr" d="M150 60 L150 92"/><path class="arr" d="M340 60 L340 92"/><path class="arr" d="M530 60 L530 92"/>
+          <rect class="L-cp" x="70" y="94" width="160" height="56" rx="8" stroke-width="1"/><text class="th" x="150" y="114" text-anchor="middle" dominant-baseline="central">ETL_WH (L)</text><text class="ts" x="150" y="133" text-anchor="middle" dominant-baseline="central">nightly loads</text>
+          <rect class="L-cp" x="260" y="94" width="160" height="56" rx="8" stroke-width="1"/><text class="th" x="340" y="114" text-anchor="middle" dominant-baseline="central">BI_WH (M ×3)</text><text class="ts" x="340" y="133" text-anchor="middle" dominant-baseline="central">dashboards</text>
+          <rect class="L-cp" x="450" y="94" width="160" height="56" rx="8" stroke-width="1"/><text class="th" x="530" y="114" text-anchor="middle" dominant-baseline="central">DS_WH (XL)</text><text class="ts" x="530" y="133" text-anchor="middle" dominant-baseline="central">data science</text>
+          <path class="arr" d="M150 150 L250 190"/><path class="arr" d="M340 150 L340 190"/><path class="arr" d="M530 150 L430 190"/>
+          <rect class="L-st" x="40" y="192" width="600" height="56" rx="10" stroke-width="1"/>
+          <text class="th" x="340" y="212" text-anchor="middle" dominant-baseline="central">Central storage: one copy of data</text>
+          <text class="ts" x="340" y="231" text-anchor="middle" dominant-baseline="central">S3 / Azure Blob / GCS · effectively unlimited · micro-partitions</text>
+        </svg>
+        <div class="grid2"><div class="mini"><h5>Shared-disk idea</h5><p>All warehouses read one central copy of the data, so there are no data silos and no copies to keep in sync.</p></div><div class="mini"><h5>Shared-nothing idea</h5><p>Inside each warehouse, the nodes split the work and process micro-partitions in parallel. Warehouses don't slow each other down.</p></div></div>
+      </div>
+    </div>
+  </div>
+
+  <h3>Follow one query through the three layers</h3>
+  <p>Press <b>Next</b> to watch <code>SELECT SUM(amount) FROM orders WHERE order_date = '2024-03-15'</code> travel through Snowflake. The dot is your query.</p>
+  <div class="panel">
+    <svg viewBox="0 0 680 460" class="journey" id="journey">
+      <g class="jg" id="j-client"><rect class="neutral" x="260" y="8" width="160" height="38" rx="8" stroke-width="1"/><text class="th" x="340" y="27" text-anchor="middle" dominant-baseline="central">You · SQL client</text></g>
+      <g class="jg" id="j-a1"><line class="arr" x1="340" y1="48" x2="340" y2="78"/></g>
+      <rect class="L-cs" x="40" y="80" width="600" height="90" rx="12" stroke-width="1"/>
+      <text class="th" x="58" y="100" dominant-baseline="central">Cloud services layer · the brain</text>
+      <g class="jg" id="j-auth"><rect class="neutral" x="60" y="116" width="128" height="38" rx="8" stroke-width="1"/><text class="t" x="124" y="135" text-anchor="middle" dominant-baseline="central">Auth + RBAC</text></g>
+      <g class="jg" id="j-opt"><rect class="neutral" x="204" y="116" width="128" height="38" rx="8" stroke-width="1"/><text class="t" x="268" y="135" text-anchor="middle" dominant-baseline="central">Parser + optimizer</text></g>
+      <g class="jg" id="j-meta"><rect class="neutral" x="348" y="116" width="128" height="38" rx="8" stroke-width="1"/><text class="t" x="412" y="135" text-anchor="middle" dominant-baseline="central">Metadata store</text></g>
+      <g class="jg" id="j-rc"><rect class="neutral" x="492" y="116" width="128" height="38" rx="8" stroke-width="1"/><text class="t" x="556" y="135" text-anchor="middle" dominant-baseline="central">Result cache</text></g>
+      <g class="jg" id="j-a2"><line class="arr" x1="340" y1="172" x2="340" y2="202"/></g>
+      <rect class="L-cp" x="40" y="204" width="600" height="110" rx="12" stroke-width="1"/>
+      <text class="th" x="58" y="222" dominant-baseline="central">Compute layer · virtual warehouses (the muscle)</text>
+      <g class="jg" id="j-wh1"><rect class="neutral" x="60" y="238" width="170" height="62" rx="8" stroke-width="1"/><text class="th" x="145" y="256" text-anchor="middle" dominant-baseline="central">ETL_WH</text><text class="ts" x="145" y="273" text-anchor="middle" dominant-baseline="central">size L · busy loading</text><rect x="72" y="284" width="146" height="8" rx="3" fill="var(--card2)"/></g>
+      <g class="jg" id="j-wh2"><rect class="neutral" x="255" y="238" width="170" height="62" rx="8" stroke-width="1"/><text class="th" x="340" y="256" text-anchor="middle" dominant-baseline="central">BI_WH</text><text class="ts" x="340" y="273" text-anchor="middle" dominant-baseline="central">size M · runs our query</text><rect id="j-ssd" x="267" y="284" width="146" height="8" rx="3" fill="var(--card2)"/></g>
+      <g class="jg" id="j-wh3"><rect class="neutral" x="450" y="238" width="170" height="62" rx="8" stroke-width="1"/><text class="th" x="535" y="256" text-anchor="middle" dominant-baseline="central">DS_WH</text><text class="ts" x="535" y="273" text-anchor="middle" dominant-baseline="central">size XL · suspended</text><rect x="462" y="284" width="146" height="8" rx="3" fill="var(--card2)"/></g>
+      <g class="jg" id="j-a3"><line class="arr" x1="340" y1="314" x2="340" y2="344"/></g>
+      <rect class="L-st" x="40" y="346" width="600" height="96" rx="12" stroke-width="1"/>
+      <text class="th" x="58" y="364" dominant-baseline="central">Storage layer · micro-partitions of ORDERS in S3</text>
+      <g id="j-parts"></g>
+      <text class="tm" x="63" y="430">P1</text><text class="tm" x="588" y="430">P16</text>
+      <circle id="pk" r="8" cx="0" cy="0" fill="var(--red)" stroke="var(--card)" stroke-width="2" style="transform:translate(340px,62px)"/>
+    </svg>
+    <div class="stepbar" id="jBar"></div>
+    <div class="stepdesc" id="jDesc"></div>
+    <div class="row" style="margin-top:12px"><button class="btn" id="jPrev">Back</button><button class="btn pri" id="jNext">Start the journey</button><button class="btn" id="jReset">Reset</button></div>
+  </div>
+  <div class="call trap"><b class="k">INTERVIEW TRAP</b><div>"Does the warehouse store data?" <b>No.</b> A warehouse only <i>caches</i> data on its local SSD while it's running. The permanent copy always lives in the storage layer. That's why you can drop or resize a warehouse without losing a single row.</div></div>
+</section>
+
+<!-- ============ 02 STORAGE ============ -->
+<section id="storage">
+  <div class="eyebrow">CHAPTER 02</div>
+  <h2>Storage layer &amp; <span class="thin">micro-partitions</span></h2>
+  <div class="wwh">
+    <div class="box what"><span class="tag">01 · WHAT IS IT</span>
+      <p>When you load data, Snowflake <b>automatically</b> cuts every table into small, <b>immutable</b> files called <b>micro-partitions</b>. Each one holds <b>50–500 MB of uncompressed data</b> (much smaller once compressed), stored <b>column by column</b> (columnar), compressed and encrypted, in cloud object storage (S3, Azure Blob or GCS).</p>
+      <p>You never see these files. You can't define, name or size them. You only interact with tables through SQL.</p>
+    </div>
+    <div class="box why"><span class="tag">02 · WHY WE USE IT</span>
+      <ul class="dots">
+        <li><b>Pruning:</b> skip files that can't contain your data. This is how Snowflake gets fast without indexes.</li>
+        <li><b>Columnar:</b> read only the columns your query mentions.</li>
+        <li><b>Immutable:</b> files are never edited in place, which is what makes Time Travel, zero-copy cloning and consistent reads possible.</li>
+        <li><b>Zero maintenance:</b> no partitions to declare, no VACUUM, no index rebuilds.</li>
+      </ul>
+    </div>
+    <div class="box how"><span class="tag">03 · HOW IT WORKS</span>
+      <p>For every micro-partition, the cloud services layer records <b>metadata</b>: the <b>MIN and MAX value of each column</b>, the number of distinct values, the NULL count and more. When your query has a filter like <code>WHERE order_date = '2024-03-15'</code>, the optimizer checks that metadata <i>before reading anything</i>. Any partition whose range can't include March 15 is skipped. This is <b>partition pruning</b>.</p>
+      <p>How well pruning works depends on <b>how the data is physically ordered</b>. If the data was loaded day by day, each file covers a narrow date range and pruning is excellent. If the data is jumbled, every file covers January to December and nothing can be skipped. Try it below.</p>
+    </div>
+  </div>
+
+  <div class="panel" id="pruneSim">
+    <div class="panel-h"><div class="t">SIMULATOR · <b>PARTITION PRUNING</b> · toy table ORDERS, 16 micro-partitions</div></div>
+    <div class="row" style="margin-bottom:6px">
+      <span class="note-s" style="min-width:120px">Physical layout:</span>
+      <div class="tabs" id="layoutTabs" style="margin:0">
+        <button class="on" data-l="clustered">Well clustered (loaded daily)</button>
+        <button data-l="partial">Partly clustered</button>
+        <button data-l="random">Poorly clustered (random)</button>
+      </div>
+    </div>
+    <div class="row" style="margin:6px 0">
+      <span class="note-s" style="min-width:120px">Filter presets:</span>
+      <button class="btn" data-p="day">One day</button><button class="btn" data-p="month">June</button><button class="btn" data-p="q4">Q4</button><button class="btn" data-p="year">Whole year</button><button class="btn" data-p="cust">WHERE customer_id = 48213</button>
+    </div>
+    <div class="ctl"><label>order_date from</label><input type="range" id="pFrom" min="0" max="365" value="74"><span class="v" id="pFromV"></span></div>
+    <div class="ctl"><label>order_date to</label><input type="range" id="pTo" min="0" max="365" value="74"><span class="v" id="pToV"></span></div>
+    <div style="margin:8px 0"><div class="note-s" style="margin-bottom:6px">Columns in SELECT (columnar storage: only these are read):</div><div class="cols" id="colPick"></div><div class="colviz" id="colViz"></div></div>
+    <div class="sqlbox" id="pSql"></div>
+    <div class="legend"><span><i style="background:var(--amber)"></i>scanned (range overlaps filter)</span><span><i style="background:var(--card2);border:1px solid var(--line2)"></i>pruned (skipped without being read)</span><span><i style="background:var(--teal)"></i>bar = this file's min→max date range across the year</span></div>
+    <div class="parts" id="parts"></div>
+    <div class="stats">
+      <div class="stat"><div class="k">PARTITIONS SCANNED</div><div class="n" id="sScan">–</div><div class="s">of 16 total</div></div>
+      <div class="stat"><div class="k">PRUNED</div><div class="n" id="sPr">–</div><div class="s">files never read</div></div>
+      <div class="stat"><div class="k">BYTES SCANNED</div><div class="n" id="sBy">–</div><div class="s">≈16 MB compressed per file</div></div>
+      <div class="stat"><div class="k">CLUSTERING DEPTH</div><div class="n" id="sDepth">–</div><div class="s">avg overlapping files (lower = better)</div></div>
+    </div>
+    <div class="insight" id="pIns"></div>
+  </div>
+
+  <h3>Immutability: what an UPDATE really does</h3>
+  <p>Micro-partitions are <b>never modified</b>. Changing one row makes Snowflake write a <b>new copy</b> of the entire micro-partition that contains it. The old file is kept for Time Travel and Fail-safe, and the table's metadata then points to the new set of files.</p>
+  <div class="panel">
+    <div class="panel-h"><div class="t">DEMO · <b>COPY-ON-WRITE</b></div><div class="row"><button class="btn pri" id="immUpd">Run UPDATE</button><button class="btn" id="immTT">Time Travel to before</button><button class="btn" id="immRe">Reset</button></div></div>
+    <div class="sqlbox" id="immSql">-- table ORDERS, version 1</div>
+    <div class="imm" id="imm"></div>
+    <div class="insight" id="immIns"><b>Current table version v1</b> points to P1, P2, P3, P4.</div>
+  </div>
+  <div class="grid2">
+    <div class="call trap" style="margin:0"><b class="k">INTERVIEW TRAP</b><div>"Does Snowflake have indexes?" Not in the traditional sense (hybrid tables are the exception). For standard tables, Snowflake relies on <b>micro-partition metadata + pruning</b>, optional <b>clustering keys</b>, and the <b>Search Optimization Service</b> for point lookups.</div></div>
+    <div class="call pro" style="margin:0"><b class="k">SENIOR ANGLE</b><div>Because of copy-on-write, <b>frequent single-row UPDATEs or DELETEs are expensive</b>: each one rewrites a whole micro-partition, and Time Travel storage grows with it. Batch your changes and use <code>MERGE</code>.</div></div>
+  </div>
+</section>
+
+<!-- ============ 03 COMPUTE ============ -->
+<section id="compute">
+  <div class="eyebrow">CHAPTER 03</div>
+  <h2>Compute: virtual warehouses <span class="thin">&amp; scaling up</span></h2>
+  <div class="wwh">
+    <div class="box what"><span class="tag">01 · WHAT IS IT</span>
+      <p>A <b>virtual warehouse</b> is a named cluster of compute (CPU, memory and local SSD) that runs your queries, DML and loads. It holds <b>no permanent data</b>. Sizes go from <b>X-Small to 6X-Large</b>. Each size up <b>doubles</b> the compute <i>and</i> the credits per hour.</p>
+      <table class="t" style="margin-top:8px"><tr><th>SIZE</th><th>XS</th><th>S</th><th>M</th><th>L</th><th>XL</th><th>2XL</th><th>3XL</th><th>4XL</th><th>5XL</th><th>6XL</th></tr><tr><td class="mono">credits/hr</td><td>1</td><td>2</td><td>4</td><td>8</td><td>16</td><td>32</td><td>64</td><td>128</td><td>256</td><td>512</td></tr></table>
+      <p class="note-s">Rates shown are for standard (Gen1) warehouses. Gen2 and Snowpark-optimized warehouses use different rates.</p>
+    </div>
+    <div class="box why"><span class="tag">02 · WHY WE USE IT</span>
+      <ul class="dots">
+        <li><b>Workload isolation:</b> ETL, BI and data science each get their own warehouse, so they never slow each other down.</li>
+        <li><b>Elasticity:</b> resize in seconds with no data movement.</li>
+        <li><b>Cost control:</b> a warehouse <b>auto-suspends</b> when idle (costing nothing) and <b>auto-resumes</b> when the next query arrives.</li>
+        <li><b>Chargeback:</b> one warehouse per team makes it easy to see who spent what.</li>
+      </ul>
+    </div>
+    <div class="box how"><span class="tag">03 · HOW IT WORKS · SCALING UP</span>
+      <p><b>Scaling up</b> (resizing, e.g. M to L) gives a <b>single query</b> more parallel workers, memory and SSD. For big scans and joins, runtime roughly <b>halves</b> each step up while the cost per hour doubles, so the <b>total cost stays about the same but you get the answer faster</b>. That only holds while the query has enough work to split up. A small query can't use 64 workers, so it doesn't get faster but it does get more expensive.</p>
+      <p><b>Spilling</b> is the other reason to scale up. When a join or sort doesn't fit in memory, Snowflake spills to local SSD (slower) and then to remote storage (much slower). A bigger warehouse has more memory, so the spilling stops. Look for <code>Bytes spilled to remote storage</code> in the Query Profile.</p>
+      <p>Resizing affects only <b>new and queued</b> queries. Queries already running finish on the old size.</p>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-h"><div class="t">SIMULATOR · <b>SCALE UP: SIZE vs TIME vs COST</b></div><span class="note-s">Illustrative model, not a benchmark</span></div>
+    <div class="row" style="margin-bottom:8px"><span class="note-s" style="min-width:110px">Workload:</span>
+      <div class="tabs" id="wlTabs" style="margin:0">
+        <button data-w="small">Tiny lookup (2 GB)</button>
+        <button class="on" data-w="medium">Daily report (80 GB)</button>
+        <button data-w="huge">Huge ETL join (3 TB, memory heavy)</button>
+      </div>
+    </div>
+    <div class="ctl"><label>Warehouse size</label><input type="range" id="szR" min="0" max="9" value="2"><span class="v" id="szV"></span></div>
+    <div class="stats">
+      <div class="stat"><div class="k">RUNTIME</div><div class="n" id="suT">–</div><div class="s" id="suTs"></div></div>
+      <div class="stat"><div class="k">CREDITS FOR THIS QUERY</div><div class="n" id="suC">–</div><div class="s">credits/hr × billed time</div></div>
+      <div class="stat"><div class="k">CREDITS / HOUR</div><div class="n" id="suH">–</div><div class="s">while running</div></div>
+    </div>
+    <div class="note-s">Runtime by size (click a bar). Red = spilling to remote storage.</div>
+    <div class="bars" id="suBars"></div>
+    <div class="note-s" style="margin-top:14px">Credits for this query by size</div>
+    <div class="bars" id="suBars2" style="height:110px"></div>
+    <div class="insight" id="suIns"></div>
+  </div>
+</section>
+
+<!-- ============ 04 SCALE OUT ============ -->
+<section id="scaleout">
+  <div class="eyebrow">CHAPTER 04</div>
+  <h2>Scale out: <span class="thin">multi-cluster warehouses</span></h2>
+  <div class="wwh">
+    <div class="box what"><span class="tag">01 · WHAT IS IT</span>
+      <p>A <b>multi-cluster warehouse</b> (Enterprise edition and above) is a single warehouse name backed by <b>several clusters of the same size</b>. You set <code>MIN_CLUSTER_COUNT</code> and <code>MAX_CLUSTER_COUNT</code>, and Snowflake starts or stops clusters automatically as concurrency changes.</p>
+      <ul class="dots"><li><b>Auto-scale mode:</b> MIN &lt; MAX (most common).</li><li><b>Maximized mode:</b> MIN = MAX, so all clusters run whenever the warehouse is running.</li></ul>
+    </div>
+    <div class="box why"><span class="tag">02 · WHY WE USE IT</span>
+      <p>Each cluster runs only a limited number of queries at once (controlled by <code>MAX_CONCURRENCY_LEVEL</code>, default 8). At 9 AM, when 100 analysts open dashboards, the extra queries <b>queue</b>. A bigger warehouse doesn't fix queuing well. <b>More clusters</b> do.</p>
+      <p><b>Rule:</b> scale <b>up</b> for <i>slow queries</i>, scale <b>out</b> for <i>too many queries at once</i>.</p>
+    </div>
+    <div class="box how"><span class="tag">03 · HOW IT WORKS · SCALING POLICIES</span>
+      <div class="grid2">
+        <div class="mini"><h5>STANDARD (default): favours speed</h5><p>Starts a new cluster <b>as soon as a query queues</b>, or when the system detects there's one more query than the running clusters can handle. Each extra cluster starts about 20 s after the previous one. Clusters shut down after <b>2–3 consecutive checks</b> (one minute apart) show the load can fit on fewer clusters.</p></div>
+        <div class="mini"><h5>ECONOMY: favours credits</h5><p>Starts a new cluster <b>only if there's enough queued work to keep it busy for at least 6 minutes</b>. Short spikes just queue. Shuts clusters down after <b>5–6 consecutive checks</b>. Good for batch work where a little waiting is fine.</p></div>
+      </div>
+    </div>
+  </div>
+  <div class="panel">
+    <div class="panel-h"><div class="t">SIMULATOR · <b>CONCURRENCY &amp; QUEUING</b> · each cluster = 8 query slots</div><span class="note-s">Simplified steady-state model</span></div>
+    <div class="ctl"><label>Concurrent queries</label><input type="range" id="soU" min="1" max="100" value="30"><span class="v" id="soUV"></span></div>
+    <div class="ctl"><label>MIN_CLUSTER_COUNT</label><input type="range" id="soMin" min="1" max="10" value="1"><span class="v" id="soMinV"></span></div>
+    <div class="ctl"><label>MAX_CLUSTER_COUNT</label><input type="range" id="soMax" min="1" max="10" value="4"><span class="v" id="soMaxV"></span></div>
+    <div class="row" style="margin:8px 0"><span class="note-s" style="min-width:150px">Scaling policy:</span><div class="tabs" id="polTabs" style="margin:0"><button class="on" data-p="standard">Standard</button><button data-p="economy">Economy</button></div>
+      <span class="note-s" style="margin-left:12px">Size:</span><select id="soSz"><option value="2">Small (2 cr/hr)</option><option value="4" selected>Medium (4 cr/hr)</option><option value="8">Large (8 cr/hr)</option></select></div>
+    <div class="clusters" id="clusters"></div>
+    <div class="queue" id="queue"></div>
+    <div class="stats">
+      <div class="stat"><div class="k">MODE</div><div class="n" id="soMode" style="font-size:20px">–</div></div>
+      <div class="stat"><div class="k">CLUSTERS RUNNING</div><div class="n" id="soRun">–</div></div>
+      <div class="stat"><div class="k">QUEUED QUERIES</div><div class="n" id="soQ">–</div></div>
+      <div class="stat"><div class="k">CREDITS / HOUR</div><div class="n" id="soC">–</div></div>
+    </div>
+    <div class="insight" id="soIns"></div>
+  </div>
+  <div class="call trap"><b class="k">INTERVIEW TRAP</b><div>"Will a multi-cluster warehouse make my single slow query faster?" <b>No.</b> A query runs on <i>one</i> cluster. Extra clusters only absorb <i>more queries</i>. To make one query faster, scale up or fix the query (pruning, joins, spilling).</div></div>
+</section>
+
+<!-- ============ 05 CLOUD SERVICES ============ -->
+<section id="cloud">
+  <div class="eyebrow">CHAPTER 05</div>
+  <h2>Cloud services layer <span class="thin">· the brain</span></h2>
+  <div class="wwh">
+    <div class="box what"><span class="tag">01 · WHAT IS IT</span>
+      <p>A set of always-on services, run by Snowflake across multiple availability zones, that <b>coordinate everything</b>: logins, query planning, metadata, transactions and security. It runs on compute that Snowflake manages, not on your warehouses.</p>
+    </div>
+    <div class="box why"><span class="tag">02 · WHY WE USE IT</span>
+      <p>Separating the "thinking" from the "doing" means some work happens <b>without a warehouse at all</b>: metadata queries, result-cache hits, <code>SHOW</code> and <code>DESCRIBE</code> commands, and creating objects. It's also what lets <b>many warehouses work on the same data consistently</b>.</p>
+    </div>
+    <div class="box how"><span class="tag">03 · HOW IT WORKS · CLICK EACH SERVICE</span>
+      <div class="grid3" id="csCards"></div>
+      <div class="explain" id="csExp" style="margin-top:12px"><b>SELECT A SERVICE</b>Click a card above to see what it does during a query.</div>
+    </div>
+  </div>
+  <div class="panel">
+    <div class="panel-h"><div class="t">CALCULATOR · <b>THE 10% CLOUD SERVICES RULE</b></div></div>
+    <p style="font-size:15px;color:var(--ink2)">Cloud services usage is metered in credits, but you're billed for it <b>only for the part above 10% of that day's warehouse compute credits</b>. Most accounts never pay for it. It becomes a real cost when you run huge numbers of tiny queries, complex query compilation, heavy <code>SHOW</code> or <code>INFORMATION_SCHEMA</code> calls, or a <code>COPY</code> that lists millions of files.</p>
+    <div class="ctl"><label>Warehouse credits / day</label><input type="range" id="csW" min="0" max="400" value="100"><span class="v" id="csWV"></span></div>
+    <div class="ctl"><label>Cloud services credits / day</label><input type="range" id="csC" min="0" max="80" value="6"><span class="v" id="csCV"></span></div>
+    <svg viewBox="0 0 680 70" id="csSvg"></svg>
+    <div class="stats"><div class="stat"><div class="k">FREE ALLOWANCE (10%)</div><div class="n" id="csA">–</div></div><div class="stat"><div class="k">CLOUD SERVICES BILLED</div><div class="n" id="csB">–</div></div><div class="stat"><div class="k">TOTAL BILLED / DAY</div><div class="n" id="csT">–</div></div></div>
+  </div>
+</section>
+
+<!-- ============ 06 CACHE ============ -->
+<section id="cache">
+  <div class="eyebrow">CHAPTER 06</div>
+  <h2>The three caches <span class="thin">· asked in almost every interview</span></h2>
+  <div class="wwh">
+    <div class="box what"><span class="tag">01 · WHAT IS IT</span>
+      <table class="t">
+        <tr><th>CACHE</th><th>LIVES IN</th><th>STORES</th><th>LIFETIME</th></tr>
+        <tr><td><span class="badge rc">Result cache</span></td><td>Cloud services</td><td>Final result sets of queries</td><td>24 h, reset on each reuse, max 31 days</td></tr>
+        <tr><td><span class="badge ssd">Warehouse cache</span></td><td>Warehouse local SSD/RAM</td><td>Raw micro-partition column data</td><td>Until the warehouse suspends or is resized</td></tr>
+        <tr><td><span class="badge md">Metadata</span></td><td>Cloud services</td><td>Row counts, MIN/MAX, distinct counts per partition</td><td>Always current</td></tr>
+      </table>
+    </div>
+    <div class="box why"><span class="tag">02 · WHY WE USE IT</span>
+      <ul class="dots">
+        <li><b>Speed:</b> a result-cache hit returns in milliseconds.</li>
+        <li><b>Cost:</b> result-cache and metadata answers need <b>no running warehouse</b>, so they cost no warehouse credits.</li>
+        <li><b>Less I/O:</b> the warehouse cache avoids re-downloading the same micro-partitions from S3 for every query.</li>
+      </ul>
+      <p>Picture a dashboard where 50 people open the same chart. Only the first query actually runs.</p>
+    </div>
+    <div class="box how"><span class="tag">03 · HOW IT WORKS · THE LOOKUP ORDER</span>
+      <p><b>1. Metadata:</b> can the query be answered from metadata alone? (e.g. <code>COUNT(*)</code>, or <code>MIN</code>/<code>MAX</code> on number or date columns). The Query Profile shows <i>METADATA-BASED RESULT</i>.</p>
+      <p><b>2. Result cache:</b> is there a saved result for this exact query? It's reused only if <b>all</b> of these are true: the query text matches exactly (adding a table alias, for example, counts as a different query); the underlying data hasn't changed; the query has no non-deterministic functions such as <code>CURRENT_TIMESTAMP()</code>, <code>RANDOM()</code> or <code>UUID_STRING()</code>, and no external functions; the role running it has the required privileges on the objects; and <code>USE_CACHED_RESULT</code> is TRUE. The result can be reused by <b>other users</b> too, as long as their role has the right privileges.</p>
+      <p><b>3. Warehouse cache:</b> the warehouse runs the query. Columns from micro-partitions it already read are served from local SSD, and everything else is fetched from <b>remote storage</b>. The Query Profile shows <i>Percentage scanned from cache</i>.</p>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-h"><div class="t">SIMULATOR · <b>WHICH CACHE ANSWERS?</b> · table SALES</div><button class="btn" id="cReset">Reset everything</button></div>
+    <div class="grid2">
+      <div>
+        <div class="note-s">Run a query:</div>
+        <div id="cQueries"></div>
+        <div class="note-s" style="margin-top:10px">Change the world:</div>
+        <div class="row" style="margin-top:6px"><button class="btn" id="cIns">INSERT new rows</button><button class="btn" id="cSus">Suspend warehouse</button><button class="btn" id="cClock">Advance clock 25 h</button><button class="btn" id="cToggle">USE_CACHED_RESULT = TRUE</button></div>
+      </div>
+      <div>
+        <svg viewBox="0 0 460 290" id="cSvg"></svg>
+        <div class="state" id="cState"></div>
+      </div>
+    </div>
+    <div class="insight" id="cIns2">Run <b>Q1</b> first. The warehouse starts cold, so the data has to come from remote storage.</div>
+    <div class="clog"><table class="t"><thead><tr><th>#</th><th>QUERY</th><th>SERVED BY</th><th>TIME</th><th>WAREHOUSE?</th></tr></thead><tbody id="cLog"></tbody></table></div>
+  </div>
+  <div class="grid2">
+    <div class="call trap" style="margin:0"><b class="k">INTERVIEW TRAP</b><div>"How do you benchmark a query fairly?" Run <code>ALTER SESSION SET USE_CACHED_RESULT = FALSE;</code> so the result cache doesn't hide the real runtime. Remember the warehouse cache can still be warm, so either suspend and resume the warehouse or compare the warm and cold runs.</div></div>
+    <div class="call pro" style="margin:0"><b class="k">SENIOR ANGLE</b><div><b>Auto-suspend vs. cache trade-off:</b> suspending after 60 s saves credits but throws away the warehouse cache. For BI warehouses that serve repeated queries, a longer auto-suspend (e.g. 5–10 min) can be cheaper overall because queries stay fast. For ad-hoc or ETL warehouses, short auto-suspend usually wins.</div></div>
+  </div>
+</section>
+
+<!-- ============ 07 BILLING ============ -->
+<section id="billing">
+  <div class="eyebrow">CHAPTER 07</div>
+  <h2>How billing works <span class="thin">· per second, 60 s minimum</span></h2>
+  <div class="wwh">
+    <div class="box what"><span class="tag">01 · WHAT IS IT</span>
+      <p>Snowflake bills three things separately:</p>
+      <ul class="dots"><li><b>Compute:</b> warehouse credits/hour × time <i>running</i> (not time querying). <b>Per-second billing with a 60-second minimum</b> every time a warehouse starts or resumes.</li><li><b>Storage:</b> average compressed TB per month, including Time Travel and Fail-safe data.</li><li><b>Serverless &amp; cloud services:</b> Snowpipe, automatic clustering, materialized view maintenance, serverless tasks, plus cloud services above the 10% allowance. Data transfer between regions or clouds is billed too.</li></ul>
+    </div>
+    <div class="box why"><span class="tag">02 · WHY IT MATTERS</span>
+      <p>Credit price depends on edition, cloud and region. A warehouse that's <b>running but idle</b> still burns credits. Most surprise bills come from warehouses that never suspend, oversized warehouses, and lots of resumes caused by a query every 50 seconds. Senior engineers are expected to <b>explain and reduce</b> cost.</p>
+    </div>
+    <div class="box how"><span class="tag">03 · HOW IT WORKS · TIMELINE</span>
+      <p>The warehouse resumes when a query arrives, stays running while queries execute, and then waits <code>AUTO_SUSPEND</code> seconds of <b>idle time</b> before suspending. You pay for that idle wait. If a run lasts less than 60 s, you're still billed for 60 s. <b>Click anywhere on the timeline to add a 20-second query</b> and watch the bill change.</p>
+    </div>
+  </div>
+  <div class="panel">
+    <div class="panel-h"><div class="t">SIMULATOR · <b>BILLING TIMELINE (30 MIN)</b></div><div class="row"><button class="btn" data-bp="dash">Dashboard every 2 min</button><button class="btn" data-bp="adhoc">3 ad-hoc queries</button><button class="btn" data-bp="etl">One 25-min ETL</button><button class="btn" data-bp="clear">Clear</button></div></div>
+    <div class="row" style="margin-bottom:8px"><span class="note-s">AUTO_SUSPEND:</span><select id="bSus"><option value="60" selected>60 s</option><option value="300">300 s (5 min)</option><option value="600">600 s (10 min)</option><option value="0">0 / NULL (never suspend)</option></select>
+      <span class="note-s" style="margin-left:10px">Size:</span><select id="bSz"><option value="1">XS (1 cr/hr)</option><option value="2">S (2)</option><option value="4" selected>M (4)</option><option value="8">L (8)</option><option value="16">XL (16)</option></select>
+      <span class="note-s" style="margin-left:10px">$ per credit (example):</span><select id="bPr"><option>2</option><option selected>3</option><option>4</option></select></div>
+    <svg viewBox="0 0 680 170" id="bSvg" style="cursor:crosshair"></svg>
+    <div class="legend"><span><i style="background:var(--ice)"></i>query executing</span><span><i style="background:var(--ice-s);border:1px solid var(--ice)"></i>warehouse running (billed)</span><span><i style="background:var(--red-s);border:1px dashed var(--red)"></i>60 s minimum top-up</span></div>
+    <div class="stats">
+      <div class="stat"><div class="k">QUERY TIME</div><div class="n" id="bQ">–</div><div class="s">actual work</div></div>
+      <div class="stat"><div class="k">BILLED TIME</div><div class="n" id="bB">–</div><div class="s" id="bBs"></div></div>
+      <div class="stat"><div class="k">CREDITS</div><div class="n" id="bC">–</div><div class="s" id="bCs"></div></div>
+      <div class="stat"><div class="k">EFFICIENCY</div><div class="n" id="bE">–</div><div class="s">query time ÷ billed time</div></div>
+    </div>
+    <div class="insight" id="bIns"></div>
+  </div>
+</section>
+
+<!-- ============ 08 EDITIONS ============ -->
+<section id="editions">
+  <div class="eyebrow">CHAPTER 08</div>
+  <h2>Editions <span class="thin">· what you get at each tier</span></h2>
+  <div class="wwh">
+    <div class="box what"><span class="tag">01 · WHAT IS IT</span><p>Snowflake comes in four editions: <b>Standard, Enterprise, Business Critical and Virtual Private Snowflake (VPS)</b>. Each tier includes everything in the tier below it, adds more features, and costs more per credit.</p></div>
+    <div class="box why"><span class="tag">02 · WHY IT MATTERS</span><p>Interviewers ask questions like "we need 30-day Time Travel and masking for PII — which edition?" or "we handle healthcare data (HIPAA) — which edition?". Edition choice drives both compliance and cost.</p></div>
+    <div class="box how"><span class="tag">03 · HOW TO READ IT · CLICK A COLUMN OR A ROW</span>
+      <table class="t ed" id="edT"></table>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 09 SQL LAB ============ -->
+<section id="sql">
+  <div class="eyebrow">CHAPTER 09</div>
+  <h2>SQL lab <span class="thin">· click any line for an explanation</span></h2>
+  <div class="panel">
+    <div class="tabs" id="sqlTabs"></div>
+    <div class="grid2" style="grid-template-columns:1.3fr 1fr">
+      <div class="code" id="sqlCode"></div>
+      <div class="explain" id="sqlExp"><b>CLICK A LINE</b>Each line is explained in plain English.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 10 Q&A ============ -->
+<section id="qa">
+  <div class="eyebrow">CHAPTER 10</div>
+  <h2>Interview Q&amp;A <span class="thin">· answer out loud first, then open</span></h2>
+  <div class="tabs" id="qaTabs"><button class="on" data-f="all">All</button><button data-f="b">Fundamentals</button><button data-f="t">Tricky</button><button data-f="s">Scenario</button></div>
+  <div id="qaList"></div>
+</section>
+
+<!-- ============ 11 QUIZ ============ -->
+<section id="quiz">
+  <div class="eyebrow">CHAPTER 11</div>
+  <h2>Quiz <span class="thin">· 12 questions</span></h2>
+  <div class="panel quiz">
+    <div class="panel-h"><div class="t">QUESTION <b id="qzN">1</b> / 12</div><div class="t">SCORE <b id="qzS">0</b></div></div>
+    <div class="stepbar" id="qzBar"></div>
+    <div id="qzBody"></div>
+    <div class="row" style="margin-top:12px"><button class="btn" id="qzPrev">Back</button><button class="btn pri" id="qzNext">Next</button></div>
+  </div>
+</section>
+
+<!-- ============ 12 CHEAT ============ -->
+<section id="cheat">
+  <div class="eyebrow">CHAPTER 12</div>
+  <h2>Cheat sheet <span class="thin">· if you remember only these</span></h2>
+  <div class="cheat">
+    <div><em>3</em>Layers: storage (pantry), compute (kitchens), cloud services (manager). Each scales independently.</div>
+    <div><em>50–500 MB</em>Uncompressed size of a micro-partition. Columnar, compressed, immutable, automatic.</div>
+    <div><em>MIN/MAX</em>The per-partition metadata that enables pruning. Check partitions scanned vs. total.</div>
+    <div><em>Up ↑</em>Scale up for slow or complex queries and spilling. Runtime roughly halves; cost per query stays about the same.</div>
+    <div><em>Out →</em>Scale out (multi-cluster, Enterprise+) for concurrency and queuing. Standard = speed, Economy = credits.</div>
+    <div><em>24h / 31d</em>Result cache: reused within 24 h, timer resets on each reuse, 31-day maximum. Needs no warehouse.</div>
+    <div><em>SSD</em>Warehouse cache: lost on suspend or resize. Trade-off with auto-suspend.</div>
+    <div><em>60 s</em>Minimum billing every time a warehouse starts or resumes, then per-second.</div>
+    <div><em>10%</em>Cloud services are billed only above 10% of daily warehouse credits.</div>
+    <div><em>CoW</em>UPDATE = copy-on-write of a whole micro-partition. That's what powers Time Travel and cloning.</div>
+  </div>
+  <div class="call analogy" style="margin-top:20px"><b class="k">NEXT MODULE</b><div><b><a href="../module02/" style="color:var(--ice)">Module 02: SnowSQL, unstructured data, streams, tasks &amp; stored procedures →</a></b> How data gets into Snowflake and keeps flowing automatically.</div></div>
+</section>
+<footer>Snowflake Interview Lab · Module 01 · Architecture · Prepared for Saurav Patel</footer>
+</main>
+</div>
+
+<script>
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+const fmt = (n, d = 0) => Number(n).toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d });
+const fmtTime = s => s < 1 ? `${Math.round(s * 1000)} ms` : s < 60 ? `${s.toFixed(s < 10 ? 1 : 0)} s` : s < 3600 ? `${Math.floor(s / 60)}m ${Math.round(s % 60)}s` : `${Math.floor(s / 3600)}h ${Math.round((s % 3600) / 60)}m`;
+const SIZES = ['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL', '5XL', '6XL'];
+const tabs = (sel, cb) => $$(sel + ' button').forEach(b => b.addEventListener('click', () => { $$(sel + ' button').forEach(x => x.classList.remove('on')); b.classList.add('on'); cb(b.dataset); }));
+
+/* theme */
+const root = document.documentElement;
+root.dataset.theme = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+$('#themeBtn').onclick = () => { root.dataset.theme = root.dataset.theme === 'dark' ? 'light' : 'dark'; };
+
+/* nav + progress */
+const secs = $$('main section');
+const seen = new Set();
+const io = new IntersectionObserver(es => es.forEach(e => {
+  if (!e.isIntersecting) return;
+  const id = e.target.id;
+  seen.add(id);
+  $$('.side a').forEach(a => { a.classList.toggle('act', a.getAttribute('href') === '#' + id); if (seen.has(a.getAttribute('href').slice(1))) a.classList.add('seen'); });
+  const pct = Math.round(seen.size / secs.length * 100);
+  $('#progBar').style.width = pct + '%';
+  $('#progLbl').textContent = pct + '% explored';
+}), { rootMargin: '-40% 0px -55% 0px' });
+secs.forEach(s => io.observe(s));
+
+/* 01 architecture tabs */
+tabs('#archTabs', d => [0, 1, 2].forEach(i => { $('#arch' + i).hidden = String(i) !== d.a; }));
+
+/* 01 query journey */
+const partsG = $('#j-parts');
+for (let i = 0; i < 16; i++) {
+  const r = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+  Object.entries({ x: 63 + i * 35, y: 384, width: 28, height: 28, rx: 4, class: 'mp', id: 'jp' + i }).forEach(([k, v]) => r.setAttribute(k, v));
+  partsG.appendChild(r);
+}
+const JSCAN = [4];
+const J = [
+  { on: ['j-client', 'j-a1'], at: [340, 62], h: '1 · You send the SQL', p: 'Your client (Snowsight, a JDBC/ODBC driver, Python or dbt) sends the text of the query over HTTPS to your account URL. It always arrives at the cloud services layer first, never directly at a warehouse.' },
+  { on: ['j-auth'], at: [124, 113], h: '2 · Who are you, and are you allowed?', p: 'Cloud services authenticates you (password, key-pair, SSO/OAuth) and checks that your current role has USAGE on the database, schema and warehouse, plus SELECT on ORDERS. If any of those is missing, the query fails here and costs nothing.' },
+  { on: ['j-opt', 'j-rc'], at: [268, 113], h: '3 · Parse, optimize, check the result cache', p: 'The SQL is parsed and compiled into an execution plan (join order, join types, aggregation strategy). The result cache is checked first: if this exact query ran recently and the data has not changed, the stored result goes straight back to you and no warehouse is needed.' },
+  { on: ['j-meta', 'j-parts'], at: [412, 113], h: '4 · Prune using metadata', p: 'The optimizer checks the MIN/MAX of order_date for all 16 micro-partitions in the metadata store. Only P5 can contain 2024-03-15, so the other 15 are pruned before anything is read. That pruning happens before a single byte is downloaded.', scan: true },
+  { on: ['j-a2', 'j-wh2'], at: [340, 236], h: '5 · The warehouse gets the plan', p: 'The plan and the list of partitions to scan go to the warehouse you selected (BI_WH). If it was suspended and AUTO_RESUME is on, it starts now and the 60-second minimum billing begins. Its worker nodes split the work. ETL_WH keeps loading in parallel without slowing BI_WH down: that is workload isolation.' },
+  { on: ['j-a3', 'j-wh2', 'j-parts'], at: [217, 398], h: '6 · Read only what is needed', p: 'The warehouse first checks its local SSD cache. Anything missing is downloaded from S3, but only P5, and only the columns order_date and amount (columnar storage). Those column chunks are then kept on SSD so the next query can reuse them.', scan: true, ssd: true },
+  { on: ['j-wh2', 'j-rc', 'j-client', 'j-a1'], at: [340, 62], h: '7 · Compute, return, cache', p: 'The workers compute SUM(amount), and the result travels back through cloud services to you. Cloud services also saves it in the result cache for 24 hours, so an identical query from anyone with the right privileges can be answered instantly.', ssd: true }
+];
+let js = -1;
+const jBar = $('#jBar');
+J.forEach((_, i) => { const s = document.createElement('span'); s.onclick = () => jGo(i); jBar.appendChild(s); });
+function jGo(i) {
+  js = i;
+  const svg = $('#journey');
+  svg.classList.toggle('playing', i >= 0);
+  $$('#journey .jg').forEach(g => g.classList.remove('on'));
+  $$('#journey .mp').forEach(r => r.classList.remove('hot', 'cold'));
+  $('#j-ssd').setAttribute('fill', 'var(--card2)');
+  [...jBar.children].forEach((s, k) => s.classList.toggle('on', k <= i));
+  if (i < 0) {
+    $('#pk').style.transform = 'translate(340px,62px)';
+    $('#jDesc').innerHTML = '<h4>Ready</h4><p>Press "Start the journey". Each step highlights the component involved and moves the red dot (your query).</p>';
+    $('#jNext').textContent = 'Start the journey';
+    return;
+  }
+  const st = J[i];
+  st.on.forEach(id => $('#' + id) && $('#' + id).classList.add('on'));
+  if (st.scan) $$('#journey .mp').forEach((r, k) => r.classList.add(JSCAN.includes(k) ? 'hot' : 'cold'));
+  if (st.ssd) $('#j-ssd').setAttribute('fill', 'var(--ice)');
+  $('#pk').style.transform = `translate(${st.at[0]}px,${st.at[1]}px)`;
+  $('#jDesc').innerHTML = `<h4>${st.h}</h4><p>${st.p}</p>`;
+  $('#jNext').textContent = i === J.length - 1 ? 'Replay' : 'Next';
+}
+$('#jNext').onclick = () => jGo(js === J.length - 1 ? 0 : js + 1);
+$('#jPrev').onclick = () => jGo(Math.max(-1, js - 1));
+$('#jReset').onclick = () => jGo(-1);
+jGo(-1);
+
+/* 02 pruning simulator */
+const N = 16, YEAR = 366;
+const dateOf = d => { const t = new Date(Date.UTC(2024, 0, 1)); t.setUTCDate(t.getUTCDate() + d); return t.toISOString().slice(0, 10); };
+const LAYOUTS = {
+  clustered: Array.from({ length: N }, (_, i) => [Math.floor(i * YEAR / N), Math.floor((i + 1) * YEAR / N) - 1]),
+  partial: Array.from({ length: N }, (_, i) => [Math.max(0, Math.floor(i * YEAR / N) - 45), Math.min(365, Math.floor((i + 1) * YEAR / N) + 50)]),
+  random: [[3, 351], [12, 298], [40, 365], [0, 330], [25, 362], [8, 280], [60, 359], [15, 340], [2, 365], [33, 310], [5, 355], [70, 364], [1, 322], [18, 348], [44, 361], [9, 300]]
+};
+const COLS = [['order_id', 8], ['customer_id', 8], ['order_date', 4], ['amount', 6], ['status', 4], ['comment', 70]];
+const pState = { layout: 'clustered', mode: 'date', cols: new Set(['order_date', 'amount']) };
+const colPick = $('#colPick');
+COLS.forEach(([c]) => {
+  const l = document.createElement('label');
+  l.textContent = c;
+  l.onclick = () => { pState.cols.has(c) ? pState.cols.delete(c) : pState.cols.add(c); prune(); };
+  colPick.appendChild(l);
+});
+function depth(rs) {
+  let tot = 0;
+  rs.forEach(([a, b]) => { tot += rs.filter(([c, d]) => c <= b && d >= a).length; });
+  return tot / rs.length;
+}
+function prune() {
+  let a = +$('#pFrom').value, b = +$('#pTo').value;
+  if (a > b) [a, b] = [b, a];
+  $('#pFromV').textContent = dateOf(+$('#pFrom').value);
+  $('#pToV').textContent = dateOf(+$('#pTo').value);
+  const rs = LAYOUTS[pState.layout];
+  const readCols = new Set(pState.cols);
+  readCols.add(pState.mode === 'date' ? 'order_date' : 'customer_id');
+  const pct = COLS.filter(([c]) => readCols.has(c)).reduce((s, [, p]) => s + p, 0) / 100;
+  let scanned = 0;
+  $('#parts').innerHTML = rs.map(([mn, mx], i) => {
+    const hit = pState.mode === 'cust' ? true : (mn <= b && mx >= a);
+    if (hit) scanned++;
+    const meta = pState.mode === 'cust' ? 'cust 1…999,870' : `${dateOf(mn).slice(5)} → ${dateOf(mx).slice(5)}`;
+    return `<div class="part ${hit ? 'scan' : 'prune'}"><b>P${i + 1}</b><span class="rng">${meta}</span><div class="bar"><i style="left:${mn / 366 * 100}%;width:${Math.max(2, (mx - mn) / 366 * 100)}%"></i></div></div>`;
+  }).join('');
+  [...colPick.children].forEach((l, i) => l.classList.toggle('sel', pState.cols.has(COLS[i][0])));
+  $('#colViz').innerHTML = COLS.map(([c, p]) => `<div class="${readCols.has(c) ? 'sel' : ''}" style="width:${p}%">${p >= 6 ? c : ''}</div>`).join('');
+  const sel = [...pState.cols];
+  const where = pState.mode === 'cust' ? 'customer_id = 48213' : (a === b ? `order_date = '${dateOf(a)}'` : `order_date BETWEEN '${dateOf(a)}' AND '${dateOf(b)}'`);
+  $('#pSql').textContent = `SELECT ${sel.length === COLS.length ? '*' : (sel.join(', ') || '1')}\nFROM orders\nWHERE ${where};`;
+  const mb = scanned * 16 * pct;
+  $('#sScan').textContent = scanned;
+  $('#sPr').textContent = Math.round((N - scanned) / N * 100) + '%';
+  $('#sBy').textContent = fmt(mb, 1) + ' MB';
+  $('#sDepth').textContent = fmt(depth(rs), 1);
+  let ins;
+  if (pState.mode === 'cust') ins = '<b>No pruning at all.</b> customer_id values are spread across every file, so each partition\'s MIN/MAX covers almost the whole range and every file has to be read. Fixes: a clustering key on customer_id (if this filter is common and the table is large), or the <b>Search Optimization Service</b> for point lookups.';
+  else if (pState.layout === 'random' && scanned > 12) ins = '<b>Poor clustering kills pruning.</b> Every file spans most of the year, so even a one-day filter reads almost everything. High clustering depth is the signal. Fix it with a <b>clustering key</b> (<code>ALTER TABLE orders CLUSTER BY (order_date)</code>) or by reloading the data sorted by date.';
+  else if (scanned <= 2) ins = `<b>Excellent pruning.</b> ${N - scanned} of ${N} files were skipped using only metadata. On a real table with 100,000 partitions, this is the difference between seconds and minutes.`;
+  else ins = `Scanned ${scanned} of ${N} files. Wider date ranges naturally scan more. Also notice the <b>comment</b> column: it's 70% of the bytes, so <code>SELECT *</code> reads about 3–10× more data than selecting the few columns you need.`;
+  if (pState.cols.has('comment') && pState.mode === 'date' && scanned <= 2) ins += ' Including <b>comment</b> multiplied the bytes read. That\'s columnar storage at work.';
+  $('#pIns').innerHTML = ins;
+}
+tabs('#layoutTabs', d => { pState.layout = d.l; prune(); });
+const PRESETS = { day: [74, 74], month: [152, 181], q4: [274, 365], year: [0, 365] };
+$$('#pruneSim [data-p]').forEach(b => b.onclick = () => {
+  if (b.dataset.p === 'cust') pState.mode = 'cust';
+  else { pState.mode = 'date'; [$('#pFrom').value, $('#pTo').value] = PRESETS[b.dataset.p]; }
+  prune();
+});
+['#pFrom', '#pTo'].forEach(s => $(s).addEventListener('input', () => { pState.mode = 'date'; prune(); }));
+prune();
+
+/* 02 immutability */
+const IMM0 = [['P1', 'orders 1–1000'], ['P2', 'orders 1001–2000'], ['P3', 'orders 2001–3000'], ['P4', 'orders 3001–4000']];
+let immState = 0;
+function imm(view) {
+  const parts = IMM0.map(([n, r]) => ({ n, r, cls: '' }));
+  if (immState >= 1) { parts[1].cls = 'retired'; parts[1].r += ' (kept for Time Travel)'; parts.push({ n: 'P5', r: 'copy of P2 with order 1042 = SHIPPED', cls: 'new' }); }
+  if (view === 'tt') parts.forEach(p => { if (['P1', 'P2', 'P3', 'P4'].includes(p.n)) p.cls += ' tt'; });
+  $('#imm').innerHTML = parts.map(p => `<div class="mpc ${p.cls}"><b>${p.n}</b>${p.r}</div>`).join('');
+}
+$('#immUpd').onclick = () => {
+  immState = 1; imm();
+  $('#immSql').textContent = "UPDATE orders SET status = 'SHIPPED' WHERE order_id = 1042;";
+  $('#immIns').innerHTML = '<b>Table version v2</b> now points to P1, <b>P5</b>, P3, P4. To change <i>one</i> row, Snowflake rewrote <i>all ~1,000 rows</i> of P2 into a new file. P2 is no longer active but is kept for the Time Travel retention period, then moved to Fail-safe.';
+};
+$('#immTT').onclick = () => {
+  if (!immState) { $('#immIns').innerHTML = 'Run the UPDATE first, so there is an older version to travel back to.'; return; }
+  imm('tt');
+  $('#immSql').textContent = 'SELECT * FROM orders AT(OFFSET => -60*5);  -- table as it was 5 minutes ago';
+  $('#immIns').innerHTML = '<b>Time Travel</b> simply reads the <i>old list</i> of files: P1, P2, P3, P4 (outlined). Nothing gets restored or copied. <b>Zero-copy cloning</b> works the same way: a clone is a new metadata pointer to the same files.';
+};
+$('#immRe').onclick = () => { immState = 0; imm(); $('#immSql').textContent = '-- table ORDERS, version 1'; $('#immIns').innerHTML = '<b>Current table version v1</b> points to P1, P2, P3, P4.'; };
+imm();
+
+/* 03 scale up */
+const WL = {
+  small: { base: 3, cap: 2, spill: -1, name: 'tiny lookup' },
+  medium: { base: 960, cap: 32, spill: 0, name: 'daily report' },
+  huge: { base: 28800, cap: 512, spill: 3, name: 'huge ETL join' }
+};
+let wl = 'medium';
+function suCalc(i) {
+  const w = WL[wl], power = 2 ** i;
+  let t = w.base / Math.min(power, w.cap);
+  const spill = i <= w.spill;
+  if (spill) t *= 1 + 0.9 * (w.spill - i + 1);
+  return { t, spill, credits: power * Math.max(t, 60) / 3600, power };
+}
+function su() {
+  const i = +$('#szR').value, r = suCalc(i), all = SIZES.map((_, k) => suCalc(k));
+  $('#szV').textContent = SIZES[i] + ' · ' + r.power + ' cr/hr';
+  $('#suT').textContent = fmtTime(r.t);
+  $('#suTs').textContent = r.spill ? 'spilling to remote storage' : 'no spilling';
+  $('#suC').textContent = fmt(r.credits, r.credits < 1 ? 3 : 2);
+  $('#suH').textContent = r.power;
+  const maxT = Math.max(...all.map(x => Math.log10(x.t + 1)));
+  const maxC = Math.max(...all.map(x => x.credits));
+  const bar = (k, h, label) => `<div class="b ${k === i ? 'sel' : ''} ${all[k].spill ? 'spill' : ''}" data-i="${k}"><small>${label}</small><i style="height:${Math.max(3, h)}%"></i><em>${SIZES[k]}</em></div>`;
+  $('#suBars').innerHTML = all.map((x, k) => bar(k, Math.log10(x.t + 1) / maxT * 82, fmtTime(x.t))).join('');
+  $('#suBars2').innerHTML = all.map((x, k) => bar(k, x.credits / maxC * 70, fmt(x.credits, x.credits < 1 ? 2 : 1))).join('');
+  $$('.bars .b').forEach(b => b.onclick = () => { $('#szR').value = b.dataset.i; su(); });
+  const w = WL[wl];
+  let ins;
+  if (r.spill) ins = `<b>Spilling.</b> The ${w.name} needs more memory than ${SIZES[i]} has, so intermediate data spills to remote storage and runtime goes up sharply. Scaling up here makes it <b>faster and cheaper</b>.`;
+  else if (r.power > w.cap) ins = `<b>Diminishing returns.</b> This ${w.name} can only use about ${w.cap}× parallelism. Going beyond ${SIZES[Math.log2(w.cap)]} buys no extra speed, and the bill keeps doubling. ${wl === 'small' ? 'Tiny queries also hit the 60 s minimum, so XS is the right choice here.' : ''}`;
+  else ins = `<b>The sweet spot.</b> Each step up roughly halves the runtime while credits per hour double, so the <b>cost per query stays about the same and you get the answer faster</b>. That's why "just make it bigger" can actually be good advice for large queries that parallelize well.`;
+  $('#suIns').innerHTML = ins;
+}
+tabs('#wlTabs', d => { wl = d.w; su(); });
+$('#szR').addEventListener('input', su);
+su();
+
+/* 04 scale out */
+let pol = 'standard';
+function so() {
+  const users = +$('#soU').value;
+  let mn = +$('#soMin').value, mx = +$('#soMax').value;
+  if (mx < mn) { mx = mn; $('#soMax').value = mx; }
+  $('#soUV').textContent = users + ' queries';
+  $('#soMinV').textContent = mn;
+  $('#soMaxV').textContent = mx;
+  const need = pol === 'standard' ? Math.ceil(users / 8) : Math.max(1, Math.floor(users / 8));
+  const run = Math.min(mx, Math.max(mn, need));
+  const queued = Math.max(0, users - run * 8);
+  const sz = +$('#soSz').value;
+  let left = users, html = '';
+  for (let c = 0; c < mx; c++) {
+    const on = c < run;
+    let slots = '';
+    for (let s = 0; s < 8; s++) { const busy = on && left > 0; if (busy) left--; slots += `<i class="${busy ? 'busy' : ''}"></i>`; }
+    html += `<div class="cl ${on ? '' : 'off'}"><h6>cluster ${c + 1} ${on ? '· on' : '· off'}</h6><div class="slots">${slots}</div></div>`;
+  }
+  $('#clusters').innerHTML = html;
+  $('#queue').innerHTML = `<span class="ql">QUEUE (${queued})</span>` + Array.from({ length: Math.min(queued, 60) }, () => '<i></i>').join('') + (queued > 60 ? `<span class="ql">+${queued - 60}</span>` : '');
+  $('#soMode').textContent = mn === mx ? 'Maximized' : 'Auto-scale';
+  $('#soRun').textContent = run + ' / ' + mx;
+  $('#soQ').textContent = queued;
+  $('#soC').textContent = run * sz;
+  const idle = run * 8 - Math.min(users, run * 8);
+  let ins;
+  if (queued > 0 && run === mx) ins = `<b>Hit MAX_CLUSTER_COUNT.</b> ${queued} queries are waiting. Raise the max, tune MAX_CONCURRENCY_LEVEL, or reduce the load (e.g. result caching, materialized views).`;
+  else if (queued > 0) ins = `<b>Economy policy is tolerating a queue.</b> It won't start another cluster unless there's enough work to keep it busy for about 6 minutes. That saves credits, but users wait. Standard policy would start cluster ${run + 1} right away.`;
+  else if (mn === mx && idle >= 8) ins = `<b>Maximized mode is wasting credits.</b> ${Math.floor(idle / 8)} cluster(s) are fully idle but still billed. Use auto-scale (MIN &lt; MAX) for workloads that vary.`;
+  else ins = `<b>No queuing.</b> ${run} cluster(s) handle ${users} concurrent queries. Each query still runs at single-cluster speed. Scaling out adds capacity, not speed.`;
+  $('#soIns').innerHTML = ins;
+}
+tabs('#polTabs', d => { pol = d.p; so(); });
+['#soU', '#soMin', '#soMax'].forEach(s => $(s).addEventListener('input', so));
+$('#soSz').addEventListener('change', so);
+so();
+
+/* 05 cloud services */
+const CS = [
+  ['Authentication', 'Verifies identity: passwords, MFA, key-pair, SSO/SAML, OAuth. Also enforces network policies (allowed IPs) before anything else happens.'],
+  ['Access control', 'Checks RBAC on every statement: does your current role (or a role it inherits) hold the privilege? Also applies masking and row access policies when the plan is built.'],
+  ['Metadata manager', 'Keeps the catalog (databases, tables, columns) and the per-micro-partition statistics (MIN/MAX, NDV, NULL counts). This is what drives pruning, COUNT(*) answers, Time Travel versions and zero-copy clones.'],
+  ['Query optimizer', 'A cost-based optimizer: parses SQL, picks join order and join strategy (broadcast vs. hash partition), pushes filters down, prunes partitions and produces the plan that the warehouse runs.'],
+  ['Transaction manager', 'Gives ACID guarantees. Because micro-partitions are immutable, each statement reads a consistent snapshot (a fixed list of files). Commits swap the file list atomically, so readers never see half-written data.'],
+  ['Infrastructure & security', 'Starts and stops warehouse nodes, manages encryption keys (hierarchical AES-256 keys, rotation), and handles result-cache storage, replication orchestration and service availability across zones.']
+];
+$('#csCards').innerHTML = CS.map(([h], i) => `<button class="mini" style="border:1px solid var(--line);text-align:left;cursor:pointer;color:var(--ink)" data-i="${i}"><h5>${h}</h5><p>click to open</p></button>`).join('');
+$$('#csCards button').forEach(b => b.onclick = () => {
+  $$('#csCards button').forEach(x => x.style.borderColor = 'var(--line)');
+  b.style.borderColor = 'var(--amber)';
+  const [h, t] = CS[b.dataset.i];
+  $('#csExp').innerHTML = `<b>${h.toUpperCase()}</b>${t}`;
+});
+function cs() {
+  const w = +$('#csW').value, c = +$('#csC').value, allow = w * 0.1, billed = Math.max(0, c - allow);
+  $('#csWV').textContent = w + ' credits';
+  $('#csCV').textContent = c + ' credits';
+  $('#csA').textContent = fmt(allow, 1);
+  $('#csB').textContent = fmt(billed, 1);
+  $('#csT').textContent = fmt(w + billed, 1);
+  const scale = 600 / Math.max(80, allow, c);
+  $('#csSvg').innerHTML = `
+    <text class="ts" x="40" y="14">cloud services used</text>
+    <rect x="40" y="22" width="${Math.max(1, Math.min(c, allow) * scale)}" height="22" rx="4" fill="var(--teal)"/>
+    <rect x="${40 + Math.min(c, allow) * scale}" y="22" width="${billed * scale}" height="22" rx="4" fill="var(--red)"/>
+    <line x1="${40 + allow * scale}" y1="16" x2="${40 + allow * scale}" y2="52" stroke="var(--amber)" stroke-width="2" stroke-dasharray="4 3"/>
+    <text class="tm" x="${Math.min(560, 46 + allow * scale)}" y="64">10% line = ${fmt(allow, 1)}</text>`;
+}
+['#csW', '#csC'].forEach(s => $(s).addEventListener('input', cs));
+cs();
+
+/* 06 cache simulator */
+const CQ = [
+  { k: 'q1', sql: 'SELECT region, SUM(amount) FROM sales GROUP BY region;', note: 'Q1 · the dashboard query', cols: ['region', 'amount'], det: true },
+  { k: 'q1b', sql: 'SELECT s.region, SUM(s.amount) FROM sales s GROUP BY s.region;', note: 'Q1 again with a table alias (different text, same meaning)', cols: ['region', 'amount'], det: true },
+  { k: 'q2', sql: 'SELECT product, AVG(amount) FROM sales GROUP BY product;', note: 'Q2 · different query on the same table', cols: ['product', 'amount'], det: true },
+  { k: 'q3', sql: 'SELECT region, SUM(amount), CURRENT_TIMESTAMP() FROM sales GROUP BY region;', note: 'Q3 · contains a non-deterministic function', cols: ['region', 'amount'], det: false },
+  { k: 'q4', sql: 'SELECT COUNT(*), MAX(sale_date) FROM sales;', note: 'Q4 · answerable from metadata', meta: true }
+];
+let C;
+function cInit() { C = { running: false, ssd: new Set(), newParts: false, rc: new Map(), ver: 1, clock: 0, use: true, n: 0 }; $('#cLog').innerHTML = ''; }
+cInit();
+$('#cQueries').innerHTML = CQ.map((q, i) => `<button class="qbtn" data-i="${i}">${q.sql}<small>${q.note}</small></button>`).join('');
+const CPATH = {
+  md: { stop: 1, cls: 'md', label: 'Metadata', time: 0.08, wh: false },
+  rc: { stop: 1, cls: 'rc', label: 'Result cache', time: 0.04, wh: false },
+  ssd: { stop: 2, cls: 'ssd', label: 'Warehouse SSD cache', time: 1.4, wh: true },
+  mix: { stop: 3, cls: 'mix', label: 'SSD + remote (new partitions)', time: 3.6, wh: true },
+  rs: { stop: 3, cls: 'rs', label: 'Remote storage (cold)', time: 9.5, wh: true }
+};
+function cDraw(path) {
+  const stops = [['You', 'client', 'neutral'], ['Cloud services', 'metadata · result cache', 'L-cs'], ['Warehouse', 'local SSD cache', 'L-cp'], ['Remote storage', 'S3 / Blob / GCS', 'L-st']];
+  const reach = path ? CPATH[path].stop : -1;
+  let s = '';
+  stops.forEach(([h, sub, cls], i) => {
+    const y = 14 + i * 70, lit = path && i <= reach;
+    s += `<g style="opacity:${!path || lit ? 1 : .3};transition:opacity .3s"><rect class="${cls}" x="10" y="${y}" width="280" height="50" rx="8" stroke-width="${lit && i === reach ? 2.4 : 1}"/><text class="th" x="26" y="${y + 19}" dominant-baseline="central">${h}</text><text class="ts" x="26" y="${y + 36}" dominant-baseline="central">${sub}</text></g>`;
+    if (i < 3) s += `<line class="arr" x1="150" y1="${y + 50}" x2="150" y2="${y + 70}" style="opacity:${path && i < reach ? 1 : .3}"/>`;
+  });
+  if (path) {
+    const p = CPATH[path], y = 14 + p.stop * 70;
+    s += `<g class="rise"><rect x="300" y="${y + 3}" width="155" height="44" rx="8" fill="var(--card2)" stroke="var(--ice)"/><text class="th" x="377" y="${y + 17}" text-anchor="middle" dominant-baseline="central">answered · ${fmtTime(p.time)}</text><text class="tm" x="377" y="${y + 35}" text-anchor="middle" dominant-baseline="central">${p.wh ? 'warehouse credits' : 'no warehouse needed'}</text></g>`;
+  }
+  $('#cSvg').innerHTML = s;
+}
+function cStateDraw() {
+  const rcList = [...C.rc.entries()].map(([k, v]) => `${k.toUpperCase()}${v.ver !== C.ver ? ' (stale)' : ''} · ${C.clock - v.last}h idle`).join(', ') || 'empty';
+  $('#cState').innerHTML = `
+    <div><span>Warehouse</span><span class="badge ${C.running ? 'on' : 'off'}">${C.running ? 'RUNNING' : 'SUSPENDED'}</span></div>
+    <div><span>SSD cache columns</span><b>${[...C.ssd].join(', ') || 'empty'}${C.newParts ? ' (+ new partitions not cached)' : ''}</b></div>
+    <div><span>Result cache</span><b>${rcList}</b></div>
+    <div><span>Data version · clock</span><b>v${C.ver} · ${C.clock}h</b></div>`;
+  $('#cToggle').textContent = 'USE_CACHED_RESULT = ' + (C.use ? 'TRUE' : 'FALSE');
+}
+function cRun(q) {
+  let path, why;
+  if (q.meta) { path = 'md'; why = '<b>Metadata answered it.</b> Row counts and MIN/MAX per micro-partition are always kept up to date in cloud services, so no warehouse was needed, even right after an INSERT.'; }
+  else {
+    const hit = C.rc.get(q.k);
+    const valid = hit && hit.ver === C.ver && C.clock - hit.last < 24 && C.clock - hit.first <= 744;
+    if (q.det && C.use && valid) { path = 'rc'; hit.last = C.clock; why = '<b>Result cache hit.</b> Same text, data unchanged, deterministic, cache enabled. Returned in milliseconds with <b>zero warehouse credits</b>, even though the warehouse is ' + (C.running ? 'running' : 'suspended') + '. The 24 h timer was reset.'; }
+    else {
+      let reason;
+      if (!q.det) reason = 'CURRENT_TIMESTAMP() makes the result non-deterministic, so it is <b>never</b> stored in the result cache.';
+      else if (!C.use) reason = 'USE_CACHED_RESULT = FALSE, so the result cache is bypassed (useful for benchmarking).';
+      else if (hit && hit.ver !== C.ver) reason = 'The data changed (INSERT), so the old cached result is invalid.';
+      else if (hit && C.clock - hit.last >= 24) reason = 'The cached result expired: it was not reused within 24 h.';
+      else if (q.k === 'q1b' && C.rc.has('q1')) reason = 'Different query text (alias added), so no result-cache match, even though it means the same thing.';
+      else reason = 'No matching result is cached yet.';
+      const resumed = !C.running;
+      C.running = true;
+      const allWarm = q.cols.every(c => C.ssd.has(c));
+      const someWarm = q.cols.some(c => C.ssd.has(c));
+      path = allWarm && !C.newParts ? 'ssd' : (someWarm ? 'mix' : 'rs');
+      const where = path === 'ssd' ? 'All needed column data was already on the warehouse SSD, so it ran fast.' : path === 'mix' ? 'Some data came from SSD and the rest (new partitions or uncached columns) from remote storage.' : 'The SSD cache was empty for these columns, so everything was read from remote storage.';
+      why = `<b>Warehouse executed it.</b> ${reason} ${resumed ? 'The warehouse <b>auto-resumed</b> (60 s minimum billing). ' : ''}${where}`;
+      q.cols.forEach(c => C.ssd.add(c));
+      C.newParts = false;
+      if (q.det) C.rc.set(q.k, { ver: C.ver, last: C.clock, first: C.clock });
+    }
+  }
+  const p = CPATH[path];
+  C.n++;
+  $('#cLog').insertAdjacentHTML('afterbegin', `<tr><td>${C.n}</td><td class="mono" style="font-size:12px">${q.note.split(' · ')[0]}</td><td><span class="badge ${p.cls}">${p.label}</span></td><td class="mono">${fmtTime(p.time)}</td><td>${p.wh ? 'yes' : 'no'}</td></tr>`);
+  $('#cIns2').innerHTML = why;
+  cDraw(path); cStateDraw();
+}
+$$('#cQueries .qbtn').forEach(b => b.onclick = () => cRun(CQ[b.dataset.i]));
+$('#cIns').onclick = () => { C.ver++; C.newParts = true; $('#cIns2').innerHTML = '<b>INSERT committed.</b> New micro-partitions were written, so every cached result on SALES is now stale. The warehouse SSD still holds the old partitions but not the new ones. Metadata was updated instantly.'; cDraw(); cStateDraw(); };
+$('#cSus').onclick = () => { C.running = false; C.ssd.clear(); C.newParts = false; $('#cIns2').innerHTML = '<b>Warehouse suspended.</b> Its compute nodes are released, so the <b>SSD cache is gone</b>. The result cache lives in cloud services and <b>survives</b>.'; cDraw(); cStateDraw(); };
+$('#cClock').onclick = () => { C.clock += 25; $('#cIns2').innerHTML = '<b>25 hours passed.</b> Any result not reused in the last 24 h has expired. (In real life, auto-suspend would also have stopped the warehouse long ago.)'; cDraw(); cStateDraw(); };
+$('#cToggle').onclick = () => { C.use = !C.use; cStateDraw(); };
+$('#cReset').onclick = () => { cInit(); cDraw(); cStateDraw(); $('#cIns2').innerHTML = 'Everything reset. Run <b>Q1</b> to start.'; };
+cDraw(); cStateDraw();
+
+/* 07 billing timeline */
+const T = 1800;
+let bq = [];
+const BP = {
+  dash: () => Array.from({ length: 15 }, (_, i) => ({ s: i * 120, d: 10 })),
+  adhoc: () => [{ s: 60, d: 20 }, { s: 700, d: 45 }, { s: 1450, d: 15 }],
+  etl: () => [{ s: 60, d: 1500 }],
+  clear: () => []
+};
+function sessions(qs, sus) {
+  const q = [...qs].sort((a, b) => a.s - b.s), out = [];
+  q.forEach(x => {
+    const last = out[out.length - 1];
+    const lastEnd = last ? last.qEnd + (sus || Infinity) : -1;
+    if (last && x.s <= lastEnd) { last.qEnd = Math.max(last.qEnd, x.s + x.d); last.qs.push(x); }
+    else out.push({ start: x.s, qEnd: x.s + x.d, qs: [x] });
+  });
+  out.forEach(s => { s.end = sus ? Math.min(T, s.qEnd + sus) : T; s.len = s.end - s.start; s.billed = Math.max(60, s.len); });
+  return out;
+}
+function bill() {
+  const sus = +$('#bSus').value, sz = +$('#bSz').value, pr = +$('#bPr').value;
+  const ss = sessions(bq, sus);
+  const X = t => 40 + t / T * 600;
+  let s = '';
+  for (let m = 0; m <= 30; m += 5) s += `<line x1="${X(m * 60)}" y1="30" x2="${X(m * 60)}" y2="120" stroke="var(--line)"/><text class="tm" x="${X(m * 60)}" y="138" text-anchor="middle">${m}m</text>`;
+  s += `<text class="ts" x="40" y="20">warehouse lane (click to add a 20 s query)</text>`;
+  s += `<rect x="40" y="50" width="600" height="50" rx="6" fill="var(--card2)"/>`;
+  ss.forEach(x => {
+    s += `<rect x="${X(x.start)}" y="50" width="${Math.max(1, X(x.end) - X(x.start))}" height="50" rx="4" fill="var(--ice-s)" stroke="var(--ice)"/>`;
+    if (x.len < 60) s += `<rect x="${X(x.end)}" y="50" width="${X(x.start + 60) - X(x.end)}" height="50" fill="var(--red-s)" stroke="var(--red)" stroke-dasharray="3 3"/>`;
+    s += `<text class="tm" x="${X(x.start) + 3}" y="114">resume</text>`;
+  });
+  bq.forEach(q => { s += `<rect x="${X(q.s)}" y="60" width="${Math.max(2, X(q.s + q.d) - X(q.s))}" height="30" rx="2" fill="var(--ice)"/>`; });
+  s += `<rect id="bHit" x="40" y="30" width="600" height="90" fill="transparent"/>`;
+  $('#bSvg').innerHTML = s;
+  $('#bHit').onclick = e => {
+    const pt = new DOMPoint(e.clientX, e.clientY).matrixTransform($('#bSvg').getScreenCTM().inverse());
+    const t = Math.round(Math.max(0, Math.min(T - 20, (pt.x - 40) / 600 * T)));
+    bq.push({ s: t, d: 20 }); bill();
+  };
+  const qt = bq.reduce((a, q) => a + q.d, 0);
+  const bt = ss.reduce((a, x) => a + x.billed, 0);
+  const cr = sz * bt / 3600;
+  $('#bQ').textContent = fmtTime(qt);
+  $('#bB').textContent = fmtTime(bt);
+  $('#bBs').textContent = `${ss.length} resume${ss.length === 1 ? '' : 's'}`;
+  $('#bC').textContent = fmt(cr, 2);
+  $('#bCs').textContent = '≈ $' + fmt(cr * pr, 2) + ' in 30 min';
+  $('#bE').textContent = bt ? Math.round(qt / bt * 100) + '%' : '–';
+  let ins;
+  if (!bq.length) ins = 'No queries: the warehouse stays suspended and costs <b>nothing</b>. Click the timeline to add queries.';
+  else if (!sus) ins = '<b>Never suspending</b> means you pay for the whole 30 minutes regardless of the work done. This is the #1 cause of surprise bills.';
+  else if (ss.some(x => x.len < 60)) ins = '<b>60 s minimum.</b> Short sessions are topped up to a full minute (red). Many tiny resumes add up, so batch small queries together.';
+  else if (qt / bt < 0.3) ins = `<b>Mostly idle billing.</b> Only ${Math.round(qt / bt * 100)}% of billed time is real work. Try a shorter AUTO_SUSPEND, but remember a shorter suspend also drops the warehouse cache.`;
+  else ins = '<b>Efficient.</b> Most of the billed time is real work. Long, continuous workloads (like ETL) bill almost exactly their runtime.';
+  $('#bIns').innerHTML = ins;
+}
+$$('[data-bp]').forEach(b => b.onclick = () => { bq = BP[b.dataset.bp](); bill(); });
+['#bSus', '#bSz', '#bPr'].forEach(s => $(s).addEventListener('change', bill));
+bq = BP.dash(); bill();
+
+/* 08 editions */
+const ED = ['Standard', 'Enterprise', 'Business Critical', 'VPS'];
+const EF = [
+  ['Core SQL engine, data sharing, Snowpipe, streams & tasks', [1, 1, 1, 1], 'Every edition runs the same core platform and architecture.'],
+  ['Time Travel retention', ['1 day', 'up to 90 days', 'up to 90 days', 'up to 90 days'], 'Standard is capped at 1 day. Enterprise+ lets you set DATA_RETENTION_TIME_IN_DAYS up to 90 on permanent objects.'],
+  ['Fail-safe (7 days, permanent tables)', [1, 1, 1, 1], 'Disaster recovery that only Snowflake support can perform. Not user-queryable.'],
+  ['Always-on AES-256 encryption', [1, 1, 1, 1], 'All data is encrypted at rest and in transit in every edition.'],
+  ['Multi-cluster warehouses', [0, 1, 1, 1], 'Scaling out for concurrency (chapter 04) requires Enterprise.'],
+  ['Materialized views', [0, 1, 1, 1], 'Pre-computed results that are maintained automatically (serverless cost).'],
+  ['Search Optimization & Query Acceleration', [0, 1, 1, 1], 'Point-lookup acceleration and offloading of large scans to serverless compute.'],
+  ['Dynamic data masking & row access policies', [0, 1, 1, 1], 'Column- and row-level security, e.g. hiding PII from non-privileged roles.'],
+  ['Periodic rekeying of encrypted data', [0, 1, 1, 1], 'Data encrypted with keys older than a year is automatically re-encrypted.'],
+  ['Tri-Secret Secure (customer-managed key)', [0, 0, 1, 1], 'Combines your key (in your cloud KMS) with Snowflake\'s key. Revoke yours and the data becomes unreadable.'],
+  ['Private connectivity (AWS PrivateLink / Azure Private Link / GCP PSC)', [0, 0, 1, 1], 'Traffic never crosses the public internet.'],
+  ['HIPAA / PCI DSS compliance support', [0, 0, 1, 1], 'Regulated data such as healthcare and payment cards points to Business Critical.'],
+  ['Account failover / failback (business continuity)', [0, 0, 1, 1], 'Promote a secondary account in another region if the primary region goes down.'],
+  ['Fully isolated Snowflake environment', [0, 0, 0, 1], 'VPS: a dedicated environment that shares no hardware or metadata store with other accounts. For the highest-security organizations.']
+];
+let edCol = -1, edOpen = -1;
+function ed() {
+  let h = `<tr><th>FEATURE</th>${ED.map((e, i) => `<th class="col ${i === edCol ? 'hl' : ''}" data-c="${i}" style="text-align:center">${e.toUpperCase()}</th>`).join('')}</tr>`;
+  EF.forEach(([f, v, n], r) => {
+    h += `<tr class="f" data-r="${r}"><td>${f}</td>${v.map((x, i) => `<td class="c ${i === edCol ? 'hl' : ''}">${x === 1 ? '<span class="yes"></span>' : x === 0 ? '<span class="no"></span>' : x}</td>`).join('')}</tr>`;
+    if (r === edOpen) h += `<tr class="note"><td colspan="5">${n}</td></tr>`;
+  });
+  $('#edT').innerHTML = h;
+  $$('#edT th.col').forEach(t => t.onclick = () => { edCol = edCol === +t.dataset.c ? -1 : +t.dataset.c; ed(); });
+  $$('#edT tr.f').forEach(t => t.onclick = () => { edOpen = edOpen === +t.dataset.r ? -1 : +t.dataset.r; ed(); });
+}
+ed();
+
+/* 09 SQL lab */
+const SQL = [
+  { t: 'Create a warehouse', lines: [
+    ['CREATE WAREHOUSE IF NOT EXISTS bi_wh', 'Creates a virtual warehouse (compute only, no data). IF NOT EXISTS makes the script safe to re-run (idempotent), which matters for CI/CD.'],
+    ["  WAREHOUSE_SIZE = 'MEDIUM'", 'Medium = 4 credits/hour. Start small, then measure using the Query Profile (spilling, queuing) before resizing.'],
+    ['  AUTO_SUSPEND = 60', 'Suspend after 60 seconds of idle time. Lower = cheaper, but the SSD cache is lost sooner. BI warehouses often use 300–600.'],
+    ['  AUTO_RESUME = TRUE', 'Start automatically when a query arrives. Without this, queries fail against a suspended warehouse.'],
+    ['  INITIALLY_SUSPENDED = TRUE', "Don't start (and bill) the warehouse the moment it's created."],
+    ['  MIN_CLUSTER_COUNT = 1', 'Multi-cluster lower bound (Enterprise+). With 1, there\'s no idle extra capacity overnight.'],
+    ['  MAX_CLUSTER_COUNT = 4', 'Upper bound for scaling out. MIN < MAX = auto-scale mode.'],
+    ["  SCALING_POLICY = 'STANDARD'", 'STANDARD starts clusters as soon as queuing begins (favours speed). ECONOMY waits for about 6 minutes of work (favours credits).'],
+    ['  STATEMENT_TIMEOUT_IN_SECONDS = 3600', 'Kill runaway queries after 1 hour. A simple but important cost guardrail. The default is 2 days.'],
+    ["  COMMENT = 'BI dashboards - team analytics';", 'Document ownership. Combine with query tags or object tags for cost attribution.']
+  ] },
+  { t: 'Resize & multi-cluster', lines: [
+    ["ALTER WAREHOUSE bi_wh SET WAREHOUSE_SIZE = 'LARGE';", 'Scale up. Running queries finish on the old size; new and queued queries use the new size. The new nodes start with an empty SSD cache.'],
+    ["ALTER WAREHOUSE etl_wh SET WAREHOUSE_SIZE = 'XLARGE' WAIT_FOR_COMPLETION = TRUE;", 'WAIT_FOR_COMPLETION makes the statement return only once the new compute is ready. Useful inside ETL scripts before a heavy step.'],
+    ['ALTER WAREHOUSE bi_wh SET MAX_CLUSTER_COUNT = 6;', 'Scale out to absorb more concurrent dashboard users.'],
+    ['ALTER WAREHOUSE bi_wh SET MAX_CONCURRENCY_LEVEL = 8;', 'How many queries one cluster runs at once (default 8). Lowering it gives each query more resources; raising it allows more parallel small queries.'],
+    ['ALTER WAREHOUSE bi_wh SUSPEND;', 'Suspend manually. Billing stops and the SSD cache is dropped.'],
+    ["SHOW WAREHOUSES LIKE 'BI%';", 'A metadata command answered by cloud services, so no warehouse is needed. Shows state, size, clusters, running and queued counts.']
+  ] },
+  { t: 'Check pruning', lines: [
+    ['EXPLAIN', 'EXPLAIN shows the plan without running the query. It\'s compiled by cloud services and uses no warehouse.'],
+    ['SELECT SUM(amount) FROM orders', 'The query to analyse.'],
+    ["WHERE order_date = '2024-03-15';", 'In the EXPLAIN output, compare partitionsAssigned with partitionsTotal. A small ratio means good pruning.'],
+    ['', ''],
+    ["SELECT SYSTEM$CLUSTERING_INFORMATION('orders', '(order_date)');", 'Returns JSON: total_partition_count, average_overlaps, average_depth and partition_depth_histogram. A low average_depth means well clustered for this column.'],
+    ['', ''],
+    ['SELECT query_id, partitions_scanned, partitions_total,', 'ACCOUNT_USAGE.QUERY_HISTORY records the pruning outcome for every query that ran.'],
+    ['       bytes_scanned, percentage_scanned_from_cache,', 'percentage_scanned_from_cache shows how much the warehouse SSD cache helped.'],
+    ['       bytes_spilled_to_remote_storage', 'Non-zero remote spill = warehouse too small for this query (or the query needs a rewrite).'],
+    ['FROM snowflake.account_usage.query_history', 'ACCOUNT_USAGE views have latency (up to ~45 minutes for QUERY_HISTORY) but keep 365 days of history.'],
+    ["WHERE start_time > DATEADD('day', -1, CURRENT_TIMESTAMP())", 'Last 24 hours.'],
+    ['ORDER BY bytes_scanned DESC LIMIT 20;', 'Top 20 heaviest scanners: your tuning shortlist.']
+  ] },
+  { t: 'Cache experiments', lines: [
+    ['ALTER SESSION SET USE_CACHED_RESULT = FALSE;', 'Disable result-cache reuse for this session, so benchmarks show real execution time.'],
+    ['SELECT region, SUM(amount) FROM sales GROUP BY region;', 'Runs on the warehouse. Run it twice: the second run is faster thanks to the warm SSD cache, not the result cache.'],
+    ['ALTER SESSION SET USE_CACHED_RESULT = TRUE;', 'Turn it back on (the default).'],
+    ['SELECT region, SUM(amount) FROM sales GROUP BY region;', 'Now served from the result cache. The Query Profile shows "QUERY RESULT REUSE".'],
+    ['SELECT * FROM TABLE(RESULT_SCAN(LAST_QUERY_ID()));', 'RESULT_SCAN treats a previous query\'s result as a table. Handy for post-processing SHOW output, for example.'],
+    ['SELECT COUNT(*) FROM sales;', 'Answered from metadata ("METADATA-BASED RESULT"), so it\'s instant even on billions of rows.']
+  ] },
+  { t: 'Cost by warehouse', lines: [
+    ['SELECT warehouse_name,', 'Which warehouse spends the most?'],
+    ['       SUM(credits_used_compute)        AS compute_credits,', 'Credits from warehouses running (including idle time before auto-suspend).'],
+    ['       SUM(credits_used_cloud_services) AS cs_credits,', 'Cloud services credits consumed. Remember only usage above 10% of the daily compute is billed.'],
+    ['       SUM(credits_used)                AS total_credits', 'Sum of the two (before the 10% adjustment).'],
+    ['FROM snowflake.account_usage.warehouse_metering_history', 'Hourly credit usage per warehouse.'],
+    ["WHERE start_time >= DATEADD('day', -30, CURRENT_TIMESTAMP())", 'Last 30 days.'],
+    ['GROUP BY warehouse_name', ''],
+    ['ORDER BY total_credits DESC;', 'For the billed (adjusted) cloud services amount, see METERING_DAILY_HISTORY.CREDITS_ADJUSTMENT_CLOUD_SERVICES.']
+  ] }
+];
+const KW = /\b(CREATE|WAREHOUSE|IF|NOT|EXISTS|ALTER|SET|SELECT|FROM|WHERE|GROUP|BY|ORDER|DESC|LIMIT|AS|SUM|AVG|COUNT|SHOW|LIKE|EXPLAIN|SESSION|TABLE|TRUE|FALSE|SUSPEND|DATEADD|CURRENT_TIMESTAMP|RESULT_SCAN|LAST_QUERY_ID)\b/g;
+const hl = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/('[^']*')/g, '\u0001$1\u0002').replace(KW, '<span class="kw">$1</span>').replace(/\b(\d+)\b/g, '<span class="num">$1</span>').replace(/\u0001([^\u0002]*)\u0002/g, '<span class="str">$1</span>');
+let sqlI = 0;
+function sqlShow(i) {
+  sqlI = i;
+  $$('#sqlTabs button').forEach((b, k) => b.classList.toggle('on', k === i));
+  $('#sqlCode').innerHTML = SQL[i].lines.map(([l], k) => `<div data-k="${k}"><em>${k + 1}</em>${hl(l) || ' '}</div>`).join('');
+  $('#sqlExp').innerHTML = '<b>CLICK A LINE</b>Each line is explained in plain English.';
+  $$('#sqlCode div').forEach(d => d.onclick = () => {
+    const [, e] = SQL[sqlI].lines[d.dataset.k];
+    if (!e) return;
+    $$('#sqlCode div').forEach(x => x.classList.remove('on'));
+    d.classList.add('on');
+    $('#sqlExp').innerHTML = `<b>LINE ${+d.dataset.k + 1}</b>${e}`;
+  });
+}
+$('#sqlTabs').innerHTML = SQL.map(s => `<button>${s.t}</button>`).join('');
+$$('#sqlTabs button').forEach((b, i) => b.onclick = () => sqlShow(i));
+sqlShow(0);
+
+/* 10 Q&A */
+const QA = [
+  ['b', 'Explain Snowflake\'s architecture in two minutes.', '<p>Snowflake has three independent layers. <b>Storage</b>: all data lives once, in cloud object storage, as compressed, columnar, immutable micro-partitions. <b>Compute</b>: virtual warehouses, which are independent MPP clusters that run queries, cache data on local SSD and can be resized, multiplied or suspended in seconds. <b>Cloud services</b>: the coordination layer handling authentication, metadata, query optimization, transactions and security.</p><p>Because storage and compute are separate, many warehouses can work on the same data at the same time without contention, each one scales on its own, and you pay per second only while compute runs. Snowflake calls this a hybrid of shared-disk (one central copy of data) and shared-nothing (parallel processing inside each warehouse).</p>'],
+  ['b', 'What is a micro-partition? Can you control its size?', '<p>It\'s the physical storage unit: 50–500 MB of uncompressed data, stored columnar, compressed and immutable. Snowflake creates micro-partitions automatically, in the order the data arrives. You <b>can\'t</b> choose their size or boundaries. You <b>can</b> influence how rows are grouped into them: by loading data sorted, by defining a <b>clustering key</b> (automatic clustering re-organizes them in the background for a serverless cost), or by rebuilding with <code>INSERT OVERWRITE ... ORDER BY</code>.</p>'],
+  ['b', 'What is partition pruning and how do you verify it?', '<p>Pruning means skipping micro-partitions whose metadata (MIN/MAX per column) proves they can\'t match the filter, before reading anything. Verify it in the <b>Query Profile</b> (TableScan node: <i>Partitions scanned</i> vs. <i>Partitions total</i>), in <code>EXPLAIN</code> (partitionsAssigned vs. partitionsTotal), or in <code>ACCOUNT_USAGE.QUERY_HISTORY</code>. Pruning breaks when you wrap the filter column in a function (for example <code>WHERE TO_CHAR(order_date,\'YYYY\')=\'2024\'</code>), when a cast is implicit, or when the data is poorly clustered.</p>'],
+  ['b', 'Scale up vs. scale out: when do you use each?', '<p><b>Scale up</b> (bigger size) when <i>individual queries</i> are slow: large scans, complex joins, or spilling to local/remote storage. <b>Scale out</b> (multi-cluster, Enterprise+) when <i>many queries at once</i> are queuing, like a BI tool at 9 AM. They solve different problems: a bigger warehouse doesn\'t fix queuing efficiently, and more clusters don\'t make any single query faster.</p>'],
+  ['b', 'Name the three caches and where each one lives.', '<p><b>Result cache</b> (cloud services): stores final results for 24 h, extended on each reuse up to 31 days, shared across users whose roles have the privileges. <b>Warehouse (local disk) cache</b> (the warehouse\'s SSD/memory): stores raw micro-partition column data, lost on suspend or resize. <b>Metadata</b> (cloud services): stores counts and MIN/MAX per partition, so it answers <code>COUNT(*)</code> or MIN/MAX without a warehouse.</p>'],
+  ['t', 'The same query ran twice but the second run did NOT use the result cache. Why?', '<p>Check each condition: (1) the text differed, even slightly (an alias, a different literal); (2) the underlying table changed (DML, or a reclustering that rewrote partitions); (3) the query includes non-deterministic functions (<code>CURRENT_TIMESTAMP</code>, <code>RANDOM</code>, <code>UUID_STRING</code>) or external functions; (4) <code>USE_CACHED_RESULT = FALSE</code> was set for the session; (5) more than 24 h passed without reuse; (6) the role doesn\'t have privileges on all the objects. Also, queries on some table types or with certain functions aren\'t eligible for reuse at all.</p>'],
+  ['t', 'Two users with different roles run the same query. Can the second user reuse the first user\'s cached result?', '<p><b>Yes</b>, as long as the second user\'s role has the required privileges on all the objects in the query and every other reuse condition holds. The result cache isn\'t private to a user. However, if row access or masking policies would produce different results for the second role, Snowflake won\'t serve them the first user\'s result.</p>'],
+  ['t', 'Why does SELECT COUNT(*) FROM a 10-billion-row table return instantly, even with the warehouse suspended?', '<p>Row counts per micro-partition are stored in the metadata layer, so cloud services can add them up without reading any data or starting a warehouse. The Query Profile shows "METADATA-BASED RESULT". Add a <code>WHERE</code> clause on a non-trivial predicate, or <code>COUNT(DISTINCT ...)</code>, and the warehouse has to run.</p>'],
+  ['t', 'What happens to a running query if you resize the warehouse?', '<p>The running query <b>keeps going on the existing compute</b>. Only new and queued queries use the new size. When you scale down, the extra nodes are released once their current queries finish. The new nodes start with an empty SSD cache, so the first queries after a resize can be slower. When you scale up, the added compute is billed with its own 60 s minimum.</p>'],
+  ['t', 'You UPDATE one row in a 2 TB table. What happens physically?', '<p>Micro-partitions are immutable, so Snowflake writes a <b>new copy of the entire micro-partition</b> containing that row (copy-on-write), then atomically updates the table\'s metadata to point at the new file. The old file stays for the Time Travel retention period and then 7 days of Fail-safe (for permanent tables). That\'s why frequent single-row updates are slow and inflate storage: batch them, use <code>MERGE</code>, or use transient tables for staging data that changes a lot.</p>'],
+  ['t', 'Does a warehouse store data? What do you lose if you drop one?', '<p>No permanent data at all, only a temporary SSD cache. Dropping a warehouse loses no data, and you can recreate it in seconds. You lose its cache, its configuration and its query-history association.</p>'],
+  ['t', 'Can two warehouses read and write the same table at the same time? How is consistency guaranteed?', '<p>Yes. Cloud services provides ACID transactions using snapshot semantics on top of immutable micro-partitions: each statement reads a fixed set of files, and writers add new files and commit by atomically swapping the metadata. Readers never see partial writes. Concurrent DML on the same table can block or serialize on locks, so heavy concurrent writers should be designed carefully (for example, staging plus a single MERGE).</p>'],
+  ['s', 'Scenario: at 9 AM, 150 analysts hit dashboards and complain about slowness, but each query is fast when run alone. What do you do?', '<p>The symptom (fast when run alone) points to <b>queuing</b>, not slow queries. Confirm it in <code>QUERY_HISTORY</code> (<code>QUEUED_OVERLOAD_TIME</code>) or the warehouse load chart. Fixes: (1) a <b>multi-cluster</b> BI warehouse in auto-scale mode with the Standard policy and a suitable MAX_CLUSTER_COUNT; (2) let the <b>result cache</b> serve identical dashboard tiles and keep the warehouse cache warm with a longer auto-suspend; (3) pre-aggregate with <b>materialized views or dynamic tables</b>; (4) separate the BI warehouse from ETL. Report the cost impact: extra clusters run only during the spike.</p>'],
+  ['s', 'Scenario: a nightly job went from 20 to 90 minutes. Walk me through debugging it.', '<p>Open the <b>Query Profile</b> for the slowest step. Check: (1) <b>spilling</b>, either local or remote, which means scale up or reduce data volume earlier in the query; (2) <b>pruning</b>, where partitions scanned has jumped because of data growth, lost clustering or a new function on the filter column; (3) <b>exploding joins</b>, where the output rows of a join are far more than its inputs, pointing to duplicate keys or a missing condition; (4) <b>queuing</b> caused by other jobs sharing the warehouse; (5) a data-volume change at the source. Then fix the root cause, re-measure, and document the before/after numbers. That\'s your STAR story.</p>'],
+  ['s', 'Scenario: the monthly bill went up 40%. How do you find out why?', '<p>Start with <code>METERING_DAILY_HISTORY</code> to split compute, cloud services and serverless costs, then <code>WAREHOUSE_METERING_HISTORY</code> by warehouse and day to find where the spike began. Look for warehouses that never suspend (AUTO_SUSPEND = 0 or very high), recently upsized warehouses, a new frequent schedule causing constant resumes, runaway queries (set STATEMENT_TIMEOUT), and serverless costs such as automatic clustering on high-churn tables. Use query tags to attribute cost to teams. Add <b>resource monitors and budgets</b> as guardrails.</p>'],
+  ['s', 'Scenario: a hospital client asks which edition they need.', '<p>Healthcare data (PHI) under HIPAA points to <b>Business Critical</b>, which supports HIPAA/PCI compliance, Tri-Secret Secure (customer-managed key), private connectivity and failover/failback. If they also need complete physical and metadata isolation from other customers, mention <b>VPS</b>. Enterprise alone gives masking and row access policies and 90-day Time Travel, but not the compliance features.</p>']
+];
+const LV = { b: ['FUNDAMENTAL', 'b'], t: ['TRICKY', 't'], s: ['SCENARIO', 's'] };
+function qa(f) {
+  $('#qaList').innerHTML = QA.filter(q => f === 'all' || q[0] === f).map(([l, q, a]) => `<details class="qa"><summary><span class="lv ${LV[l][1]}">${LV[l][0]}</span>${q}</summary><div class="ans">${a}</div></details>`).join('');
+}
+tabs('#qaTabs', d => qa(d.f));
+qa('all');
+
+/* 11 quiz */
+const QZ = [
+  ['Which layer stores the MIN/MAX metadata used for pruning?', ['Storage layer', 'Compute layer (warehouse)', 'Cloud services layer', 'The client driver'], 2, 'The metadata manager in cloud services keeps per-micro-partition statistics. That\'s why pruning decisions happen before a warehouse reads anything.'],
+  ['What is the uncompressed size range of a micro-partition?', ['1–10 MB', '50–500 MB', '1–5 GB', 'You choose it with PARTITION BY'], 1, '50–500 MB of uncompressed data, created automatically. You can\'t define micro-partitions directly.'],
+  ['100 analysts at 9 AM see slow dashboards, but each query is fast alone. Best fix?', ['Resize to 4XL', 'Multi-cluster warehouse (scale out)', 'Add a clustering key', 'Disable the result cache'], 1, 'Being fast when run alone means the problem is queuing, which is a concurrency issue, and concurrency is solved by more clusters.'],
+  ['A single query shows a lot of "bytes spilled to remote storage". Most direct fix?', ['Scale up the warehouse', 'Add more clusters', 'Increase AUTO_SUSPEND', 'Switch to the Economy policy'], 0, 'Spilling means not enough memory or local disk for that query. A bigger size gives it more memory, and that query often gets both faster and cheaper.'],
+  ['You run the identical query twice within an hour with no data changes. The second run…', ['Uses the warehouse SSD cache', 'Is served by the result cache with no warehouse credits', 'Always re-executes', 'Reads from Fail-safe'], 1, 'All the result-cache conditions hold, so cloud services returns the stored result. The warehouse can even be suspended.'],
+  ['After a warehouse auto-suspends, what happens to its local SSD cache?', ['It is kept for 24 h', 'It moves to the result cache', 'It is dropped', 'It is copied to storage'], 2, 'The compute nodes are released on suspend, so the SSD cache is lost. This is the auto-suspend vs. cache trade-off.'],
+  ['A warehouse resumes, runs a 10-second query, then suspends right away. Billed time?', ['10 s', '30 s', '60 s', '1 hour'], 2, 'Per-second billing with a 60-second minimum each time the warehouse starts or resumes.'],
+  ['Which feature requires Enterprise edition or higher?', ['Time Travel of 1 day', 'Multi-cluster warehouses', 'Secure data sharing', 'Snowpipe'], 1, 'Multi-cluster warehouses, 90-day Time Travel, materialized views, masking and row access policies are all Enterprise+.'],
+  ['What happens physically when you UPDATE one row?', ['The row is edited in place', 'The whole micro-partition is rewritten as a new file', 'Only the column file changes', 'A log entry is appended'], 1, 'Copy-on-write: micro-partitions are immutable. The old file is kept for Time Travel.'],
+  ['When are cloud services credits actually billed?', ['Always', 'Never', 'Only the part above 10% of daily warehouse credits', 'Only on Business Critical'], 2, 'Daily adjustment: cloud services usage up to 10% of that day\'s warehouse compute credits is free.'],
+  ['The maximum time a result can remain in the result cache with repeated reuse?', ['24 hours', '7 days', '31 days', '90 days'], 2, 'Each reuse resets the 24-hour timer, up to 31 days from when the query was first run.'],
+  ['The Economy scaling policy starts an extra cluster when…', ['Any query queues', 'There\'s enough load to keep it busy for about 6 minutes', 'CPU passes 80%', 'Never'], 1, 'Economy saves credits by tolerating short queues. Standard starts clusters immediately when queuing begins.']
+];
+let qi = 0;
+const qAns = Array(QZ.length).fill(null);
+const qBar = $('#qzBar');
+QZ.forEach((_, i) => { const s = document.createElement('span'); s.onclick = () => qShow(i); qBar.appendChild(s); });
+function qShow(i) {
+  qi = i;
+  const [q, opts, ok, ex] = QZ[i], a = qAns[i];
+  $('#qzN').textContent = i + 1;
+  [...qBar.children].forEach((s, k) => { s.classList.toggle('on', qAns[k] !== null); s.style.outline = k === i ? '2px solid var(--ice)' : ''; });
+  $('#qzBody').innerHTML = `<h3 style="margin-top:6px">${q}</h3>` + opts.map((o, k) => `<button class="opt ${a !== null ? (k === ok ? 'ok' : (k === a ? 'bad' : '')) : ''}" data-k="${k}">${String.fromCharCode(65 + k)}. ${o}</button>`).join('') + `<div class="qexp ${a !== null ? 'on' : ''}"><b>${a === ok ? 'Correct.' : 'Not quite.'}</b> ${ex}</div>`;
+  $$('#qzBody .opt').forEach(b => b.onclick = () => { if (qAns[qi] !== null) return; qAns[qi] = +b.dataset.k; qShow(qi); qScore(); });
+  $('#qzNext').textContent = i === QZ.length - 1 ? 'See result' : 'Next';
+}
+function qScore() { $('#qzS').textContent = qAns.filter((a, i) => a === QZ[i][2]).length; }
+function qResult() {
+  const s = qAns.filter((a, i) => a === QZ[i][2]).length;
+  const msg = s >= 10 ? 'Interview-ready on architecture. Move on to Module 02.' : s >= 7 ? 'Solid. Re-read the caches and scaling chapters, then retry.' : 'Replay the simulators (pruning, cache, billing), then retry.';
+  $('#qzBody').innerHTML = `<div class="score">${s} / ${QZ.length}</div><p style="margin-top:8px">${msg}</p><button class="btn pri" id="qzAgain" style="margin-top:10px">Retry quiz</button>`;
+  $('#qzAgain').onclick = () => { qAns.fill(null); qScore(); qShow(0); };
+}
+$('#qzNext').onclick = () => qi === QZ.length - 1 ? qResult() : qShow(qi + 1);
+$('#qzPrev').onclick = () => qShow(Math.max(0, qi - 1));
+qShow(0);
+</script>
+<div class="toast" id="toast"></div>
+<script>
+(() => {
+  const t = document.getElementById('toast'); let h;
+  document.querySelectorAll('.road a.soon').forEach(a => a.addEventListener('click', e => {
+    e.preventDefault();
+    t.textContent = `Module ${a.dataset.m} isn't built yet. Ask for it in chat and it will be added here.`;
+    t.classList.add('on'); clearTimeout(h); h = setTimeout(() => t.classList.remove('on'), 2800);
+  }));
+})();
+</script>
+</body>
+</html>

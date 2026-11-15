@@ -1,0 +1,1805 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Snowflake Interview Lab · Module 13 · Data Modeling &amp; Tooling</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/space-grotesk@5/300.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/space-grotesk@5/700.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/ibm-plex-sans@5/300.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/ibm-plex-sans@5/400.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/ibm-plex-sans@5/600.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/jetbrains-mono@5/400.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/jetbrains-mono@5/700.css">
+<style>
+:root{
+  --bg:#F2F6FA; --card:#FFFFFF; --card2:#E9EFF5; --ink:#0B1B2B; --ink2:#46596B; --ink3:#7F90A2;
+  --line:rgba(11,27,43,.12); --line2:rgba(11,27,43,.22);
+  --ice:#0A86C2; --ice-s:#DCEFF9; --amber:#B86F00; --amber-s:#FFF0D4; --teal:#0B8A6A; --teal-s:#DAF3EB;
+  --red:#C93C3C; --red-s:#FCE4E4; --grid:rgba(10,134,194,.06);
+  --f-head:"Space Grotesk",sans-serif; --f-body:"IBM Plex Sans",sans-serif; --f-mono:"JetBrains Mono",monospace;
+  --r:10px;
+}
+[data-theme="dark"]{
+  --bg:#08121D; --card:#0F1D2C; --card2:#16293B; --ink:#E5EDF5; --ink2:#9DB0C3; --ink3:#687D91;
+  --line:rgba(229,237,245,.10); --line2:rgba(229,237,245,.22);
+  --ice:#4CC3F0; --ice-s:rgba(76,195,240,.13); --amber:#FFB938; --amber-s:rgba(255,185,56,.13); --teal:#3FD3A8; --teal-s:rgba(63,211,168,.13);
+  --red:#FF7070; --red-s:rgba(255,112,112,.14); --grid:rgba(76,195,240,.05);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:var(--f-body);color:var(--ink);line-height:1.7;font-size:16px;
+  background:radial-gradient(1200px 600px at 85% -10%, var(--ice-s), transparent 60%),radial-gradient(900px 500px at -10% 30%, var(--teal-s), transparent 60%),
+  linear-gradient(var(--grid) 1px, transparent 1px) 0 0/32px 32px,linear-gradient(90deg, var(--grid) 1px, transparent 1px) 0 0/32px 32px,var(--bg);background-attachment:fixed}
+code,.mono{font-family:var(--f-mono);font-size:.88em}
+p code,li code,td code{background:var(--card2);padding:1px 6px;border-radius:5px}
+button{font-family:var(--f-body);cursor:pointer}
+.top{position:sticky;top:0;z-index:30;display:flex;align-items:center;gap:16px;padding:12px 28px;border-bottom:1px solid var(--line);background:color-mix(in srgb,var(--bg) 82%,transparent);backdrop-filter:saturate(1.4) blur(8px)}
+.brand{font-family:var(--f-mono);font-weight:700;letter-spacing:.06em;font-size:13px}.brand b{color:var(--ice)}
+.pill{font-family:var(--f-mono);font-size:12px;padding:3px 10px;border-radius:99px;border:1px solid var(--line2);color:var(--ink2)}
+.prog{flex:1;height:4px;background:var(--card2);border-radius:4px;overflow:hidden;max-width:360px;margin-left:auto}
+.prog i{display:block;height:100%;width:0;background:var(--ice);transition:width .4s}
+.prog-l{font-family:var(--f-mono);font-size:12px;color:var(--ink2);min-width:84px}
+.theme{border:1px solid var(--line2);background:var(--card);color:var(--ink);border-radius:8px;padding:5px 10px;font-size:13px}
+.wrap{display:grid;grid-template-columns:270px minmax(0,1fr);gap:36px;max-width:1340px;margin:0 auto;padding:28px}
+nav.side{position:sticky;top:76px;align-self:start;max-height:calc(100vh - 96px);overflow:auto;padding-right:6px}
+.side h4{font-family:var(--f-mono);font-size:11px;letter-spacing:.14em;color:var(--ink3);margin:6px 0 10px;font-weight:400}
+.side a{display:flex;gap:10px;align-items:baseline;padding:6px 10px;border-radius:8px;color:var(--ink2);text-decoration:none;font-size:14px;border-left:2px solid transparent}
+.side a span{font-family:var(--f-mono);font-size:11px;color:var(--ink3)}
+.side a:hover{background:var(--card)}
+.side a.act{color:var(--ink);background:var(--card);border-left-color:var(--ice);border-radius:0 8px 8px 0}
+.side a.seen span{color:var(--teal)}
+.road{margin-top:22px;border-top:1px solid var(--line);padding-top:14px}
+.road div{font-size:13px;color:var(--ink3);padding:3px 10px;display:flex;gap:8px}
+.road div.now{color:var(--ink);font-weight:600}.road div.done{color:var(--teal)}
+.road div em{font-style:normal;font-family:var(--f-mono);font-size:11px;min-width:20px}
+main{min-width:0}
+section{padding:36px 0 44px;border-bottom:1px dashed var(--line2);scroll-margin-top:70px}
+.eyebrow{font-family:var(--f-mono);font-size:12px;letter-spacing:.16em;color:var(--ice);margin-bottom:6px}
+h1{font-family:var(--f-head);font-weight:700;font-size:clamp(40px,6vw,76px);line-height:1;letter-spacing:-.03em}
+h1 .thin,h2 .thin{font-weight:300;color:var(--ink2)}
+h2{font-family:var(--f-head);font-weight:700;font-size:clamp(28px,3.4vw,40px);letter-spacing:-.02em;line-height:1.1;margin-bottom:12px}
+h3{font-family:var(--f-head);font-weight:700;font-size:20px;margin:26px 0 10px;letter-spacing:-.01em}
+.lead{font-size:18px;font-weight:300;color:var(--ink2);max-width:820px}
+p{margin:8px 0}
+ul.dots{margin:8px 0 8px 20px}ul.dots li{margin:4px 0}
+.wwh{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:20px 0}
+.wwh .box{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:18px 20px;position:relative;overflow:hidden}
+.wwh .box.how{grid-column:1/-1}
+.wwh .tag{font-family:var(--f-mono);font-size:11px;letter-spacing:.14em;display:inline-block;padding:2px 8px;border-radius:5px;margin-bottom:8px}
+.box.what .tag{background:var(--ice-s);color:var(--ice)}.box.why .tag{background:var(--amber-s);color:var(--amber)}.box.how .tag{background:var(--teal-s);color:var(--teal)}
+.box::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px}
+.box.what::before{background:var(--ice)}.box.why::before{background:var(--amber)}.box.how::before{background:var(--teal)}
+.call{display:flex;gap:14px;padding:14px 18px;border-radius:var(--r);margin:14px 0;border:1px solid var(--line)}
+.call b.k{font-family:var(--f-mono);font-size:11px;letter-spacing:.12em;white-space:nowrap;padding-top:3px}
+.call.analogy{background:var(--ice-s)}.call.analogy b.k{color:var(--ice)}
+.call.trap{background:var(--red-s)}.call.trap b.k{color:var(--red)}
+.call.pro{background:var(--teal-s)}.call.pro b.k{color:var(--teal)}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px;margin:18px 0}
+.panel-h{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+.panel-h .t{font-family:var(--f-mono);font-size:12px;letter-spacing:.12em;color:var(--ink2)}.panel-h .t b{color:var(--ink)}
+.btn{border:1px solid var(--line2);background:var(--card);color:var(--ink);padding:7px 14px;border-radius:8px;font-size:14px;transition:all .15s}
+.btn:hover{border-color:var(--ice);color:var(--ice)}
+.btn.pri{background:var(--ice);color:var(--card);border-color:var(--ice)}.btn.pri:hover{color:var(--card);filter:brightness(1.08)}
+.btn.warn{border-color:var(--red);color:var(--red)}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.ctl{display:flex;align-items:center;gap:12px;font-size:14px;color:var(--ink2);margin:8px 0}
+.ctl label{min-width:150px}.ctl input[type=range]{flex:1;accent-color:var(--ice)}
+.ctl .v{font-family:var(--f-mono);font-size:13px;color:var(--ink);min-width:110px;text-align:right}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:14px 0}
+.stat{background:var(--card2);border-radius:10px;padding:12px 14px}
+.stat .k{font-family:var(--f-mono);font-size:11px;color:var(--ink3);letter-spacing:.08em}
+.stat .n{font-family:var(--f-head);font-weight:700;font-size:28px;line-height:1.2}
+.stat .s{font-size:12px;color:var(--ink2)}
+.sqlbox{font-family:var(--f-mono);font-size:13px;background:var(--card2);border-radius:8px;padding:10px 14px;white-space:pre-wrap;color:var(--ink);border-left:3px solid var(--ice);overflow:auto}
+.insight{font-size:14px;padding:10px 14px;border-radius:8px;background:var(--amber-s);color:var(--ink);margin-top:10px}.insight b{color:var(--amber)}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+.tabs button{border:1px solid var(--line2);background:transparent;color:var(--ink2);padding:6px 12px;border-radius:99px;font-size:13px}
+.tabs button.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}.grid2>div{min-width:0}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.mini{background:var(--card2);border-radius:10px;padding:14px}
+.mini h5{font-family:var(--f-head);font-size:15px;margin-bottom:4px}
+.mini p{font-size:14px;color:var(--ink2);margin:0}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:13px;color:var(--ink2);margin:8px 0}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:-1px;margin-right:6px}
+table.t{width:100%;border-collapse:collapse;font-size:14px}
+table.t th,table.t td{padding:7px 10px;border-bottom:1px solid var(--line);text-align:left}
+table.t th{font-family:var(--f-mono);font-size:11px;letter-spacing:.1em;color:var(--ink3);font-weight:400}
+table.t td.m{font-family:var(--f-mono);font-size:12px}
+svg{width:100%;height:auto;display:block}
+svg .t{font-family:var(--f-body);font-size:14px;fill:var(--ink)}
+svg .ts{font-family:var(--f-body);font-size:12px;fill:var(--ink2)}
+svg .th{font-family:var(--f-head);font-size:14px;font-weight:700;fill:var(--ink)}
+svg .tm{font-family:var(--f-mono);font-size:11px;fill:var(--ink2)}
+.L-cs{fill:var(--amber-s);stroke:var(--amber)}.L-cp{fill:var(--ice-s);stroke:var(--ice)}.L-st{fill:var(--teal-s);stroke:var(--teal)}
+.neutral{fill:var(--card);stroke:var(--line2)}
+.arr{stroke:var(--ink3);stroke-width:1.2;fill:none}
+.fn{transition:opacity .3s}
+.flow.playing .fn{opacity:.25}
+.flow.playing .fn.on{opacity:1}
+.fn.on rect{stroke-width:2.4}
+.edge{stroke:var(--ink3);stroke-width:1.4;fill:none;transition:opacity .3s}
+.flow.playing .edge{opacity:.2}
+.flow.playing .edge.on{opacity:1;stroke:var(--ice);stroke-width:2.4;stroke-dasharray:7 5}
+@media (prefers-reduced-motion:no-preference){
+  .flow.playing .edge.on{animation:dash .8s linear infinite}
+  @keyframes dash{to{stroke-dashoffset:-24}}
+  .pulse{animation:pulse 1.2s ease-in-out infinite}
+  @keyframes pulse{0%,100%{opacity:.35}50%{opacity:1}}
+  .rise{animation:rise .5s both}
+  @keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+  .grow{transform-box:fill-box;transform-origin:left center;animation:grow .6s both}
+  @keyframes grow{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+}
+.stepbar{display:flex;gap:6px;margin:12px 0}
+.stepbar span{flex:1;height:4px;border-radius:4px;background:var(--card2);cursor:pointer}
+.stepbar span.on{background:var(--ice)}
+.stepdesc{min-height:120px;background:var(--card2);border-radius:10px;padding:14px 16px}
+.stepdesc h4{font-family:var(--f-head);font-size:17px;margin-bottom:6px}
+.stepdesc .two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.stepdesc .two div{font-size:14px;color:var(--ink2)}
+.stepdesc .two b.l{display:block;font-family:var(--f-mono);font-size:11px;letter-spacing:.12em;margin-bottom:4px}
+.stepdesc .two .you b.l{color:var(--ice)}.stepdesc .two .be b.l{color:var(--teal)}
+.term{background:#0A141F;color:#D6E2EE;font-family:var(--f-mono);font-size:12.5px;border-radius:12px;padding:14px 16px;height:340px;overflow:auto;border:1px solid #1E3247}
+.term div{white-space:pre;line-height:1.5}
+.term .tin{color:#FFB938}.term .terr{color:#FF7A7A}.term .tok{color:#3FD3A8}.term .tdim{color:#6F8499}
+.tbar{display:flex;gap:6px;align-items:center;margin-bottom:8px}
+.tbar i{width:10px;height:10px;border-radius:50%;display:inline-block}
+.tinput{display:flex;gap:8px;margin-top:8px}
+.tinput input{flex:1;font-family:var(--f-mono);font-size:13px;padding:8px 10px;border-radius:8px;border:1px solid var(--line2);background:var(--card);color:var(--ink)}
+.cmds{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}
+.cmds button{font-family:var(--f-mono);font-size:11.5px;border:1px solid var(--line2);background:var(--card);color:var(--ink);padding:5px 9px;border-radius:7px;text-align:left}
+.cmds button:hover{border-color:var(--amber);color:var(--amber)}
+.cmds button small{display:block;font-family:var(--f-body);font-size:11px;color:var(--ink3)}
+.explain{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 16px;min-height:90px;font-size:14.5px}
+.explain b.h{font-family:var(--f-mono);font-size:12px;color:var(--ice);letter-spacing:.1em;display:block;margin-bottom:4px}
+.gantt-l{font-family:var(--f-mono);font-size:11px;fill:var(--ink2)}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font-family:var(--f-mono);font-size:12px;border:1px solid var(--line2);padding:5px 10px;border-radius:99px;cursor:pointer;user-select:none;background:var(--card);color:var(--ink2)}
+.chip.on{background:var(--ice-s);border-color:var(--ice);color:var(--ice)}
+.chip.now{outline:2px solid var(--amber);outline-offset:2px}
+.fcard{border:1px solid var(--line2);border-radius:10px;padding:10px 12px;cursor:pointer;background:var(--card);text-align:left;color:var(--ink)}
+.fcard.on{border-color:var(--ice);background:var(--ice-s)}
+.fcard b{display:block;font-family:var(--f-mono);font-size:12px}
+.fcard small{color:var(--ink3);font-size:12px}
+.out{font-family:var(--f-mono);font-size:12px;background:var(--card2);border-radius:8px;padding:10px 14px;white-space:pre-wrap;border-left:3px solid var(--teal);max-height:260px;overflow:auto}
+.chunk{border:1px solid var(--line2);border-radius:8px;padding:8px 10px;font-size:13px;margin:6px 0;background:var(--card)}
+.chunk em{font-style:normal;background:var(--amber-s);color:var(--ink);border-bottom:2px solid var(--amber)}
+.chunk b{font-family:var(--f-mono);font-size:11px;color:var(--ice);margin-right:8px}
+.act-i{color:var(--teal);font-family:var(--f-mono);font-size:12px;font-weight:700}
+.act-d{color:var(--red);font-family:var(--f-mono);font-size:12px;font-weight:700}
+.badge{font-family:var(--f-mono);font-size:11px;padding:2px 8px;border-radius:99px;white-space:nowrap}
+.badge.ok{background:var(--teal-s);color:var(--teal)}.badge.bad{background:var(--red-s);color:var(--red)}.badge.mid{background:var(--amber-s);color:var(--amber)}.badge.off{background:var(--card2);color:var(--ink3)}
+.flash{animation:flash 1s}
+@keyframes flash{0%{box-shadow:0 0 0 3px var(--amber)}100%{box-shadow:0 0 0 0 transparent}}
+.tn rect{fill:var(--card);stroke:var(--line2);transition:all .3s}
+.tn.run rect{fill:var(--amber-s);stroke:var(--amber);stroke-width:2.4}
+.tn.ok rect{fill:var(--teal-s);stroke:var(--teal);stroke-width:2}
+.tn.skip rect{fill:var(--card2);stroke:var(--ink3);stroke-dasharray:5 4}
+.tn.fail rect{fill:var(--red-s);stroke:var(--red);stroke-width:2}
+.tn .st{font-family:var(--f-mono);font-size:10px;fill:var(--ink3)}
+.log{max-height:240px;overflow:auto}
+.pk{transition:transform .8s cubic-bezier(.5,.05,.3,1)}
+.code{font-family:var(--f-mono);font-size:13px;background:var(--card2);border-radius:10px;padding:10px 0;overflow:auto}
+.code div{padding:2px 16px 2px 0;cursor:pointer;white-space:pre;display:block}
+.code div em{font-style:normal;color:var(--ink3);width:40px;text-align:right;padding-right:14px;display:inline-block;user-select:none}
+.code div:hover{background:var(--ice-s)}
+.code div.on{background:var(--ice-s);box-shadow:inset 3px 0 var(--ice)}
+.kw{color:var(--ice);font-weight:700}.str{color:var(--teal)}.num{color:var(--amber)}
+.qa{border:1px solid var(--line);border-radius:10px;margin:8px 0;background:var(--card);overflow:hidden}
+.qa summary{list-style:none;cursor:pointer;padding:14px 18px;display:flex;gap:12px;align-items:baseline;font-weight:600}
+.qa summary::-webkit-details-marker{display:none}
+.qa summary .lv{font-family:var(--f-mono);font-size:10px;letter-spacing:.1em;padding:2px 8px;border-radius:99px;flex:none;font-weight:400}
+.lv.b{background:var(--teal-s);color:var(--teal)}.lv.t{background:var(--red-s);color:var(--red)}.lv.s{background:var(--amber-s);color:var(--amber)}
+.qa summary .tp{font-family:var(--f-mono);font-size:10px;color:var(--ink3);flex:none;font-weight:400}
+.qa summary::after{content:"+";margin-left:auto;font-family:var(--f-mono);color:var(--ink3)}
+.qa[open] summary::after{content:"−"}
+.qa .ans{padding:0 18px 16px;color:var(--ink2);font-size:15px;border-top:1px solid var(--line)}
+.qa .ans p:first-child{margin-top:12px}
+.opt{display:block;width:100%;text-align:left;padding:12px 14px;margin:8px 0;border:1px solid var(--line2);border-radius:10px;background:var(--card);color:var(--ink);font-size:15px}
+.opt:hover{border-color:var(--ice)}
+.opt.ok{border-color:var(--teal);background:var(--teal-s)}.opt.bad{border-color:var(--red);background:var(--red-s)}
+.qexp{margin-top:10px;padding:12px 14px;border-radius:10px;background:var(--card2);font-size:14px;color:var(--ink2)}
+.score{font-family:var(--f-head);font-weight:700;font-size:56px;line-height:1}
+.cheat{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+.cheat div{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 16px;font-size:14px}
+.cheat div em{font-style:normal;font-family:var(--f-mono);font-size:20px;font-weight:700;color:var(--ice);display:block;line-height:1.1;margin-bottom:4px}
+.analogy-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:18px}
+.ag{border-radius:12px;padding:16px;border:1px solid var(--line);background:var(--card)}
+.ag .k{font-family:var(--f-mono);font-size:11px;letter-spacing:.12em}
+.ag h5{font-family:var(--f-head);font-size:18px;margin:2px 0 4px}
+.ag p{font-size:14px;color:var(--ink2);margin:0}
+.ag.a1{border-top:3px solid var(--amber)}.ag.a1 .k{color:var(--amber)}
+.ag.a2{border-top:3px solid var(--ice)}.ag.a2 .k{color:var(--ice)}
+.ag.a3{border-top:3px solid var(--teal)}.ag.a3 .k{color:var(--teal)}
+.ag.a4{border-top:3px solid var(--red)}.ag.a4 .k{color:var(--red)}
+footer{padding:40px 0;color:var(--ink3);font-size:13px;font-family:var(--f-mono)}
+.note-s{font-size:12px;color:var(--ink3);font-style:italic}
+@media (max-width:1000px){
+  .wrap{grid-template-columns:1fr;padding:16px}
+  nav.side{display:none}
+  .wwh,.grid2,.stepdesc .two{grid-template-columns:1fr}
+  .grid3,.analogy-grid{grid-template-columns:1fr}
+  .prog{display:none}
+}
+.road a.rm{display:flex;gap:8px;align-items:baseline;font-size:13px;padding:5px 10px;border-radius:8px;text-decoration:none;color:var(--ink2);border-left:2px solid transparent}
+.road a.rm:hover{background:var(--card);color:var(--ink)}
+.road a.rm em{font-style:normal;font-family:var(--f-mono);font-size:11px;min-width:20px}
+.road a.rm i{font-style:normal;font-family:var(--f-mono);font-size:9.5px;margin-left:auto;border:1px solid var(--line2);border-radius:99px;padding:0 6px;white-space:nowrap;color:var(--ink3)}
+.road a.rm.now{color:var(--ink);font-weight:600;border-left-color:var(--ice);background:var(--card);border-radius:0 8px 8px 0}
+.road a.rm.now i{border-color:var(--ice);color:var(--ice)}
+.road a.rm.ready em,.road a.rm.ready i{color:var(--teal)}.road a.rm.ready i{border-color:var(--teal)}
+.road a.rm.soon{color:var(--ink3)}
+.toast{position:fixed;bottom:24px;left:50%;transform:translate(-50%,20px);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;font-size:14px;opacity:0;transition:all .3s;z-index:60;pointer-events:none;max-width:90vw}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+.code div.pdone{box-shadow:inset 3px 0 var(--teal)}
+#pcCode{max-height:600px;position:relative}
+/* ===== Module 13 extras ===== */
+.sn{cursor:pointer}
+.sn rect.box{transition:all .25s}
+.sn:hover rect.box{stroke-width:2.2}
+.sn.sel rect.box{stroke-width:3;filter:drop-shadow(0 0 6px var(--ice-s))}
+.sn.dimn rect.box{fill:var(--ice-s);stroke:var(--ice)}
+.sn.fact rect.box{fill:var(--amber-s);stroke:var(--amber)}
+.sn.sub rect.box{fill:var(--teal-s);stroke:var(--teal);stroke-dasharray:5 3}
+.sjoin{stroke:var(--ink3);stroke-width:1.4;fill:none}
+.sjoin.on{stroke:var(--ice);stroke-width:2.4;stroke-dasharray:7 5}
+@media (prefers-reduced-motion:no-preference){ .sjoin.on{animation:dash .8s linear infinite} .newrow td{animation:newrow 1.6s ease-out} @keyframes newrow{0%{background:var(--amber-s)}100%{background:transparent}} }
+.dvgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:12px}
+.dvgrid>div{min-width:0}
+.dvt{background:var(--card2);border-radius:10px;padding:10px 12px;overflow:auto}
+.dvt h5{font-family:var(--f-mono);font-size:12px;letter-spacing:.06em;margin-bottom:6px;display:flex;justify-content:space-between;gap:8px}
+.dvt h5 span{color:var(--ink3);font-weight:400}
+.dvt.hub{border-top:3px solid var(--ice)}.dvt.lnk{border-top:3px solid var(--amber)}.dvt.sat{border-top:3px solid var(--teal)}
+.dvt table.t{font-size:12px}.dvt table.t td{font-family:var(--f-mono);font-size:11px;padding:4px 6px;white-space:nowrap}
+.dvt table.t th{font-size:10px;padding:4px 6px;white-space:nowrap}
+.srcrec{font-family:var(--f-mono);font-size:12.5px;background:var(--card2);border-radius:10px;padding:10px 14px;border-left:3px solid var(--amber);white-space:pre-wrap}
+.layers{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.lay{border:1px solid var(--line2);border-radius:12px;padding:14px;cursor:pointer;background:var(--card);transition:all .2s;text-align:left;color:var(--ink)}
+.lay:hover{transform:translateY(-2px)}
+.lay.on{box-shadow:0 0 0 2px var(--ice)}
+.lay .k{font-family:var(--f-mono);font-size:11px;letter-spacing:.12em}
+.lay h5{font-family:var(--f-head);font-size:20px;margin:2px 0}
+.lay p{font-size:13px;color:var(--ink2);margin:0}
+.lay.b1{border-top:4px solid #B5651D}.lay.b1 .k{color:#B5651D}
+.lay.b2{border-top:4px solid var(--ink3)}.lay.b2 .k{color:var(--ink2)}
+.lay.b3{border-top:4px solid var(--amber)}.lay.b3 .k{color:var(--amber)}
+.dn{cursor:pointer}
+.dn rect{fill:var(--card);stroke:var(--line2);stroke-width:1.2;transition:all .25s}
+.dn.src rect{fill:var(--teal-s);stroke:var(--teal)}
+.dn.seed rect{fill:var(--card2);stroke:var(--ink3);stroke-dasharray:4 3}
+.dn.snap rect{fill:var(--red-s);stroke:var(--red)}
+.dn.mdl rect{fill:var(--ice-s);stroke:var(--ice)}
+.dn.sel rect{stroke-width:3;stroke:var(--amber)}
+.dag.hl .dn{opacity:.28}.dag.hl .dn.hit{opacity:1}
+.dag.hl .dn.hit rect{stroke-width:2.6}
+.dag .dedge{stroke:var(--ink3);stroke-width:1.3;fill:none;transition:opacity .3s}
+.dag.hl .dedge{opacity:.15}.dag.hl .dedge.hit{opacity:1;stroke:var(--amber);stroke-width:2.2;stroke-dasharray:6 4}
+@media (prefers-reduced-motion:no-preference){ .dag.hl .dedge.hit{animation:dash .8s linear infinite} }
+.dn .mt{font-family:var(--f-mono);font-size:9.5px;fill:var(--ink3)}
+.runlist{font-family:var(--f-mono);font-size:12px;display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.runlist span{padding:3px 8px;border-radius:6px;background:var(--card2);border:1px solid var(--line2)}
+.runlist span.ok{background:var(--teal-s);border-color:var(--teal);color:var(--teal)}
+.runlist span.bad{background:var(--red-s);border-color:var(--red);color:var(--red)}
+.envrow{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:10px}
+.env{border-radius:10px;padding:10px 12px;background:var(--card2);font-size:13px;border-left:3px solid var(--ink3)}
+.env b{font-family:var(--f-mono);font-size:12px;display:block}
+.env.on{border-left-color:var(--teal);background:var(--teal-s)}
+.ci .fn rect{transition:all .3s}
+.ci .fn.done rect{fill:var(--teal-s);stroke:var(--teal)}
+.ci .fn.fail rect{fill:var(--red-s);stroke:var(--red);stroke-width:2.4}
+.ci .fn.skipd{opacity:.3}
+.ci.playing .fn.done{opacity:.85}.ci.playing .fn.fail{opacity:1}.ci.playing .fn.skipd{opacity:.2}
+@media (min-width:1001px){ #layers .ctl label{min-width:220px} }
+@media (max-width:560px){ .top{padding:10px 14px} .top .pill,.prog-l{display:none} }
+.scdt td:first-child{font-family:var(--f-mono);font-weight:700;color:var(--ice);white-space:nowrap}
+.analogy-grid.ag5{grid-template-columns:repeat(5,minmax(0,1fr))}
+.code a,.explain a,.mini a{color:var(--ice)}
+@media (max-width:1000px){ .dvgrid,.layers,.envrow,.analogy-grid.ag5{grid-template-columns:1fr} .grid2,.grid3{grid-template-columns:1fr!important} .dvgrid>div{grid-column:auto!important} table.t{display:block;overflow-x:auto} .ctl{flex-wrap:wrap} .ctl label{min-width:0;flex:1 1 100%} .ctl .v{min-width:60px} .cmds button{max-width:100%;white-space:normal} }
+/* course-wide phone layout */
+@media (max-width:560px){
+  .top{flex-wrap:wrap;gap:8px;padding:10px 14px}
+  .top .pill,.top .prog-l,.top .prog{display:none}
+  .brand{flex:1}
+  .ctl{flex-wrap:wrap}.ctl label{min-width:0;flex:1 1 100%}.ctl .v{min-width:0;text-align:left}
+  table{display:block;overflow-x:auto;max-width:100%}
+  .grid2,.grid3,.analogy-grid,[style*="grid-template-columns"]{grid-template-columns:1fr!important}
+  .grid2>*,.grid3>*,.call>div{min-width:0}
+  p code,li code,td code{word-break:break-word}
+  .code,.sqlbox,.out,.term,pre{max-width:100%;overflow-x:auto}
+  .call{flex-direction:column;gap:6px}
+  main,section,.panel,.wwh .box,.mini{min-width:0;max-width:100%}
+}
+</style>
+</head>
+<body>
+<div class="top">
+  <div class="brand">SNOWFLAKE<b>//</b>INTERVIEW LAB</div>
+  <span class="pill">Module 13 · Modeling &amp; tooling</span>
+  <div class="prog"><i id="progBar"></i></div>
+  <span class="prog-l" id="progLbl">0% explored</span>
+  <button class="theme" id="themeBtn">Dark / light</button>
+</div>
+<div class="wrap">
+<nav class="side">
+  <h4>MODULE 13 · CHAPTERS</h4>
+  <a href="#intro"><span>00</span>Why modeling still matters</a>
+  <a href="#dim"><span>01</span>Dimensional modeling</a>
+  <a href="#scd"><span>02</span>Slowly changing dims</a>
+  <a href="#dv"><span>03</span>Data Vault 2.0</a>
+  <a href="#layers"><span>04</span>Medallion layers</a>
+  <a href="#keys"><span>05</span>Keys &amp; constraints</a>
+  <a href="#dbt"><span>06</span>dbt with Snowflake</a>
+  <a href="#cicd"><span>07</span>Orchestration &amp; CI/CD</a>
+  <a href="#sql"><span>08</span>SQL lab</a>
+  <a href="#qa"><span>09</span>Interview Q&amp;A</a>
+  <a href="#quiz"><span>10</span>Quiz</a>
+  <a href="#cheat"><span>11</span>Cheat sheet</a>
+  <div class="road">
+    <h4>COURSE ROADMAP · CLICK TO OPEN</h4>
+    <a class="rm ready" href="../module01/"><em>01</em>Architecture<i>open</i></a>
+    <a class="rm ready" href="../module02/"><em>02</em>SnowSQL · unstructured · streams, tasks &amp; procedures<i>open</i></a>
+    <a class="rm ready" href="../module03/"><em>03</em>Performance tuning<i>open</i></a>
+    <a class="rm ready" href="../module04/"><em>04</em>Data ingestion (Snowpipe)<i>open</i></a>
+    <a class="rm ready" href="../module05/"><em>05</em>Dynamic tables &amp; transforms<i>open</i></a>
+    <a class="rm ready" href="../module06/"><em>06</em>Semi-structured data<i>open</i></a>
+    <a class="rm ready" href="../module07/"><em>07</em>Data protection<i>open</i></a>
+    <a class="rm ready" href="../module08/"><em>08</em>Security &amp; governance<i>open</i></a>
+    <a class="rm ready" href="../module09/"><em>09</em>Cost optimization<i>open</i></a>
+    <a class="rm ready" href="../module10/"><em>10</em>Data sharing<i>open</i></a>
+    <a class="rm ready" href="../module11/"><em>11</em>Snowpark &amp; Cortex AI<i>open</i></a>
+    <a class="rm ready" href="../module12/"><em>12</em>Advanced SQL<i>open</i></a>
+    <a class="rm now" href="../module13/"><em>13</em>Modeling &amp; tooling<i>you are here</i></a>
+    <a class="rm ready" href="../module14/"><em>14</em>System design &amp; behavioral<i>open</i></a>
+  </div>
+</nav>
+<main>
+
+<section id="intro">
+  <div class="eyebrow">MODULE 13 · DATA MODELING &amp; TOOLING</div>
+  <h1>Shape the data.<br><span class="thin">Ship it safely.</span></h1>
+  <p class="lead" style="margin-top:18px">The previous modules taught you how Snowflake stores, loads, secures and queries data. This module is about the two things that decide whether a warehouse stays useful after year one: <b>how you shape the tables</b> (star schemas, Data Vault, layers, keys) and <b>how you build and release changes</b> (dbt, Airflow, schemachange, Git, clones and SWAP).</p>
+  <div class="wwh">
+    <div class="box what"><span class="tag">01 · WHAT IS IT</span>
+      <p><b>Data modeling</b> means deciding <b>which tables exist, what one row in each table means, and how tables connect</b>. It's the blueprint of the warehouse. <b>Tooling</b> is the machinery that turns that blueprint into real objects, tests them and deploys them repeatably: dbt for SQL transformations, an orchestrator for scheduling, and CI/CD for safe releases.</p>
+    </div>
+    <div class="box why"><span class="tag">02 · WHY IT STILL MATTERS IN A COLUMNAR CLOUD WAREHOUSE</span>
+      <p>A common fresher myth: "Snowflake is fast and storage is cheap, so just dump everything into one wide table." Speed fixes <i>slow queries</i>, not <i>wrong answers</i>. Without a model you get double-counted revenue (wrong grain), five different definitions of "active customer", and history that silently disappears when a source overwrites a row.</p>
+      <ul class="dots"><li><b>Correctness:</b> the grain and keys decide whether SUMs are right.</li><li><b>Usability:</b> analysts and BI tools understand a star schema immediately.</li><li><b>Cost:</b> a clear model means fewer giant ad-hoc joins and less rework.</li><li><b>Change:</b> sources change constantly; a good model absorbs it.</li></ul>
+    </div>
+    <div class="box how"><span class="tag">03 · HOW SNOWFLAKE CHANGES THE OLD RULES</span>
+      <div class="grid3">
+        <div class="mini"><h5>Joins are cheaper</h5><p>Columnar storage reads only the columns a query touches, and micro-partition pruning skips most of a big fact table. A few joins to small dimensions are rarely the bottleneck, so star schemas stay a good default.</p></div>
+        <div class="mini"><h5>Wide tables are fine too</h5><p>Because unused columns cost nothing to scan, a denormalized "one big table" for a single dashboard is acceptable as a <b>final serving layer</b>, built on top of a proper model, not instead of it.</p></div>
+        <div class="mini"><h5>Constraints don't protect you</h5><p>Snowflake doesn't enforce primary or foreign keys on standard tables (chapter 05). The model, your dbt tests and your MERGE logic are what keep data clean.</p></div>
+      </div>
+    </div>
+  </div>
+  <p style="margin-top:6px">Five analogies to carry through the module:</p>
+  <div class="analogy-grid ag5">
+    <div class="ag a1 rise"><div class="k">STAR SCHEMA</div><h5>A shop receipt</h5><p>Each receipt line is a fact (what was sold, how much). The product catalog, customer card and calendar are the dimensions that describe it.</p></div>
+    <div class="ag a2 rise" style="animation-delay:.1s"><div class="k">DATA VAULT</div><h5>LEGO bricks</h5><p>Hubs are the studs (business keys), links are connectors, satellites are the coloured pieces that change. You only ever add bricks.</p></div>
+    <div class="ag a3 rise" style="animation-delay:.2s"><div class="k">MEDALLION</div><h5>A water plant</h5><p>Raw river water (bronze), filtered and treated (silver), bottled and labelled for drinking (gold).</p></div>
+    <div class="ag a4 rise" style="animation-delay:.3s"><div class="k">DBT</div><h5>A recipe book</h5><p>Each model is a recipe that names its ingredients with ref(). dbt works out the cooking order and tastes every dish (tests).</p></div>
+    <div class="ag a1 rise" style="animation-delay:.4s"><div class="k">BLUE / GREEN</div><h5>A stage set change</h5><p>Build the new set behind the curtain (a clone), then swap it in one move. If it looks wrong, swap back.</p></div>
+  </div>
+</section>
+
+<section id="dim">
+  <div class="eyebrow">CHAPTER 01</div>
+  <h2>Dimensional modeling <span class="thin">· facts, dimensions and grain</span></h2>
+  <div class="wwh">
+    <div class="box what"><span class="tag">01 · WHAT IS IT</span>
+      <p>Dimensional modeling (Ralph Kimball's method) splits data into two kinds of tables:</p>
+      <ul class="dots"><li><b>Fact tables</b> record <b>business events or measurements</b>: a sale, a payment, a shipment, a daily balance. They hold <b>numeric measures</b> (amount, quantity) plus <b>foreign keys</b> to dimensions. They are long and narrow, and grow every day.</li>
+      <li><b>Dimension tables</b> hold the <b>descriptive context</b>, the "who, what, where, when": customer, product, store, date. They are short and wide, with many text attributes used for filtering and grouping.</li></ul>
+      <p>Arrange one fact in the middle with dimensions around it and you get a <b>star schema</b>.</p>
+    </div>
+    <div class="box why"><span class="tag">02 · WHY WE USE IT</span>
+      <ul class="dots"><li><b>Easy to understand:</b> business users read it as "sales by product by month".</li><li><b>Predictable SQL:</b> every question is fact JOIN dimensions, GROUP BY attributes. BI tools (Power BI, Tableau, Looker) are built around this shape.</li><li><b>Consistent numbers:</b> shared (conformed) dimensions mean "customer" means the same thing in sales, returns and support facts.</li><li><b>Performs well in Snowflake:</b> big fact pruned by date, small dimensions easily broadcast to every node during a join.</li></ul>
+    </div>
+    <div class="box how"><span class="tag">03 · HOW IT WORKS · THE FOUR-STEP DESIGN</span>
+      <div class="grid3" style="grid-template-columns:repeat(4,1fr)">
+        <div class="mini"><h5>1 · Pick the process</h5><p>One business process per fact: orders, shipments, inventory. Not "the sales department".</p></div>
+        <div class="mini"><h5>2 · Declare the grain</h5><p>Say exactly what <b>one row</b> means, e.g. "one row per order line". This is the most important decision.</p></div>
+        <div class="mini"><h5>3 · Choose dimensions</h5><p>Everything that is true at that grain: date, customer, product, store, promotion.</p></div>
+        <div class="mini"><h5>4 · Choose facts</h5><p>Numeric measures true at that grain: quantity, net amount, discount.</p></div>
+      </div>
+      <p style="margin-top:10px">Dimensions get a <b>surrogate key</b> (a meaningless integer or hash like <code>customer_sk</code>) instead of the source system's ID. That lets you keep history (several rows for the same customer, chapter 02), combine sources whose IDs clash, and add an "Unknown" member (key <code>-1</code>) so facts with missing data still join.</p>
+    </div>
+  </div>
+
+  <h3>Three kinds of fact table</h3>
+  <table class="t">
+    <tr><th>TYPE</th><th>ONE ROW MEANS</th><th>HOW IT CHANGES</th><th>EXAMPLE</th></tr>
+    <tr><td><b>Transaction</b></td><td>One event at a point in time</td><td>Insert only; never updated</td><td><code>fact_sales</code>: one row per order line</td></tr>
+    <tr><td><b>Periodic snapshot</b></td><td>The state of something at the end of each period</td><td>One new set of rows every day/month, even if nothing happened</td><td><code>fact_inventory_daily</code>: stock on hand per product per store per day</td></tr>
+    <tr><td><b>Accumulating snapshot</b></td><td>One process instance with several milestones</td><td>The same row is <b>updated</b> as milestones happen</td><td><code>fact_order_fulfilment</code>: ordered_date, packed_date, shipped_date, delivered_date, days_to_ship</td></tr>
+  </table>
+  <p class="note-s">Also know: <b>factless facts</b> (events with no measure, like "student attended class"), and measure types: <b>additive</b> (sum across everything: sales amount), <b>semi-additive</b> (can't sum across time: account balance, stock level), <b>non-additive</b> (ratios, percentages: store them as numerator and denominator instead).</p>
+
+  <div class="panel">
+    <div class="panel-h"><div class="t">SIMULATOR · <b>STAR SCHEMA EXPLORER</b> · click any table</div>
+      <div class="row"><span class="note-s">Layout:</span><div class="tabs" id="stMode" style="margin:0"><button class="on" data-m="star">Star (denormalized dims)</button><button data-m="snow">Snowflake (normalized dims)</button></div></div></div>
+    <div class="grid2" style="grid-template-columns:1.2fr 1fr">
+      <div><svg viewBox="0 0 680 440" id="stSvg"></svg>
+        <div class="legend"><span><i style="background:var(--amber-s);border:1px solid var(--amber)"></i>fact</span><span><i style="background:var(--ice-s);border:1px solid var(--ice)"></i>dimension</span><span><i style="background:var(--teal-s);border:1px dashed var(--teal)"></i>sub-dimension (snowflaked out)</span></div>
+      </div>
+      <div><div class="explain" id="stInfo"></div></div>
+    </div>
+    <div class="stats">
+      <div class="stat"><div class="k">TABLES</div><div class="n" id="stT">5</div></div>
+      <div class="stat"><div class="k">JOINS FOR "REVENUE BY CATEGORY &amp; REGION"</div><div class="n" id="stJ">2</div></div>
+      <div class="stat"><div class="k">REPEATED TEXT IN DIMS</div><div class="n" id="stR" style="font-size:22px">some</div><div class="s">category name stored per product row</div></div>
+    </div>
+    <div class="note-s" style="margin-bottom:4px">Query the model is built for:</div>
+    <div class="sqlbox" id="stSql"></div>
+    <div class="insight" id="stIns"></div>
+  </div>
+
+  <h3>The vocabulary interviewers expect</h3>
+  <div class="grid3">
+    <div class="mini"><h5>Grain</h5><p>The exact meaning of one fact row. Mixing grains (order header totals next to order line amounts) is the #1 cause of double-counting.</p></div>
+    <div class="mini"><h5>Conformed dimension</h5><p>One dimension shared by several facts with the same keys and attribute values (e.g. <code>dim_date</code>, <code>dim_customer</code>), so you can compare sales vs returns side by side. Kimball calls the matrix of facts × conformed dims the <b>bus matrix</b>.</p></div>
+    <div class="mini"><h5>Star vs snowflake schema</h5><p><b>Star:</b> each dimension is one flattened table (category name repeated per product). <b>Snowflake:</b> dimensions normalized into sub-tables (product → category → department). Star is simpler and usually faster for BI; snowflaking saves little in a columnar store.</p></div>
+    <div class="mini"><h5>Degenerate dimension</h5><p>A dimension key with no dimension table, stored directly in the fact: <code>order_number</code>, <code>invoice_no</code>. Useful for grouping lines of one order.</p></div>
+    <div class="mini"><h5>Junk dimension</h5><p>Combines several small low-cardinality flags (is_gift, payment_type, channel) into one table of all combinations, so the fact carries one key instead of five flag columns.</p></div>
+    <div class="mini"><h5>Bridge table</h5><p>Resolves <b>many-to-many</b>: one bank account with several holders, one patient with several diagnoses. The bridge lists the pairs (with an optional allocation weight) so you don't double count.</p></div>
+  </div>
+  <div class="grid2" style="margin-top:14px">
+    <div class="call trap" style="margin:0"><b class="k">INTERVIEW TRAP</b><div>"Revenue doubled after we added the shipments table to the join." That's a <b>fan-out</b>: joining two facts of different grain (or a fact to a many-to-many without a bridge) repeats rows. Fix: aggregate each fact to a common grain first, then join on conformed dimensions ("drill across").</div></div>
+    <div class="call pro" style="margin:0"><b class="k">SENIOR ANGLE</b><div>In Snowflake, <b>cluster big facts by date</b> (or let natural load order do it) so date filters prune micro-partitions; keep dimensions small enough to be broadcast. Prefer integer or binary surrogate keys over long strings on very large facts, and keep a <code>dim_date</code> table rather than calling date functions in every report.</div></div>
+  </div>
+</section>
+
+<section id="scd">
+  <div class="eyebrow">CHAPTER 02</div>
+  <h2>Slowly changing dimensions <span class="thin">· recap</span></h2>
+  <div class="wwh">
+    <div class="box what"><span class="tag">01 · WHAT IS IT</span>
+      <p>Dimension attributes change slowly: a customer moves city, a product changes category. An <b>SCD type</b> is the rule for what happens to the old value.</p>
+    </div>
+    <div class="box why"><span class="tag">02 · WHY IT MATTERS</span>
+      <p>If you overwrite a customer's city, last year's sales suddenly appear under the <i>new</i> city. Sometimes that's what the business wants, often it's not. You must choose per attribute.</p>
+    </div>
+    <div class="box how"><span class="tag">03 · HOW EACH TYPE WORKS</span>
+      <table class="t scdt">
+        <tr><th>TYPE</th><th>WHAT HAPPENS ON CHANGE</th><th>HISTORY?</th><th>TYPICAL USE</th></tr>
+        <tr><td>Type 0</td><td>Keep the original value forever; ignore changes</td><td>Original only</td><td>Date of birth, original signup channel</td></tr>
+        <tr><td>Type 1</td><td>Overwrite in place (UPDATE)</td><td>None</td><td>Fixing typos, attributes where only "current" matters</td></tr>
+        <tr><td>Type 2</td><td>Close the old row (valid_to, is_current = FALSE) and insert a new row with a new surrogate key</td><td>Full</td><td>City, segment, sales rep: anything reported "as it was"</td></tr>
+        <tr><td>Type 3</td><td>Add a column for the previous value (<code>prev_city</code>)</td><td>One step back</td><td>Re-organisations where people compare "old vs new" territory</td></tr>
+        <tr><td>Type 4</td><td>Keep current values in the main dimension and move history to a separate history table (Kimball also uses "type 4" for a <b>mini-dimension</b> of fast-changing attributes)</td><td>In another table</td><td>Very large or fast-changing dimensions</td></tr>
+        <tr><td>Type 6</td><td>Hybrid 1 + 2 + 3: Type 2 rows plus a <code>current_city</code> column overwritten on every row</td><td>Full + current</td><td>Report both "as was" and "as is" without self-joins</td></tr>
+      </table>
+      <p style="margin-top:10px">Type 2 is the one interviews focus on. The full <b>SCD2 MERGE pattern with streams</b> (and the dbt snapshot equivalent) is built step by step in <a href="../module05/">Module 05 · Dynamic tables &amp; transforms</a>; in this module we'll see dbt snapshots in chapter 06.</p>
+    </div>
+  </div>
+  <div class="call trap"><b class="k">INTERVIEW TRAP</b><div>"With Type 2, which key does the fact table store?" The <b>surrogate key of the dimension row that was current when the event happened</b>, looked up by business key and event date between valid_from and valid_to. Joining on the business key instead returns every historical version and multiplies rows.</div></div>
+</section>
+
+<section id="dv">
+  <div class="eyebrow">CHAPTER 03</div>
+  <h2>Data Vault 2.0 <span class="thin">· hubs, links and satellites</span></h2>
+  <div class="wwh">
+    <div class="box what"><span class="tag">01 · WHAT IS IT</span>
+      <p>Data Vault (Dan Linstedt) is a modeling method for the <b>integration layer</b> of an enterprise warehouse. It splits every source entity into three kinds of table:</p>
+      <ul class="dots"><li><b>Hub</b>: the list of unique <b>business keys</b> (customer number, order number). One row per key, ever.</li><li><b>Link</b>: a <b>relationship</b> between hubs (customer placed order). One row per unique combination.</li><li><b>Satellite</b>: the <b>descriptive attributes and their history</b> (name, city, amount), hanging off a hub or a link. A new row only when something changes.</li></ul>
+      <p>Every row carries a <b>hash key</b>, a <b>load date</b> and a <b>record source</b>.</p>
+    </div>
+    <div class="box why"><span class="tag">02 · WHY WE USE IT</span>
+      <ul class="dots"><li><b>Many changing sources:</b> adding a new source system means adding satellites, not redesigning tables.</li><li><b>Full auditability:</b> insert-only, every version kept with where and when it came from (finance, insurance, regulated industries).</li><li><b>Parallel loading:</b> hash keys are calculated from the business key itself, so hubs, links and satellites load at the same time with no lookups.</li><li><b>Raw history first, business rules later:</b> you store what the source said, then apply interpretation in a separate layer.</li></ul>
+    </div>
+    <div class="box how"><span class="tag">03 · HOW IT WORKS</span>
+      <div class="grid3">
+        <div class="mini"><h5>Hash keys</h5><p><code>MD5(UPPER(TRIM(business_key)))</code> (or SHA-1/SHA-2) gives a fixed-length, deterministic key. Any loader in any system computes the same key for "C-1001", so no sequence lookup is needed. In Snowflake, <code>MD5_BINARY</code> stores 16 bytes instead of a 32-char string.</p></div>
+        <div class="mini"><h5>Hashdiff</h5><p>A hash of all the satellite's descriptive columns. Compare the incoming hashdiff with the latest stored one: equal means "no change, insert nothing"; different means "insert a new satellite row".</p></div>
+        <div class="mini"><h5>Raw vs business vault</h5><p><b>Raw vault</b>: hubs/links/sats exactly as the sources delivered (no business rules). <b>Business vault</b>: derived satellites, computed attributes, de-duplication and rules. Information marts (often star schemas) are built on top.</p></div>
+      </div>
+      <p style="margin-top:10px"><b>PIT (point-in-time) tables</b> store, for each hub key and snapshot date, which satellite row was valid in each satellite, so queries do simple equi-joins instead of complex "latest row before date" logic. <b>Bridge tables</b> pre-join hubs and links along a common path for faster mart queries. Both are query helpers, not sources of truth.</p>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-h"><div class="t">SIMULATOR · <b>ONE SOURCE RECORD → HUB / LINK / SATELLITE ROWS</b></div><span class="note-s">Hash values are an illustrative short hash, not real MD5. Dates are sample load dates.</span></div>
+    <div class="grid2" style="grid-template-columns:1fr 1.1fr">
+      <div><div class="note-s">Incoming source record (from the order system):</div><div class="srcrec" id="dvSrc"></div></div>
+      <div>
+        <div class="note-s">Choose what arrives next:</div>
+        <div class="cmds" id="dvBtns">
+          <button data-a="load">1 · Load this record<small>first load: everything is new</small></button>
+          <button data-a="same">2 · Same record again<small>re-delivered file</small></button>
+          <button data-a="move">3 · Customer moves to Pune<small>attribute change</small></button>
+          <button data-a="order">4 · Same customer, new order<small>new relationship</small></button>
+          <button data-a="email">5 · Customer changes email<small>another attribute change</small></button>
+        </div>
+        <button class="btn" id="dvReset">Reset vault</button>
+      </div>
+    </div>
+    <div class="dvgrid">
+      <div class="dvt hub"><h5>HUB_CUSTOMER <span id="dvc1">0 rows</span></h5><table class="t" id="dvHubC"></table></div>
+      <div class="dvt lnk"><h5>LNK_CUSTOMER_ORDER <span id="dvc2">0 rows</span></h5><table class="t" id="dvLnk"></table></div>
+      <div class="dvt hub"><h5>HUB_ORDER <span id="dvc3">0 rows</span></h5><table class="t" id="dvHubO"></table></div>
+      <div class="dvt sat" style="grid-column:span 2"><h5>SAT_CUSTOMER_DETAILS <span id="dvc4">0 rows</span></h5><table class="t" id="dvSatC"></table></div>
+      <div class="dvt sat"><h5>SAT_ORDER_DETAILS <span id="dvc5">0 rows</span></h5><table class="t" id="dvSatO"></table></div>
+    </div>
+    <div class="stats">
+      <div class="stat"><div class="k">ROWS INSERTED THIS LOAD</div><div class="n" id="dvIns">0</div></div>
+      <div class="stat"><div class="k">ROWS UPDATED (EVER)</div><div class="n">0</div><div class="s">Data Vault is insert-only</div></div>
+      <div class="stat"><div class="k">TOTAL VAULT ROWS</div><div class="n" id="dvTot">0</div></div>
+    </div>
+    <div class="insight" id="dvMsg">Press <b>1 · Load this record</b> to watch one flat source row split into five tables.</div>
+  </div>
+
+  <h3>Kimball or Data Vault?</h3>
+  <table class="t">
+    <tr><th></th><th>KIMBALL STAR SCHEMA</th><th>DATA VAULT 2.0</th></tr>
+    <tr><td><b>Built for</b></td><td>Consumption: BI, reporting, self-service</td><td>Integration: many sources, history, audit</td></tr>
+    <tr><td><b>Change in sources</b></td><td>Often requires reworking dims/facts</td><td>Add a satellite or link; existing tables untouched</td></tr>
+    <tr><td><b>Query simplicity</b></td><td>High: fact + few dims</td><td>Low: many joins; needs PIT/bridge or marts</td></tr>
+    <tr><td><b>Loading</b></td><td>Lookups for surrogate keys, MERGE/updates</td><td>Insert-only, parallel, hash-based</td></tr>
+    <tr><td><b>Typical place</b></td><td>Gold / marts layer</td><td>Silver / integration layer, with Kimball marts on top</td></tr>
+  </table>
+  <div class="grid2" style="margin-top:14px">
+    <div class="call trap" style="margin:0"><b class="k">INTERVIEW TRAP</b><div>"Why not just use Snowflake's <code>HASH()</code> function for hash keys?" <code>HASH()</code> returns a 64-bit integer and is not meant as a collision-resistant key; it can also differ from other tools. Data Vault uses standard <b>MD5 or SHA</b> on <b>normalized</b> input (trimmed, upper-cased, consistent delimiter and null handling) so every loader produces identical keys.</div></div>
+    <div class="call pro" style="margin:0"><b class="k">SENIOR ANGLE</b><div>Data Vault suits Snowflake well: insert-only loads are cheap (no updates rewriting micro-partitions), multi-table INSERT (<code>INSERT ALL</code>) can feed hub, link and satellites from one staging scan, and the many joins are handled by PIT tables or dynamic tables that flatten the vault into marts. Don't use it for a small team with two sources: it's heavy.</div></div>
+  </div>
+</section>
+
+<section id="layers">
+  <div class="eyebrow">CHAPTER 04</div>
+  <h2>Medallion architecture <span class="thin">· bronze, silver, gold in Snowflake</span></h2>
+  <div class="wwh">
+    <div class="box what"><span class="tag">01 · WHAT IS IT</span>
+      <p>A <b>layered architecture</b> moves data through stages of increasing quality. The "medallion" names come from the lakehouse world; dbt projects call the same idea <b>raw / staging / marts</b>.</p>
+      <ul class="dots"><li><b>Bronze (raw)</b>: data exactly as it arrived, often VARIANT JSON, plus load metadata.</li><li><b>Silver (staging / integration)</b>: cleaned, typed, de-duplicated, conformed. Data Vault often lives here.</li><li><b>Gold (marts)</b>: business-ready star schemas and aggregates for BI, ML and sharing.</li></ul>
+    </div>
+    <div class="box why"><span class="tag">02 · WHY WE USE IT</span>
+      <ul class="dots"><li><b>Replay:</b> bronze keeps the original, so a bug in silver logic can be fixed and rebuilt without re-ingesting.</li><li><b>Separation of concerns:</b> ingestion engineers own bronze, analytics engineers own gold.</li><li><b>Security:</b> analysts get access to gold only; raw PII stays locked in bronze.</li><li><b>Cost control:</b> different retention and table types per layer.</li></ul>
+    </div>
+    <div class="box how"><span class="tag">03 · HOW IT MAPS TO SNOWFLAKE OBJECTS · CLICK A LAYER</span>
+      <div class="layers" id="lyCards">
+        <button class="lay b1 on" data-l="0"><div class="k">BRONZE · RAW</div><h5>As delivered</h5><p>Snowpipe / COPY targets, VARIANT, append-only</p></button>
+        <button class="lay b2" data-l="1"><div class="k">SILVER · STAGING</div><h5>Clean &amp; conform</h5><p>Typed, de-duplicated, keys added, often transient</p></button>
+        <button class="lay b3" data-l="2"><div class="k">GOLD · MARTS</div><h5>Ready to use</h5><p>Facts &amp; dims, aggregates, secure views, shares</p></button>
+      </div>
+      <div class="grid2" style="margin-top:12px">
+        <div class="explain" id="lyInfo"></div>
+        <div><div class="note-s">Example DDL for this layer</div><div class="sqlbox" id="lySql"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <h3>Environment strategy: dev / test / prod with zero-copy clones</h3>
+  <p>Every team needs places to build and test without touching production. In Snowflake the usual pattern is <b>one database per layer per environment</b> (<code>PROD_RAW</code>, <code>PROD_ANALYTICS</code>, <code>DEV_ANALYTICS</code>…) or one database per environment with a schema per layer. Test environments are created with <b>zero-copy clones</b>: the clone shares prod's micro-partitions and only pays storage for data it changes.</p>
+  <div class="panel">
+    <div class="panel-h"><div class="t">CALCULATOR · <b>WHAT DOES A CLONED TEST ENVIRONMENT COST?</b></div><span class="note-s">Illustrative model, not a benchmark. Storage price is a placeholder; check your contract.</span></div>
+    <div class="row" style="margin-bottom:6px"><span class="note-s" style="min-width:150px">Environment approach:</span><div class="tabs" id="envMode" style="margin:0"><button class="on" data-v="clone">Zero-copy clone of prod</button><button data-v="copy">Full copy (CTAS / re-load)</button></div></div>
+    <div class="ctl"><label>Prod size (TB, compressed)</label><input type="range" id="envSz" min="1" max="100" value="20"><span class="v" id="envSzV"></span></div>
+    <div class="ctl"><label>% of data changed in test</label><input type="range" id="envCh" min="0" max="100" value="5"><span class="v" id="envChV"></span></div>
+    <div class="ctl"><label>Number of test / dev envs</label><input type="range" id="envN" min="1" max="10" value="3"><span class="v" id="envNV"></span></div>
+    <div class="sqlbox" id="envSql"></div>
+    <div class="stats">
+      <div class="stat"><div class="k">EXTRA STORAGE</div><div class="n" id="envTB">–</div></div>
+      <div class="stat"><div class="k">EXTRA STORAGE / MONTH</div><div class="n" id="envUSD">–</div><div class="s">at an assumed $23 per TB-month</div></div>
+      <div class="stat"><div class="k">TIME TO CREATE</div><div class="n" id="envTm" style="font-size:22px">–</div></div>
+    </div>
+    <div class="envrow" id="envRow"></div>
+    <div class="insight" id="envIns"></div>
+  </div>
+  <div class="grid2">
+    <div class="mini"><h5>Naming conventions that scale</h5><p>Databases: <code>&lt;ENV&gt;_&lt;LAYER&gt;</code> (<code>PROD_RAW</code>, <code>DEV_MARTS</code>). Schemas by source or domain (<code>RAW.SHOPIFY</code>, <code>MARTS.FINANCE</code>). Tables by role: <code>stg_</code>, <code>int_</code>, <code>dim_</code>, <code>fct_</code>, <code>agg_</code>. Warehouses by workload (<code>LOAD_WH</code>, <code>TRANSFORM_WH</code>, <code>BI_WH</code>). Roles per layer and access level. Consistency makes RBAC grants and monitoring scripts simple.</p></div>
+    <div class="mini"><h5>Dynamic tables as the layer glue</h5><p>Silver and gold can be <b>dynamic tables</b>: a SELECT plus a <code>TARGET_LAG</code>, and Snowflake refreshes them incrementally where possible (Module 05). Use <code>TARGET_LAG = DOWNSTREAM</code> on intermediate layers so they refresh only when a gold table needs them.</p></div>
+  </div>
+  <div class="grid2" style="margin-top:14px">
+    <div class="call trap" style="margin:0"><b class="k">INTERVIEW TRAP</b><div>"Is a clone free forever?" No. It's free <b>at creation</b>. As soon as either the clone or the source changes micro-partitions, the changed partitions are stored separately. A long-lived dev clone of a busy prod table slowly becomes a full copy. Also remember that <b>named internal stages are not cloned</b> with a database, and clones keep child-object grants but not the grants on the cloned container itself (check docs for the exact rules).</div></div>
+    <div class="call pro" style="margin:0"><b class="k">SENIOR ANGLE</b><div>Put staging and scratch layers in <b>transient</b> databases/schemas: no Fail-safe (7 days of extra storage avoided) and Time Travel of at most 1 day. Keep bronze permanent if it is your only copy of the source, since replay depends on it. Gold usually stays permanent with a longer Time Travel window for "who broke the dashboard yesterday" recovery.</div></div>
+  </div>
+</section>
+
+<section id="keys">
+  <div class="eyebrow">CHAPTER 05</div>
+  <h2>Keys &amp; constraints <span class="thin">· what Snowflake does and doesn't enforce</span></h2>
+  <div class="wwh">
+    <div class="box what"><span class="tag">01 · WHAT IS IT</span>
+      <p>Snowflake lets you declare <code>PRIMARY KEY</code>, <code>UNIQUE</code>, <code>FOREIGN KEY</code> and <code>NOT NULL</code>. On <b>standard tables, only NOT NULL is enforced</b>. PK, UNIQUE and FK are <b>informational</b>: stored in metadata, shown in <code>SHOW PRIMARY KEYS</code> and used by BI and modeling tools, but a duplicate primary key insert <b>succeeds</b>.</p>
+      <p><b>Hybrid tables</b> (Unistore, for transactional workloads) are different: they require a primary key and enforce PK, UNIQUE and FK constraints. Check current docs for their availability and limits in your region.</p>
+    </div>
+    <div class="box why"><span class="tag">02 · WHY DECLARE THEM ANYWAY</span>
+      <ul class="dots"><li><b>Documentation:</b> anyone reading the DDL knows the grain and relationships.</li><li><b>Tools:</b> BI tools, ER diagram tools and some semantic layers read the constraints to suggest joins.</li><li><b>Optimizer (with RELY):</b> setting the <code>RELY</code> property tells Snowflake it may trust the constraint, which can enable optimizations such as eliminating an unnecessary join. Only use it when your pipeline <i>guarantees</i> the data honours the constraint, otherwise results can be wrong.</li></ul>
+    </div>
+    <div class="box how"><span class="tag">03 · HOW IT WORKS · TRY TO BREAK THE TABLE</span>
+      <p>Below, <code>orders</code> has <code>order_id PRIMARY KEY</code>, <code>customer_id REFERENCES customers</code> and <code>amount NOT NULL</code>. The <code>customers</code> table only contains customer 1 and 2. Switch between a standard and a hybrid table and run the inserts.</p>
+    </div>
+  </div>
+  <div class="panel">
+    <div class="panel-h"><div class="t">INTERACTIVE · <b>CONSTRAINT ENFORCEMENT</b></div>
+      <div class="row"><span class="note-s">Table type:</span><div class="tabs" id="kyType" style="margin:0"><button class="on" data-v="std">Standard table</button><button data-v="hyb">Hybrid table</button></div><button class="btn" id="kyReset">Reset</button></div></div>
+    <div class="cmds" id="kyBtns">
+      <button data-a="ok">INSERT (101, 1, 50.00)<small>valid row</small></button>
+      <button data-a="dup">INSERT (101, 2, 75.00)<small>duplicate primary key</small></button>
+      <button data-a="null">INSERT (102, 1, NULL)<small>NULL into NOT NULL column</small></button>
+      <button data-a="fk">INSERT (103, 999, 20.00)<small>customer 999 doesn't exist</small></button>
+      <button data-a="chk">Find PK violations<small>the query you must run yourself</small></button>
+    </div>
+    <div class="grid2">
+      <div><div class="sqlbox" id="kySql">-- click a statement above</div><div class="explain" id="kyRes" style="margin-top:10px"><b class="h">RESULT</b>Nothing run yet.</div></div>
+      <div><div class="note-s">ORDERS (current contents)</div><table class="t" id="kyTbl"></table></div>
+    </div>
+    <div class="insight" id="kyIns">Run the valid insert, then the duplicate. On a standard table, both succeed.</div>
+  </div>
+
+  <h3>Generating keys: sequences, IDENTITY, UUIDs and hashes</h3>
+  <div class="panel">
+    <div class="panel-h"><div class="t">INTERACTIVE · <b>WHERE DO THE GAPS COME FROM?</b></div><button class="btn" id="sqReset">Reset</button></div>
+    <div class="row" style="margin-bottom:8px">
+      <button class="btn" id="sqIns">INSERT 1 row (IDENTITY)</button>
+      <button class="btn" id="sqRb">INSERT then ROLLBACK</button>
+      <button class="btn" id="sqPar">INSERT 3 rows from 2 sessions at once</button>
+      <button class="btn" id="sqUuid">Generate UUID_STRING()</button>
+    </div>
+    <div class="grid2">
+      <div><div class="note-s">Values handed out by the sequence</div><div class="chips" id="sqChips" style="margin-top:6px"></div></div>
+      <div><div class="note-s">Rows actually in the table</div><div class="out" id="sqRows" style="margin-top:6px">(empty)</div></div>
+    </div>
+    <div class="insight" id="sqIns2">IDENTITY / AUTOINCREMENT values are <b>unique</b>, but not guaranteed to be <b>gap-free</b> or in strict insert order.</div>
+  </div>
+  <table class="t">
+    <tr><th>METHOD</th><th>HOW</th><th>GOOD FOR</th><th>WATCH OUT</th></tr>
+    <tr><td><b>SEQUENCE</b></td><td><code>CREATE SEQUENCE s;</code> then <code>s.NEXTVAL</code></td><td>Sharing one counter across tables; surrogate keys for dims</td><td>Unique but gaps are normal; don't use for invoice numbers that must be contiguous</td></tr>
+    <tr><td><b>IDENTITY / AUTOINCREMENT</b></td><td><code>id NUMBER IDENTITY(1,1)</code></td><td>Simple per-table surrogate key</td><td>Backed by a sequence: same gap behaviour; ordering setting (ORDER / NOORDER) affects whether values increase with insert order, so check the default in your account</td></tr>
+    <tr><td><b>UUID_STRING()</b></td><td><code>UUID_STRING()</code> (random v4) or with a namespace + name (deterministic v5)</td><td>Keys generated anywhere without coordination</td><td>36-char strings: bigger and slower to join than numbers</td></tr>
+    <tr><td><b>Hash key</b></td><td><code>MD5_BINARY(UPPER(TRIM(bk)))</code>, <code>SHA2_BINARY(...)</code></td><td>Data Vault, idempotent and parallel loads, multi-source integration</td><td>Normalise input; theoretical collisions; MD5 binary is 16 bytes</td></tr>
+  </table>
+  <div class="grid2" style="margin-top:14px">
+    <div class="call trap" style="margin:0"><b class="k">INTERVIEW TRAP</b><div>"I put a PRIMARY KEY on the table, so it can't have duplicates, right?" <b>Wrong in Snowflake</b> (for standard tables). Your MERGE logic, a <code>QUALIFY ROW_NUMBER() ... = 1</code> de-dup step, and a dbt <code>unique</code> test are what guarantee uniqueness. Also: a <b>MERGE</b> whose source has duplicate keys can fail with a nondeterministic-merge error or update the target ambiguously; de-dup the source first.</div></div>
+    <div class="call pro" style="margin:0"><b class="k">SENIOR ANGLE</b><div>Declare constraints anyway, add <code>RELY</code> only where tests prove it, and pick surrogate keys by need: integer sequences for classic Kimball dims in a single pipeline; hash keys when loads run in parallel, must be re-runnable, or merge several sources (and dbt's <code>generate_surrogate_key</code> macro produces exactly that).</div></div>
+  </div>
+</section>
+
+<section id="dbt">
+  <div class="eyebrow">CHAPTER 06</div>
+  <h2>dbt with Snowflake <span class="thin">· SQL transformations as software</span></h2>
+  <div class="wwh">
+    <div class="box what"><span class="tag">01 · WHAT IS IT</span>
+      <p><b>dbt (data build tool)</b> lets you write each transformation as a <b>SELECT statement in a .sql file</b> (a <b>model</b>). dbt wraps it in the right DDL/DML (CREATE VIEW, CREATE TABLE AS, MERGE…), runs everything in dependency order on Snowflake, and tests the results. It's the "T" in ELT: data is already loaded into Snowflake, and all compute runs on your Snowflake warehouse.</p>
+      <p>Available as open-source <b>dbt Core</b> (CLI), the managed <b>dbt Cloud</b> service, and Snowflake also offers running dbt projects natively inside Snowflake (a newer feature; check current docs).</p>
+    </div>
+    <div class="box why"><span class="tag">02 · WHY TEAMS USE IT</span>
+      <ul class="dots"><li><b>Dependency graph for free:</b> <code>{{ ref('stg_orders') }}</code> both resolves the table name and records the dependency.</li><li><b>Environments:</b> the same code builds into DEV or PROD schemas depending on the target.</li><li><b>Tests and docs</b> live next to the SQL, in version control.</li><li><b>Reuse:</b> Jinja macros and packages (dbt_utils) remove copy-paste.</li><li><b>Software practices:</b> pull requests, code review, CI.</li></ul>
+    </div>
+    <div class="box how"><span class="tag">03 · HOW IT WORKS</span>
+      <div class="grid3" style="grid-template-columns:repeat(4,1fr)">
+        <div class="mini"><h5>1 · Parse</h5><p>dbt reads every model, finds the <code>ref()</code> and <code>source()</code> calls and builds a DAG (saved in <code>manifest.json</code>).</p></div>
+        <div class="mini"><h5>2 · Compile</h5><p>Jinja is rendered: <code>ref('stg_orders')</code> becomes <code>analytics.staging.stg_orders</code> for the current target.</p></div>
+        <div class="mini"><h5>3 · Materialize</h5><p>The SELECT is wrapped in DDL/DML for its materialization and sent to Snowflake. Independent models run in parallel threads.</p></div>
+        <div class="mini"><h5>4 · Test</h5><p>Each test compiles to a query that returns failing rows. Zero rows = pass.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-h"><div class="t">SIMULATOR · <b>dbt DAG</b> · click a node, then build a selection</div><span class="note-s">Compiled names assume target database ANALYTICS; raw data in RAW_DB.</span></div>
+    <svg viewBox="0 0 740 296" class="dag" id="dagSvg"></svg>
+    <div class="legend"><span><i style="background:var(--teal-s);border:1px solid var(--teal)"></i>source</span><span><i style="background:var(--card2);border:1px dashed var(--ink3)"></i>seed</span><span><i style="background:var(--ice-s);border:1px solid var(--ice)"></i>model</span><span><i style="background:var(--red-s);border:1px solid var(--red)"></i>snapshot</span></div>
+    <div class="row" style="margin:6px 0">
+      <span class="note-s">Selector:</span><div class="tabs" id="dagSel" style="margin:0"><button class="on" data-v="down">model+</button><button data-v="up">+model</button><button data-v="both">+model+</button><button data-v="one">model only</button></div>
+      <span class="note-s" style="margin-left:8px">Tests:</span><div class="tabs" id="dagFail" style="margin:0"><button class="on" data-v="0">All pass</button><button data-v="1">unique test on stg_customers fails</button></div>
+      <button class="btn pri" id="dagRun">▶ dbt build</button>
+    </div>
+    <div class="sqlbox" id="dagCmd"></div>
+    <div class="runlist" id="dagRunList"></div>
+    <div class="tabs" id="dagView" style="margin-top:12px"><button class="on" data-v="raw">Model code (Jinja)</button><button data-v="comp">Compiled SQL</button><button data-v="ddl">What dbt sends to Snowflake</button></div>
+    <div class="grid2" style="grid-template-columns:1.4fr 1fr">
+      <div class="sqlbox" id="dagCode" style="min-height:180px"></div>
+      <div class="explain" id="dagInfo"></div>
+    </div>
+    <div class="insight" id="dagIns">Click <b>stg_orders</b> and press <b>dbt build</b>: everything downstream of it is rebuilt and tested, in order.</div>
+  </div>
+
+  <h3>Materializations</h3>
+  <table class="t">
+    <tr><th>MATERIALIZATION</th><th>WHAT dbt CREATES</th><th>USE WHEN</th></tr>
+    <tr><td><b>view</b> (default)</td><td><code>CREATE OR REPLACE VIEW</code></td><td>Light logic, staging models, always-fresh results</td></tr>
+    <tr><td><b>table</b></td><td><code>CREATE OR REPLACE TABLE … AS SELECT</code> (full rebuild every run)</td><td>Heavy logic read often; small-to-medium marts</td></tr>
+    <tr><td><b>incremental</b></td><td>First run: CREATE TABLE AS. Later runs: only new/changed rows, applied with a strategy</td><td>Large, growing facts where rebuilds are too slow or costly</td></tr>
+    <tr><td><b>ephemeral</b></td><td>Nothing in Snowflake: the SQL is inlined as a CTE into models that ref it</td><td>Small reusable logic you don't want as an object</td></tr>
+    <tr><td><b>dynamic_table</b></td><td>A Snowflake dynamic table with <code>target_lag</code> and <code>snowflake_warehouse</code> configs</td><td>Let Snowflake handle refresh scheduling (supported in recent dbt-snowflake versions; config names can vary by version)</td></tr>
+  </table>
+  <div class="panel">
+    <div class="panel-h"><div class="t">COMPARE · <b>INCREMENTAL STRATEGIES ON SNOWFLAKE</b></div><span class="note-s">Simplified SQL; dbt's real statements add temp tables and quoting.</span></div>
+    <div class="tabs" id="incTabs"><button class="on" data-v="merge">merge (default)</button><button data-v="append">append</button><button data-v="di">delete+insert</button><button data-v="io">insert_overwrite</button></div>
+    <div class="sqlbox" id="incSql"></div>
+    <div class="insight" id="incIns"></div>
+  </div>
+
+  <h3>The other building blocks</h3>
+  <div class="grid3">
+    <div class="mini"><h5>Sources</h5><p>Declared in YAML (<code>sources.yml</code>) with database, schema and tables; referenced with <code>{{ source('raw','orders') }}</code>. Adds lineage and <b>freshness checks</b> (<code>loaded_at_field</code>, warn/error after N hours).</p></div>
+    <div class="mini"><h5>Snapshots (SCD2)</h5><p>dbt compares the source to the snapshot table each run (strategy <code>timestamp</code> on an updated_at column, or <code>check</code> on listed columns) and adds <code>dbt_valid_from</code> / <code>dbt_valid_to</code> rows. History you can't recreate later, so run it on a schedule.</p></div>
+    <div class="mini"><h5>Tests</h5><p>Generic tests in YAML: <code>unique</code>, <code>not_null</code>, <code>accepted_values</code>, <code>relationships</code> (FK check). Singular tests are .sql files returning bad rows. Packages add more (dbt_utils, dbt_expectations).</p></div>
+    <div class="mini"><h5>Seeds</h5><p>Small CSV files in the repo loaded with <code>dbt seed</code>: country codes, mapping tables. Not for big data.</p></div>
+    <div class="mini"><h5>Macros &amp; Jinja</h5><p>Reusable Jinja functions: <code>{% macro cents_to_dollars(col) %}</code>. Jinja gives loops, ifs and variables, e.g. <code>{% if is_incremental() %}</code> and <code>{{ this }}</code> (the current model's table).</p></div>
+    <div class="mini"><h5>Commands</h5><p><code>dbt run</code> (models), <code>dbt test</code>, <code>dbt snapshot</code>, <code>dbt seed</code>, and <code>dbt build</code> which does all of them in DAG order, testing each node before its children run.</p></div>
+  </div>
+  <div class="grid2" style="margin-top:14px">
+    <div class="call trap" style="margin:0"><b class="k">INTERVIEW TRAP</b><div>"An incremental model missed late-arriving rows." The filter <code>WHERE updated_at &gt; (SELECT MAX(updated_at) FROM {{ this }})</code> skips rows that arrive late with older timestamps. Use a <b>lookback window</b> (e.g. minus 3 days) together with the <code>merge</code> strategy and a <code>unique_key</code> so reprocessed rows update instead of duplicating, and schedule periodic <code>--full-refresh</code> if needed.</div></div>
+    <div class="call pro" style="margin:0"><b class="k">SENIOR ANGLE</b><div>Snowflake-specific dbt configs worth naming: <code>transient</code> (dbt-snowflake creates table models as transient by default; set <code>transient: false</code> for tables needing Fail-safe), <code>cluster_by</code>, <code>snowflake_warehouse</code> (per-model warehouse), <code>copy_grants</code>, <code>query_tag</code> for cost attribution, and <code>merge_update_columns</code> to limit what a merge updates.</div></div>
+  </div>
+</section>
+
+<section id="cicd">
+  <div class="eyebrow">CHAPTER 07</div>
+  <h2>Orchestration &amp; CI/CD <span class="thin">· run it on time, release it safely</span></h2>
+  <div class="wwh">
+    <div class="box what"><span class="tag">01 · WHAT IS IT</span>
+      <p><b>Orchestration</b> decides <b>when</b> and <b>in what order</b> jobs run, and what happens when one fails. <b>CI/CD</b> (continuous integration / delivery) decides <b>how code changes reach production</b>: every change goes through Git, automated tests on a safe copy, and a repeatable deployment.</p>
+    </div>
+    <div class="box why"><span class="tag">02 · WHY IT MATTERS</span>
+      <p>Without it, people run DDL by hand in prod worksheets, nobody knows which version of a table is live, and a broken model is discovered by the CFO's dashboard. With it, every change is reviewed, tested against real-shaped data, and can be rolled back.</p>
+    </div>
+    <div class="box how"><span class="tag">03 · HOW · THE TOOLS AND WHERE THEY FIT</span>
+      <div class="grid3">
+        <div class="mini"><h5>Airflow</h5><p>Python DAGs that orchestrate across systems: wait for an S3 file, run Snowflake SQL, trigger dbt, call an API, notify Slack. The <code>apache-airflow-providers-snowflake</code> package provides the connection and operators (the classic <code>SnowflakeOperator</code>; newer versions steer you to the generic <code>SQLExecuteQueryOperator</code>, and a SQL API operator exists too).</p></div>
+        <div class="mini"><h5>Snowflake tasks</h5><p>Native scheduler (Module 02): great when everything happens inside Snowflake. Choose an external orchestrator when the pipeline spans other systems, needs rich retries/backfills/SLAs, or the company already standardised on one.</p></div>
+        <div class="mini"><h5>Git integration</h5><p>A <code>GIT REPOSITORY</code> object (via an API integration) mirrors a remote repo inside Snowflake. You <code>FETCH</code> it and run files directly: <code>EXECUTE IMMEDIATE FROM @repo/branches/main/deploy.sql</code>.</p></div>
+        <div class="mini"><h5>schemachange</h5><p>An open-source Python tool for database migrations. <b>Versioned</b> scripts <code>V1.2.0__add_col.sql</code> run once, in version order. <b>Repeatable</b> scripts <code>R__views.sql</code> re-run whenever their checksum changes. <b>Always</b> scripts <code>A__grants.sql</code> run every deploy. Applied scripts are recorded in a change-history table.</p></div>
+        <div class="mini"><h5>Terraform</h5><p>Infrastructure as code for account objects: warehouses, databases, roles, grants, users, integrations, via the Snowflake Terraform provider (now maintained under Snowflake's GitHub organisation). Usually for platform objects, while dbt/schemachange manage tables and views.</p></div>
+        <div class="mini"><h5>Snowflake CLI</h5><p>The <code>snow</code> command: run SQL (<code>snow sql -f</code>), manage connections, deploy Streamlit apps, Snowpark code and Native Apps, work with Git repository objects. Easy to call from GitHub Actions or Jenkins.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-h"><div class="t">SIMULATOR · <b>CI/CD PIPELINE</b> · from pull request to SWAP</div>
+      <div class="row"><span class="note-s">Scenario:</span><div class="tabs" id="ciScen" style="margin:0"><button class="on" data-v="ok">Everything passes</button><button data-v="ci">dbt test fails in CI</button><button data-v="green">Validation fails on green</button></div></div></div>
+    <svg viewBox="0 0 720 230" class="flow ci" id="ciSvg"></svg>
+    <div class="stepbar" id="ciBar"></div>
+    <div class="stepdesc" id="ciDesc"></div>
+    <div class="row" style="margin-top:12px"><button class="btn" id="ciPrev">Back</button><button class="btn pri" id="ciNext">Start</button><button class="btn" id="ciReset">Reset</button></div>
+    <div class="stats">
+      <div class="stat"><div class="k">PROD STATUS</div><div class="n" id="ciProd" style="font-size:20px">v41 live</div></div>
+      <div class="stat"><div class="k">CLONES ALIVE</div><div class="n" id="ciClones">0</div></div>
+      <div class="stat"><div class="k">USER-VISIBLE DOWNTIME</div><div class="n" id="ciDown" style="font-size:20px">none</div></div>
+    </div>
+    <div class="insight" id="ciIns">Press <b>Start</b> to follow one change through the pipeline.</div>
+  </div>
+
+  <h3>Blue/green deployment with clone + SWAP</h3>
+  <div class="grid2">
+    <div class="sqlbox">-- 1. build the new version next to prod
+CREATE OR REPLACE DATABASE analytics_green CLONE analytics;
+-- 2. run migrations + dbt build against analytics_green
+-- 3. validate (tests, row counts, reconciliation)
+-- 4. atomic name exchange
+ALTER DATABASE analytics SWAP WITH analytics_green;
+-- 5. rollback = swap again; later drop the old copy
+ALTER DATABASE analytics SWAP WITH analytics_green;</div>
+    <div class="mini"><h5>Why it works</h5><p><code>SWAP WITH</code> exchanges the <b>names</b> of two databases (or schemas, or tables) in a single metadata operation, so consumers querying <code>analytics.marts.fct_sales</code> see the old version until the instant of the swap and the new one right after. No data moves. Things to check: queries using fully-qualified names follow the name, grants travel with the object (not the name), and stages, pipes and tasks inside need care when cloned.</p></div>
+  </div>
+  <div class="grid2" style="margin-top:14px">
+    <div class="call trap" style="margin:0"><b class="k">INTERVIEW TRAP</b><div>"How do you test a pipeline change on production data without risking production?" Not by running it in prod "carefully". <b>Zero-copy clone</b> prod into a CI database (seconds, almost no storage), run migrations and <code>dbt build</code> there, run tests, then drop the clone. For PII, clone into a schema where masking policies apply, or use a masked/sampled copy.</div></div>
+    <div class="call pro" style="margin:0"><b class="k">SENIOR ANGLE</b><div><b>Slim CI:</b> <code>dbt build --select state:modified+ --defer --state prod_artifacts/</code> builds only changed models and their children, reading unchanged parents from prod. It keeps CI fast and cheap on large projects. Tag queries (<code>QUERY_TAG</code>) per pipeline so CI spend is visible in cost reports.</div></div>
+  </div>
+</section>
+
+<section id="sql">
+  <div class="eyebrow">CHAPTER 08</div>
+  <h2>SQL lab <span class="thin">· click any line for an explanation</span></h2>
+  <div class="panel">
+    <div class="tabs" id="sqlTabs"></div>
+    <div class="grid2" style="grid-template-columns:1.35fr 1fr">
+      <div class="code" id="sqlCode"></div>
+      <div class="explain" id="sqlExp"><b class="h">CLICK A LINE</b>Each line is explained in plain English.</div>
+    </div>
+  </div>
+</section>
+
+<section id="qa">
+  <div class="eyebrow">CHAPTER 09</div>
+  <h2>Interview Q&amp;A <span class="thin">· answer out loud first, then open</span></h2>
+  <div class="tabs" id="qaTabs"><button class="on" data-f="all">All</button><button data-f="Dimensional">Dimensional</button><button data-f="Data Vault">Data Vault</button><button data-f="Layers">Layers</button><button data-f="Keys">Keys</button><button data-f="dbt">dbt</button><button data-f="CI/CD">CI/CD</button></div>
+  <div id="qaList"></div>
+</section>
+
+<section id="quiz">
+  <div class="eyebrow">CHAPTER 10</div>
+  <h2>Quiz <span class="thin">· 14 questions</span></h2>
+  <div class="panel">
+    <div class="panel-h"><div class="t">QUESTION <b id="qzN">1</b> / 14</div><div class="t">SCORE <b id="qzS">0</b></div></div>
+    <div class="stepbar" id="qzBar"></div>
+    <div id="qzBody"></div>
+    <div class="row" style="margin-top:12px"><button class="btn" id="qzPrev">Back</button><button class="btn pri" id="qzNext">Next</button></div>
+  </div>
+</section>
+
+<section id="cheat">
+  <div class="eyebrow">CHAPTER 11</div>
+  <h2>Cheat sheet <span class="thin">· if you remember only these</span></h2>
+  <div class="cheat">
+    <div><em>Grain first</em>Declare what one fact row means before choosing columns. Mixed grain = double counting.</div>
+    <div><em>3 fact types</em>Transaction (insert-only events), periodic snapshot (state per period), accumulating snapshot (one row updated per milestone).</div>
+    <div><em>Star &gt; snowflake</em>Flattened dims are simpler and usually faster in Snowflake; normalizing saves little in columnar storage.</div>
+    <div><em>Degenerate / junk / bridge</em>Order number in the fact / flags combined into one dim / many-to-many resolver.</div>
+    <div><em>SCD 0·1·2·3·4·6</em>Keep · overwrite · new row · prev column · history table (or mini-dim) · hybrid. Facts store the SK current at event time.</div>
+    <div><em>Hub · Link · Sat</em>Business keys · relationships · changing attributes. Insert-only, hash keys, load_date, record_source.</div>
+    <div><em>Hashdiff</em>Hash of satellite attributes; new sat row only when it differs from the latest one.</div>
+    <div><em>Bronze · silver · gold</em>Raw as delivered · cleaned and conformed (often transient) · business-ready marts.</div>
+    <div><em>Only NOT NULL</em>PK / UNIQUE / FK are informational on standard tables. Hybrid tables enforce them. RELY only when guaranteed.</div>
+    <div><em>Gaps are normal</em>SEQUENCE and IDENTITY are unique, not gap-free. UUID_STRING or hash keys need no coordination.</div>
+    <div><em>ref() = DAG</em>dbt resolves names per target and orders the build. <code>model+</code> downstream, <code>+model</code> upstream; build tests before children.</div>
+    <div><em>Clone → test → SWAP</em>Zero-copy clone for CI, schemachange V__ / R__ / A__ scripts, ALTER DATABASE … SWAP WITH for blue/green and rollback.</div>
+  </div>
+  <div class="call analogy" style="margin-top:20px"><b class="k">NEXT MODULE</b><div><b><a href="../module14/">Module 14: System design &amp; behavioral</a>.</b> Put every module together: end-to-end architecture whiteboards, trade-off discussions, and how to tell your six years of experience as crisp STAR stories.</div></div>
+</section>
+<footer>Snowflake Interview Lab · Module 13 · Data Modeling &amp; Tooling · Prepared for Saurav Patel</footer>
+</main>
+</div>
+
+<script>
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+const fmt = (n, d = 0) => Number(n).toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d });
+const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+const tabs = (sel, cb) => $$(sel + ' button').forEach(b => b.addEventListener('click', () => { $$(sel + ' button').forEach(x => x.classList.remove('on')); b.classList.add('on'); cb(b.dataset); }));
+
+/* theme + progress */
+const root = document.documentElement;
+root.dataset.theme = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+$('#themeBtn').onclick = () => { root.dataset.theme = root.dataset.theme === 'dark' ? 'light' : 'dark'; };
+const secs = $$('main section'), seen = new Set();
+const io = new IntersectionObserver(es => es.forEach(e => {
+  if (!e.isIntersecting) return;
+  seen.add(e.target.id);
+  $$('.side > a').forEach(a => { const id = a.getAttribute('href').slice(1); a.classList.toggle('act', id === e.target.id); if (seen.has(id)) a.classList.add('seen'); });
+  const pct = Math.round(seen.size / secs.length * 100);
+  $('#progBar').style.width = pct + '%'; $('#progLbl').textContent = pct + '% explored';
+}), { rootMargin: '-40% 0px -55% 0px' });
+secs.forEach(s => io.observe(s));
+
+/* ===== 01 star schema explorer ===== */
+const ST_T = {
+  fact_sales: { kind: 'fact', label: 'FACT_SALES', sub: 'transaction fact', grain: 'One row per order line (order_number + line_number).',
+    cols: [['date_sk', 'NUMBER', 'FK → dim_date'], ['customer_sk', 'NUMBER', 'FK → dim_customer'], ['product_sk', 'NUMBER', 'FK → dim_product'], ['store_sk', 'NUMBER', 'FK → dim_store'], ['order_flags_sk', 'NUMBER', 'FK → junk dim'], ['order_number', 'VARCHAR', 'degenerate dim'], ['line_number', 'NUMBER', 'part of grain'], ['quantity', 'NUMBER', 'additive measure'], ['net_amount', 'NUMBER(12,2)', 'additive measure'], ['discount_amount', 'NUMBER(12,2)', 'additive measure']],
+    q: `SELECT d.year_month, SUM(f.net_amount) AS revenue
+FROM fact_sales f
+JOIN dim_date d ON d.date_sk = f.date_sk
+WHERE d.year = 2026
+GROUP BY d.year_month ORDER BY 1;`,
+    note: `The fact is narrow and very long (billions of rows is normal). It holds only keys, a degenerate dimension (<code>order_number</code>) and numeric measures. Everything descriptive lives in dimensions.` },
+  dim_date: { kind: 'dimn', label: 'DIM_DATE', sub: 'conformed · role-playing', grain: 'One row per calendar day.',
+    cols: [['date_sk', 'NUMBER', 'PK (e.g. 20261114)'], ['full_date', 'DATE', ''], ['year', 'NUMBER', ''], ['quarter', 'NUMBER', ''], ['year_month', 'VARCHAR', ''], ['day_name', 'VARCHAR', ''], ['is_weekend', 'BOOLEAN', ''], ['fiscal_period', 'VARCHAR', 'business calendar']],
+    q: `SELECT d.day_name, SUM(f.quantity) AS units
+FROM fact_sales f
+JOIN dim_date d ON d.date_sk = f.date_sk
+WHERE d.is_weekend
+GROUP BY d.day_name;`,
+    note: `Conformed: every fact uses the same date dimension. It is also <b>role-playing</b>: an accumulating snapshot can join it three times as order_date, ship_date and delivery_date.` },
+  dim_customer: { kind: 'dimn', label: 'DIM_CUSTOMER', sub: 'SCD Type 2', grain: 'One row per customer <b>version</b> (new row when city or segment changes).',
+    cols: [['customer_sk', 'NUMBER', 'PK (surrogate)'], ['customer_id', 'VARCHAR', 'business key'], ['customer_name', 'VARCHAR', ''], ['segment', 'VARCHAR', 'SCD2 tracked'], ['city', 'VARCHAR', 'SCD2 tracked'], ['region', 'VARCHAR', 'flattened'], ['valid_from', 'TIMESTAMP_NTZ', ''], ['valid_to', 'TIMESTAMP_NTZ', ''], ['is_current', 'BOOLEAN', '']],
+    q: `SELECT c.segment, COUNT(DISTINCT c.customer_id) AS buyers
+FROM fact_sales f
+JOIN dim_customer c ON c.customer_sk = f.customer_sk
+GROUP BY c.segment;`,
+    note: `Because this is SCD2, count distinct <b>customer_id</b> (business key), not customer_sk, or a customer who moved twice counts as three people.` },
+  dim_product: { kind: 'dimn', label: 'DIM_PRODUCT', sub: 'denormalized', grain: 'One row per product (SKU).',
+    cols: [['product_sk', 'NUMBER', 'PK'], ['sku', 'VARCHAR', 'business key'], ['product_name', 'VARCHAR', ''], ['brand', 'VARCHAR', ''], ['category_name', 'VARCHAR', 'repeated per product'], ['department_name', 'VARCHAR', 'repeated per product'], ['unit_cost', 'NUMBER(10,2)', '']],
+    q: `SELECT p.category_name, SUM(f.net_amount) AS revenue
+FROM fact_sales f
+JOIN dim_product p ON p.product_sk = f.product_sk
+GROUP BY p.category_name;`,
+    note: `In a star, the hierarchy department → category → product is <b>flattened</b> into one table. "Electronics" is repeated on thousands of rows, but columnar compression makes that almost free.` },
+  dim_store: { kind: 'dimn', label: 'DIM_STORE', sub: 'denormalized', grain: 'One row per store (plus one "Online" member).',
+    cols: [['store_sk', 'NUMBER', 'PK'], ['store_code', 'VARCHAR', 'business key'], ['store_name', 'VARCHAR', ''], ['city', 'VARCHAR', ''], ['region', 'VARCHAR', 'repeated per store'], ['country', 'VARCHAR', ''], ['opened_date', 'DATE', '']],
+    q: `SELECT s.region, SUM(f.net_amount) AS revenue
+FROM fact_sales f
+JOIN dim_store s ON s.store_sk = f.store_sk
+GROUP BY s.region;`,
+    note: `Geography is flattened into the store row. Region-level reports need just one join.` },
+  dim_order_flags: { kind: 'dimn', label: 'DIM_ORDER_FLAGS', sub: 'junk dimension', grain: 'One row per <b>combination</b> of flags (2 × 3 × 2 = 12 rows).',
+    cols: [['order_flags_sk', 'NUMBER', 'PK'], ['is_gift', 'BOOLEAN', ''], ['payment_type', 'VARCHAR', 'card / cash / wallet'], ['channel', 'VARCHAR', 'store / online']],
+    q: `SELECT j.payment_type, COUNT(*) AS lines
+FROM fact_sales f
+JOIN dim_order_flags j ON j.order_flags_sk = f.order_flags_sk
+WHERE j.is_gift
+GROUP BY j.payment_type;`,
+    note: `A <b>junk dimension</b> collects small unrelated flags so the fact carries one key instead of three flag columns.` },
+  dim_category: { kind: 'sub', label: 'DIM_CATEGORY', sub: 'snowflaked out', grain: 'One row per category.',
+    cols: [['category_sk', 'NUMBER', 'PK'], ['category_name', 'VARCHAR', ''], ['department_sk', 'NUMBER', 'FK → dim_department']],
+    q: `SELECT c.category_name, SUM(f.net_amount)
+FROM fact_sales f
+JOIN dim_product  p ON p.product_sk  = f.product_sk
+JOIN dim_category c ON c.category_sk = p.category_sk
+GROUP BY c.category_name;`,
+    note: `Normalized: the category name is stored once. Every category report now needs an <b>extra join</b> through dim_product.` },
+  dim_department: { kind: 'sub', label: 'DIM_DEPARTMENT', sub: 'snowflaked out', grain: 'One row per department.',
+    cols: [['department_sk', 'NUMBER', 'PK'], ['department_name', 'VARCHAR', '']],
+    q: `SELECT dp.department_name, SUM(f.net_amount)
+FROM fact_sales f
+JOIN dim_product    p  ON p.product_sk     = f.product_sk
+JOIN dim_category   c  ON c.category_sk    = p.category_sk
+JOIN dim_department dp ON dp.department_sk = c.department_sk
+GROUP BY 1;`,
+    note: `Three joins to reach a department name. That is the cost of snowflaking.` },
+  dim_geography: { kind: 'sub', label: 'DIM_GEOGRAPHY', sub: 'shared sub-dimension', grain: 'One row per city.',
+    cols: [['geography_sk', 'NUMBER', 'PK'], ['city', 'VARCHAR', ''], ['region', 'VARCHAR', ''], ['country', 'VARCHAR', '']],
+    q: `SELECT g.region, SUM(f.net_amount)
+FROM fact_sales f
+JOIN dim_store     s ON s.store_sk     = f.store_sk
+JOIN dim_geography g ON g.geography_sk = s.geography_sk
+GROUP BY g.region;`,
+    note: `Shared by store and customer. Changing a region name happens in one row, which is the main argument for snowflaking.` }
+};
+const ST_POS = {
+  star: { fact_sales: [250, 170, 180, 100], dim_date: [250, 20, 180, 64], dim_order_flags: [250, 352, 180, 64], dim_product: [20, 188, 180, 64], dim_customer: [480, 90, 180, 64], dim_store: [480, 286, 180, 64] },
+  snow: { fact_sales: [250, 170, 180, 100], dim_date: [250, 20, 180, 64], dim_order_flags: [250, 352, 180, 64], dim_product: [20, 60, 180, 64], dim_category: [20, 200, 180, 64], dim_department: [20, 340, 180, 64], dim_customer: [480, 60, 180, 64], dim_store: [480, 200, 180, 64], dim_geography: [480, 340, 180, 64] }
+};
+const ST_E = {
+  star: [['dim_date', 'fact_sales'], ['dim_order_flags', 'fact_sales'], ['dim_product', 'fact_sales'], ['dim_customer', 'fact_sales'], ['dim_store', 'fact_sales']],
+  snow: [['dim_date', 'fact_sales'], ['dim_order_flags', 'fact_sales'], ['dim_product', 'fact_sales'], ['dim_customer', 'fact_sales'], ['dim_store', 'fact_sales'], ['dim_category', 'dim_product'], ['dim_department', 'dim_category'], ['dim_geography', 'dim_store'], ['dim_geography', 'dim_customer']]
+};
+let stMode = 'star', stSel = 'fact_sales';
+function stCols(id) {
+  const t = ST_T[id];
+  if (stMode === 'snow' && id === 'dim_product') return t.cols.filter(c => !/category_name|department_name/.test(c[0])).concat([['category_sk', 'NUMBER', 'FK → dim_category']]);
+  if (stMode === 'snow' && (id === 'dim_store' || id === 'dim_customer')) return t.cols.filter(c => !/^(city|region|country)$/.test(c[0])).concat([['geography_sk', 'NUMBER', 'FK → dim_geography']]);
+  return t.cols;
+}
+function stDraw() {
+  const P = ST_POS[stMode], c = id => [P[id][0] + P[id][2] / 2, P[id][1] + P[id][3] / 2];
+  let s = '';
+  ST_E[stMode].forEach(([a, b]) => { const [x1, y1] = c(a), [x2, y2] = c(b); s += `<path class="sjoin${a === stSel || b === stSel ? ' on' : ''}" d="M${x1} ${y1} L${x2} ${y2}"/>`; });
+  Object.keys(P).forEach(id => {
+    const [x, y, w, h] = P[id], t = ST_T[id];
+    s += `<g class="sn ${t.kind}${id === stSel ? ' sel' : ''}" data-id="${id}"><rect class="box" x="${x}" y="${y}" width="${w}" height="${h}" rx="10" stroke-width="1.2"/><text class="th" x="${x + w / 2}" y="${y + h / 2 - 9}" text-anchor="middle" dominant-baseline="central">${t.label}</text><text class="ts" x="${x + w / 2}" y="${y + h / 2 + 11}" text-anchor="middle" dominant-baseline="central">${t.sub}</text></g>`;
+  });
+  $('#stSvg').innerHTML = s;
+  $$('#stSvg .sn').forEach(g => g.addEventListener('click', () => { stSel = g.dataset.id; stDraw(); }));
+  const t = ST_T[stSel];
+  $('#stInfo').innerHTML = `<b class="h">${t.label} · ${t.sub.toUpperCase()}</b><p style="margin:2px 0 6px"><b>Grain:</b> ${t.grain}</p><table class="t">${stCols(stSel).map(r => `<tr><td class="m">${r[0]}</td><td class="m">${r[1]}</td><td style="font-size:12px;color:var(--ink2)">${r[2]}</td></tr>`).join('')}</table><p style="font-size:13.5px;margin-top:8px">${t.note}</p><div class="sqlbox" style="margin-top:6px">${esc(t.q)}</div>`;
+  const star = stMode === 'star';
+  $('#stT').textContent = Object.keys(P).length;
+  $('#stJ').textContent = star ? 2 : 4;
+  $('#stR').textContent = star ? 'some' : 'none';
+  $('#stR').nextElementSibling.textContent = star ? 'category / region names repeated per row (compresses well)' : 'each name stored once';
+  $('#stSql').textContent = star ? `SELECT p.category_name, s.region, SUM(f.net_amount) AS revenue
+FROM fact_sales f
+JOIN dim_product p ON p.product_sk = f.product_sk
+JOIN dim_store   s ON s.store_sk   = f.store_sk
+GROUP BY 1, 2;` : `SELECT c.category_name, g.region, SUM(f.net_amount) AS revenue
+FROM fact_sales f
+JOIN dim_product   p ON p.product_sk   = f.product_sk
+JOIN dim_category  c ON c.category_sk  = p.category_sk
+JOIN dim_store     s ON s.store_sk     = f.store_sk
+JOIN dim_geography g ON g.geography_sk = s.geography_sk
+GROUP BY 1, 2;`;
+  $('#stIns').innerHTML = star ? `<b>Star:</b> 2 joins, and every dimension is one table a business user can browse. Snowflake broadcasts small dimensions to all nodes, so these joins are cheap; the big cost is scanning the fact, which date filters prune. This is why star is the default for marts.` : `<b>Snowflake schema:</b> the same question now needs 4 joins and the analyst must know the path product → category. Storage saved is tiny because columnar compression already shrinks repeated names. Snowflaking makes sense mainly for very large, frequently changing hierarchies or a shared sub-dimension (geography).`;
+}
+tabs('#stMode', d => { stMode = d.m; if (!ST_POS[stMode][stSel]) stSel = 'fact_sales'; stDraw(); });
+stDraw();
+
+/* ===== 03 Data Vault splitter ===== */
+const hh = s => { let h = 0x811c9dc5; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 0x01000193) >>> 0; } return h.toString(16).padStart(8, '0'); };
+const DV0 = () => ({ cust: 'C-1001', name: 'Asha Rao', email: 'asha@example.com', city: 'Mumbai', order: 'O-5001', odate: '2026-11-01', amount: '2450.00' });
+let DV, dvSrc, dvBatch;
+function dvInit() { DV = { hubC: [], hubO: [], lnk: [], satC: [], satO: [] }; dvSrc = DV0(); dvBatch = 0; }
+dvInit();
+function dvShowSrc() {
+  $('#dvSrc').textContent = `customer_id : ${dvSrc.cust}
+name        : ${dvSrc.name}
+email       : ${dvSrc.email}
+city        : ${dvSrc.city}
+order_id    : ${dvSrc.order}
+order_date  : ${dvSrc.odate}
+amount      : ${dvSrc.amount}
+source      : ORDER_APP`;
+}
+function dvApply(label) {
+  dvBatch++;
+  const ld = `2026-11-${String(9 + dvBatch).padStart(2, '0')}`, s = dvSrc, ins = [];
+  Object.values(DV).forEach(t => t.forEach(r => r.n = false));
+  const hkC = hh(s.cust.toUpperCase()), hkO = hh(s.order.toUpperCase()), hkL = hh(s.cust.toUpperCase() + '||' + s.order.toUpperCase());
+  if (!DV.hubC.find(r => r.hk === hkC)) { DV.hubC.push({ hk: hkC, bk: s.cust, ld, n: true }); ins.push('HUB_CUSTOMER (new business key)'); }
+  if (!DV.hubO.find(r => r.hk === hkO)) { DV.hubO.push({ hk: hkO, bk: s.order, ld, n: true }); ins.push('HUB_ORDER (new business key)'); }
+  if (!DV.lnk.find(r => r.hk === hkL)) { DV.lnk.push({ hk: hkL, c: hkC, o: hkO, ld, n: true }); ins.push('LNK_CUSTOMER_ORDER (new relationship)'); }
+  const hdC = hh([s.name, s.email, s.city].join('|').toUpperCase()), lastC = DV.satC.filter(r => r.hk === hkC).slice(-1)[0];
+  if (!lastC || lastC.hd !== hdC) { DV.satC.push({ hk: hkC, ld, hd: hdC, name: s.name, email: s.email, city: s.city, n: true }); ins.push('SAT_CUSTOMER_DETAILS (' + (lastC ? 'hashdiff changed' : 'first version') + ')'); }
+  const hdO = hh([s.odate, s.amount].join('|')), lastO = DV.satO.filter(r => r.hk === hkO).slice(-1)[0];
+  if (!lastO || lastO.hd !== hdO) { DV.satO.push({ hk: hkO, ld, hd: hdO, d: s.odate, a: s.amount, n: true }); ins.push('SAT_ORDER_DETAILS (' + (lastO ? 'hashdiff changed' : 'first version') + ')'); }
+  dvRender(ins, label);
+}
+function dvRender(ins, label) {
+  const row = (r, cells) => `<tr class="${r.n ? 'newrow' : ''}">${cells.map(c => `<td>${esc(c)}</td>`).join('')}</tr>`;
+  const tb = (id, h, rows, f) => { $(id).innerHTML = `<tr>${h.map(x => `<th>${x}</th>`).join('')}</tr>` + (rows.length ? rows.map(r => row(r, f(r))).join('') : `<tr><td colspan="${h.length}" style="color:var(--ink3)">empty</td></tr>`); };
+  tb('#dvHubC', ['HK_CUSTOMER', 'CUSTOMER_ID', 'LOAD_DTS', 'REC_SRC'], DV.hubC, r => [r.hk.slice(0, 6) + '…', r.bk, r.ld, 'ORDER_APP']);
+  tb('#dvHubO', ['HK_ORDER', 'ORDER_ID', 'LOAD_DTS'], DV.hubO, r => [r.hk + '…', r.bk, r.ld]);
+  tb('#dvLnk', ['HK_LINK', 'HK_CUSTOMER', 'HK_ORDER', 'LOAD_DTS'], DV.lnk, r => [r.hk.slice(0, 6) + '…', r.c.slice(0, 6) + '…', r.o.slice(0, 6) + '…', r.ld]);
+  tb('#dvSatC', ['HK_CUSTOMER', 'LOAD_DTS', 'HASHDIFF', 'NAME', 'EMAIL', 'CITY'], DV.satC, r => [r.hk + '…', r.ld, r.hd + '…', r.name, r.email, r.city]);
+  tb('#dvSatO', ['HK_ORDER', 'LOAD_DTS', 'HASHDIFF', 'AMOUNT'], DV.satO, r => [r.hk.slice(0, 6) + '…', r.ld, r.hd.slice(0, 6) + '…', r.a]);
+  [['#dvc1', DV.hubC], ['#dvc2', DV.lnk], ['#dvc3', DV.hubO], ['#dvc4', DV.satC], ['#dvc5', DV.satO]].forEach(([id, t]) => $(id).textContent = t.length + ' row' + (t.length === 1 ? '' : 's'));
+  $('#dvIns').textContent = ins ? ins.length : 0;
+  $('#dvTot').textContent = Object.values(DV).reduce((a, t) => a + t.length, 0);
+  dvShowSrc();
+  if (!ins) return;
+  const MSG = {
+    load: `One flat record became <b>5 rows in 5 tables</b>. Hash keys were computed from the business keys alone, so all five inserts could run <b>in parallel</b> with no lookups.`,
+    same: `<b>Nothing was inserted.</b> The hub and link keys already exist, and both satellites' latest hashdiff equals the incoming hashdiff. Re-delivered files are harmless: loads are idempotent.`,
+    move: `Only <b>SAT_CUSTOMER_DETAILS</b> grew. The customer is still the same business key (hub untouched) with the same order (link untouched); the new city produced a new hashdiff, so a new satellite row was added. The old row is never updated: history is preserved by load date.`,
+    order: `A new order means a <b>new HUB_ORDER key, a new LINK row and a new order satellite row</b>. The customer hub and customer satellite didn't change, so nothing was added there.`,
+    email: `Another attribute change, another satellite row. To find the "current" customer, query the latest LOAD_DTS per hash key, or use a PIT table that pre-computes which satellite row was valid on each date.`
+  };
+  $('#dvMsg').innerHTML = `<b>Inserted:</b> ${ins.length ? ins.join(', ') : 'nothing'}.<br>${MSG[label]}`;
+}
+$$('#dvBtns button').forEach(b => b.onclick = () => {
+  const a = b.dataset.a;
+  if (a === 'move') dvSrc.city = 'Pune';
+  if (a === 'order') { dvSrc.order = 'O-5002'; dvSrc.odate = '2026-11-12'; dvSrc.amount = '999.00'; }
+  if (a === 'email') dvSrc.email = 'asha.rao@example.org';
+  dvApply(a);
+});
+$('#dvReset').onclick = () => { dvInit(); dvRender(null); $('#dvMsg').innerHTML = 'Vault emptied. Press <b>1 · Load this record</b>.'; };
+dvRender(null);
+
+/* ===== 04 layers ===== */
+const LY = [
+  { h: 'BRONZE · RAW', b: `<p><b>Contents:</b> data exactly as delivered: JSON in a <code>VARIANT</code> column or source columns as strings, plus metadata (<code>_loaded_at</code>, <code>_file_name</code> from <code>METADATA$FILENAME</code>).</p><p><b>Snowflake objects:</b> a <code>RAW</code> database, one schema per source. Tables loaded by Snowpipe / Snowpipe Streaming / COPY; append-only; external or Iceberg tables when data stays in the lake.</p><p><b>Rules:</b> no business logic, no deletes. Permanent tables if this is your only copy. Access: ingestion roles only.</p>`,
+    s: `CREATE DATABASE IF NOT EXISTS prod_raw;
+CREATE SCHEMA IF NOT EXISTS prod_raw.shopify;
+CREATE TABLE IF NOT EXISTS prod_raw.shopify.orders (
+  payload     VARIANT,
+  _file_name  VARCHAR,
+  _loaded_at  TIMESTAMP_LTZ DEFAULT CURRENT_TIMESTAMP()
+);` },
+  { h: 'SILVER · STAGING / INTEGRATION', b: `<p><b>Contents:</b> typed columns, renamed to standards, de-duplicated (<code>QUALIFY ROW_NUMBER()</code>), invalid rows quarantined, keys generated, sources conformed. Data Vault, if used, lives here.</p><p><b>Snowflake objects:</b> often a <b>transient</b> database or schema (cheaper: no Fail-safe) because it can be rebuilt from bronze. dbt <code>stg_</code> views and <code>int_</code> models, or dynamic tables with <code>TARGET_LAG = DOWNSTREAM</code>.</p><p><b>Access:</b> data engineers and analytics engineers.</p>`,
+    s: `CREATE TRANSIENT DATABASE IF NOT EXISTS prod_staging
+  DATA_RETENTION_TIME_IN_DAYS = 1;
+CREATE OR REPLACE DYNAMIC TABLE prod_staging.shop.stg_orders
+  TARGET_LAG = DOWNSTREAM
+  WAREHOUSE  = transform_wh
+AS
+SELECT payload:id::NUMBER          AS order_id,
+       payload:customer_id::NUMBER AS customer_id,
+       payload:total::NUMBER(12,2) AS amount,
+       _loaded_at
+FROM prod_raw.shopify.orders
+QUALIFY ROW_NUMBER() OVER (PARTITION BY order_id ORDER BY _loaded_at DESC) = 1;` },
+  { h: 'GOLD · MARTS', b: `<p><b>Contents:</b> star schemas (<code>dim_</code>, <code>fct_</code>), aggregates (<code>agg_</code>), one-big-tables for specific dashboards, ML feature tables.</p><p><b>Snowflake objects:</b> a <code>MARTS</code> / <code>ANALYTICS</code> database with a schema per domain (finance, marketing). Permanent tables or dynamic tables with a business-driven <code>TARGET_LAG</code>; <b>secure views</b> for sharing; masking and row access policies applied here.</p><p><b>Access:</b> BI tools, analysts, data shares, apps, through read-only roles.</p>`,
+    s: `CREATE DATABASE IF NOT EXISTS prod_marts;
+CREATE OR REPLACE DYNAMIC TABLE prod_marts.finance.agg_daily_revenue
+  TARGET_LAG = '1 hour'
+  WAREHOUSE  = transform_wh
+AS
+SELECT d.full_date, s.region, SUM(f.net_amount) AS revenue
+FROM prod_marts.sales.fact_sales f
+JOIN prod_marts.sales.dim_date  d ON d.date_sk  = f.date_sk
+JOIN prod_marts.sales.dim_store s ON s.store_sk = f.store_sk
+GROUP BY 1, 2;
+GRANT SELECT ON ALL DYNAMIC TABLES IN SCHEMA prod_marts.finance TO ROLE bi_reader;` }
+];
+function lyShow(i) { $$('#lyCards .lay').forEach((b, k) => b.classList.toggle('on', k === +i)); $('#lyInfo').innerHTML = `<b class="h">${LY[i].h}</b>${LY[i].b}`; $('#lySql').textContent = LY[i].s; }
+$$('#lyCards .lay').forEach(b => b.onclick = () => lyShow(b.dataset.l));
+lyShow(0);
+
+/* env calculator */
+let envMode = 'clone';
+function envCalc() {
+  const S = +$('#envSz').value, c = +$('#envCh').value, N = +$('#envN').value;
+  $('#envSzV').textContent = S + ' TB'; $('#envChV').textContent = c + ' %'; $('#envNV').textContent = N;
+  const clone = envMode === 'clone';
+  const tb = clone ? N * S * c / 100 : N * S;
+  $('#envTB').textContent = fmt(tb, tb < 10 ? 1 : 0) + ' TB';
+  $('#envUSD').textContent = '$' + fmt(tb * 23);
+  $('#envTm').textContent = clone ? 'seconds to minutes' : '~' + fmt(Math.max(1, S * N * 0.1), 1) + ' h (illustrative)';
+  const names = ['DEV', 'TEST', 'QA', 'UAT', 'PERF', 'CI_PR_101', 'CI_PR_102', 'CI_PR_103', 'SANDBOX_A', 'SANDBOX_B'].slice(0, N);
+  $('#envSql').textContent = clone ? names.map(n => `CREATE OR REPLACE DATABASE ${n}_ANALYTICS CLONE PROD_ANALYTICS;`).join('\n') : names.map(n => `-- ${n}: create every table again and reload / CTAS ${S} TB from prod`).join('\n');
+  $('#envRow').innerHTML = [['PROD_ANALYTICS', S + ' TB of micro-partitions', true]].concat(names.slice(0, 2).map(n => [n + '_ANALYTICS', clone ? `shares prod partitions; owns ${fmt(S * c / 100, 1)} TB of changes` : `own full copy: ${S} TB`, clone])).map(([n, d, on]) => `<div class="env ${on ? 'on' : ''}"><b>${n}</b>${d}</div>`).join('');
+  $('#envIns').innerHTML = clone ? (c > 50 ? `<b>Clones drift.</b> When most partitions change (big rebuilds, full-refresh dbt runs, reclustering), each clone ends up owning its own copy and the saving disappears. Re-clone test environments regularly instead of keeping them for months.` : `<b>Zero-copy:</b> a clone is a metadata operation that points at prod's existing micro-partitions. You pay only for partitions the clone (or prod, after the clone) rewrites. ${N} environments cost about the same as ${fmt(tb, 1)} TB.`) : `<b>Full copies</b> pay ${fmt(N)} × ${S} TB of storage and take warehouse time to rebuild. This is how teams worked before clones; in Snowflake it's rarely justified except for masked or sub-sampled copies for less trusted users.`;
+}
+['#envSz', '#envCh', '#envN'].forEach(id => $(id).addEventListener('input', envCalc));
+tabs('#envMode', d => { envMode = d.v; envCalc(); });
+envCalc();
+
+/* ===== 05 constraints demo ===== */
+let kyType = 'std', kyRows = [];
+const kyInit = () => { kyRows = []; };
+function kyDraw(dupIds = []) {
+  const ids = kyRows.map(r => r[0]), dups = ids.filter((x, i) => ids.indexOf(x) !== i);
+  $('#kyTbl').innerHTML = '<tr><th>ORDER_ID (PK)</th><th>CUSTOMER_ID (FK)</th><th>AMOUNT (NOT NULL)</th></tr>' + (kyRows.length ? kyRows.map(r => `<tr style="${dups.includes(r[0]) ? 'background:var(--red-s)' : r[1] === 999 ? 'background:var(--amber-s)' : ''}"><td class="m">${r[0]}</td><td class="m">${r[1]}${r[1] === 999 ? ' (orphan)' : ''}</td><td class="m">${r[2]}</td></tr>`).join('') : '<tr><td colspan="3" style="color:var(--ink3)">empty</td></tr>');
+}
+function kyRun(a) {
+  const hyb = kyType === 'hyb', tbl = hyb ? 'orders_h' : 'orders';
+  let sql, res, ins, ok = true;
+  const has = id => kyRows.some(r => r[0] === id);
+  if (a === 'ok') {
+    sql = `INSERT INTO ${tbl} VALUES (101, 1, 50.00);`;
+    if (hyb && has(101)) { ok = false; res = 'Error: duplicate primary key value (illustrative message). 0 rows inserted.'; }
+    else { kyRows.push([101, 1, '50.00']); res = 'number of rows inserted: 1'; }
+    ins = hyb ? 'Valid row. On a hybrid table the PK index is checked on every insert.' : 'Valid row inserted. Now try the duplicate.';
+  } else if (a === 'dup') {
+    sql = `INSERT INTO ${tbl} VALUES (101, 2, 75.00);`;
+    if (hyb && has(101)) { ok = false; res = 'Error: duplicate primary key value (illustrative message). 0 rows inserted.'; ins = '<b>Hybrid tables enforce the primary key</b>, using a row-oriented index built for transactional lookups.'; }
+    else { kyRows.push([101, 2, '75.00']); res = 'number of rows inserted: 1'; ins = hyb ? 'No existing 101 yet, so this insert is valid. Run it again to see the error.' : `<b>It succeeded.</b> The PRIMARY KEY on a standard table is informational only. You now have two rows with order_id 101, and any join on order_id will double count. ${has(101) ? '' : ''}`; }
+  } else if (a === 'null') {
+    sql = `INSERT INTO ${tbl} VALUES (102, 1, NULL);`;
+    ok = false; res = 'Error: NULL result in a non-nullable column';
+    ins = '<b>NOT NULL is enforced on every table type.</b> It is the only constraint a standard table checks.';
+  } else if (a === 'fk') {
+    sql = `INSERT INTO ${tbl} VALUES (103, 999, 20.00);`;
+    if (hyb) { ok = false; res = 'Error: foreign key constraint violated, no parent row for customer 999 (illustrative message).'; ins = '<b>Hybrid tables enforce foreign keys</b> (the parent must also be a hybrid table).'; }
+    else { kyRows.push([103, 999, '20.00']); res = 'number of rows inserted: 1'; ins = '<b>Orphan row accepted.</b> Customer 999 does not exist, but standard tables never check FOREIGN KEY. An INNER JOIN to customers silently drops this order; a dbt <code>relationships</code> test would catch it.'; }
+  } else {
+    sql = `SELECT order_id, COUNT(*) AS n\nFROM ${tbl}\nGROUP BY order_id\nHAVING COUNT(*) > 1;`;
+    const c = {}; kyRows.forEach(r => c[r[0]] = (c[r[0]] || 0) + 1);
+    const d = Object.entries(c).filter(([, n]) => n > 1);
+    res = d.length ? 'ORDER_ID | N\n' + d.map(([k, n]) => `${k}      | ${n}`).join('\n') : 'Query produced no rows: no duplicates.';
+    ins = d.length ? 'This is what a dbt <code>unique</code> test runs under the hood. Fix with a de-dup step: <code>QUALIFY ROW_NUMBER() OVER (PARTITION BY order_id ORDER BY loaded_at DESC) = 1</code>, and use MERGE instead of INSERT for loads.' : 'Clean. In real pipelines, run this check (as a dbt test) after every load.';
+  }
+  $('#kySql').textContent = sql;
+  $('#kyRes').innerHTML = `<b class="h" style="color:${ok ? 'var(--teal)' : 'var(--red)'}">${ok ? 'SUCCESS' : 'FAILED'}</b><span class="mono" style="white-space:pre-wrap">${esc(res)}</span>`;
+  $('#kyIns').innerHTML = ins;
+  kyDraw();
+}
+$$('#kyBtns button').forEach(b => b.onclick = () => kyRun(b.dataset.a));
+tabs('#kyType', d => { kyType = d.v; kyInit(); kyDraw(); $('#kySql').textContent = d.v === 'hyb' ? `CREATE HYBRID TABLE orders_h (\n  order_id NUMBER PRIMARY KEY,\n  customer_id NUMBER REFERENCES customers_h(customer_id),\n  amount NUMBER(12,2) NOT NULL);` : `CREATE TABLE orders (\n  order_id NUMBER PRIMARY KEY,\n  customer_id NUMBER REFERENCES customers(customer_id),\n  amount NUMBER(12,2) NOT NULL);`; $('#kyRes').innerHTML = '<b class="h">RESULT</b>Table recreated (empty).'; $('#kyIns').innerHTML = d.v === 'hyb' ? 'Hybrid table: try the same inserts and compare. (Hybrid tables are a separate table type for low-latency transactional workloads; check current docs for availability.)' : 'Standard table: only NOT NULL will stop you.'; });
+$('#kyReset').onclick = () => { kyInit(); kyDraw(); $('#kyRes').innerHTML = '<b class="h">RESULT</b>Table truncated.'; $('#kySql').textContent = 'TRUNCATE TABLE orders;'; };
+kyDraw();
+
+/* sequence gaps */
+let sqNext, sqVals, sqRows;
+function sqInit() { sqNext = 1; sqVals = []; sqRows = []; }
+sqInit();
+function sqDraw(msg) {
+  $('#sqChips').innerHTML = sqVals.length ? sqVals.map(v => `<span class="chip ${v.used ? 'on' : ''}" style="${v.used ? '' : 'text-decoration:line-through;opacity:.6'}">${v.n}</span>`).join('') : '<span class="note-s">none yet</span>';
+  $('#sqRows').textContent = sqRows.length ? sqRows.join('\n') : '(empty)';
+  if (msg) $('#sqIns2').innerHTML = msg;
+}
+$('#sqIns').onclick = () => { const n = sqNext++; sqVals.push({ n, used: true }); sqRows.push(`id=${n}  inserted`); sqDraw(`Value <b>${n}</b> handed out and used.`); };
+$('#sqRb').onclick = () => { const n = sqNext++; sqVals.push({ n, used: false }); sqDraw(`Value <b>${n}</b> was consumed by the INSERT, then the transaction rolled back. <b>Sequences never give values back</b>, so ${n} is a permanent gap. This is by design: handing out numbers without locking is what makes sequences fast under concurrency.`); };
+$('#sqPar').onclick = () => { const a = sqNext, b = sqNext + 1, c = sqNext + 2; sqNext += 3; [a, b, c].forEach(n => sqVals.push({ n, used: true })); sqRows.push(`id=${b}  session B (committed first)`, `id=${c}  session B`, `id=${a}  session A (committed last)`); sqDraw(`Both sessions got unique values, but rows did not land in id order (illustrative). With NOORDER behaviour, values are unique but not guaranteed to increase in the order rows are inserted. <b>Never use an IDENTITY column to sort events in time</b>; use a timestamp.`); };
+$('#sqUuid').onclick = () => { const u = (crypto.randomUUID ? crypto.randomUUID() : 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, ch => { const r = Math.random() * 16 | 0; return (ch === 'x' ? r : (r & 3 | 8)).toString(16); })); sqRows.push(`uuid=${u}`); sqDraw(`<code>UUID_STRING()</code> needs no shared counter, so any system (Kafka producer, app, Snowflake) can create keys independently. Trade-off: 36 characters vs an 8-byte number, so joins and storage are heavier on huge facts.`); };
+$('#sqReset').onclick = () => { sqInit(); sqDraw('Reset. IDENTITY / AUTOINCREMENT values are <b>unique</b>, but not guaranteed to be <b>gap-free</b> or in strict insert order.'); };
+sqDraw();
+</script>
+
+<script>
+/* ===== 06 dbt DAG ===== */
+const DN = {
+  src_orders: { k: 'src', l: 'raw.orders', m: 'source', x: 10, y: 30, d: [],
+    raw: `# models/staging/sources.yml
+sources:
+  - name: raw
+    database: raw_db
+    schema: shop
+    loaded_at_field: _loaded_at
+    freshness:
+      warn_after:  {count: 6,  period: hour}
+      error_after: {count: 24, period: hour}
+    tables:
+      - name: orders
+      - name: customers`,
+    comp: `-- {{ source('raw', 'orders') }} compiles to:
+raw_db.shop.orders`,
+    ddl: `-- sources are never built by dbt.
+-- dbt source freshness runs something like:
+select max(_loaded_at) from raw_db.shop.orders;`,
+    info: `A <b>source</b> is a table loaded by something else (Snowpipe, Fivetran, COPY). Declaring it gives lineage, a single place to change the location, and <b>freshness</b> checks.` },
+  src_customers: { k: 'src', l: 'raw.customers', m: 'source', x: 10, y: 130, d: [],
+    raw: `# declared in the same sources.yml
+      - name: customers
+        columns:
+          - name: id
+            tests: [not_null]`,
+    comp: `raw_db.shop.customers`, ddl: `-- not built: loaded by the ingestion pipeline`,
+    info: `Tests can be put on sources too, catching bad data <b>before</b> any model reads it.` },
+  country_codes: { k: 'seed', l: 'country_codes', m: 'seed', x: 10, y: 230, d: [],
+    raw: `# seeds/country_codes.csv
+country_code,country_name,region
+IN,India,APAC
+DE,Germany,EMEA
+US,United States,AMER`,
+    comp: `analytics.seeds.country_codes`,
+    ddl: `create table analytics.seeds.country_codes (
+  country_code varchar, country_name varchar, region varchar);
+insert into analytics.seeds.country_codes values
+  ('IN','India','APAC'), ('DE','Germany','EMEA'), ('US','United States','AMER');`,
+    info: `A <b>seed</b> is a small CSV in Git, loaded with <code>dbt seed</code>. Good for static mappings that analysts maintain; not for large or frequently changing data.` },
+  stg_orders: { k: 'mdl', l: 'stg_orders', m: 'view', x: 157, y: 30, d: ['src_orders'],
+    raw: `{{ config(materialized='view') }}
+
+select
+    id::number                as order_id,
+    customer_id::number       as customer_id,
+    amount_cents / 100.0      as amount,
+    lower(status)             as status,
+    created_at::timestamp_ntz as ordered_at,
+    _loaded_at
+from {{ source('raw', 'orders') }}`,
+    comp: `select
+    id::number                as order_id,
+    customer_id::number       as customer_id,
+    amount_cents / 100.0      as amount,
+    lower(status)             as status,
+    created_at::timestamp_ntz as ordered_at,
+    _loaded_at
+from raw_db.shop.orders`,
+    ddl: `create or replace view analytics.staging.stg_orders as (
+  select id::number as order_id, ...
+  from raw_db.shop.orders
+);`,
+    info: `<b>Staging</b> models do light cleanup only: rename, cast, standardise. One staging model per source table, usually a <b>view</b> (cheap, always fresh).`, t: ['not_null(order_id)', 'unique(order_id)'] },
+  stg_customers: { k: 'mdl', l: 'stg_customers', m: 'view', x: 157, y: 130, d: ['src_customers'],
+    raw: `select
+    id::number         as customer_id,
+    initcap(full_name) as customer_name,
+    upper(country)     as country_code,
+    updated_at
+from {{ source('raw', 'customers') }}
+qualify row_number() over (partition by id order by updated_at desc) = 1`,
+    comp: `select
+    id::number         as customer_id,
+    initcap(full_name) as customer_name,
+    upper(country)     as country_code,
+    updated_at
+from raw_db.shop.customers
+qualify row_number() over (partition by id order by updated_at desc) = 1`,
+    ddl: `create or replace view analytics.staging.stg_customers as (
+  select ... from raw_db.shop.customers
+  qualify row_number() over (partition by id order by updated_at desc) = 1
+);`,
+    info: `De-duplicates the raw feed with <code>QUALIFY</code>. The YAML puts <code>unique</code> and <code>not_null</code> tests on customer_id; toggle the failing test to see what <code>dbt build</code> skips.`, t: ['unique(customer_id)', 'not_null(customer_id)'] },
+  snap_customers: { k: 'snap', l: 'snap_customers', m: 'snapshot', x: 157, y: 230, d: ['src_customers'],
+    raw: `{% snapshot snap_customers %}
+{{ config(
+    target_schema='snapshots',
+    unique_key='id',
+    strategy='timestamp',
+    updated_at='updated_at'
+) }}
+select * from {{ source('raw', 'customers') }}
+{% endsnapshot %}`,
+    comp: `select * from raw_db.shop.customers`,
+    ddl: `-- first run
+create table analytics.snapshots.snap_customers as
+select *, updated_at as dbt_valid_from,
+       null::timestamp as dbt_valid_to,
+       md5(...) as dbt_scd_id, updated_at as dbt_updated_at
+from raw_db.shop.customers;
+-- later runs: a MERGE that sets dbt_valid_to on changed rows
+-- and inserts their new versions (SCD Type 2)`,
+    info: `A <b>snapshot</b> is dbt's SCD Type 2. Each run compares source rows with the current snapshot rows (by <code>updated_at</code>, or by comparing listed columns with <code>strategy='check'</code>) and closes / inserts versions. History is only captured when the snapshot <b>runs</b>, so schedule it.` },
+  int_orders_enriched: { k: 'mdl', l: 'int_orders_enriched', m: 'ephemeral', x: 304, y: 30, d: ['stg_orders', 'stg_customers'],
+    raw: `{{ config(materialized='ephemeral') }}
+
+select o.*, c.country_code
+from {{ ref('stg_orders') }} o
+left join {{ ref('stg_customers') }} c
+  on c.customer_id = o.customer_id`,
+    comp: `select o.*, c.country_code
+from analytics.staging.stg_orders o
+left join analytics.staging.stg_customers c
+  on c.customer_id = o.customer_id`,
+    ddl: `-- nothing is created in Snowflake.
+-- models that ref() it get this CTE injected:
+with __dbt__cte__int_orders_enriched as (
+  select o.*, c.country_code
+  from analytics.staging.stg_orders o
+  left join analytics.staging.stg_customers c ...
+)
+select ... from __dbt__cte__int_orders_enriched`,
+    info: `<b>Ephemeral</b> models exist only in dbt: their SQL is inlined as a CTE. Handy for small shared logic, but you can't query them directly and deep chains make compiled SQL hard to debug.` },
+  dim_customers: { k: 'mdl', l: 'dim_customers', m: 'table', x: 304, y: 180, d: ['snap_customers', 'country_codes'],
+    raw: `{{ config(materialized='table') }}
+
+select
+    {{ dbt_utils.generate_surrogate_key(['s.id', 's.dbt_valid_from']) }}
+                         as customer_sk,
+    s.id                 as customer_id,
+    s.full_name          as customer_name,
+    cc.region,
+    s.dbt_valid_from     as valid_from,
+    s.dbt_valid_to       as valid_to,
+    s.dbt_valid_to is null as is_current
+from {{ ref('snap_customers') }} s
+left join {{ ref('country_codes') }} cc
+  on cc.country_code = upper(s.country)`,
+    comp: `select
+    md5(cast(coalesce(cast(s.id as varchar), '_dbt_utils_surrogate_key_null_')
+        || '-' || coalesce(cast(s.dbt_valid_from as varchar),
+        '_dbt_utils_surrogate_key_null_') as varchar)) as customer_sk,
+    s.id as customer_id, ...
+from analytics.snapshots.snap_customers s
+left join analytics.seeds.country_codes cc
+  on cc.country_code = upper(s.country)`,
+    ddl: `create or replace transient table analytics.marts.dim_customers as (
+  select md5(...) as customer_sk, ...
+  from analytics.snapshots.snap_customers s
+  left join analytics.seeds.country_codes cc ...
+);`,
+    info: `A <b>table</b> model is rebuilt completely each run (<code>CREATE OR REPLACE ... AS SELECT</code>). Note <b>transient</b>: dbt-snowflake's default for tables. The surrogate key is an MD5 hash from the dbt_utils macro.`, t: ['unique(customer_sk)', 'not_null(customer_sk)'] },
+  fct_orders: { k: 'mdl', l: 'fct_orders', m: 'incremental', x: 451, y: 100, d: ['int_orders_enriched', 'dim_customers'],
+    raw: `{{ config(
+    materialized='incremental',
+    unique_key='order_id',
+    incremental_strategy='merge',
+    cluster_by=['order_date']
+) }}
+
+select e.order_id, d.customer_sk, e.amount,
+       e.ordered_at::date as order_date, e._loaded_at
+from {{ ref('int_orders_enriched') }} e
+join {{ ref('dim_customers') }} d
+  on d.customer_id = e.customer_id
+ and e.ordered_at >= d.valid_from
+ and e.ordered_at <  coalesce(d.valid_to, '9999-12-31')
+{% if is_incremental() %}
+where e._loaded_at > (select dateadd(day, -3, max(_loaded_at)) from {{ this }})
+{% endif %}`,
+    comp: `with __dbt__cte__int_orders_enriched as (
+  select o.*, c.country_code
+  from analytics.staging.stg_orders o
+  left join analytics.staging.stg_customers c
+    on c.customer_id = o.customer_id
+)
+select e.order_id, d.customer_sk, e.amount,
+       e.ordered_at::date as order_date, e._loaded_at
+from __dbt__cte__int_orders_enriched e
+join analytics.marts.dim_customers d
+  on d.customer_id = e.customer_id
+ and e.ordered_at >= d.valid_from
+ and e.ordered_at <  coalesce(d.valid_to, '9999-12-31')
+where e._loaded_at > (select dateadd(day, -3, max(_loaded_at))
+                      from analytics.marts.fct_orders)`,
+    ddl: `-- run 1 (table doesn't exist): create table ... as select ...
+-- later runs:
+create temporary view analytics.marts.fct_orders__dbt_tmp as (<compiled select>);
+merge into analytics.marts.fct_orders t
+using analytics.marts.fct_orders__dbt_tmp s
+  on t.order_id = s.order_id
+when matched then update set customer_sk = s.customer_sk, amount = s.amount, ...
+when not matched then insert (...) values (...);`,
+    info: `<b>Incremental</b>: only rows from the last 3 days of loads are processed (the <code>is_incremental()</code> block renders only when the table already exists and you didn't pass <code>--full-refresh</code>). <code>{{ this }}</code> is the model's own table. The lookback window plus <code>merge</code> on <code>unique_key</code> handles late data without duplicates. The SCD2 join picks the customer version valid at order time.`, t: ['unique(order_id)', 'relationships(customer_sk → dim_customers)'] },
+  mart_daily_revenue: { k: 'mdl', l: 'mart_daily_revenue', m: 'dynamic_table', x: 598, y: 30, d: ['fct_orders'],
+    raw: `{{ config(
+    materialized='dynamic_table',
+    target_lag='1 hour',
+    snowflake_warehouse='transform_wh'
+) }}
+
+select order_date, sum(amount) as revenue, count(*) as orders
+from {{ ref('fct_orders') }}
+group by order_date`,
+    comp: `select order_date, sum(amount) as revenue, count(*) as orders
+from analytics.marts.fct_orders
+group by order_date`,
+    ddl: `create or replace dynamic table analytics.marts.mart_daily_revenue
+  target_lag = '1 hour'
+  warehouse  = transform_wh
+as (
+  select order_date, sum(amount) as revenue, count(*) as orders
+  from analytics.marts.fct_orders
+  group by order_date
+);`,
+    info: `<b>dynamic_table</b> materialization: dbt creates the object once; afterwards <b>Snowflake</b> keeps it fresh within the target lag, even between dbt runs. dbt only re-creates it when the definition changes. Config options depend on your dbt-snowflake version.` },
+  customer_ltv: { k: 'mdl', l: 'customer_ltv', m: 'table', x: 598, y: 180, d: ['fct_orders', 'dim_customers'],
+    raw: `select d.customer_id, d.region,
+       sum(f.amount) as lifetime_value,
+       min(f.order_date) as first_order
+from {{ ref('fct_orders') }} f
+join {{ ref('dim_customers') }} d using (customer_sk)
+group by 1, 2`,
+    comp: `select d.customer_id, d.region,
+       sum(f.amount) as lifetime_value,
+       min(f.order_date) as first_order
+from analytics.marts.fct_orders f
+join analytics.marts.dim_customers d using (customer_sk)
+group by 1, 2`,
+    ddl: `create or replace transient table analytics.marts.customer_ltv as (
+  select ... from analytics.marts.fct_orders f
+  join analytics.marts.dim_customers d using (customer_sk) group by 1, 2
+);`,
+    info: `Materialization not set in the file, so it comes from <code>dbt_project.yml</code> (e.g. <code>marts: +materialized: table</code>). Folder-level defaults keep model files short.`, t: ['not_null(customer_id)'] }
+};
+const DORDER = ['src_orders', 'src_customers', 'country_codes', 'stg_orders', 'stg_customers', 'snap_customers', 'int_orders_enriched', 'dim_customers', 'fct_orders', 'mart_daily_revenue', 'customer_ltv'];
+const DW = 132, DH = 52;
+let dSel = 'stg_orders', dMode = 'down', dFail = false, dView = 'raw', dHL = null;
+const kids = id => DORDER.filter(k => DN[k].d.includes(id));
+function walk(id, f, acc = new Set()) { f(id).forEach(n => { if (!acc.has(n)) { acc.add(n); walk(n, f, acc); } }); return acc; }
+function dSet() {
+  const s = new Set([dSel]);
+  if (dMode === 'down' || dMode === 'both') walk(dSel, kids).forEach(x => s.add(x));
+  if (dMode === 'up' || dMode === 'both') walk(dSel, id => DN[id].d).forEach(x => s.add(x));
+  return s;
+}
+function dDraw() {
+  let s = '';
+  DORDER.forEach(id => DN[id].d.forEach(p => {
+    const a = DN[p], b = DN[id], x1 = a.x + DW, y1 = a.y + DH / 2, x2 = b.x, y2 = b.y + DH / 2, mx = (x1 + x2) / 2;
+    const hit = dHL && dHL.has(p) && dHL.has(id);
+    s += `<path class="dedge${hit ? ' hit' : ''}" d="M${x1} ${y1} C${mx} ${y1} ${mx} ${y2} ${x2} ${y2}"/>`;
+  }));
+  DORDER.forEach(id => {
+    const n = DN[id];
+    s += `<g class="dn ${n.k}${id === dSel ? ' sel' : ''}${dHL && dHL.has(id) ? ' hit' : ''}" data-id="${id}"><rect x="${n.x}" y="${n.y}" width="${DW}" height="${DH}" rx="9"/><text class="th" x="${n.x + DW / 2}" y="${n.y + 20}" text-anchor="middle" dominant-baseline="central" style="font-size:11.5px">${n.l}</text><text class="mt" x="${n.x + DW / 2}" y="${n.y + 38}" text-anchor="middle" dominant-baseline="central">${n.m}${n.t ? ' · ' + n.t.length + ' tests' : ''}</text></g>`;
+  });
+  const svg = $('#dagSvg');
+  svg.innerHTML = s;
+  svg.classList.toggle('hl', !!dHL);
+  $$('#dagSvg .dn').forEach(g => g.addEventListener('click', () => { dSel = g.dataset.id; dHL = dSet(); dDraw(); dCode(); $('#dagRunList').innerHTML = ''; $('#dagIns').innerHTML = `Selected <b>${DN[dSel].l}</b> (${DN[dSel].m}). Highlighted nodes are what <code>${dCmd()}</code> would select. Press <b>dbt build</b> to run it.`; }));
+  $('#dagCmd').textContent = '$ ' + dCmd();
+}
+function dCmd() { const n = dSel.startsWith('src_') ? 'source:raw.' + dSel.slice(4) : dSel; return 'dbt build --select ' + (dMode === 'up' ? '+' + n : dMode === 'both' ? '+' + n + '+' : dMode === 'down' ? n + '+' : n); }
+function dCode() {
+  const n = DN[dSel];
+  $('#dagCode').textContent = dView === 'raw' ? n.raw : dView === 'comp' ? n.comp : n.ddl;
+  $('#dagInfo').innerHTML = `<b class="h">${n.l.toUpperCase()} · ${n.m.toUpperCase()}</b>${n.info}${n.t ? `<p style="margin-top:6px;font-size:13px"><b>Tests:</b> ${n.t.map(t => `<code>${t}</code>`).join(' ')}</p>` : ''}${n.d.length ? `<p style="font-size:13px"><b>Depends on:</b> ${n.d.map(x => DN[x].l).join(', ')}</p>` : ''}`;
+}
+function dRun() {
+  const sel = dSet(); dHL = sel; dDraw();
+  const failed = new Set(), out = [];
+  let built = 0, skipped = 0, tests = 0;
+  DORDER.filter(id => sel.has(id)).forEach(id => {
+    const n = DN[id];
+    if (n.k === 'src') { out.push(`<span>${n.l} · source (not built)</span>`); return; }
+    const blocked = n.d.some(p => failed.has(p));
+    if (blocked) { failed.add(id); skipped++; out.push(`<span class="bad">SKIP ${n.l}</span>`); return; }
+    if (n.m === 'ephemeral') out.push(`<span>${n.l} · ephemeral (inlined)</span>`);
+    else { built++; out.push(`<span class="ok">${n.m} ${n.l} ✓</span>`); }
+    (n.t || []).forEach(t => { tests++; const bad = dFail && id === 'stg_customers' && t.startsWith('unique'); if (bad) failed.add(id); out.push(`<span class="${bad ? 'bad' : 'ok'}">test ${t} ${bad ? '✗ FAIL (3 rows)' : '✓'}</span>`); });
+  });
+  $('#dagRunList').innerHTML = out.join('');
+  const hitFail = dFail && sel.has('stg_customers');
+  $('#dagIns').innerHTML = hitFail ? `<b>dbt build stopped the damage.</b> The unique test on stg_customers returned failing rows, so every node downstream of it was <b>SKIPPED</b> (${skipped} skipped). Bad data never reached the marts. Plain <code>dbt run</code> followed by <code>dbt test</code> would have built everything first and only complained afterwards.` : `<b>${built} nodes built, ${tests} tests passed${skipped ? ', ' + skipped + ' skipped' : ''}.</b> dbt walks the DAG in dependency order; nodes whose parents are done run in parallel up to your <code>threads</code> setting. ${dMode === 'down' ? '<code>model+</code> = the model and everything downstream: the usual choice after changing a model.' : dMode === 'up' ? '<code>+model</code> = the model plus everything it depends on: rebuild a mart from scratch.' : dMode === 'both' ? '<code>+model+</code> = ancestors and descendants.' : 'Only the model itself: fast, but downstream models may now be stale.'}`;
+}
+tabs('#dagSel', d => { dMode = d.v; dHL = dSet(); dDraw(); $('#dagRunList').innerHTML = ''; });
+tabs('#dagFail', d => { dFail = d.v === '1'; });
+tabs('#dagView', d => { dView = d.v; dCode(); });
+$('#dagRun').onclick = dRun;
+dHL = dSet(); dDraw(); dCode();
+
+/* incremental strategies */
+const INC = {
+  merge: { s: `-- config: incremental_strategy='merge', unique_key='order_id'
+merge into analytics.marts.fct_orders t
+using fct_orders__dbt_tmp s
+  on t.order_id = s.order_id
+when matched then update set amount = s.amount, customer_sk = s.customer_sk
+when not matched then insert (order_id, customer_sk, amount, order_date)
+                      values (s.order_id, s.customer_sk, s.amount, s.order_date);`,
+    i: `<b>merge</b> is the dbt-snowflake default. Updates existing keys and inserts new ones: correct for late or changed rows. Needs a <code>unique_key</code>, and the new batch must not contain duplicate keys or the MERGE errors (nondeterministic). Cost grows with target size unless the ON clause can prune (add <code>incremental_predicates</code> to limit the target scan, e.g. last 7 days).` },
+  append: { s: `-- config: incremental_strategy='append'
+insert into analytics.marts.fct_orders (order_id, customer_sk, amount, order_date)
+select order_id, customer_sk, amount, order_date
+from fct_orders__dbt_tmp;`,
+    i: `<b>append</b> just inserts. Cheapest and fastest, perfect for immutable event logs. But a re-run or overlapping lookback window <b>creates duplicates</b>: there is no key check.` },
+  di: { s: `-- config: incremental_strategy='delete+insert', unique_key='order_id'
+delete from analytics.marts.fct_orders
+where order_id in (select order_id from fct_orders__dbt_tmp);
+
+insert into analytics.marts.fct_orders
+select * from fct_orders__dbt_tmp;`,
+    i: `<b>delete+insert</b> removes every target row whose key appears in the batch, then inserts the batch. Tolerates duplicate keys in the batch better than MERGE and can be faster when replacing whole chunks (e.g. unique_key = order_date to reload whole days).` },
+  io: { s: `-- config: incremental_strategy='insert_overwrite'
+-- on Snowflake this overwrites the WHOLE table:
+insert overwrite into analytics.marts.fct_orders
+select * from fct_orders__dbt_tmp;`,
+    i: `<b>insert_overwrite</b> on Snowflake replaces the <b>entire</b> table with the batch (Snowflake has no user-defined partitions to overwrite selectively, unlike BigQuery or Spark). Easy to misuse: if your incremental filter selects only 3 days, you just deleted everything else. Check the dbt-snowflake docs before choosing it; newer versions also offer a <code>microbatch</code> strategy for time-based batches.` }
+};
+tabs('#incTabs', d => { $('#incSql').textContent = INC[d.v].s; $('#incIns').innerHTML = INC[d.v].i; });
+$('#incSql').textContent = INC.merge.s; $('#incIns').innerHTML = INC.merge.i;
+
+/* ===== 07 CI/CD stepper ===== */
+const CN = [['PR opened', 'feature branch'], ['Clone prod', 'CI_PR_123 db'], ['schemachange', 'apply V__ / R__'], ['dbt build', 'slim CI + tests'], ['Review + merge', 'main branch'], ['Build green', 'clone + deploy'], ['Validate green', 'tests · recon'], ['SWAP', 'go live']];
+const CP = [[20, 30], [195, 30], [370, 30], [545, 30], [545, 150], [370, 150], [195, 150], [20, 150]];
+(function () {
+  let s = '';
+  const e = [[170, 62, 195, 62], [345, 62, 370, 62], [520, 62, 545, 62], [620, 94, 620, 150], [545, 182, 520, 182], [370, 182, 345, 182], [195, 182, 170, 182]];
+  e.forEach((p, i) => s += `<path class="edge" id="ce${i}" d="M${p[0]} ${p[1]} L${p[2]} ${p[3]}"/>`);
+  CN.forEach(([h, t], i) => s += `<g class="fn" id="cn${i}"><rect class="${i < 5 ? 'L-cp' : 'L-cs'}" x="${CP[i][0]}" y="${CP[i][1]}" width="150" height="64" rx="10" stroke-width="1"/><text class="th" x="${CP[i][0] + 75}" y="${CP[i][1] + 24}" text-anchor="middle" dominant-baseline="central">${i + 1} · ${h}</text><text class="ts" x="${CP[i][0] + 75}" y="${CP[i][1] + 44}" text-anchor="middle" dominant-baseline="central">${t}</text></g>`);
+  s += `<text class="tm" x="360" y="125" text-anchor="middle">CI: on every pull request ↑ · CD: after merge ↓</text>`;
+  $('#ciSvg').innerHTML = s;
+})();
+const CS = [
+  { n: 0, h: '1 · Developer opens a pull request', you: 'Branch <code>feature/add-discount</code> changes <code>fct_orders.sql</code> and adds <code>migrations/V1.4.0__add_discount_column.sql</code>. Push and open a PR in GitHub/GitLab.', be: 'The PR triggers the CI workflow (GitHub Actions, GitLab CI, Jenkins, Azure DevOps). It authenticates to Snowflake as a <b>service user with key-pair auth</b> and a dedicated CI role, never a person\'s password.', prod: 'v41 live', cl: 0 },
+  { n: 1, h: '2 · Zero-copy clone of prod for this PR', you: '<code>CREATE OR REPLACE DATABASE ci_pr_123 CLONE analytics;</code>', be: 'A metadata-only operation: the clone points at prod\'s existing micro-partitions, so it is ready in seconds to minutes even for many TB, and costs storage only for what CI changes. Tests run on <b>production-shaped data</b>, not toy samples.', prod: 'v41 live', cl: 1 },
+  { n: 2, h: '3 · Run schema migrations with schemachange', you: '<code>schemachange deploy -f migrations -d ci_pr_123 ...</code>', be: 'schemachange reads its change-history table, sees the clone is at version 1.3.x, and runs only <code>V1.4.0__add_discount_column.sql</code>. Repeatable <code>R__</code> scripts whose checksum changed re-run; <code>A__</code> scripts always run. Each applied script is logged with its checksum.', prod: 'v41 live', cl: 1 },
+  { n: 3, h: '4 · dbt build on the clone (slim CI)', you: '<code>dbt build --select state:modified+ --defer --state prod_artifacts/ --target ci</code>', be: 'dbt compares this branch\'s manifest with prod\'s: only <code>fct_orders</code> and its children are built; unchanged parents are read from prod (<b>defer</b>). Every built model is tested immediately; failures block the PR.', prod: 'v41 live', cl: 1 },
+  { n: 4, h: '5 · Review and merge', you: 'A teammate reviews the SQL diff, the CI result and the dbt docs. Merge into <code>main</code>. The CI clone is dropped.', be: '<code>DROP DATABASE ci_pr_123;</code> Any storage the clone owned is released (after Time Travel / Fail-safe rules for the object type). The merge triggers the CD workflow.', prod: 'v41 live', cl: 0 },
+  { n: 5, h: '6 · Build the green environment', you: '<code>CREATE OR REPLACE DATABASE analytics_green CLONE analytics;</code> then schemachange + <code>dbt build --target green</code>.', be: 'Production keeps serving users from <code>analytics</code> (blue) while the new version is built next to it. Heavy rebuilds happen here, on a deploy warehouse, without locking prod tables.', prod: 'v41 live (green building)', cl: 1 },
+  { n: 6, h: '7 · Validate green', you: 'Run dbt tests, row-count and sum reconciliation versus blue, and a smoke test of key dashboards pointed at green.', be: 'Comparing the two databases is cheap: they share most partitions, and queries read only changed columns. Define pass/fail thresholds in code, so the decision is automatic.', prod: 'v41 live', cl: 1 },
+  { n: 7, h: '8 · ALTER DATABASE ... SWAP WITH', you: '<code>ALTER DATABASE analytics SWAP WITH analytics_green;</code>', be: 'A single metadata operation exchanges the two names. Users querying <code>analytics.marts.*</code> see v42 from the next query. The old version now sits in <code>analytics_green</code>: <b>rollback = swap again</b>. Drop it after a safe period.', prod: 'v42 live', cl: 1 }
+];
+const CF = {
+  ci: { n: 3, h: '4 · dbt test FAILS on the clone', you: 'The <code>unique(order_id)</code> test on <code>fct_orders</code> returns 12 duplicate rows: the new join to a discounts table fans out.', be: 'CI exits non-zero; the PR is blocked. Nothing ran against prod. The developer fixes the join (aggregate discounts per order first), pushes again, and CI re-runs on a fresh clone.', prod: 'v41 live (untouched)', cl: 1 },
+  green: { n: 6, h: '7 · Validation FAILS on green', you: 'Reconciliation: green revenue for last month is 3% lower than blue. Threshold is 0.1%.', be: 'The pipeline stops <b>before</b> the SWAP. Users never saw the bad numbers. Investigate in green (it is a full working copy), fix, redeploy. Drop green if abandoning.', prod: 'v41 live (untouched)', cl: 1 }
+};
+let ciScen = 'ok', ci = -1;
+const ciSteps = () => ciScen === 'ok' ? CS : ciScen === 'ci' ? CS.slice(0, 3).concat([CF.ci]) : CS.slice(0, 6).concat([CF.green]);
+function ciBuildBar() { $('#ciBar').innerHTML = ''; ciSteps().forEach((_, i) => { const s = document.createElement('span'); s.onclick = () => ciGo(i); $('#ciBar').appendChild(s); }); }
+function ciGo(i) {
+  ci = i; const S = ciSteps(), svg = $('#ciSvg');
+  svg.classList.toggle('playing', i >= 0);
+  [...$('#ciBar').children].forEach((s, k) => s.classList.toggle('on', k <= i));
+  if (i < 0) {
+    $$('#ciSvg .fn').forEach(g => g.classList.remove('on', 'done', 'fail', 'skipd')); $$('#ciSvg .edge').forEach(e => e.classList.remove('on'));
+    $('#ciDesc').innerHTML = '<h4>Ready</h4><div style="font-size:14px;color:var(--ink2)">Pick a scenario and press Start.</div>';
+    $('#ciNext').textContent = 'Start'; $('#ciProd').textContent = 'v41 live'; $('#ciClones').textContent = 0; $('#ciDown').textContent = 'none';
+    $('#ciIns').innerHTML = 'Press <b>Start</b> to follow one change through the pipeline.'; return;
+  }
+  const st = S[i], failing = st === CF.ci || st === CF.green;
+  $$('#ciSvg .fn').forEach((g, k) => { g.classList.toggle('on', k === st.n); g.classList.toggle('done', k < st.n); g.classList.toggle('fail', failing && k === st.n); g.classList.toggle('skipd', failing && k > st.n); });
+  $$('#ciSvg .edge').forEach((e, k) => e.classList.toggle('on', k === st.n - 1));
+  $('#ciDesc').innerHTML = `<h4>${st.h}</h4><div class="two"><div class="you"><b class="l">WHAT YOU DO</b>${st.you}</div><div class="be"><b class="l">WHAT HAPPENS IN THE BACKEND</b>${st.be}</div></div>`;
+  $('#ciProd').textContent = st.prod; $('#ciClones').textContent = st.cl; $('#ciDown').textContent = 'none';
+  $('#ciNext').textContent = i === S.length - 1 ? 'Replay' : 'Next';
+  $('#ciIns').innerHTML = failing ? `<b>Fail early, fail cheap.</b> The problem was caught on a clone, so production stayed on v41 and no user was affected. This is the whole point of clone-based CI/CD.` : i === S.length - 1 ? `<b>Released with zero downtime.</b> Every step was automated and logged; the previous version is one SWAP away. Interview phrase: "immutable, tested build swapped in atomically".` : `Step ${i + 1} of ${S.length}. Production is still serving <b>${st.prod.split(' ')[0]}</b>.`;
+}
+$('#ciNext').onclick = () => ciGo(ci === ciSteps().length - 1 ? 0 : ci + 1);
+$('#ciPrev').onclick = () => ciGo(Math.max(-1, ci - 1));
+$('#ciReset').onclick = () => ciGo(-1);
+tabs('#ciScen', d => { ciScen = d.v; ciBuildBar(); ciGo(-1); });
+ciBuildBar(); ciGo(-1);
+</script>
+
+<script>
+/* ===== 08 SQL lab ===== */
+const SQL = [
+  { t: 'Star schema DDL', l: [
+    ['CREATE TABLE dim_date (', 'Date dimension: one row per calendar day, shared (conformed) by every fact.'],
+    ['  date_sk     NUMBER(8) NOT NULL PRIMARY KEY,', 'Smart integer key like 20261114. NOT NULL is enforced; PRIMARY KEY is informational on standard tables.'],
+    ['  full_date   DATE NOT NULL,', 'The actual date value.'],
+    ['  year_month  VARCHAR(7),', 'Pre-computed label such as 2026-11, so reports never repeat date functions.'],
+    ['  is_weekend  BOOLEAN', 'Ready-made filter flag.'],
+    [');', ''],
+    ['', ''],
+    ['CREATE TABLE dim_customer (', 'Customer dimension kept as SCD Type 2.'],
+    ['  customer_sk NUMBER IDENTITY(1,1) PRIMARY KEY,', 'Surrogate key generated by Snowflake. Unique but may have gaps.'],
+    ['  customer_id VARCHAR NOT NULL,', 'Business key from the source system. Repeats once per version.'],
+    ['  city        VARCHAR,', 'Tracked attribute: a change creates a new row.'],
+    ['  valid_from  TIMESTAMP_NTZ NOT NULL,', 'When this version became true.'],
+    ['  valid_to    TIMESTAMP_NTZ,', 'When it stopped being true; NULL (or 9999-12-31) for the current version.'],
+    ['  is_current  BOOLEAN DEFAULT TRUE', 'Convenience flag for "latest version" queries.'],
+    [');', ''],
+    ['', ''],
+    ['CREATE TABLE fact_sales (', 'Transaction fact. Grain: one row per order line.'],
+    ['  date_sk      NUMBER(8)   NOT NULL REFERENCES dim_date(date_sk),', 'Foreign key to dim_date. Declared for documentation and tools; not enforced.'],
+    ['  customer_sk  NUMBER      NOT NULL REFERENCES dim_customer(customer_sk),', 'Points at the customer VERSION that was current when the sale happened.'],
+    ['  order_number VARCHAR(20) NOT NULL,', 'Degenerate dimension: an identifier with no table of its own.'],
+    ['  line_number  NUMBER      NOT NULL,', 'Together with order_number this defines the grain.'],
+    ['  quantity     NUMBER(10,0),', 'Additive measure.'],
+    ['  net_amount   NUMBER(12,2),', 'Additive measure. Store money as NUMBER, never FLOAT.'],
+    ['  CONSTRAINT pk_fact_sales PRIMARY KEY (order_number, line_number) RELY', 'Composite key documenting the grain. RELY lets the optimizer trust it, so only set it if your pipeline guarantees uniqueness.'],
+    [')', ''],
+    ['CLUSTER BY (date_sk);', 'Optional clustering key on a very large fact so date filters prune micro-partitions well.']
+  ] },
+  { t: 'Data Vault DDL + load', l: [
+    ['CREATE TABLE hub_customer (', 'Hub: one row per unique business key, forever.'],
+    ['  hk_customer   BINARY(16)    NOT NULL,', 'Hash key: MD5_BINARY of the normalized business key (16 bytes).'],
+    ['  customer_id   VARCHAR       NOT NULL,', 'The business key itself.'],
+    ['  load_dts      TIMESTAMP_NTZ NOT NULL,', 'When the key was first seen by the warehouse.'],
+    ['  record_source VARCHAR       NOT NULL', 'Which system delivered it, for auditability.'],
+    [');', ''],
+    ['CREATE TABLE lnk_customer_order (', 'Link: one row per unique customer-order relationship.'],
+    ['  hk_customer_order BINARY(16) NOT NULL,', 'Hash of both business keys combined.'],
+    ['  hk_customer BINARY(16) NOT NULL, hk_order BINARY(16) NOT NULL,', 'Hash keys of the connected hubs.'],
+    ['  load_dts TIMESTAMP_NTZ NOT NULL, record_source VARCHAR NOT NULL);', 'Standard audit columns.'],
+    ['CREATE TABLE sat_customer_details (', 'Satellite: descriptive attributes with full history.'],
+    ['  hk_customer BINARY(16) NOT NULL, load_dts TIMESTAMP_NTZ NOT NULL,', 'Parent hash key + load date form the satellite key.'],
+    ['  hashdiff BINARY(16) NOT NULL,', 'Hash of all attributes below: used to detect change.'],
+    ['  name VARCHAR, email VARCHAR, city VARCHAR, record_source VARCHAR);', 'The changing attributes.'],
+    ['', ''],
+    ['INSERT INTO sat_customer_details', 'Load only changed versions into the satellite.'],
+    ["SELECT MD5_BINARY(UPPER(TRIM(s.customer_id))), CURRENT_TIMESTAMP(),", 'Compute the hash key from the normalized business key, plus the load timestamp.'],
+    ["       MD5_BINARY(CONCAT_WS('||', COALESCE(s.name,''), COALESCE(s.email,''), COALESCE(s.city,''))),", 'Hashdiff: same delimiter and NULL handling every time, otherwise identical data hashes differently.'],
+    ["       s.name, s.email, s.city, 'ORDER_APP'", 'Attributes plus the record source.'],
+    ['FROM stg_customers s', 'Staged batch from the source.'],
+    ['LEFT JOIN (SELECT hk_customer, hashdiff FROM sat_customer_details', 'Find the latest stored version per key...'],
+    ['           QUALIFY ROW_NUMBER() OVER (PARTITION BY hk_customer ORDER BY load_dts DESC) = 1) cur', '...using QUALIFY to keep only the newest row per hash key.'],
+    ['  ON cur.hk_customer = MD5_BINARY(UPPER(TRIM(s.customer_id)))', 'Match incoming rows to their latest version.'],
+    ["WHERE cur.hk_customer IS NULL", 'Brand-new key: insert the first version...'],
+    ["   OR cur.hashdiff <> MD5_BINARY(CONCAT_WS('||', COALESCE(s.name,''), COALESCE(s.email,''), COALESCE(s.city,'')));", '...or the attributes changed: insert a new version. Unchanged rows are skipped, so re-runs are idempotent.']
+  ] },
+  { t: 'Keys, sequences & identity', l: [
+    ['CREATE SEQUENCE customer_sk_seq START = 1 INCREMENT = 1;', 'A standalone counter object. Values are unique; gaps are possible.'],
+    ['SELECT customer_sk_seq.NEXTVAL;', 'Get the next value. Each call consumes a number, even if the transaction later rolls back.'],
+    ['', ''],
+    ['CREATE TABLE dim_product (', ''],
+    ['  product_sk NUMBER DEFAULT customer_sk_seq.NEXTVAL,', 'Use a sequence as a column default (can be shared across tables).'],
+    ['  sku VARCHAR NOT NULL,', 'Business key.'],
+    ['  product_uuid VARCHAR DEFAULT UUID_STRING(),', 'Random UUID: no coordination needed, but a 36-character string.'],
+    ['  product_hk BINARY(16)', 'Hash key, filled by the load: MD5_BINARY(UPPER(TRIM(sku))).'],
+    [');', ''],
+    ['', ''],
+    ['CREATE TABLE audit_log (log_id NUMBER AUTOINCREMENT START 1 INCREMENT 1, msg VARCHAR);', 'AUTOINCREMENT (same as IDENTITY) creates a hidden sequence for this column.'],
+    ['', ''],
+    ['INSERT INTO dim_product (sku) VALUES (\'SKU-1\'), (\'SKU-1\');', 'Duplicate business keys: Snowflake accepts them. Constraints will not save you.'],
+    ['', ''],
+    ['ALTER TABLE dim_product ADD CONSTRAINT uq_sku UNIQUE (sku);', 'Allowed even though duplicates exist, because UNIQUE is not enforced on standard tables.'],
+    ['SHOW UNIQUE KEYS IN TABLE dim_product;', 'Constraints are stored as metadata you can query.'],
+    ['', ''],
+    ['SELECT sku, COUNT(*) FROM dim_product GROUP BY sku HAVING COUNT(*) > 1;', 'The uniqueness check you must run yourself (or as a dbt unique test).'],
+    ['', ''],
+    ['CREATE OR REPLACE TABLE dim_product AS', 'Fix: rebuild the table de-duplicated...'],
+    ['SELECT * FROM dim_product', ''],
+    ['QUALIFY ROW_NUMBER() OVER (PARTITION BY sku ORDER BY product_sk) = 1;', '...keeping one row per business key.']
+  ] },
+  { t: 'Layers & environments', l: [
+    ['CREATE DATABASE IF NOT EXISTS prod_raw;', 'Bronze: permanent, because it may be the only copy of source data.'],
+    ['CREATE TRANSIENT DATABASE IF NOT EXISTS prod_staging DATA_RETENTION_TIME_IN_DAYS = 1;', 'Silver: transient (no Fail-safe) with 1 day of Time Travel, because it can be rebuilt from bronze.'],
+    ['CREATE DATABASE IF NOT EXISTS prod_marts DATA_RETENTION_TIME_IN_DAYS = 7;', 'Gold: permanent with a longer Time Travel window for quick recovery.'],
+    ['', ''],
+    ['CREATE SCHEMA prod_marts.finance WITH MANAGED ACCESS;', 'Managed access: only the schema owner (or MANAGE GRANTS) can grant on its objects, keeping control central.'],
+    ['', ''],
+    ['CREATE ROLE IF NOT EXISTS marts_reader;', 'A read-only access role for the gold layer.'],
+    ['GRANT USAGE ON DATABASE prod_marts TO ROLE marts_reader;', 'Let the role see the database...'],
+    ['GRANT USAGE ON ALL SCHEMAS IN DATABASE prod_marts TO ROLE marts_reader;', '...and its schemas.'],
+    ['GRANT SELECT ON FUTURE TABLES IN DATABASE prod_marts TO ROLE marts_reader;', 'Future grants: tables created later (by dbt) are readable automatically.'],
+    ['', ''],
+    ['CREATE OR REPLACE DATABASE dev_marts CLONE prod_marts;', 'Zero-copy clone: a full dev copy in seconds, sharing prod micro-partitions.'],
+    ['CREATE OR REPLACE SCHEMA dev_marts.finance CLONE prod_marts.finance', 'Clone at the schema level...'],
+    ["  AT (TIMESTAMP => DATEADD('hour', -2, CURRENT_TIMESTAMP()));", '...as it was 2 hours ago, by combining clone with Time Travel.'],
+    ['', ''],
+    ['ALTER WAREHOUSE transform_wh SET AUTO_SUSPEND = 60;', 'Separate warehouses per workload (load, transform, BI) make cost per layer visible.']
+  ] },
+  { t: 'Blue/green with SWAP', l: [
+    ['CREATE OR REPLACE DATABASE analytics_green CLONE analytics;', 'Green = a zero-copy clone of current production (blue).'],
+    ['USE DATABASE analytics_green;', 'Point the deployment session at green.'],
+    ['ALTER TABLE marts.fct_orders ADD COLUMN discount_amount NUMBER(12,2);', 'Apply the migration to green only. Users still query blue.'],
+    ['-- dbt build --target green   (rebuild changed models here)', 'Transformation run happens outside SQL, against the green database.'],
+    ['', ''],
+    ['SELECT (SELECT SUM(net_amount) FROM analytics.marts.fct_orders)', 'Reconciliation check: compare a key total between blue...'],
+    ['     - (SELECT SUM(net_amount) FROM analytics_green.marts.fct_orders) AS diff;', '...and green. Automate a threshold for pass or fail.'],
+    ['', ''],
+    ['ALTER DATABASE analytics SWAP WITH analytics_green;', 'Atomic name exchange: from the next query, "analytics" is the new version.'],
+    ['', ''],
+    ['ALTER DATABASE analytics SWAP WITH analytics_green;', 'Rollback: swapping again puts the old version back instantly.'],
+    ['DROP DATABASE analytics_green;', 'Once confident, drop the old version. It stays recoverable with UNDROP during its Time Travel period.'],
+    ['', ''],
+    ['ALTER TABLE fct_orders SWAP WITH fct_orders_rebuilt;', 'The same trick at table level: rebuild a big table offline, then swap it in.'],
+    ['ALTER SCHEMA marts SWAP WITH marts_v2;', 'Or at schema level.']
+  ] },
+  { t: 'dbt model, snapshot & tests', l: [
+    ['-- models/marts/fct_orders.sql', 'A dbt model is just a SELECT in a .sql file. dbt adds the DDL/DML.'],
+    ["{{ config(materialized='incremental', unique_key='order_id', incremental_strategy='merge') }}", 'Incremental model: after the first run, only new or changed rows are merged in by order_id.'],
+    ['select o.order_id, o.customer_id, o.amount, o._loaded_at', 'Columns of the fact.'],
+    ["from {{ ref('stg_orders') }} o", 'ref() resolves to the right database.schema for the target AND records the dependency in the DAG.'],
+    ['{% if is_incremental() %}', 'True only when the table exists, the model is incremental and no --full-refresh was passed.'],
+    ["where o._loaded_at > (select dateadd(day, -3, max(_loaded_at)) from {{ this }})", 'Process the last 3 days of loads again (lookback) to catch late data. this = the model table itself.'],
+    ['{% endif %}', 'End of the Jinja block.'],
+    ['', ''],
+    ['-- snapshots/snap_customers.sql', 'Snapshots implement SCD Type 2.'],
+    ['{% snapshot snap_customers %}', 'Start of a snapshot block (newer dbt versions also allow YAML-defined snapshots).'],
+    ["{{ config(target_schema='snapshots', unique_key='id', strategy='timestamp', updated_at='updated_at') }}", 'Detect changes by a newer updated_at per id. strategy=check compares listed columns instead.'],
+    ["select * from {{ source('raw', 'customers') }}", 'Snapshot the raw source so history is captured before any transformation.'],
+    ['{% endsnapshot %}', 'dbt adds dbt_valid_from, dbt_valid_to, dbt_scd_id and dbt_updated_at columns.'],
+    ['', ''],
+    ['# models/marts/schema.yml', 'Tests and docs live in YAML next to the models.'],
+    ['models:', ''],
+    ['  - name: fct_orders', 'The model being described.'],
+    ['    columns:', ''],
+    ['      - name: order_id', ''],
+    ['        tests: [unique, not_null]', 'Generic tests: compiled into queries that return duplicate or NULL ids. Zero rows means pass.'],
+    ['      - name: customer_id', ''],
+    ['        tests:', ''],
+    ['          - relationships: {to: ref(\'dim_customers\'), field: customer_id}', 'The foreign-key check Snowflake will not do for you: every customer_id must exist in dim_customers.'],
+    ['      - name: status', ''],
+    ["        tests: [{accepted_values: {values: ['placed','shipped','returned']}}]", 'Only these values are allowed.']
+  ] },
+  { t: 'schemachange & Git', l: [
+    ['# migrations/', 'Folder that schemachange scans. File names decide when scripts run.'],
+    ['#   V1.0.0__create_raw_schema.sql', 'Versioned script: runs exactly once, in version order. Never edit after it ran; add a new version instead.'],
+    ['#   V1.1.0__create_orders_table.sql', 'Next version. Double underscore separates version and description.'],
+    ['#   V1.2.0__add_discount_column.sql', 'Schema change for the new feature.'],
+    ['#   R__vw_daily_revenue.sql', 'Repeatable script: re-runs whenever its content (checksum) changes. Ideal for views, procedures, UDFs.'],
+    ['#   A__grants.sql', 'Always script: runs on every deployment, e.g. re-applying grants.'],
+    ['', ''],
+    ['# schemachange deploy -f migrations --config-folder . --create-change-history-table', 'CLI call from CI. Connection details come from a config file and environment variables; a change-history table records what ran.'],
+    ['', ''],
+    ['CREATE OR REPLACE API INTEGRATION git_api', 'Native Git integration: an API integration allowing Snowflake to reach your Git host.'],
+    ["  API_PROVIDER = git_https_api", 'Provider type for Git over HTTPS.'],
+    ["  API_ALLOWED_PREFIXES = ('https://github.com/my-org')", 'Only repositories under this prefix may be used.'],
+    ['  ENABLED = TRUE;', 'Turn the integration on.'],
+    ['CREATE OR REPLACE GIT REPOSITORY ops.git.platform_repo', 'A repository object: a read-only mirror of the remote repo inside Snowflake.'],
+    ["  API_INTEGRATION = git_api ORIGIN = 'https://github.com/my-org/platform.git';", 'Private repos also need GIT_CREDENTIALS pointing at a secret.'],
+    ['ALTER GIT REPOSITORY ops.git.platform_repo FETCH;', 'Pull the latest commits from the remote.'],
+    ["LS @ops.git.platform_repo/branches/main/migrations;", 'Branches, tags and commits are browsable like a stage.'],
+    ["EXECUTE IMMEDIATE FROM @ops.git.platform_repo/branches/main/deploy/setup.sql;", 'Run a SQL file straight from the repo, so what is deployed is exactly what is in Git.']
+  ] }
+];
+const KW = /\b(CREATE|OR|REPLACE|TABLE|DATABASE|SCHEMA|TRANSIENT|SEQUENCE|IDENTITY|AUTOINCREMENT|START|INCREMENT|NOT|NULL|PRIMARY|KEY|FOREIGN|REFERENCES|UNIQUE|CONSTRAINT|RELY|DEFAULT|CLUSTER|BY|IF|EXISTS|ALTER|ADD|COLUMN|SET|SELECT|FROM|WHERE|GROUP|HAVING|ORDER|DESC|AS|SUM|COUNT|SHOW|KEYS|IN|INSERT|INTO|VALUES|LEFT|JOIN|ON|QUALIFY|ROW_NUMBER|OVER|PARTITION|CLONE|AT|SWAP|WITH|USE|DROP|GRANT|USAGE|ROLE|FUTURE|TABLES|ALL|SCHEMAS|MANAGED|ACCESS|WAREHOUSE|API|INTEGRATION|GIT|REPOSITORY|FETCH|EXECUTE|IMMEDIATE|ENABLED|TRUE|FALSE|LS|AND|NUMBER|VARCHAR|BINARY|BOOLEAN|DATE|TIMESTAMP_NTZ|MD5_BINARY|UUID_STRING|CURRENT_TIMESTAMP|DATEADD|CONCAT_WS|COALESCE|UPPER|TRIM)\b/g;
+const hl = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/('[^']*')/g, '\u0001$1\u0002').replace(KW, '<span class="kw">$1</span>').replace(/\b(\d+)\b/g, '<span class="num">$1</span>').replace(/\u0001([^\u0002]*)\u0002/g, (m, a) => '<span class="str">' + a.replace(/<[^>]+>/g, '') + '</span>');
+let sqlI = 0;
+function sqlShow(i) {
+  sqlI = i;
+  $$('#sqlTabs button').forEach((b, k) => b.classList.toggle('on', k === i));
+  $('#sqlCode').innerHTML = SQL[i].l.map(([l], k) => `<div data-k="${k}"><em>${k + 1}</em>${/^\s*(#|-- |\{|models:|- name|columns:|tests)/.test(l) || /^\s+(- name|columns:|tests|- relationships)/.test(l) ? esc(l) : hl(l) || ' '}</div>`).join('');
+  $('#sqlExp').innerHTML = '<b class="h">CLICK A LINE</b>Each line is explained in plain English.';
+  $$('#sqlCode div').forEach(d => d.onclick = () => {
+    const e = SQL[sqlI].l[d.dataset.k][1]; if (!e) return;
+    $$('#sqlCode div').forEach(x => x.classList.remove('on')); d.classList.add('on');
+    $('#sqlExp').innerHTML = `<b class="h">LINE ${+d.dataset.k + 1}</b>${esc(e)}`;
+  });
+}
+$('#sqlTabs').innerHTML = SQL.map(s => `<button>${s.t}</button>`).join('');
+$$('#sqlTabs button').forEach((b, i) => b.onclick = () => sqlShow(i));
+sqlShow(0);
+
+/* ===== 09 Q&A ===== */
+const QA = [
+  ['Dimensional', 'b', `What is the grain of a fact table and why is it the first design decision?`, `<p>The grain is the precise meaning of one row, e.g. "one row per order line" or "one row per product per store per day". Every dimension and measure must be true at that grain. Declaring it first prevents mixing levels (header shipping cost on every line), which is the most common cause of double-counted totals. In an interview, always state the grain out loud before drawing columns.</p>`],
+  ['Dimensional', 'b', `Explain transaction, periodic snapshot and accumulating snapshot facts with examples.`, `<p><b>Transaction:</b> one row per event, insert-only (each sale line). <b>Periodic snapshot:</b> the state at regular intervals, one row per entity per period even with no activity (daily account balance, inventory on hand); measures are often semi-additive. <b>Accumulating snapshot:</b> one row per process instance updated as milestones occur (order placed, packed, shipped, delivered, with lag measures); in Snowflake that means MERGE updates, so keep them moderate in size or rebuild them from transaction facts.</p>`],
+  ['Dimensional', 't', `Star vs snowflake schema: which do you choose in Snowflake and why?`, `<p>Default to <b>star</b>: fewer joins, simpler for BI users and semantic layers, and the storage saved by normalizing is negligible because columnar compression already shrinks repeated values. Small dimensions are broadcast cheaply during joins. Snowflaking is justified for a large shared sub-dimension (geography used by customer and store), a hierarchy maintained by a separate team, or very large dimensions where the repeated text matters. Often the integration layer is normalized and the marts are star.</p>`],
+  ['Dimensional', 't', `What are degenerate, junk and role-playing dimensions, and bridge tables?`, `<p><b>Degenerate:</b> a dimension key with no table, like order_number stored in the fact. <b>Junk:</b> one small table holding all combinations of low-cardinality flags so the fact carries one key. <b>Role-playing:</b> one physical dimension used in several roles (dim_date as order date, ship date, delivery date), often via views. <b>Bridge:</b> resolves many-to-many between a fact and a dimension (accounts with multiple holders), optionally with weighting factors to allocate amounts without double counting.</p>`],
+  ['Dimensional', 's', `Revenue in a report doubled after someone joined shipments to sales. How do you diagnose and fix it?`, `<p>Classic fan-out: two facts at different grains (or a one-to-many join) multiply rows. Diagnose by counting rows per key before and after the join and checking the declared grains. Fix with <b>drill-across</b>: aggregate each fact separately to a shared grain (e.g. order and date) using conformed dimensions, then join the aggregates. Add a dbt test on the model's grain (<code>unique</code> on the key combination) so it can't regress.</p>`],
+  ['Data Vault', 'b', `Describe hubs, links and satellites.`, `<p><b>Hubs</b> store unique business keys with hash key, load date and record source. <b>Links</b> store unique relationships between hubs (and are how many-to-many is modelled). <b>Satellites</b> store descriptive attributes and their history, keyed by parent hash key + load date, with a hashdiff for change detection. Everything is insert-only. Business logic is applied later in the business vault and information marts.</p>`],
+  ['Data Vault', 't', `Why does Data Vault 2.0 use hash keys instead of sequences?`, `<p>Hash keys are deterministic: any process can compute <code>MD5(UPPER(TRIM(bk)))</code> without looking up a sequence-generated key, so hubs, links and satellites load <b>in parallel</b> and from different platforms consistently, and reloading is idempotent. Trade-offs: input normalization rules must be identical everywhere, keys are wider than integers (use MD5_BINARY for 16 bytes), and collisions are theoretically possible (very unlikely; SHA-2 reduces the risk further).</p>`],
+  ['Data Vault', 's', `When would you recommend Data Vault over Kimball, and how do users query it?`, `<p>Data Vault fits when there are many sources that change often, strict audit or regulatory needs, or a large enterprise integration program where agility in adding sources matters. For a small team with a few stable sources, it adds a lot of tables and joins for little benefit. Users should <b>not</b> query the raw vault directly: build PIT and bridge tables, then Kimball-style information marts (views or dynamic tables) on top.</p>`],
+  ['Layers', 'b', `Explain the medallion architecture and how you'd implement it in Snowflake.`, `<p>Bronze holds raw data as delivered (often VARIANT, append-only, loaded by Snowpipe/COPY); silver holds cleaned, typed, de-duplicated and conformed data; gold holds business-ready marts. In Snowflake: separate databases or schemas per layer and environment, transient objects for rebuildable staging, permanent bronze and gold, dbt models or dynamic tables to move data between layers, RBAC so analysts read only gold, and masking policies applied on gold.</p>`],
+  ['Layers', 't', `How do you set up dev/test/prod environments in Snowflake?`, `<p>Usually separate databases per environment (sometimes separate accounts for strict isolation), created and maintained by code (Terraform for databases, roles and warehouses; schemachange/dbt for objects). Test and CI environments are <b>zero-copy clones</b> of prod, created in seconds and paying only for changed partitions. Roles are environment-scoped (DEV_TRANSFORMER cannot write PROD). Re-clone regularly so clones don't drift into full copies, and mask PII for less trusted environments.</p>`],
+  ['Keys', 'b', `Are primary and foreign keys enforced in Snowflake?`, `<p>On standard tables, <b>no</b>: PRIMARY KEY, UNIQUE and FOREIGN KEY are informational metadata; only <b>NOT NULL</b> is enforced. Hybrid tables do enforce PK (mandatory), UNIQUE and FK. Declare constraints anyway for documentation and tooling, and guarantee integrity in the pipeline: MERGE on keys, de-dup with QUALIFY, and dbt unique/not_null/relationships tests.</p>`],
+  ['Keys', 't', `What does the RELY property do and when is it dangerous?`, `<p>RELY marks a constraint as trustworthy so the optimizer may use it, for example to eliminate a join that cannot change the result. Because Snowflake does not verify the constraint, setting RELY on data that actually contains duplicates or orphans can produce <b>incorrect results</b>. Only use it when your loading process and tests guarantee the constraint holds.</p>`],
+  ['Keys', 't', `Sequence vs IDENTITY vs UUID vs hash key: how do you choose a surrogate key?`, `<p><b>Sequences/IDENTITY</b> give compact integers, but values can have gaps and need not follow insert order, and they require a single generator. <b>UUID_STRING</b> needs no coordination but is a 36-char string. <b>Hash keys</b> are deterministic from business keys, ideal for parallel, re-runnable, multi-source loads (Data Vault, dbt generate_surrogate_key). I use integers for small single-pipeline Kimball dims and hashes for parallel/idempotent pipelines; never rely on any of them being contiguous.</p>`],
+  ['dbt', 'b', `What does ref() do in dbt, and what is the difference between view, table, incremental and ephemeral?`, `<p><code>ref('model')</code> resolves to the right database.schema.object for the current target and records a dependency so dbt can build the DAG in order. <b>view</b>: CREATE VIEW, cheap and always fresh. <b>table</b>: full CREATE OR REPLACE TABLE AS SELECT each run. <b>incremental</b>: first run builds the table, later runs process only new/changed rows with a strategy (merge, append, delete+insert, insert_overwrite). <b>ephemeral</b>: no object, inlined as a CTE into dependents.</p>`],
+  ['dbt', 't', `Compare dbt incremental strategies on Snowflake.`, `<p><b>merge</b> (default): upsert on unique_key; correct for late and changed rows; batch must have unique keys; use incremental_predicates to limit target scans. <b>append</b>: insert only; cheapest; duplicates on re-runs. <b>delete+insert</b>: delete target rows whose keys are in the batch, then insert; good for replacing whole chunks like days. <b>insert_overwrite</b>: on Snowflake replaces the whole table, so it's rarely what people expect. Newer versions add microbatch for time-sliced processing.</p>`],
+  ['dbt', 't', `How do dbt snapshots work and how do they differ from building SCD2 yourself?`, `<p>A snapshot selects from a source, compares each unique_key with its current snapshot row using the <b>timestamp</b> strategy (updated_at newer) or the <b>check</b> strategy (listed columns differ), then closes changed rows (dbt_valid_to) and inserts new versions. It's a generated MERGE. Differences from a hand-written stream + MERGE: it only captures changes visible at run time (intermediate changes between runs are lost), it runs on dbt's schedule, and hard-delete handling is a config option. Streams capture every committed change.</p>`],
+  ['dbt', 's', `Your dbt project takes 2 hours and CI is slow. How do you speed it up?`, `<p>Convert large rebuilt tables to <b>incremental</b> with good predicates; use <b>slim CI</b> (<code>state:modified+</code> with <code>--defer</code>) so PRs build only changed models; raise <code>threads</code> so independent models run in parallel; give heavy models their own <code>snowflake_warehouse</code>; cluster big incremental targets on the merge/filter column; replace deep ephemeral chains with views or tables; check the Query Profile of the slowest models; consider dynamic tables for parts that need continuous freshness. Tag queries with query_tag to measure the gains.</p>`],
+  ['CI/CD', 'b', `What is schemachange and how do versioned, repeatable and always scripts differ?`, `<p>schemachange is an open-source, Flyway-style migration tool for Snowflake. <b>V</b> scripts (<code>V1.2.0__desc.sql</code>) run once in version order and are never edited after running. <b>R</b> scripts (<code>R__desc.sql</code>) re-run when their checksum changes, which suits views, procedures and UDFs defined with CREATE OR REPLACE. <b>A</b> scripts run on every deploy. Applied versions and checksums are tracked in a change-history table, so each environment knows its state.</p>`],
+  ['CI/CD', 't', `Snowflake tasks or Airflow: how do you decide?`, `<p>Tasks are native, serverless-capable, cheap and perfect when the whole pipeline lives inside Snowflake (streams + tasks, dynamic tables). Airflow (or Dagster, Prefect, ADF) is better when steps span systems (APIs, S3 sensors, dbt, ML jobs, notifications), when you need backfills, rich retries, SLAs and a central view across many platforms. Many teams combine them: Airflow triggers dbt and high-level steps; Snowflake tasks handle near-real-time CDC inside the warehouse.</p>`],
+  ['CI/CD', 's', `Design a zero-downtime deployment process for a Snowflake + dbt platform.`, `<p>Git as the source of truth; PRs trigger CI that clones prod into a per-PR database, runs schemachange migrations and slim-CI <code>dbt build</code> with tests, then drops the clone. After merge, CD clones prod to a green database, applies migrations, runs dbt, validates with tests and reconciliation against blue, then <code>ALTER DATABASE analytics SWAP WITH analytics_green</code>. Rollback is a second SWAP. Use service users with key-pair auth, Terraform for roles and warehouses, query tags for cost, and alerting on failures. Watch for objects that don't clone cleanly (internal stages, pipes, task states) and grants.</p>`]
+];
+const LV = { b: 'FUNDAMENTAL', t: 'TRICKY', s: 'SCENARIO' };
+function qa(f) { $('#qaList').innerHTML = QA.filter(q => f === 'all' || q[0] === f).map(([tp, l, q, a]) => `<details class="qa"><summary><span class="lv ${l}">${LV[l]}</span><span class="tp">${tp.toUpperCase()}</span>${q}</summary><div class="ans">${a}</div></details>`).join(''); }
+tabs('#qaTabs', d => qa(d.f));
+qa('all');
+
+/* ===== 10 quiz ===== */
+const QZ = [
+  [`What must you decide FIRST when designing a fact table?`, [`The clustering key`, `The grain: what one row represents`, `The surrogate key data type`, `The BI tool`], 1, `Grain comes first; dimensions and measures must all be true at that grain.`],
+  [`Daily stock on hand per product per store is best modelled as a…`, [`Transaction fact`, `Accumulating snapshot`, `Periodic snapshot`, `Junk dimension`], 2, `A periodic snapshot records state at regular intervals. Stock level is semi-additive: don't sum it across days.`],
+  [`An order_number stored directly in the fact table with no dimension table is a…`, [`Junk dimension`, `Degenerate dimension`, `Conformed dimension`, `Bridge table`], 1, `Degenerate dimensions are identifiers that live in the fact.`],
+  [`In a snowflake schema compared to a star schema…`, [`Dimensions are normalized into sub-tables, so queries need more joins`, `Facts are normalized`, `There are no surrogate keys`, `Queries need fewer joins`], 0, `Snowflaking splits hierarchies (product → category → department) into separate tables, adding joins.`],
+  [`SCD Type 2 handles a change by…`, [`Overwriting the value`, `Adding a previous_value column`, `Closing the current row and inserting a new version with a new surrogate key`, `Ignoring the change`], 2, `Type 2 keeps full history with valid_from / valid_to and a new surrogate key per version.`],
+  [`In Data Vault, a customer's city changes. Which table gets a new row?`, [`HUB_CUSTOMER`, `The link table`, `The customer satellite`, `All three`], 2, `The business key and relationships are unchanged; only the satellite records a new version (detected via hashdiff).`],
+  [`Why are hash keys used in Data Vault 2.0?`, [`They are shorter than integers`, `They are deterministic, enabling parallel, lookup-free, idempotent loads`, `Snowflake requires them`, `They enforce uniqueness`], 1, `Any loader computes the same key from the business key, so tables load in parallel.`],
+  [`Which constraint does Snowflake enforce on a standard table?`, [`PRIMARY KEY`, `UNIQUE`, `FOREIGN KEY`, `NOT NULL`], 3, `Only NOT NULL. PK, UNIQUE and FK are informational (hybrid tables are the exception).`],
+  [`An IDENTITY column shows values 1, 2, 5, 6. What is the most likely explanation?`, [`Data corruption`, `Values consumed by rolled-back or failed inserts are never reused; gaps are normal`, `Someone deleted rows 3 and 4 only`, `IDENTITY is broken`], 1, `Sequences guarantee uniqueness, not contiguity. (Deleted rows are also possible, but gaps happen even without deletes.)`],
+  [`Which layer is typically created as TRANSIENT to save storage?`, [`Bronze when it is the only copy of source data`, `Silver / staging, because it can be rebuilt`, `Account usage views`, `None: transient tables are slower`], 1, `Rebuildable staging needs no Fail-safe. Keep the only copy of source data permanent.`],
+  [`In dbt, what does dbt build --select stg_orders+ run?`, [`Only stg_orders`, `stg_orders and everything upstream`, `stg_orders and everything downstream, with tests`, `All models in the project`], 2, `The trailing + selects descendants. build runs models, tests, snapshots and seeds in DAG order.`],
+  [`Which dbt-snowflake incremental strategy is the default?`, [`append`, `merge`, `delete+insert`, `insert_overwrite`], 1, `merge is the default and needs a unique_key to upsert.`],
+  [`schemachange script R__vw_revenue.sql will run…`, [`Exactly once`, `On every deploy`, `Whenever its checksum (content) changes`, `Never; R means retired`], 2, `R = repeatable: re-applied when the file changes. V = once, A = always.`],
+  [`What does ALTER DATABASE analytics SWAP WITH analytics_green do?`, [`Copies all data from green to analytics`, `Exchanges the two database names in one metadata operation`, `Merges the two databases`, `Drops green`], 1, `SWAP is an atomic rename exchange. No data moves, and running it again rolls back.`]
+];
+let qi = 0; const qAns = Array(QZ.length).fill(null);
+QZ.forEach((_, i) => { const s = document.createElement('span'); s.onclick = () => qShow(i); $('#qzBar').appendChild(s); });
+function qShow(i) {
+  qi = i; const [q, opts, ok, ex] = QZ[i], a = qAns[i];
+  $('#qzN').textContent = i + 1;
+  [...$('#qzBar').children].forEach((s, k) => { s.classList.toggle('on', qAns[k] !== null); s.style.outline = k === i ? '2px solid var(--ice)' : ''; });
+  $('#qzBody').innerHTML = `<h3 style="margin-top:6px">${q}</h3>` + opts.map((o, k) => `<button class="opt ${a !== null ? (k === ok ? 'ok' : (k === a ? 'bad' : '')) : ''}" data-k="${k}">${String.fromCharCode(65 + k)}. ${o}</button>`).join('') + (a !== null ? `<div class="qexp"><b>${a === ok ? 'Correct.' : 'Not quite.'}</b> ${ex}</div>` : '');
+  $$('#qzBody .opt').forEach(b => b.onclick = () => { if (qAns[qi] !== null) return; qAns[qi] = +b.dataset.k; qShow(qi); $('#qzS').textContent = qAns.filter((x, j) => x === QZ[j][2]).length; });
+  $('#qzNext').textContent = i === QZ.length - 1 ? 'See result' : 'Next';
+}
+function qResult() {
+  const s = qAns.filter((x, j) => x === QZ[j][2]).length;
+  const msg = s >= QZ.length - 2 ? 'Interview-ready on modeling and tooling.' : s >= Math.round(QZ.length * 0.6) ? 'Solid. Replay the Data Vault and dbt DAG simulators, then retry.' : 'Walk through the star schema explorer, the Data Vault splitter and the CI/CD pipeline again, then retry.';
+  $('#qzBody').innerHTML = `<div class="score">${s} / ${QZ.length}</div><p style="margin-top:8px">${msg}</p><button class="btn pri" id="qzAgain" style="margin-top:10px">Retry quiz</button>`;
+  $('#qzAgain').onclick = () => { qAns.fill(null); $('#qzS').textContent = 0; qShow(0); };
+}
+$('#qzNext').onclick = () => qi === QZ.length - 1 ? qResult() : qShow(qi + 1);
+$('#qzPrev').onclick = () => qShow(Math.max(0, qi - 1));
+qShow(0);
+</script>
+<div class="toast" id="toast"></div>
+<script>
+(() => {
+  const t = document.getElementById('toast'); let h;
+  document.querySelectorAll('.road a.soon').forEach(a => a.addEventListener('click', e => {
+    e.preventDefault();
+    t.textContent = `Module ${a.dataset.m} isn't built yet. Ask for it in chat and it will be added here.`;
+    t.classList.add('on'); clearTimeout(h); h = setTimeout(() => t.classList.remove('on'), 2800);
+  }));
+})();
+</script>
+</body>
+</html>

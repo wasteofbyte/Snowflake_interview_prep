@@ -1,0 +1,1600 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Snowflake Interview Lab · Module 03 · Performance Tuning</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/space-grotesk@5/300.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/space-grotesk@5/700.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/ibm-plex-sans@5/300.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/ibm-plex-sans@5/400.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/ibm-plex-sans@5/600.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/jetbrains-mono@5/400.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/jetbrains-mono@5/700.css">
+<style>
+:root{
+  --bg:#F2F6FA; --card:#FFFFFF; --card2:#E9EFF5; --ink:#0B1B2B; --ink2:#46596B; --ink3:#7F90A2;
+  --line:rgba(11,27,43,.12); --line2:rgba(11,27,43,.22);
+  --ice:#0A86C2; --ice-s:#DCEFF9; --amber:#B86F00; --amber-s:#FFF0D4; --teal:#0B8A6A; --teal-s:#DAF3EB;
+  --red:#C93C3C; --red-s:#FCE4E4; --grid:rgba(10,134,194,.06);
+  --f-head:"Space Grotesk",sans-serif; --f-body:"IBM Plex Sans",sans-serif; --f-mono:"JetBrains Mono",monospace;
+  --r:10px;
+}
+[data-theme="dark"]{
+  --bg:#08121D; --card:#0F1D2C; --card2:#16293B; --ink:#E5EDF5; --ink2:#9DB0C3; --ink3:#687D91;
+  --line:rgba(229,237,245,.10); --line2:rgba(229,237,245,.22);
+  --ice:#4CC3F0; --ice-s:rgba(76,195,240,.13); --amber:#FFB938; --amber-s:rgba(255,185,56,.13); --teal:#3FD3A8; --teal-s:rgba(63,211,168,.13);
+  --red:#FF7070; --red-s:rgba(255,112,112,.14); --grid:rgba(76,195,240,.05);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:var(--f-body);color:var(--ink);line-height:1.7;font-size:16px;
+  background:radial-gradient(1200px 600px at 85% -10%, var(--ice-s), transparent 60%),radial-gradient(900px 500px at -10% 30%, var(--teal-s), transparent 60%),
+  linear-gradient(var(--grid) 1px, transparent 1px) 0 0/32px 32px,linear-gradient(90deg, var(--grid) 1px, transparent 1px) 0 0/32px 32px,var(--bg);background-attachment:fixed}
+code,.mono{font-family:var(--f-mono);font-size:.88em}
+p code,li code,td code{background:var(--card2);padding:1px 6px;border-radius:5px}
+button{font-family:var(--f-body);cursor:pointer}
+.top{position:sticky;top:0;z-index:30;display:flex;align-items:center;gap:16px;padding:12px 28px;border-bottom:1px solid var(--line);background:color-mix(in srgb,var(--bg) 82%,transparent);backdrop-filter:saturate(1.4) blur(8px)}
+.brand{font-family:var(--f-mono);font-weight:700;letter-spacing:.06em;font-size:13px}.brand b{color:var(--ice)}
+.pill{font-family:var(--f-mono);font-size:12px;padding:3px 10px;border-radius:99px;border:1px solid var(--line2);color:var(--ink2)}
+.prog{flex:1;height:4px;background:var(--card2);border-radius:4px;overflow:hidden;max-width:360px;margin-left:auto}
+.prog i{display:block;height:100%;width:0;background:var(--ice);transition:width .4s}
+.prog-l{font-family:var(--f-mono);font-size:12px;color:var(--ink2);min-width:84px}
+.theme{border:1px solid var(--line2);background:var(--card);color:var(--ink);border-radius:8px;padding:5px 10px;font-size:13px}
+.wrap{display:grid;grid-template-columns:270px minmax(0,1fr);gap:36px;max-width:1340px;margin:0 auto;padding:28px}
+nav.side{position:sticky;top:76px;align-self:start;max-height:calc(100vh - 96px);overflow:auto;padding-right:6px}
+.side h4{font-family:var(--f-mono);font-size:11px;letter-spacing:.14em;color:var(--ink3);margin:6px 0 10px;font-weight:400}
+.side a{display:flex;gap:10px;align-items:baseline;padding:6px 10px;border-radius:8px;color:var(--ink2);text-decoration:none;font-size:14px;border-left:2px solid transparent}
+.side a span{font-family:var(--f-mono);font-size:11px;color:var(--ink3)}
+.side a:hover{background:var(--card)}
+.side a.act{color:var(--ink);background:var(--card);border-left-color:var(--ice);border-radius:0 8px 8px 0}
+.side a.seen span{color:var(--teal)}
+.road{margin-top:22px;border-top:1px solid var(--line);padding-top:14px}
+.road div{font-size:13px;color:var(--ink3);padding:3px 10px;display:flex;gap:8px}
+.road div.now{color:var(--ink);font-weight:600}.road div.done{color:var(--teal)}
+.road div em{font-style:normal;font-family:var(--f-mono);font-size:11px;min-width:20px}
+main{min-width:0}
+section{padding:36px 0 44px;border-bottom:1px dashed var(--line2);scroll-margin-top:70px}
+.eyebrow{font-family:var(--f-mono);font-size:12px;letter-spacing:.16em;color:var(--ice);margin-bottom:6px}
+h1{font-family:var(--f-head);font-weight:700;font-size:clamp(40px,6vw,76px);line-height:1;letter-spacing:-.03em}
+h1 .thin,h2 .thin{font-weight:300;color:var(--ink2)}
+h2{font-family:var(--f-head);font-weight:700;font-size:clamp(28px,3.4vw,40px);letter-spacing:-.02em;line-height:1.1;margin-bottom:12px}
+h3{font-family:var(--f-head);font-weight:700;font-size:20px;margin:26px 0 10px;letter-spacing:-.01em}
+.lead{font-size:18px;font-weight:300;color:var(--ink2);max-width:820px}
+p{margin:8px 0}
+ul.dots{margin:8px 0 8px 20px}ul.dots li{margin:4px 0}
+.wwh{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:20px 0}
+.wwh .box{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:18px 20px;position:relative;overflow:hidden}
+.wwh .box.how{grid-column:1/-1}
+.wwh .tag{font-family:var(--f-mono);font-size:11px;letter-spacing:.14em;display:inline-block;padding:2px 8px;border-radius:5px;margin-bottom:8px}
+.box.what .tag{background:var(--ice-s);color:var(--ice)}.box.why .tag{background:var(--amber-s);color:var(--amber)}.box.how .tag{background:var(--teal-s);color:var(--teal)}
+.box::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px}
+.box.what::before{background:var(--ice)}.box.why::before{background:var(--amber)}.box.how::before{background:var(--teal)}
+.call{display:flex;gap:14px;padding:14px 18px;border-radius:var(--r);margin:14px 0;border:1px solid var(--line)}
+.call b.k{font-family:var(--f-mono);font-size:11px;letter-spacing:.12em;white-space:nowrap;padding-top:3px}
+.call.analogy{background:var(--ice-s)}.call.analogy b.k{color:var(--ice)}
+.call.trap{background:var(--red-s)}.call.trap b.k{color:var(--red)}
+.call.pro{background:var(--teal-s)}.call.pro b.k{color:var(--teal)}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px;margin:18px 0}
+.panel-h{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+.panel-h .t{font-family:var(--f-mono);font-size:12px;letter-spacing:.12em;color:var(--ink2)}.panel-h .t b{color:var(--ink)}
+.btn{border:1px solid var(--line2);background:var(--card);color:var(--ink);padding:7px 14px;border-radius:8px;font-size:14px;transition:all .15s}
+.btn:hover{border-color:var(--ice);color:var(--ice)}
+.btn.pri{background:var(--ice);color:var(--card);border-color:var(--ice)}.btn.pri:hover{color:var(--card);filter:brightness(1.08)}
+.btn.warn{border-color:var(--red);color:var(--red)}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.ctl{display:flex;align-items:center;gap:12px;font-size:14px;color:var(--ink2);margin:8px 0}
+.ctl label{min-width:150px}.ctl input[type=range]{flex:1;accent-color:var(--ice)}
+.ctl .v{font-family:var(--f-mono);font-size:13px;color:var(--ink);min-width:110px;text-align:right}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:14px 0}
+.stat{background:var(--card2);border-radius:10px;padding:12px 14px}
+.stat .k{font-family:var(--f-mono);font-size:11px;color:var(--ink3);letter-spacing:.08em}
+.stat .n{font-family:var(--f-head);font-weight:700;font-size:28px;line-height:1.2}
+.stat .s{font-size:12px;color:var(--ink2)}
+.sqlbox{font-family:var(--f-mono);font-size:13px;background:var(--card2);border-radius:8px;padding:10px 14px;white-space:pre-wrap;color:var(--ink);border-left:3px solid var(--ice);overflow:auto}
+.insight{font-size:14px;padding:10px 14px;border-radius:8px;background:var(--amber-s);color:var(--ink);margin-top:10px}.insight b{color:var(--amber)}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+.tabs button{border:1px solid var(--line2);background:transparent;color:var(--ink2);padding:6px 12px;border-radius:99px;font-size:13px}
+.tabs button.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}.grid2>div{min-width:0}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.mini{background:var(--card2);border-radius:10px;padding:14px}
+.mini h5{font-family:var(--f-head);font-size:15px;margin-bottom:4px}
+.mini p{font-size:14px;color:var(--ink2);margin:0}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:13px;color:var(--ink2);margin:8px 0}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:-1px;margin-right:6px}
+table.t{width:100%;border-collapse:collapse;font-size:14px}
+table.t th,table.t td{padding:7px 10px;border-bottom:1px solid var(--line);text-align:left}
+table.t th{font-family:var(--f-mono);font-size:11px;letter-spacing:.1em;color:var(--ink3);font-weight:400}
+table.t td.m{font-family:var(--f-mono);font-size:12px}
+svg{width:100%;height:auto;display:block}
+svg .t{font-family:var(--f-body);font-size:14px;fill:var(--ink)}
+svg .ts{font-family:var(--f-body);font-size:12px;fill:var(--ink2)}
+svg .th{font-family:var(--f-head);font-size:14px;font-weight:700;fill:var(--ink)}
+svg .tm{font-family:var(--f-mono);font-size:11px;fill:var(--ink2)}
+.L-cs{fill:var(--amber-s);stroke:var(--amber)}.L-cp{fill:var(--ice-s);stroke:var(--ice)}.L-st{fill:var(--teal-s);stroke:var(--teal)}
+.neutral{fill:var(--card);stroke:var(--line2)}
+.arr{stroke:var(--ink3);stroke-width:1.2;fill:none}
+.fn{transition:opacity .3s}
+.flow.playing .fn{opacity:.25}
+.flow.playing .fn.on{opacity:1}
+.fn.on rect{stroke-width:2.4}
+.edge{stroke:var(--ink3);stroke-width:1.4;fill:none;transition:opacity .3s}
+.flow.playing .edge{opacity:.2}
+.flow.playing .edge.on{opacity:1;stroke:var(--ice);stroke-width:2.4;stroke-dasharray:7 5}
+@media (prefers-reduced-motion:no-preference){
+  .flow.playing .edge.on{animation:dash .8s linear infinite}
+  @keyframes dash{to{stroke-dashoffset:-24}}
+  .pulse{animation:pulse 1.2s ease-in-out infinite}
+  @keyframes pulse{0%,100%{opacity:.35}50%{opacity:1}}
+  .rise{animation:rise .5s both}
+  @keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+  .grow{transform-box:fill-box;transform-origin:left center;animation:grow .6s both}
+  @keyframes grow{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+}
+.stepbar{display:flex;gap:6px;margin:12px 0}
+.stepbar span{flex:1;height:4px;border-radius:4px;background:var(--card2);cursor:pointer}
+.stepbar span.on{background:var(--ice)}
+.stepdesc{min-height:120px;background:var(--card2);border-radius:10px;padding:14px 16px}
+.stepdesc h4{font-family:var(--f-head);font-size:17px;margin-bottom:6px}
+.stepdesc .two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.stepdesc .two div{font-size:14px;color:var(--ink2)}
+.stepdesc .two b.l{display:block;font-family:var(--f-mono);font-size:11px;letter-spacing:.12em;margin-bottom:4px}
+.stepdesc .two .you b.l{color:var(--ice)}.stepdesc .two .be b.l{color:var(--teal)}
+.term{background:#0A141F;color:#D6E2EE;font-family:var(--f-mono);font-size:12.5px;border-radius:12px;padding:14px 16px;height:340px;overflow:auto;border:1px solid #1E3247}
+.term div{white-space:pre;line-height:1.5}
+.term .tin{color:#FFB938}.term .terr{color:#FF7A7A}.term .tok{color:#3FD3A8}.term .tdim{color:#6F8499}
+.tbar{display:flex;gap:6px;align-items:center;margin-bottom:8px}
+.tbar i{width:10px;height:10px;border-radius:50%;display:inline-block}
+.tinput{display:flex;gap:8px;margin-top:8px}
+.tinput input{flex:1;font-family:var(--f-mono);font-size:13px;padding:8px 10px;border-radius:8px;border:1px solid var(--line2);background:var(--card);color:var(--ink)}
+.cmds{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}
+.cmds button{font-family:var(--f-mono);font-size:11.5px;border:1px solid var(--line2);background:var(--card);color:var(--ink);padding:5px 9px;border-radius:7px;text-align:left}
+.cmds button:hover{border-color:var(--amber);color:var(--amber)}
+.cmds button small{display:block;font-family:var(--f-body);font-size:11px;color:var(--ink3)}
+.explain{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 16px;min-height:90px;font-size:14.5px}
+.explain b.h{font-family:var(--f-mono);font-size:12px;color:var(--ice);letter-spacing:.1em;display:block;margin-bottom:4px}
+.gantt-l{font-family:var(--f-mono);font-size:11px;fill:var(--ink2)}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font-family:var(--f-mono);font-size:12px;border:1px solid var(--line2);padding:5px 10px;border-radius:99px;cursor:pointer;user-select:none;background:var(--card);color:var(--ink2)}
+.chip.on{background:var(--ice-s);border-color:var(--ice);color:var(--ice)}
+.chip.now{outline:2px solid var(--amber);outline-offset:2px}
+.fcard{border:1px solid var(--line2);border-radius:10px;padding:10px 12px;cursor:pointer;background:var(--card);text-align:left;color:var(--ink)}
+.fcard.on{border-color:var(--ice);background:var(--ice-s)}
+.fcard b{display:block;font-family:var(--f-mono);font-size:12px}
+.fcard small{color:var(--ink3);font-size:12px}
+.out{font-family:var(--f-mono);font-size:12px;background:var(--card2);border-radius:8px;padding:10px 14px;white-space:pre-wrap;border-left:3px solid var(--teal);max-height:260px;overflow:auto}
+.chunk{border:1px solid var(--line2);border-radius:8px;padding:8px 10px;font-size:13px;margin:6px 0;background:var(--card)}
+.chunk em{font-style:normal;background:var(--amber-s);color:var(--ink);border-bottom:2px solid var(--amber)}
+.chunk b{font-family:var(--f-mono);font-size:11px;color:var(--ice);margin-right:8px}
+.act-i{color:var(--teal);font-family:var(--f-mono);font-size:12px;font-weight:700}
+.act-d{color:var(--red);font-family:var(--f-mono);font-size:12px;font-weight:700}
+.badge{font-family:var(--f-mono);font-size:11px;padding:2px 8px;border-radius:99px;white-space:nowrap}
+.badge.ok{background:var(--teal-s);color:var(--teal)}.badge.bad{background:var(--red-s);color:var(--red)}.badge.mid{background:var(--amber-s);color:var(--amber)}.badge.off{background:var(--card2);color:var(--ink3)}
+.flash{animation:flash 1s}
+@keyframes flash{0%{box-shadow:0 0 0 3px var(--amber)}100%{box-shadow:0 0 0 0 transparent}}
+.tn rect{fill:var(--card);stroke:var(--line2);transition:all .3s}
+.tn.run rect{fill:var(--amber-s);stroke:var(--amber);stroke-width:2.4}
+.tn.ok rect{fill:var(--teal-s);stroke:var(--teal);stroke-width:2}
+.tn.skip rect{fill:var(--card2);stroke:var(--ink3);stroke-dasharray:5 4}
+.tn.fail rect{fill:var(--red-s);stroke:var(--red);stroke-width:2}
+.tn .st{font-family:var(--f-mono);font-size:10px;fill:var(--ink3)}
+.log{max-height:240px;overflow:auto}
+.pk{transition:transform .8s cubic-bezier(.5,.05,.3,1)}
+.code{font-family:var(--f-mono);font-size:13px;background:var(--card2);border-radius:10px;padding:10px 0;overflow:auto}
+.code div{padding:2px 16px 2px 0;cursor:pointer;white-space:pre;display:block}
+.code div em{font-style:normal;color:var(--ink3);width:40px;text-align:right;padding-right:14px;display:inline-block;user-select:none}
+.code div:hover{background:var(--ice-s)}
+.code div.on{background:var(--ice-s);box-shadow:inset 3px 0 var(--ice)}
+.kw{color:var(--ice);font-weight:700}.str{color:var(--teal)}.num{color:var(--amber)}
+.qa{border:1px solid var(--line);border-radius:10px;margin:8px 0;background:var(--card);overflow:hidden}
+.qa summary{list-style:none;cursor:pointer;padding:14px 18px;display:flex;gap:12px;align-items:baseline;font-weight:600}
+.qa summary::-webkit-details-marker{display:none}
+.qa summary .lv{font-family:var(--f-mono);font-size:10px;letter-spacing:.1em;padding:2px 8px;border-radius:99px;flex:none;font-weight:400}
+.lv.b{background:var(--teal-s);color:var(--teal)}.lv.t{background:var(--red-s);color:var(--red)}.lv.s{background:var(--amber-s);color:var(--amber)}
+.qa summary .tp{font-family:var(--f-mono);font-size:10px;color:var(--ink3);flex:none;font-weight:400}
+.qa summary::after{content:"+";margin-left:auto;font-family:var(--f-mono);color:var(--ink3)}
+.qa[open] summary::after{content:"−"}
+.qa .ans{padding:0 18px 16px;color:var(--ink2);font-size:15px;border-top:1px solid var(--line)}
+.qa .ans p:first-child{margin-top:12px}
+.opt{display:block;width:100%;text-align:left;padding:12px 14px;margin:8px 0;border:1px solid var(--line2);border-radius:10px;background:var(--card);color:var(--ink);font-size:15px}
+.opt:hover{border-color:var(--ice)}
+.opt.ok{border-color:var(--teal);background:var(--teal-s)}.opt.bad{border-color:var(--red);background:var(--red-s)}
+.qexp{margin-top:10px;padding:12px 14px;border-radius:10px;background:var(--card2);font-size:14px;color:var(--ink2)}
+.score{font-family:var(--f-head);font-weight:700;font-size:56px;line-height:1}
+.cheat{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+.cheat div{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 16px;font-size:14px}
+.cheat div em{font-style:normal;font-family:var(--f-mono);font-size:20px;font-weight:700;color:var(--ice);display:block;line-height:1.1;margin-bottom:4px}
+.analogy-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:18px}
+.ag{border-radius:12px;padding:16px;border:1px solid var(--line);background:var(--card)}
+.ag .k{font-family:var(--f-mono);font-size:11px;letter-spacing:.12em}
+.ag h5{font-family:var(--f-head);font-size:18px;margin:2px 0 4px}
+.ag p{font-size:14px;color:var(--ink2);margin:0}
+.ag.a1{border-top:3px solid var(--amber)}.ag.a1 .k{color:var(--amber)}
+.ag.a2{border-top:3px solid var(--ice)}.ag.a2 .k{color:var(--ice)}
+.ag.a3{border-top:3px solid var(--teal)}.ag.a3 .k{color:var(--teal)}
+.ag.a4{border-top:3px solid var(--red)}.ag.a4 .k{color:var(--red)}
+footer{padding:40px 0;color:var(--ink3);font-size:13px;font-family:var(--f-mono)}
+.note-s{font-size:12px;color:var(--ink3);font-style:italic}
+@media (max-width:1000px){
+  .wrap{grid-template-columns:1fr;padding:16px}
+  nav.side{display:none}
+  .wwh,.grid2,.stepdesc .two{grid-template-columns:1fr}
+  .grid3,.analogy-grid{grid-template-columns:1fr}
+  .prog{display:none}
+}
+.road a.rm{display:flex;gap:8px;align-items:baseline;font-size:13px;padding:5px 10px;border-radius:8px;text-decoration:none;color:var(--ink2);border-left:2px solid transparent}
+.road a.rm:hover{background:var(--card);color:var(--ink)}
+.road a.rm em{font-style:normal;font-family:var(--f-mono);font-size:11px;min-width:20px}
+.road a.rm i{font-style:normal;font-family:var(--f-mono);font-size:9.5px;margin-left:auto;border:1px solid var(--line2);border-radius:99px;padding:0 6px;white-space:nowrap;color:var(--ink3)}
+.road a.rm.now{color:var(--ink);font-weight:600;border-left-color:var(--ice);background:var(--card);border-radius:0 8px 8px 0}
+.road a.rm.now i{border-color:var(--ice);color:var(--ice)}
+.road a.rm.ready em,.road a.rm.ready i{color:var(--teal)}.road a.rm.ready i{border-color:var(--teal)}
+.road a.rm.soon{color:var(--ink3)}
+.toast{position:fixed;bottom:24px;left:50%;transform:translate(-50%,20px);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;font-size:14px;opacity:0;transition:all .3s;z-index:60;pointer-events:none;max-width:90vw}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+.code div.pdone{box-shadow:inset 3px 0 var(--teal)}
+#pcCode{max-height:600px;position:relative}
+/* ===== Module 03 additions ===== */
+.op rect{fill:var(--card);stroke:var(--line2);stroke-width:1.2;transition:all .25s}
+.op{cursor:pointer}
+.op:hover rect{stroke:var(--ice)}
+.op.hot rect{stroke:var(--red);stroke-width:2.2}
+.op.warm rect{stroke:var(--amber);stroke-width:2}
+.op.sel rect{fill:var(--ice-s);stroke:var(--ice);stroke-width:2.6}
+.op .pct{font-family:var(--f-mono);font-size:11px;font-weight:700}
+.op.hot .pct{fill:var(--red)}.op.warm .pct{fill:var(--amber)}.op .pct{fill:var(--ink3)}
+.op .bar{fill:var(--card2)}.op .barf{fill:var(--ink3)}.op.hot .barf{fill:var(--red)}.op.warm .barf{fill:var(--amber)}
+.opedge{stroke:var(--ink3);stroke-width:1.4;fill:none}
+.opedge.fat{stroke:var(--red);stroke-width:4}
+.optxt{font-family:var(--f-mono);font-size:10.5px;fill:var(--ink2)}
+.meter{height:12px;background:var(--card2);border-radius:99px;overflow:hidden;margin:4px 0}
+.meter i{display:block;height:100%;width:0;background:var(--amber);transition:width .5s}
+.meter.t i{background:var(--teal)}.meter.r i{background:var(--red)}.meter.b i{background:var(--ice)}
+.mp{transition:x .7s cubic-bezier(.5,.05,.3,1),width .7s cubic-bezier(.5,.05,.3,1),fill .4s}
+.sqlbox.bad{border-left-color:var(--red)}.sqlbox.good{border-left-color:var(--teal)}
+.cmpbar{display:grid;grid-template-columns:130px 1fr 1fr;gap:8px;align-items:center;font-size:13px;margin:6px 0}
+.cmpbar .lbl{font-family:var(--f-mono);font-size:11px;color:var(--ink3);letter-spacing:.06em}
+.cmpbar .b{position:relative;height:22px;background:var(--card2);border-radius:6px;overflow:hidden}
+.cmpbar .b i{position:absolute;left:0;top:0;bottom:0;transition:width .6s;border-radius:6px}
+.cmpbar .b.bad i{background:var(--red-s);box-shadow:inset 0 0 0 1px var(--red)}
+.cmpbar .b.good i{background:var(--teal-s);box-shadow:inset 0 0 0 1px var(--teal)}
+.cmpbar .b span{position:relative;z-index:1;font-family:var(--f-mono);font-size:11.5px;padding-left:8px;line-height:22px;color:var(--ink)}
+.feat{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin:12px 0}
+.feat div{border:1px solid var(--line2);border-radius:10px;padding:10px;background:var(--card);font-size:13px;transition:all .3s}
+.feat div b{display:block;font-family:var(--f-mono);font-size:12px;margin-bottom:2px}
+.feat div.best{border-color:var(--teal);background:var(--teal-s);box-shadow:0 0 0 2px var(--teal)}
+.feat div.ok{border-color:var(--amber);background:var(--amber-s)}
+.feat div.no{opacity:.5}
+.feat div small{display:block;color:var(--ink2);font-size:12px}
+.qtype{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px}
+.wl rect{transition:width .6s,x .6s}
+.diag{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}
+.diag .btn.right{border-color:var(--teal);background:var(--teal-s);color:var(--teal)}
+.diag .btn.wrong{border-color:var(--red);background:var(--red-s);color:var(--red)}
+.statgrid{display:grid;grid-template-columns:1fr auto;gap:2px 12px;font-size:13.5px}
+.statgrid span:nth-child(odd){color:var(--ink2)}
+.statgrid span:nth-child(even){font-family:var(--f-mono);font-size:12.5px;text-align:right}
+.statgrid span.red{color:var(--red);font-weight:700}.statgrid span.amb{color:var(--amber);font-weight:700}
+.tbar2{display:flex;height:26px;border-radius:6px;overflow:hidden;margin:6px 0;border:1px solid var(--line)}
+.tbar2 i{display:block;height:100%;transition:width .5s}
+.qpgrid{grid-template-columns:1.1fr 1fr}
+@media (max-width:1000px){ .qpgrid{grid-template-columns:1fr} .feat{grid-template-columns:1fr 1fr} .cmpbar{grid-template-columns:90px 1fr 1fr} }
+/* course-wide phone layout */
+@media (max-width:560px){
+  .top{flex-wrap:wrap;gap:8px;padding:10px 14px}
+  .top .pill,.top .prog-l,.top .prog{display:none}
+  .brand{flex:1}
+  .ctl{flex-wrap:wrap}.ctl label{min-width:0;flex:1 1 100%}.ctl .v{min-width:0;text-align:left}
+  table{display:block;overflow-x:auto;max-width:100%}
+  .grid2,.grid3,.analogy-grid,[style*="grid-template-columns"]{grid-template-columns:1fr!important}
+  .grid2>*,.grid3>*,.call>div{min-width:0}
+  p code,li code,td code{word-break:break-word}
+  .code,.sqlbox,.out,.term,pre{max-width:100%;overflow-x:auto}
+  .call{flex-direction:column;gap:6px}
+  main,section,.panel,.wwh .box,.mini{min-width:0;max-width:100%}
+}
+</style>
+</head>
+<body>
+<div class="top">
+  <div class="brand">SNOWFLAKE<b>//</b>INTERVIEW LAB</div>
+  <span class="pill">Module 03 · Performance tuning</span>
+  <div class="prog"><i id="progBar"></i></div>
+  <span class="prog-l" id="progLbl">0% explored</span>
+  <button class="theme" id="themeBtn">Dark / light</button>
+</div>
+<div class="wrap">
+<nav class="side">
+  <h4>MODULE 03 · CHAPTERS</h4>
+  <a href="#intro"><span>00</span>Start here</a>
+  <a href="#profile"><span>01</span>Reading the Query Profile</a>
+  <a href="#cluster"><span>02</span>Clustering keys</a>
+  <a href="#sos"><span>03</span>Search Optimization</a>
+  <a href="#qas"><span>04</span>Query Acceleration</a>
+  <a href="#mv"><span>05</span>MVs · dynamic tables · cache</a>
+  <a href="#antipat"><span>06</span>Joins &amp; SQL anti-patterns</a>
+  <a href="#wh"><span>07</span>Warehouse tuning &amp; debugging</a>
+  <a href="#sql"><span>08</span>SQL lab</a>
+  <a href="#qa"><span>09</span>Interview Q&amp;A</a>
+  <a href="#quiz"><span>10</span>Quiz</a>
+  <a href="#cheat"><span>11</span>Cheat sheet</a>
+  <div class="road">
+    <h4>COURSE ROADMAP · CLICK TO OPEN</h4>
+    <a class="rm ready" href="../module01/"><em>01</em>Architecture<i>open</i></a>
+    <a class="rm ready" href="../module02/"><em>02</em>SnowSQL · unstructured · streams, tasks &amp; procedures<i>open</i></a>
+    <a class="rm now" href="../module03/"><em>03</em>Performance tuning<i>you are here</i></a>
+    <a class="rm ready" href="../module04/"><em>04</em>Data ingestion (Snowpipe)<i>open</i></a>
+    <a class="rm ready" href="../module05/"><em>05</em>Dynamic tables &amp; transforms<i>open</i></a>
+    <a class="rm ready" href="../module06/"><em>06</em>Semi-structured data<i>open</i></a>
+    <a class="rm ready" href="../module07/"><em>07</em>Data protection<i>open</i></a>
+    <a class="rm ready" href="../module08/"><em>08</em>Security &amp; governance<i>open</i></a>
+    <a class="rm ready" href="../module09/"><em>09</em>Cost optimization<i>open</i></a>
+    <a class="rm ready" href="../module10/"><em>10</em>Data sharing<i>open</i></a>
+    <a class="rm ready" href="../module11/"><em>11</em>Snowpark &amp; Cortex AI<i>open</i></a>
+    <a class="rm ready" href="../module12/"><em>12</em>Advanced SQL<i>open</i></a>
+    <a class="rm ready" href="../module13/"><em>13</em>Modeling &amp; tooling<i>open</i></a>
+    <a class="rm ready" href="../module14/"><em>14</em>System design &amp; behavioral<i>open</i></a>
+  </div>
+</nav>
+<main>
+
+<section id="intro">
+  <div class="eyebrow">MODULE 03 · PERFORMANCE TUNING</div>
+  <h1>Make it fast.<br><span class="thin">Know why it was slow.</span></h1>
+  <p class="lead" style="margin-top:18px">Module 1 showed how Snowflake is built: micro-partitions, warehouses, three cache layers. This module turns that knowledge into a skill interviewers test hard at the senior level: <b>looking at a slow query and explaining, with evidence, what to change</b>. You'll learn to read the Query Profile, choose between clustering, Search Optimization, Query Acceleration and materialized views, spot SQL anti-patterns, and walk through a real "dashboard got slow" investigation.</p>
+  <p style="margin-top:14px">Think of performance tuning like a <b>doctor's visit</b>. A good doctor never prescribes before examining. Four steps, every time:</p>
+  <div class="analogy-grid">
+    <div class="ag a1 rise"><div class="k">1 · MEASURE</div><h5>Take the vitals</h5><p>Get the facts: elapsed time, queued time, bytes scanned, partitions scanned, spill. From <code>QUERY_HISTORY</code> and the Query Profile, not from "it feels slow".</p></div>
+    <div class="ag a2 rise" style="animation-delay:.1s"><div class="k">2 · FIND THE BOTTLENECK</div><h5>Locate the pain</h5><p>Which operator eats most of the time? Is the query waiting in a queue, scanning too much, spilling, or joining badly? One cause usually dominates.</p></div>
+    <div class="ag a3 rise" style="animation-delay:.2s"><div class="k">3 · FIX THE CAUSE</div><h5>Treat the disease</h5><p>A bigger warehouse is a painkiller. Rewriting a filter, fixing a join key or adding a clustering key is the cure. Pick the cheapest fix that removes the cause.</p></div>
+    <div class="ag a4 rise" style="animation-delay:.3s"><div class="k">4 · RE-MEASURE</div><h5>Check the patient</h5><p>Run it again, compare the same numbers. If nothing moved, your guess was wrong, so go back to step 2. Also check what the fix <i>costs</i> per month.</p></div>
+  </div>
+  <div class="wwh">
+    <div class="box what"><span class="tag">01 · WHAT IS IT</span>
+      <p><b>Performance tuning</b> means making queries finish faster, or with fewer credits, or both, by removing the thing that is slowing them down. In Snowflake there are no indexes to build, no vacuum to run and no partitions to manage by hand. Instead you control <b>how much data a query has to touch</b> and <b>how much compute it gets</b>.</p>
+    </div>
+    <div class="box why"><span class="tag">02 · WHY IT MATTERS</span>
+      <p>Every second a warehouse runs costs credits, and slow dashboards cost people's time. A 6-year Snowflake developer is expected to explain <i>why</i> a query is slow from its profile, and to know when a feature like clustering or Search Optimization is worth its ongoing serverless cost, and when it's just burning money.</p>
+    </div>
+    <div class="box how"><span class="tag">03 · HOW IT WORKS · THE FIVE LEVERS</span>
+      <p>Almost every Snowflake performance problem, and every fix, maps to one of five levers you met in Module 1:</p>
+      <div class="feat" style="margin-top:8px">
+        <div><b style="color:var(--ice)">PRUNING</b>Skip micro-partitions using min/max metadata. <small>Fixes: sargable filters, clustering keys, Search Optimization.</small></div>
+        <div><b style="color:var(--amber)">MEMORY</b>Joins, sorts and aggregations need RAM; overflow spills to local SSD, then to remote storage. <small>Fixes: bigger warehouse, less data, better joins.</small></div>
+        <div><b style="color:var(--teal)">PARALLELISM</b>More nodes scan more partitions at once. <small>Fixes: warehouse size, Query Acceleration for outliers.</small></div>
+        <div><b style="color:var(--red)">CONCURRENCY</b>Too many queries at once → they wait in a queue. <small>Fixes: multi-cluster warehouses, separate warehouses per workload.</small></div>
+        <div><b>CACHING</b>Result cache (cloud services), local disk cache (warehouse SSD), metadata. <small>Fixes: stable query text, don't suspend hot warehouses too eagerly, MVs.</small></div>
+      </div>
+    </div>
+  </div>
+  <div class="call analogy"><b class="k">ANALOGY</b><div>A query is a <b>librarian fetching books</b>. Pruning = knowing which shelves to skip. Memory = the size of the desk to spread books on. Parallelism = how many assistants you send. Concurrency = how many people are queuing at the counter. Caching = remembering the answer you gave five minutes ago.</div></div>
+</section>
+
+<section id="profile">
+  <div class="eyebrow">CHAPTER 01</div>
+  <h2>Reading the Query Profile <span class="thin">· the X-ray of a query</span></h2>
+  <div class="wwh">
+    <div class="box what"><span class="tag">01 · WHAT IS IT</span>
+      <p>The <b>Query Profile</b> (in Snowsight: Query History → pick a query → <i>Query Profile</i> tab) is a visual <b>execution plan with real runtime numbers</b>. It's a tree of <b>operators</b>; data flows from the bottom (table scans) up to the top (Result).</p>
+      <ul class="dots">
+        <li><b>TableScan</b>: reads micro-partitions of a table. <b>Filter</b>: drops rows. <b>Join</b>: combines two inputs. <b>Aggregate</b>: GROUP BY. <b>Sort</b> / <b>SortWithLimit</b>: ORDER BY. <b>WindowFunction</b>, <b>Flatten</b>, <b>UnionAll</b>, <b>Result</b>.</li>
+        <li>Each node shows its <b>% of total execution time</b>, and the arrows show <b>row counts</b> flowing between nodes.</li>
+      </ul>
+      <p>The same numbers are available in SQL through <code>GET_QUERY_OPERATOR_STATS(query_id)</code>.</p>
+    </div>
+    <div class="box why"><span class="tag">02 · WHY WE USE IT</span>
+      <p>It turns "the query is slow" into a specific, provable cause. Without it you guess: resize the warehouse, add a clustering key, hope. With it you can say: <i>"95% of time is the TableScan on SALES, it read 48,000 of 48,300 partitions because the filter wraps the date column in a function"</i>. That sentence is what interviewers want to hear.</p>
+      <p>The panel on the right of the profile lists the <b>most expensive nodes</b>, so you always start where the time actually goes.</p>
+    </div>
+    <div class="box how"><span class="tag">03 · HOW IT WORKS · WHAT EACH NUMBER TELLS YOU</span>
+      <table class="t">
+        <tr><th>STATISTIC</th><th>WHERE</th><th>WHAT IT MEANS · WHEN IT'S A PROBLEM</th></tr>
+        <tr><td><b>Partitions scanned / total</b></td><td>TableScan</td><td>Pruning efficiency. Scanning 48,000 of 48,300 for a one-month filter = <b>pruning failed</b>. Scanning 400 of 48,300 = healthy.</td></tr>
+        <tr><td><b>Bytes scanned</b></td><td>TableScan / query</td><td>How much columnar data was read. <code>SELECT *</code> on a wide table inflates this.</td></tr>
+        <tr><td><b>Percentage scanned from cache</b></td><td>TableScan / query</td><td>Share of bytes served from the warehouse's <b>local disk cache</b>. Low right after resume or resize is normal.</td></tr>
+        <tr><td><b>Bytes spilled to local storage</b></td><td>Join / Sort / Aggregate</td><td>Memory was not enough, so intermediate data went to the node's SSD. Slower, tolerable in small amounts.</td></tr>
+        <tr><td><b>Bytes spilled to remote storage</b></td><td>Join / Sort / Aggregate</td><td>Local SSD was full too, so data went to cloud storage. <b>Very slow.</b> Almost always worth fixing.</td></tr>
+        <tr><td><b>Rows in / rows out</b></td><td>Join</td><td>If output rows ≫ input rows on both sides, you have an <b>exploding join</b> (duplicate keys or a missing condition).</td></tr>
+        <tr><td><b>Execution time breakdown</b></td><td>Query / operator</td><td>Processing (CPU), Local Disk IO, Remote Disk IO, Network Communication, Synchronization, Initialization. Tells you if a node is CPU-bound or waiting on I/O.</td></tr>
+        <tr><td><b>Queued / compilation time</b></td><td>Query details, QUERY_HISTORY</td><td>Time <b>before</b> execution started. A query can have a perfect profile and still take minutes if it sat in a queue.</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-h"><div class="t">SIMULATOR · <b>INTERACTIVE QUERY PROFILE</b> · click the operator nodes, then diagnose</div><span class="note-s">Illustrative model, not a benchmark</span></div>
+    <div class="tabs" id="qpCase"><button class="on" data-c="0">Case A · monthly revenue</button><button data-c="1">Case B · order report</button><button data-c="2">Case C · customer ranking</button><button data-c="3">Case D · KPI tile at 9 AM</button></div>
+    <div class="sqlbox" id="qpSql"></div>
+    <div class="grid2 qpgrid" style="margin-top:12px">
+      <div><svg viewBox="0 0 520 430" id="qpSvg"></svg><div class="note-s">Red outline = most expensive node · thick red arrow = suspicious row explosion</div></div>
+      <div>
+        <div class="explain" id="qpNode"><b class="h">OPERATOR DETAILS</b>Click a node in the tree.</div>
+        <div class="explain" style="margin-top:10px" id="qpQuery"></div>
+      </div>
+    </div>
+    <div class="note-s" style="margin-top:12px">Your diagnosis: what is the <b>main</b> problem in this query?</div>
+    <div class="diag" id="qpDiag">
+      <button class="btn" data-d="prune">Poor partition pruning</button>
+      <button class="btn" data-d="join">Exploding join</button>
+      <button class="btn" data-d="spill">Spilling to remote storage</button>
+      <button class="btn" data-d="queue">Queued: concurrency</button>
+      <button class="btn" data-d="compile">Compilation overhead</button>
+    </div>
+    <div class="insight" id="qpIns">Pick a case, click around the tree (start with the red node), then choose a diagnosis.</div>
+  </div>
+
+  <h3>Where does the elapsed time go?</h3>
+  <div class="grid3">
+    <div class="mini"><h5>Queued</h5><p><code>QUEUED_OVERLOAD_TIME</code>: warehouse busy with other queries. <code>QUEUED_PROVISIONING_TIME</code>: waiting for the warehouse to start or resize. <code>QUEUED_REPAIR_TIME</code>: replacing a failed node (rare).</p></div>
+    <div class="mini"><h5>Compilation</h5><p>Cloud services parses, optimizes and prunes using metadata. Huge IN-lists, very deep views or thousands of UNIONed branches make this large. <code>COMPILATION_TIME</code> in QUERY_HISTORY.</p></div>
+    <div class="mini"><h5>Execution</h5><p>The warehouse actually runs the operator tree. <code>EXECUTION_TIME</code>. This is the part the Query Profile breaks down per operator.</p></div>
+  </div>
+  <div class="call trap"><b class="k">INTERVIEW TRAP</b><div>"The profile shows only 5 seconds of execution, but the user waited 4 minutes." The profile only covers <b>execution</b>. Look at <b>queued time</b> in the query details or <code>QUERY_HISTORY</code>. Resizing the warehouse won't help a queue; <b>more clusters</b> (multi-cluster) or a separate warehouse will.</div></div>
+  <div class="call pro"><b class="k">SENIOR ANGLE</b><div>Don't tune one query in isolation. Pull the <b>top 20 queries by total elapsed time</b> (or by credits) from <code>ACCOUNT_USAGE.QUERY_HISTORY</code>, grouped by <code>QUERY_PARAMETERIZED_HASH</code> so repeated queries with different literals count as one. Fixing the query that runs 5,000 times a day beats fixing the one that runs once a month.</div></div>
+</section>
+
+<section id="cluster">
+  <div class="eyebrow">CHAPTER 02</div>
+  <h2>Clustering keys <span class="thin">· &amp; automatic clustering</span></h2>
+  <div class="wwh">
+    <div class="box what"><span class="tag">01 · WHAT IS IT</span>
+      <p>Every table is stored as <b>micro-partitions</b> (roughly 50–500 MB of uncompressed data each). For every column, Snowflake keeps the <b>min and max</b> value per partition. A filter like <code>WHERE order_date = '2024-03-15'</code> can skip every partition whose range doesn't include that date. This is <b>pruning</b>.</p>
+      <p>By default, data is stored in the order it was loaded: its <b>natural ordering</b>. A <b>clustering key</b> (<code>ALTER TABLE … CLUSTER BY (…)</code>) tells Snowflake to keep rows with similar key values together, so partition ranges stay narrow.</p>
+    </div>
+    <div class="box why"><span class="tag">02 · WHY WE USE IT</span>
+      <p>If you load data daily, it's naturally ordered by load date, and date filters prune well for free. But after years of updates, deletes, late-arriving data or loads in a different order, ranges get <b>wide and overlapping</b>: every partition covers "January to December", and nothing can be skipped.</p>
+      <p>A clustering key restores narrow ranges for the column you filter on most, so big queries read a few hundred partitions instead of tens of thousands.</p>
+    </div>
+    <div class="box how"><span class="tag">03 · HOW IT WORKS · DEPTH, OVERLAP &amp; THE BACKGROUND SERVICE</span>
+      <ul class="dots">
+        <li><b>Overlap</b>: how many other partitions share a part of a partition's value range. <b>Depth</b>: for a given value, how many partitions contain it. The best possible depth is <b>1</b> (only one partition holds each value). Lower = better pruning.</li>
+        <li><code>SYSTEM$CLUSTERING_INFORMATION('sales', '(order_date)')</code> returns JSON: <code>total_partition_count</code>, <code>total_constant_partition_count</code>, <code>average_overlaps</code>, <code>average_depth</code> and a <code>partition_depth_histogram</code>. <code>SYSTEM$CLUSTERING_DEPTH</code> returns just the average depth.</li>
+        <li><b>Automatic Clustering</b> is a <b>serverless</b> background service. Once a key is defined, Snowflake watches how "clustered" the table is and, when it's worth it, <b>rewrites</b> overlapping partitions into new, better-sorted ones. You don't need a warehouse; you pay <b>serverless credits</b>, visible in <code>AUTOMATIC_CLUSTERING_HISTORY</code>.</li>
+        <li>Rewritten partitions are new partitions. The old ones stay around for Time Travel and Fail-safe, so heavy reclustering also <b>increases storage</b> for a while.</li>
+        <li>You can pause it with <code>ALTER TABLE … SUSPEND RECLUSTER</code> and restart with <code>RESUME RECLUSTER</code>.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-h"><div class="t">SIMULATOR · <b>RECLUSTERING</b> · 28 micro-partitions of SALES, key = order_date</div>
+      <div class="row"><button class="btn pri" id="clPlay">▶ Auto-cluster</button><button class="btn" id="clStep">One reclustering pass</button><button class="btn" id="clChurn">DML batch (late, unsorted data)</button><button class="btn" id="clReset">Reset</button></div></div>
+    <div class="row" style="margin-bottom:6px"><span class="note-s" style="min-width:140px">Query being pruned:</span><div class="tabs" id="clQ" style="margin:0"><button class="on" data-q="m">WHERE order_date in March</button><button data-q="d">WHERE order_date = '2024-07-04'</button><button data-q="h">WHERE order_date in H2</button></div></div>
+    <svg viewBox="0 0 680 350" id="clSvg"></svg>
+    <div class="legend"><span><i style="background:var(--ice-s);border:1px solid var(--ice)"></i>partition must be scanned (range overlaps the filter)</span><span><i style="background:var(--card2);border:1px solid var(--line2)"></i>pruned (skipped)</span><span><i style="background:var(--amber-s);border:1px solid var(--amber)"></i>filter range</span></div>
+    <div class="stats">
+      <div class="stat"><div class="k">AVERAGE DEPTH</div><div class="n" id="clDepth">–</div><div class="s">1.0 = perfect</div></div>
+      <div class="stat"><div class="k">AVERAGE OVERLAPS</div><div class="n" id="clOv">–</div></div>
+      <div class="stat"><div class="k">PARTITIONS SCANNED</div><div class="n" id="clScan">–</div><div class="s">of 28</div></div>
+      <div class="stat"><div class="k">SERVERLESS CREDITS</div><div class="n" id="clCr">0.00</div><div class="meter"><i id="clMeter"></i></div><div class="s">illustrative cost meter</div></div>
+    </div>
+    <div class="insight" id="clIns">Each bar is one micro-partition, drawn from its <b>min</b> to its <b>max</b> order_date. Right now the table is badly clustered: almost every bar spans most of the year. Press <b>Auto-cluster</b>.</div>
+  </div>
+
+  <h3>Choosing a clustering key · try it</h3>
+  <div class="panel">
+    <div class="panel-h"><div class="t">KEY CHOOSER · <b>5 TB EVENTS table</b>, most queries filter on a date range and often on tenant</div></div>
+    <div class="tabs" id="ckTabs">
+      <button class="on" data-k="0">event_ts (timestamp)</button><button data-k="1">TO_DATE(event_ts)</button><button data-k="2">event_id (unique)</button><button data-k="3">is_deleted (boolean)</button><button data-k="4">(TO_DATE(event_ts), tenant_id)</button><button data-k="5">5 columns</button>
+    </div>
+    <div class="sqlbox" id="ckSql"></div>
+    <div class="explain" id="ckOut" style="margin-top:10px"></div>
+  </div>
+  <div class="grid2">
+    <div class="mini"><h5>Good candidates</h5><p>Large tables (Snowflake's guidance: typically <b>multi-terabyte</b>), columns used most often in <b>selective filters</b> or join predicates, with <b>enough distinct values</b> to prune but not so many that maintenance is expensive. Use <b>expressions</b> to lower cardinality: <code>TO_DATE(ts)</code>, <code>DATE_TRUNC('month', ts)</code>, <code>SUBSTRING(code, 1, 3)</code>. Keep it to <b>3–4 columns at most</b>, ordered from lower to higher cardinality.</p></div>
+    <div class="mini"><h5>When NOT to cluster</h5><p>Small tables (a few GB: they're already few partitions). Tables that are <b>constantly updated everywhere</b> (high churn), because Snowflake keeps reclustering and the credits never stop. Tables whose natural load order already matches the filter. Tables queried in many unrelated ways where no single key helps most queries.</p></div>
+  </div>
+  <div class="call trap"><b class="k">INTERVIEW TRAP</b><div>"Is a clustering key an index?" <b>No.</b> There's no separate structure to look up. It only changes <b>how rows are physically grouped</b> into micro-partitions so min/max pruning works better. It helps <b>range and equality filters on the key</b>; it does nothing for a filter on an unrelated column.</div></div>
+  <div class="call pro"><b class="k">SENIOR ANGLE</b><div>Before adding a key, prove it: (1) check the queries really filter on that column (<code>ACCESS_HISTORY</code> / query text), (2) look at <code>SYSTEM$CLUSTERING_INFORMATION</code> and partitions scanned today, (3) test on a <b>clone</b> sorted with <code>CREATE TABLE … AS SELECT … ORDER BY key</code> to see the pruning you'd get, (4) watch <code>AUTOMATIC_CLUSTERING_HISTORY</code> for the first weeks. If the ongoing credits exceed the warehouse time you save, remove it.</div></div>
+</section>
+
+<section id="sos">
+  <div class="eyebrow">CHAPTER 03</div>
+  <h2>Search Optimization Service <span class="thin">· needle-in-a-haystack queries</span></h2>
+  <div class="wwh">
+    <div class="box what"><span class="tag">01 · WHAT IS IT</span>
+      <p>The <b>Search Optimization Service (SOS)</b> is a table-level feature (Enterprise Edition and higher) that builds and maintains a persistent data structure called a <b>search access path</b>. Think of it as a compact map that records, for chosen columns, <b>which micro-partitions might contain which values</b>.</p>
+      <p>It speeds up <b>highly selective</b> queries, the ones that return a few rows out of billions:</p>
+      <ul class="dots">
+        <li><b>Equality and IN</b>: <code>WHERE order_id = 'ORD-88123'</code>, <code>WHERE email IN (…)</code></li>
+        <li><b>Substring and regex</b>: <code>LIKE '%timeout%'</code>, <code>ILIKE</code>, <code>RLIKE</code>, <code>REGEXP_LIKE</code></li>
+        <li><b>Fields inside VARIANT</b>: <code>WHERE payload:customer.email::STRING = '…'</code></li>
+        <li><b>Geospatial</b>: <code>ST_INTERSECTS</code>, <code>ST_CONTAINS</code>, <code>ST_DWITHIN</code> on GEOGRAPHY columns</li>
+      </ul>
+    </div>
+    <div class="box why"><span class="tag">02 · WHY WE USE IT</span>
+      <p>Clustering can make only <b>one</b> ordering great. If a table is clustered by date, a lookup on <code>customer_id</code> or a text search in a log message still scans everything, because those values are spread across all partitions.</p>
+      <p>SOS adds pruning for <b>many columns at once</b>, independent of the physical order. It shines for point lookups from apps and APIs, investigation queries on logs ("find all events for this user"), and security analytics.</p>
+    </div>
+    <div class="box how"><span class="tag">03 · HOW IT WORKS · BACKEND</span>
+      <ul class="dots">
+        <li>You enable it: <code>ALTER TABLE events ADD SEARCH OPTIMIZATION ON EQUALITY(user_id), SUBSTRING(message);</code> (or for the whole table with just <code>ADD SEARCH OPTIMIZATION</code>, which covers eligible columns for equality).</li>
+        <li>A <b>serverless</b> service <b>builds</b> the search access path in the background (it can take a while on big tables). <code>DESCRIBE SEARCH OPTIMIZATION ON events</code> and <code>SHOW TABLES</code> (<code>search_optimization_progress</code>) show its status.</li>
+        <li>At query time, during <b>compilation</b>, the optimizer consults the access path to prune partitions that definitely don't contain the value, on top of normal min/max pruning. The Query Profile then shows a <b>Search Optimization Access</b> node.</li>
+        <li>Every insert, update or delete makes Snowflake <b>maintain</b> the access path, again with serverless credits.</li>
+        <li><b>Costs</b>: (1) storage for the access path (can be a meaningful fraction of the table size), (2) serverless compute to build it, (3) ongoing maintenance compute proportional to churn. Estimate first with <code>SYSTEM$ESTIMATE_SEARCH_OPTIMIZATION_COSTS</code>; track with <code>SEARCH_OPTIMIZATION_HISTORY</code>.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-h"><div class="t">COMPARE WIDGET · <b>WHICH FEATURE HELPS THIS QUERY?</b></div><span class="note-s">Click a query pattern</span></div>
+    <div class="qtype" id="fcList"></div>
+    <div class="sqlbox" id="fcSql" style="margin-top:12px"></div>
+    <div class="feat" id="fcFeat">
+      <div data-f="cl"><b>CLUSTERING</b><small>physical ordering · range filters</small></div>
+      <div data-f="sos"><b>SEARCH OPT.</b><small>selective lookups · many columns</small></div>
+      <div data-f="qas"><b>QUERY ACCEL.</b><small>offload big scans of outliers</small></div>
+      <div data-f="mv"><b>MATERIALIZED VIEW</b><small>precomputed repeat results</small></div>
+      <div data-f="none"><b>NONE OF THESE</b><small>rewrite · resize · cache</small></div>
+    </div>
+    <div class="insight" id="fcIns">Pick a query pattern above.</div>
+  </div>
+
+  <table class="t">
+    <tr><th></th><th>CLUSTERING KEY</th><th>SEARCH OPTIMIZATION</th></tr>
+    <tr><td><b>Best for</b></td><td>Range and equality filters on <b>one</b> primary access pattern (often a date)</td><td>Highly selective lookups on <b>many</b> columns, substring, VARIANT, geo</td></tr>
+    <tr><td><b>How</b></td><td>Physically reorders rows into partitions</td><td>Separate search access path; data order unchanged</td></tr>
+    <tr><td><b>Cost</b></td><td>Serverless reclustering credits (+ temporary storage)</td><td>Access path storage + serverless build &amp; maintenance</td></tr>
+    <tr><td><b>Helps queries returning…</b></td><td>Large slices (a month of data)</td><td>A few rows (needle in a haystack)</td></tr>
+    <tr><td><b>Edition</b></td><td>All editions</td><td>Enterprise Edition or higher</td></tr>
+  </table>
+  <div class="call trap" style="margin-top:14px"><b class="k">INTERVIEW TRAP</b><div>"We enabled Search Optimization and the dashboard didn't get faster." SOS only helps <b>selective</b> predicates. A query returning 30% of the table, or one that aggregates everything, still scans almost everything. Also check that the predicate type was enabled (an EQUALITY path does nothing for <code>LIKE '%x%'</code>; that needs SUBSTRING).</div></div>
+  <div class="call pro"><b class="k">SENIOR ANGLE</b><div>Enable SOS <b>per column and per method</b> (<code>ON EQUALITY(user_id), SUBSTRING(message)</code>) instead of the whole table: smaller access path, lower maintenance. And combine features: cluster the log table by <code>TO_DATE(event_ts)</code> for time-window queries <i>and</i> add SOS on <code>user_id</code> for investigations.</div></div>
+</section>
+
+<section id="qas">
+  <div class="eyebrow">CHAPTER 04</div>
+  <h2>Query Acceleration Service <span class="thin">· borrow extra muscle for outliers</span></h2>
+  <div class="wwh">
+    <div class="box what"><span class="tag">01 · WHAT IS IT</span>
+      <p>The <b>Query Acceleration Service (QAS)</b> is a warehouse setting (Enterprise Edition and higher). When a query on that warehouse is <b>eligible</b>, Snowflake <b>offloads parts of its work</b>, mainly scanning and filtering lots of partitions (and some partial aggregation), to <b>shared serverless compute</b>, then hands the reduced results back to your warehouse to finish.</p>
+      <pre class="sqlbox">ALTER WAREHOUSE bi_wh SET
+  ENABLE_QUERY_ACCELERATION = TRUE
+  QUERY_ACCELERATION_MAX_SCALE_FACTOR = 8;</pre>
+    </div>
+    <div class="box why"><span class="tag">02 · WHY WE USE IT</span>
+      <p>Picture a MEDIUM warehouse serving dashboards fine all day, until an analyst runs an <b>ad-hoc query that scans 3 TB</b>. That one outlier hogs the warehouse, other queries queue, and you're tempted to make the warehouse XLARGE for <i>everyone</i>, all day.</p>
+      <p>QAS gives that outlier extra compute <b>only while it runs</b>, so you can keep the warehouse sized for the normal workload.</p>
+    </div>
+    <div class="box how"><span class="tag">03 · HOW IT WORKS · BACKEND</span>
+      <ul class="dots">
+        <li><b>Eligibility</b> is decided by Snowflake per query. Typical eligible queries: large scans with <b>selective filters</b> or aggregations that reduce data a lot, including some INSERT/CTAS/COPY workloads. Typically <b>not</b> eligible: too few partitions to be worth it, or filters that don't reduce the data much.</li>
+        <li><code>QUERY_ACCELERATION_MAX_SCALE_FACTOR</code> caps the extra compute as a <b>multiple of the warehouse size</b>. Default is <b>8</b>; <b>0</b> means no upper limit. A MEDIUM (4 credits/hour) with factor 8 can lease up to 32 credits/hour of acceleration compute.</li>
+        <li><code>SYSTEM$ESTIMATE_QUERY_ACCELERATION('&lt;query_id&gt;')</code> tells you whether a past query was eligible and its estimated time at different scale factors. <code>ACCOUNT_USAGE.QUERY_ACCELERATION_ELIGIBLE</code> lists eligible queries across the account.</li>
+        <li>Billing is serverless, per second of acceleration compute used, visible in <code>QUERY_ACCELERATION_HISTORY</code>. The Query Profile shows the accelerated scan (partitions scanned by the service).</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-h"><div class="t">SIMULATOR · <b>MIXED WORKLOAD ON BI_WH (MEDIUM, 3 query slots)</b></div><button class="btn pri" id="qaRun">▶ Replay workload</button></div>
+    <div class="row" style="margin-bottom:6px"><span class="note-s" style="min-width:150px">Query Acceleration:</span><div class="tabs" id="qaTog" style="margin:0"><button class="on" data-v="0">OFF</button><button data-v="1">ON</button></div></div>
+    <div class="ctl"><label>MAX_SCALE_FACTOR</label><input type="range" id="qaSf" min="1" max="16" value="8"><span class="v" id="qaSfV"></span></div>
+    <svg viewBox="0 0 680 330" id="qaSvg"></svg>
+    <div class="legend"><span><i style="background:var(--amber-s);border:1px solid var(--amber)"></i>waiting in queue</span><span><i style="background:var(--ice)"></i>running on warehouse</span><span><i style="background:var(--teal)"></i>scan offloaded to QAS</span><span><i style="background:var(--red)"></i>outlier query</span></div>
+    <div class="stats">
+      <div class="stat"><div class="k">ALL QUERIES DONE AT</div><div class="n" id="qaEnd">–</div></div>
+      <div class="stat"><div class="k">AVG QUEUE · SMALL QUERIES</div><div class="n" id="qaQ">–</div></div>
+      <div class="stat"><div class="k">OUTLIER Q2 ELAPSED</div><div class="n" id="qaO">–</div></div>
+      <div class="stat"><div class="k">QAS CREDITS</div><div class="n" id="qaC">0</div><div class="s">illustrative</div></div>
+    </div>
+    <div class="insight" id="qaIns">Q2 and Q7 are big ad-hoc scans with selective filters (eligible). Q10 is a huge ORDER BY over everything (not eligible). Toggle QAS and replay.</div>
+    <p class="note-s">Illustrative model, not a benchmark.</p>
+  </div>
+  <div class="grid2">
+    <div class="call trap" style="margin:0"><b class="k">INTERVIEW TRAP</b><div>"QAS vs a bigger warehouse vs multi-cluster?" <b>Bigger warehouse</b>: every query gets more memory and CPU, all the time (fixes spilling). <b>Multi-cluster</b>: more copies of the same size (fixes queuing from many concurrent queries). <b>QAS</b>: extra scan power only for eligible outlier queries. It does <b>not</b> fix spilling in a join or sort that happens on the warehouse.</div></div>
+    <div class="call pro" style="margin:0"><b class="k">SENIOR ANGLE</b><div>Find candidates with data, not hope: query <code>QUERY_ACCELERATION_ELIGIBLE</code> grouped by warehouse, ordered by <code>eligible_query_acceleration_time</code>. Enable QAS on the warehouses with the most eligible time, start with a modest scale factor, and compare <code>QUERY_ACCELERATION_HISTORY</code> credits against the warehouse credits you saved by not upsizing.</div></div>
+  </div>
+</section>
+
+<section id="mv">
+  <div class="eyebrow">CHAPTER 05</div>
+  <h2>Materialized views vs dynamic tables vs result cache <span class="thin">· precompute or reuse</span></h2>
+  <div class="wwh">
+    <div class="box what"><span class="tag">01 · WHAT IS IT</span>
+      <p>Three ways to avoid recomputing the same answer:</p>
+      <ul class="dots">
+        <li><b>Materialized view (MV)</b>: a view whose result is <b>stored</b> and kept up to date automatically by Snowflake. Enterprise Edition and higher.</li>
+        <li><b>Dynamic table (DT)</b>: a table defined by a query plus a <code>TARGET_LAG</code> ("at most 15 minutes behind"); Snowflake refreshes it, incrementally when it can. Deep dive in Module 05.</li>
+        <li><b>Result cache</b>: cloud services remembers the <b>result of a query</b> for 24 hours and returns it instantly if the exact same query runs again and the data hasn't changed.</li>
+      </ul>
+    </div>
+    <div class="box why"><span class="tag">02 · WHY WE USE IT</span>
+      <p>If 200 dashboard users run "daily revenue by region" over a 5-billion-row table, scanning those rows 200 times is waste. Precomputing once and reading a tiny result is faster and cheaper.</p>
+      <p>Each tool trades something: MVs are always current but very restricted; DTs are flexible but lag; the result cache is free but fragile (any data change or text change misses).</p>
+    </div>
+    <div class="box how"><span class="tag">03 · HOW IT WORKS · BACKEND</span>
+      <div class="grid3">
+        <div class="mini"><h5>MV maintenance &amp; rewrite</h5><p>A <b>serverless background service</b> updates the MV after base-table DML (billed; see <code>MATERIALIZED_VIEW_REFRESH_HISTORY</code>). If the MV is momentarily behind, Snowflake <b>combines</b> the MV with the newest base-table changes, so results are <b>always current</b>. The optimizer can also <b>rewrite</b> a query on the base table to use the MV automatically.</p></div>
+        <div class="mini"><h5>MV restrictions</h5><p><b>One table only</b>: no joins (not even self-joins). No window functions, HAVING, ORDER BY, LIMIT, UDFs or non-deterministic functions like <code>CURRENT_TIMESTAMP</code>; only a subset of aggregates (SUM, COUNT, MIN, MAX, AVG…). It can't select from another view or MV. Check the docs for the full current list.</p></div>
+        <div class="mini"><h5>Result cache rules</h5><p>Kept <b>24 hours</b>, and each reuse extends it (up to <b>31 days</b> from the first run). Hit only if the <b>query text matches</b>, the <b>data is unchanged</b>, no non-deterministic functions, and your role can read the tables. <b>No warehouse needed</b> on a hit. Controlled by <code>USE_CACHED_RESULT</code> (default TRUE).</p></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-h"><div class="t">SIMULATOR · <b>RESULT CACHE: HIT OR MISS?</b> · the dashboard re-runs a query that ran 10 minutes ago</div></div>
+    <div class="row" style="margin:4px 0"><span class="note-s" style="min-width:220px">Query text:</span><div class="tabs" id="rcText" style="margin:0"><button class="on" data-v="same">Identical</button><button data-v="ws">Added a space / changed case</button></div></div>
+    <div class="row" style="margin:4px 0"><span class="note-s" style="min-width:220px">Base table since last run:</span><div class="tabs" id="rcData" style="margin:0"><button class="on" data-v="0">Unchanged</button><button data-v="1">Snowpipe inserted rows</button></div></div>
+    <div class="row" style="margin:4px 0"><span class="note-s" style="min-width:220px">Functions:</span><div class="tabs" id="rcFn" style="margin:0"><button class="on" data-v="0">Deterministic only</button><button data-v="1">Uses CURRENT_TIMESTAMP()</button></div></div>
+    <div class="row" style="margin:4px 0"><span class="note-s" style="min-width:220px">Warehouse:</span><div class="tabs" id="rcWh" style="margin:0"><button class="on" data-v="0">Suspended</button><button data-v="1">Running</button></div></div>
+    <div class="row" style="margin:4px 0 10px"><span class="note-s" style="min-width:220px">USE_CACHED_RESULT:</span><div class="tabs" id="rcPar" style="margin:0"><button class="on" data-v="1">TRUE (default)</button><button data-v="0">FALSE</button></div></div>
+    <div class="explain" id="rcOut"></div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-h"><div class="t">DECISION WIDGET · <b>MV, DYNAMIC TABLE, OR JUST A VIEW?</b></div></div>
+    <div class="row" style="margin:4px 0"><span class="note-s" style="min-width:220px">Does the query join tables?</span><div class="tabs" id="dwJoin" style="margin:0"><button class="on" data-v="0">No, one table</button><button data-v="1">Yes, joins</button></div></div>
+    <div class="row" style="margin:4px 0"><span class="note-s" style="min-width:220px">Freshness needed:</span><div class="tabs" id="dwFresh" style="margin:0"><button class="on" data-v="now">Always current</button><button data-v="lag">Minutes of lag OK</button></div></div>
+    <div class="row" style="margin:4px 0"><span class="note-s" style="min-width:220px">How often is it queried?</span><div class="tabs" id="dwFreq" style="margin:0"><button class="on" data-v="hi">Constantly (dashboards)</button><button data-v="lo">Rarely</button></div></div>
+    <div class="row" style="margin:4px 0 10px"><span class="note-s" style="min-width:220px">Base table churn:</span><div class="tabs" id="dwChurn" style="margin:0"><button class="on" data-v="lo">Mostly appends</button><button data-v="hi">Heavy updates all day</button></div></div>
+    <div class="explain" id="dwOut"></div>
+  </div>
+
+  <table class="t">
+    <tr><th></th><th>MATERIALIZED VIEW</th><th>DYNAMIC TABLE</th><th>RESULT CACHE</th></tr>
+    <tr><td><b>Joins</b></td><td>No (single table)</td><td>Yes</td><td>Any query</td></tr>
+    <tr><td><b>Freshness</b></td><td>Always current (combines with base changes)</td><td>Up to TARGET_LAG behind</td><td>Exact result; invalid once data changes</td></tr>
+    <tr><td><b>Compute</b></td><td>Serverless maintenance</td><td>Your warehouse (named in the DT)</td><td>None on a hit</td></tr>
+    <tr><td><b>Auto query rewrite</b></td><td>Yes</td><td>No (query the DT directly)</td><td>N/A</td></tr>
+    <tr><td><b>Typical use</b></td><td>Hot aggregate or filtered subset of one big table; external-table acceleration</td><td>Multi-step transformation pipelines</td><td>Repeated identical dashboard queries</td></tr>
+  </table>
+  <div class="call trap" style="margin-top:14px"><b class="k">INTERVIEW TRAP</b><div>"Why not create an MV for every slow query?" Each MV costs <b>storage + serverless maintenance every time the base table changes</b>. On a table updated all day, maintenance can cost more than the queries it saves. MVs pay off when the base table changes <b>rarely</b> relative to how <b>often</b> the MV is queried, and the result is much smaller than the base.</div></div>
+</section>
+
+<section id="antipat">
+  <div class="eyebrow">CHAPTER 06</div>
+  <h2>Joins &amp; SQL anti-patterns <span class="thin">· the cheapest fix is often the SQL</span></h2>
+  <div class="wwh">
+    <div class="box what"><span class="tag">01 · WHAT IS IT</span>
+      <p>A <b>join</b> combines rows from two inputs on a condition. Inside a multi-node warehouse, the optimizer must decide <b>how to bring matching rows onto the same node</b>:</p>
+      <ul class="dots">
+        <li><b>Broadcast</b>: the small side (the <b>build</b> side, e.g. a dimension) is copied to every node; each node then joins its share of the big side (the <b>probe</b> side) locally. Cheap when one side is small.</li>
+        <li><b>Hash-partitioned</b>: both sides are redistributed by a hash of the join key, so equal keys land on the same node. Used when both sides are large.</li>
+      </ul>
+      <p>An <b>anti-pattern</b> is a SQL habit that works but forces Snowflake to do far more work than needed.</p>
+    </div>
+    <div class="box why"><span class="tag">02 · WHY IT MATTERS</span>
+      <p>Most "Snowflake is slow" tickets are not Snowflake problems. They're a function wrapped around a filter column, a join on a non-unique key, or a <code>DISTINCT</code> hiding duplicates. Rewriting the SQL costs nothing per month; a bigger warehouse costs every hour it runs.</p>
+    </div>
+    <div class="box how"><span class="tag">03 · HOW IT WORKS · JOINS IN THE BACKEND</span>
+      <p>Snowflake's optimizer picks the join order and distribution from table statistics; you don't write hints. It builds a hash table from the build side, then streams the probe side through it. It can also push a <b>join filter</b> (shown as <b>JoinFilter</b> in the profile) built from the build side's keys down to the probe-side scan, so partitions and rows that can't match are skipped early. Your job is to give it good inputs: <b>unique keys where you expect them, filters before joins, and the columns you actually need</b>.</p>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-h"><div class="t">ANIMATION · <b>HOW ROWS MOVE BETWEEN 4 NODES</b></div><div class="tabs" id="jsTabs" style="margin:0"><button class="on" data-v="b">Broadcast (fact ⋈ small dim)</button><button data-v="h">Hash-partition (fact ⋈ big fact)</button></div></div>
+    <svg viewBox="0 0 680 250" class="flow playing" id="jsSvg"></svg>
+    <div class="insight" id="jsIns"></div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-h"><div class="t">CALCULATOR · <b>EXPLODING JOIN</b> · orders ⋈ shipments ON order_id</div><span class="note-s">10 million distinct order_ids</span></div>
+    <div class="ctl"><label>rows per key in ORDERS</label><input type="range" id="exA" min="1" max="5" value="1"><span class="v" id="exAV"></span></div>
+    <div class="ctl"><label>rows per key in SHIPMENTS</label><input type="range" id="exB" min="1" max="20" value="1"><span class="v" id="exBV"></span></div>
+    <div class="stats">
+      <div class="stat"><div class="k">ROWS IN (LEFT)</div><div class="n" id="exL">–</div></div>
+      <div class="stat"><div class="k">ROWS IN (RIGHT)</div><div class="n" id="exR">–</div></div>
+      <div class="stat"><div class="k">ROWS OUT</div><div class="n" id="exO">–</div></div>
+      <div class="stat"><div class="k">SUM(amount) INFLATED BY</div><div class="n" id="exF">–</div></div>
+    </div>
+    <div class="insight" id="exIns"></div>
+  </div>
+
+  <h3>Rewrite lab · bad SQL vs fixed SQL</h3>
+  <div class="panel">
+    <div class="panel-h"><div class="t">SIMULATOR · <b>REWRITE LAB</b></div><span class="note-s">Before/after numbers are an illustrative model, not a benchmark</span></div>
+    <div class="tabs" id="rwTabs"></div>
+    <div class="grid2">
+      <div><div class="note-s" style="color:var(--red)">BEFORE · anti-pattern</div><pre class="sqlbox bad" id="rwBad"></pre></div>
+      <div><div class="note-s" style="color:var(--teal)">AFTER · rewrite</div><pre class="sqlbox good" id="rwGood"></pre></div>
+    </div>
+    <div style="margin-top:14px">
+      <div class="cmpbar"><span class="lbl"></span><span class="lbl" style="color:var(--red)">BEFORE</span><span class="lbl" style="color:var(--teal)">AFTER</span></div>
+      <div id="rwBars"></div>
+    </div>
+    <div class="insight" id="rwIns"></div>
+  </div>
+  <div class="call trap"><b class="k">INTERVIEW TRAP</b><div>"I added <code>DISTINCT</code> and the duplicates went away, so it's fixed." No: the join still produced millions of extra rows, and now Snowflake also has to <b>aggregate</b> all of them to remove duplicates. Find out <i>why</i> a key is duplicated (SCD2 history rows, a missing join column, bad source data) and fix the join.</div></div>
+  <div class="call pro"><b class="k">SENIOR ANGLE</b><div>Make these checks part of code review: filter columns used raw (sargable), explicit column lists, <code>UNION ALL</code> unless dedup is required, uniqueness test on every dimension key, no <code>ORDER BY</code> in views or subqueries, and a look at the Query Profile for any new query that will run on a schedule.</div></div>
+</section>
+
+<section id="wh">
+  <div class="eyebrow">CHAPTER 07</div>
+  <h2>Warehouse tuning &amp; a full debugging walkthrough <span class="thin">· size, clusters, guardrails</span></h2>
+  <div class="wwh">
+    <div class="box what"><span class="tag">01 · WHAT IS IT</span>
+      <p>The warehouse is the compute your query gets. You tune it along two axes:</p>
+      <ul class="dots">
+        <li><b>Scale up</b> (size XS → S → M … each step doubles nodes, memory, local SSD and credits/hour): for <b>big or spilling</b> queries.</li>
+        <li><b>Scale out</b> (multi-cluster: <code>MIN_CLUSTER_COUNT</code> / <code>MAX_CLUSTER_COUNT</code>, Enterprise Edition): for <b>many concurrent</b> queries that queue.</li>
+      </ul>
+      <p>Plus warehouse <b>types</b>: standard; <b>Snowpark-optimized</b> (much more memory per node, for memory-heavy Python, ML training and large UDFs); and Snowflake's newer <b>generation 2 standard warehouses</b> (faster hardware and engine improvements; check your region's availability and current syntax in the docs).</p>
+    </div>
+    <div class="box why"><span class="tag">02 · WHY IT MATTERS</span>
+      <p>Picking the wrong axis wastes money: a bigger warehouse doesn't fix queuing if the queries were already fast, and more clusters don't fix one query spilling to remote storage. Guardrail parameters stop one runaway query from burning credits for two days.</p>
+    </div>
+    <div class="box how"><span class="tag">03 · HOW IT WORKS · KNOBS YOU SHOULD KNOW</span>
+      <table class="t">
+        <tr><th>KNOB</th><th>WHAT IT DOES</th></tr>
+        <tr><td class="m">WAREHOUSE_SIZE</td><td>Each size up doubles compute and credits/hour. For well-parallelised work, time roughly halves, so cost per query stays similar until scaling stops.</td></tr>
+        <tr><td class="m">MIN/MAX_CLUSTER_COUNT, SCALING_POLICY</td><td>Multi-cluster: STANDARD policy starts clusters quickly to avoid queuing; ECONOMY waits until there's enough load to keep a new cluster busy, saving credits.</td></tr>
+        <tr><td class="m">MAX_CONCURRENCY_LEVEL</td><td>How many queries one cluster runs at once before queuing (default <b>8</b>). Lowering it gives each query more resources; raising it packs more small queries.</td></tr>
+        <tr><td class="m">STATEMENT_TIMEOUT_IN_SECONDS</td><td>Cancels queries running longer than this (default 172800 = 2 days). Set it much lower on BI warehouses.</td></tr>
+        <tr><td class="m">STATEMENT_QUEUED_TIMEOUT_IN_SECONDS</td><td>Cancels queries that waited in the queue too long (default 0 = never).</td></tr>
+        <tr><td class="m">QUERY_TAG</td><td>Session parameter: a label (e.g. <code>'dash:revenue'</code>) stored with every query in QUERY_HISTORY, so you can find and attribute workloads.</td></tr>
+        <tr><td class="m">AUTO_SUSPEND</td><td>Seconds idle before suspending. Too low on a BI warehouse throws away the local disk cache on every gap.</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-h"><div class="t">SIMULATOR · <b>SIZE VS SPILL</b> · a join + sort that needs ~600 GB of working memory</div><span class="note-s">Illustrative model, not a benchmark</span></div>
+    <div class="ctl"><label>Warehouse size</label><input type="range" id="wsS" min="0" max="7" value="1"><span class="v" id="wsSV"></span></div>
+    <svg viewBox="0 0 680 120" id="wsSvg"></svg>
+    <div class="stats">
+      <div class="stat"><div class="k">SPILL LOCAL</div><div class="n" id="wsL">–</div></div>
+      <div class="stat"><div class="k">SPILL REMOTE</div><div class="n" id="wsR">–</div></div>
+      <div class="stat"><div class="k">ELAPSED</div><div class="n" id="wsT">–</div></div>
+      <div class="stat"><div class="k">CREDITS FOR THIS QUERY</div><div class="n" id="wsC">–</div></div>
+    </div>
+    <div class="insight" id="wsIns"></div>
+  </div>
+
+  <h3>Debugging walkthrough · "the revenue dashboard went from 10 seconds to 10 minutes"</h3>
+  <div class="panel">
+    <div class="panel-h"><div class="t">STEPPER · <b>A REAL INVESTIGATION, STEP BY STEP</b></div><div class="row"><button class="btn" id="dbPrev">Back</button><button class="btn pri" id="dbNext">Start</button><button class="btn" id="dbReset">Reset</button></div></div>
+    <div class="stepbar" id="dbBar"></div>
+    <div class="stepdesc" id="dbDesc"></div>
+    <pre class="sqlbox" id="dbSql" style="margin-top:10px"></pre>
+  </div>
+  <div class="grid2">
+    <div class="call trap" style="margin:0"><b class="k">INTERVIEW TRAP</b><div>"Just make the warehouse bigger." In the walkthrough, a 4XL would have hidden the duplicate-key explosion for a while at 64× the hourly cost, and the dashboard numbers would <b>still be wrong</b> (inflated revenue). Always ask whether the output is even correct.</div></div>
+    <div class="call pro" style="margin:0"><b class="k">SENIOR ANGLE</b><div>Separate warehouses per workload (ELT, BI, data science), a <code>QUERY_TAG</code> on every tool, <code>STATEMENT_TIMEOUT_IN_SECONDS</code> per warehouse, resource monitors, and a daily job that flags regressions: queries whose elapsed time or spill jumped versus their 7-day baseline by <code>QUERY_PARAMETERIZED_HASH</code>.</div></div>
+  </div>
+</section>
+
+<section id="sql">
+  <div class="eyebrow">CHAPTER 08</div>
+  <h2>SQL lab <span class="thin">· click any line for an explanation</span></h2>
+  <div class="panel">
+    <div class="tabs" id="sqlTabs"></div>
+    <div class="grid2" style="grid-template-columns:1.35fr 1fr">
+      <div class="code" id="sqlCode"></div>
+      <div class="explain" id="sqlExp"><b class="h">CLICK A LINE</b>Each line is explained in plain English.</div>
+    </div>
+  </div>
+</section>
+
+<section id="qa">
+  <div class="eyebrow">CHAPTER 09</div>
+  <h2>Interview Q&amp;A <span class="thin">· answer out loud first, then open</span></h2>
+  <div class="tabs" id="qaTabs"><button class="on" data-f="all">All</button><button data-f="Profile">Query Profile</button><button data-f="Clustering">Clustering</button><button data-f="SOS/QAS">SOS &amp; QAS</button><button data-f="MV/Cache">MV &amp; cache</button><button data-f="SQL">SQL &amp; joins</button><button data-f="Warehouse">Warehouse</button></div>
+  <div id="qaList"></div>
+</section>
+
+<section id="quiz">
+  <div class="eyebrow">CHAPTER 10</div>
+  <h2>Quiz <span class="thin">· 14 questions</span></h2>
+  <div class="panel">
+    <div class="panel-h"><div class="t">QUESTION <b id="qzN">1</b> / 14</div><div class="t">SCORE <b id="qzS">0</b></div></div>
+    <div class="stepbar" id="qzBar"></div>
+    <div id="qzBody"></div>
+    <div class="row" style="margin-top:12px"><button class="btn" id="qzPrev">Back</button><button class="btn pri" id="qzNext">Next</button></div>
+  </div>
+</section>
+
+<section id="cheat">
+  <div class="eyebrow">CHAPTER 11</div>
+  <h2>Cheat sheet <span class="thin">· if you remember only these</span></h2>
+  <div class="cheat">
+    <div><em>Measure first</em>Measure → find the bottleneck → fix the cause → re-measure. Evidence from QUERY_HISTORY and the Query Profile.</div>
+    <div><em>Scanned / total</em>Partitions scanned close to total on a selective filter = pruning failed. Look for functions on the filter column.</div>
+    <div><em>Remote spill</em>Bytes spilled to remote storage = memory problem. Reduce data first, then size up. Not fixed by multi-cluster or QAS.</div>
+    <div><em>Rows out ≫ in</em>A join producing far more rows than its inputs = duplicate keys or missing join condition. DISTINCT is not the fix.</div>
+    <div><em>Queued</em>Waiting, not working. Multi-cluster or a separate warehouse, not a bigger size.</div>
+    <div><em>Depth 1 = ideal</em>SYSTEM$CLUSTERING_INFORMATION: average_depth, average_overlaps, histogram. Lower is better.</div>
+    <div><em>Cluster key</em>Large (multi-TB) tables, frequent selective filters, 3–4 columns max, low → high cardinality, use TO_DATE / DATE_TRUNC. Serverless credits.</div>
+    <div><em>SOS</em>Needle-in-haystack: equality / IN, substring &amp; regex, VARIANT paths, geo. Access path storage + serverless maintenance. Enterprise.</div>
+    <div><em>QAS</em>Offloads eligible big scans of outlier queries. MAX_SCALE_FACTOR default 8, 0 = no limit. SYSTEM$ESTIMATE_QUERY_ACCELERATION.</div>
+    <div><em>MV</em>Single table, no joins, limited functions, serverless maintenance, always current, automatic query rewrite. Enterprise.</div>
+    <div><em>Result cache</em>24 h (extends on reuse, up to 31 days). Same text, unchanged data, deterministic functions. No warehouse on a hit.</div>
+    <div><em>Guardrails</em>STATEMENT_TIMEOUT_IN_SECONDS, MAX_CONCURRENCY_LEVEL (default 8), QUERY_TAG, AUTO_SUSPEND, resource monitors.</div>
+  </div>
+  <div class="call analogy" style="margin-top:20px"><b class="k">NEXT MODULE</b><div><b>Module 04: Data ingestion (Snowpipe).</b> COPY options in depth, Snowpipe and Snowpipe Streaming, file sizing, error handling and load monitoring. <a href="../module04/" style="color:var(--ice);font-weight:600">Open Module 04 →</a></div></div>
+</section>
+<footer>Snowflake Interview Lab · Module 03 · Performance Tuning · Prepared for Saurav Patel</footer>
+</main>
+</div>
+
+<script>
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+const fmt = (n, d = 0) => Number(n).toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d });
+const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+const tabs = (sel, cb) => $$(sel + ' button').forEach(b => b.addEventListener('click', () => { $$(sel + ' button').forEach(x => x.classList.remove('on')); b.classList.add('on'); cb(b.dataset); }));
+
+/* theme + progress */
+const root = document.documentElement;
+root.dataset.theme = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+$('#themeBtn').onclick = () => { root.dataset.theme = root.dataset.theme === 'dark' ? 'light' : 'dark'; };
+const secs = $$('main section'), seen = new Set();
+const io = new IntersectionObserver(es => es.forEach(e => {
+  if (!e.isIntersecting) return;
+  seen.add(e.target.id);
+  $$('.side > a').forEach(a => { const id = a.getAttribute('href').slice(1); a.classList.toggle('act', id === e.target.id); if (seen.has(id)) a.classList.add('seen'); });
+  const pct = Math.round(seen.size / secs.length * 100);
+  $('#progBar').style.width = pct + '%'; $('#progLbl').textContent = pct + '% explored';
+}), { rootMargin: '-40% 0px -55% 0px' });
+secs.forEach(s => io.observe(s));
+
+/* ===== 01 Query Profile simulator ===== */
+const QP_DIAG = { prune: 'Poor partition pruning', join: 'Exploding join', spill: 'Spilling to remote storage', queue: 'Queued: concurrency', compile: 'Compilation overhead' };
+const QP = [
+  { // A: poor pruning
+    sql: `SELECT region, SUM(amount) AS revenue
+FROM sales
+WHERE TO_CHAR(sale_ts, 'YYYY-MM') = '2024-03'
+GROUP BY region;              -- warehouse: BI_WH (MEDIUM)`,
+    q: { elapsed: '6m 12s', queued: '0 ms', compile: '184 ms', exec: '6m 11s', bytes: '1.92 TB', cache: '3%', bd: [22, 2, 71, 3, 1, 1] },
+    nodes: [
+      { id: 'r', t: 'Result', s: '8 rows', x: 260, y: 14, p: 0.1, st: [['Output rows', '8']], n: `The final rows sent back to the client. Almost never the problem.` },
+      { id: 'a', t: 'Aggregate', s: 'GROUP BY region', x: 260, y: 112, p: 2.3, st: [['Input rows', '152,004,113'], ['Output rows', '8'], ['Grouping keys', 'SALES.REGION']], n: `Groups 152 million rows into 8 regions. Cheap: just 2.3% of the time.` },
+      { id: 'f', t: 'Filter', s: "TO_CHAR(sale_ts,'YYYY-MM') = '2024-03'", x: 260, y: 210, p: 4.2, st: [['Input rows', '6,108,550,912'], ['Output rows', '152,004,113', 'amb'], ['Filter condition', 'TO_CHAR(SALE_TS, …) = …']], n: `<b>Look at the ratio:</b> 6.1 billion rows in, only 152 million (2.5%) kept. The filter is applied <i>after</i> reading the data, row by row. The function around <code>sale_ts</code> means the optimizer could not turn it into a min/max range for pruning.` },
+      { id: 's', t: 'TableScan', s: 'SALES', x: 260, y: 308, p: 93.4, st: [['Partitions scanned', '48,212', 'red'], ['Partitions total', '48,300'], ['Bytes scanned', '1.92 TB', 'red'], ['% scanned from cache', '3%'], ['Output rows', '6,108,550,912']], n: `<b>The most expensive node: 93.4%.</b> It read <b>48,212 of 48,300</b> partitions (99.8%) to answer a question about <b>one month</b> out of several years. Most of the time is Remote Disk IO: fetching partitions from storage.` }
+    ],
+    edges: [['s', 'f', '6.1B rows', 1], ['f', 'a', '152M rows'], ['a', 'r', '8 rows']],
+    ans: 'prune',
+    right: `<b>Correct: poor pruning.</b> Partitions scanned ≈ partitions total, and the filter discards 97.5% of what was read. Fix the SQL first: <code>WHERE sale_ts &gt;= '2024-03-01' AND sale_ts &lt; '2024-04-01'</code> lets Snowflake compare against each partition's min/max <code>sale_ts</code>. If data arrives out of order, add a clustering key on <code>TO_DATE(sale_ts)</code>. Expected after the rewrite: roughly 1,300 partitions instead of 48,212.`,
+    wrong: { join: `There is no Join node in this tree at all.`, spill: `Click the nodes: no bytes spilled anywhere. The time is in reading, not in memory pressure.`, queue: `Queued time is 0 ms. The query started immediately; it was slow while executing.`, compile: `Compilation took 184 ms out of 6 minutes. Look at the red node instead.` }
+  },
+  { // B: exploding join
+    sql: `SELECT o.order_date, SUM(o.amount) AS revenue
+FROM orders o
+JOIN promotions p ON o.customer_id = p.customer_id
+WHERE o.order_date >= '2024-01-01'
+GROUP BY o.order_date;        -- warehouse: BI_WH (MEDIUM)`,
+    q: { elapsed: '11m 40s', queued: '0 ms', compile: '211 ms', exec: '11m 39s', bytes: '38 GB', cache: '61%', bd: [68, 18, 2, 9, 2, 1] },
+    nodes: [
+      { id: 'r', t: 'Result', s: '320 rows', x: 260, y: 14, p: 0.1, st: [['Output rows', '320']], n: `Final output.` },
+      { id: 'a', t: 'Aggregate', s: 'GROUP BY order_date', x: 260, y: 112, p: 27.2, st: [['Input rows', '1,384,220,507', 'red'], ['Output rows', '320'], ['Bytes spilled to local storage', '9.4 GB', 'amb']], n: `Has to aggregate <b>1.38 billion</b> rows, far more than the 40 million orders that exist. It's slow because its <i>input</i> is bloated, not because aggregation is hard.` },
+      { id: 'j', t: 'Join', s: 'INNER · customer_id', x: 260, y: 210, p: 64.0, st: [['Join type', 'INNER'], ['Join condition', 'O.CUSTOMER_ID = P.CUSTOMER_ID'], ['Input rows (left)', '40,112,930'], ['Input rows (right)', '2,104,551'], ['Output rows', '1,384,220,507', 'red'], ['Bytes spilled to local storage', '41 GB', 'amb']], n: `<b>The most expensive node: 64%.</b> Inputs: 40 million + 2.1 million rows. Output: <b>1.38 billion</b>. Each order matched on average ~34 promotion rows, because <code>customer_id</code> is <b>not unique</b> in PROMOTIONS (one row per customer per campaign). That's an exploding join. The revenue numbers are also <b>wrong</b>: each order's amount is counted many times.` },
+      { id: 's1', t: 'TableScan', s: 'ORDERS', x: 130, y: 308, p: 6.2, st: [['Partitions scanned', '612'], ['Partitions total', '2,410'], ['Bytes scanned', '36 GB'], ['% scanned from cache', '64%'], ['Output rows', '40,112,930']], n: `Pruning works fine: 612 of 2,410 partitions, thanks to the order_date filter.` },
+      { id: 's2', t: 'TableScan', s: 'PROMOTIONS', x: 390, y: 308, p: 2.5, st: [['Partitions scanned', '14'], ['Partitions total', '14'], ['Bytes scanned', '2 GB'], ['Output rows', '2,104,551']], n: `Small table fully scanned, which is normal for 14 partitions. It is the <b>build side</b> of the join (the smaller input).` }
+    ],
+    edges: [['s1', 'j', '40.1M rows'], ['s2', 'j', '2.1M rows'], ['j', 'a', '1.38B rows', 1], ['a', 'r', '320 rows']],
+    ans: 'join',
+    right: `<b>Correct: exploding join.</b> Output rows (1.38 B) ≫ both inputs (40 M and 2.1 M). The key isn't unique on the PROMOTIONS side. Fix: join on the real grain (<code>customer_id</code> <b>and</b> <code>campaign_id</code>), or reduce PROMOTIONS to one row per customer first (e.g. <code>QUALIFY ROW_NUMBER() OVER (PARTITION BY customer_id ORDER BY start_date DESC) = 1</code>), or use <code>WHERE EXISTS</code> if you only need "customers with a promotion". A bigger warehouse would just compute the wrong answer faster.`,
+    wrong: { prune: `ORDERS read 612 of 2,410 partitions: pruning is fine. Look at row counts on the arrows.`, spill: `There is some <i>local</i> spill, but it's a symptom. Ask why the Join outputs 1.38 billion rows from 42 million inputs.`, queue: `Queued time is 0 ms.`, compile: `Compilation was 211 ms. The time is in the Join.` }
+  },
+  { // C: remote spilling
+    sql: `SELECT customer_id, region, lifetime_value,
+       RANK() OVER (PARTITION BY region ORDER BY lifetime_value DESC) AS rnk
+FROM (SELECT customer_id, region, SUM(amount) AS lifetime_value
+      FROM transactions GROUP BY customer_id, region)
+ORDER BY region, rnk;         -- warehouse: ADHOC_WH (X-SMALL)`,
+    q: { elapsed: '48m 05s', queued: '0 ms', compile: '240 ms', exec: '48m 04s', bytes: '610 GB', cache: '0%', bd: [24, 15, 58, 1, 1, 1] },
+    nodes: [
+      { id: 'r', t: 'Result', s: '912M rows', x: 260, y: 10, p: 0.4, st: [['Output rows', '912,400,113']], n: `Returning 912 million rows to a client is itself a smell. Does anyone read them all?` },
+      { id: 'o', t: 'Sort', s: 'ORDER BY region, rnk', x: 260, y: 92, p: 17.1, st: [['Input rows', '912,400,113'], ['Bytes spilled to local storage', '96 GB', 'amb'], ['Bytes spilled to remote storage', '41 GB', 'red']], n: `A full sort of 912 million rows with no LIMIT. It spills too.` },
+      { id: 'w', t: 'WindowFunction', s: 'RANK() OVER (PARTITION BY region …)', x: 260, y: 174, p: 61.8, st: [['Input rows', '912,400,113'], ['Bytes spilled to local storage', '412 GB', 'red'], ['Bytes spilled to remote storage', '236 GB', 'red']], n: `<b>The most expensive node: 61.8%.</b> To rank within each region, Snowflake must sort every customer by lifetime_value. With only 8 regions, each partition of the window is huge. An X-Small has very little memory, so the data overflowed memory, then the local SSD, then went to <b>remote storage</b>: <b>236 GB</b> written and read back over the network.` },
+      { id: 'a', t: 'Aggregate', s: 'GROUP BY customer_id, region', x: 260, y: 256, p: 14.9, st: [['Input rows', '18,220,340,551'], ['Output rows', '912,400,113'], ['Bytes spilled to local storage', '22 GB', 'amb']], n: `A high-cardinality GROUP BY (912 million groups). Some local spill.` },
+      { id: 's', t: 'TableScan', s: 'TRANSACTIONS', x: 260, y: 338, p: 5.8, st: [['Partitions scanned', '52,004'], ['Partitions total', '52,004'], ['Bytes scanned', '610 GB'], ['Output rows', '18,220,340,551']], n: `A full scan, but there is no filter, so that's expected for "lifetime" value.` }
+    ],
+    edges: [['s', 'a', '18.2B rows'], ['a', 'w', '912M rows'], ['w', 'o', '912M rows'], ['o', 'r', '912M rows']],
+    ans: 'spill',
+    right: `<b>Correct: spilling to remote storage.</b> 236 GB + 41 GB spilled remotely, and Remote Disk IO dominates the breakdown. Fix in this order: (1) <b>reduce the data</b>: does the business need all 912 M customers ranked? <code>QUALIFY rnk &lt;= 100</code> turns it into a top-N per region; drop the final ORDER BY. (2) <b>Size up</b> for this workload (e.g. LARGE or bigger): more memory and local SSD per query; since cost scales with size but time drops, it may cost about the same. (3) Run it on a dedicated warehouse, not the shared ad-hoc one.`,
+    wrong: { prune: `There's no filter, so a full scan is expected, and the scan is only 5.8% of the time.`, join: `There's no join in this query.`, queue: `Queued time is 0 ms.`, compile: `Compilation was 240 ms out of 48 minutes.` }
+  },
+  { // D: queued
+    sql: `SELECT kpi_name, SUM(kpi_value) AS value
+FROM daily_kpi
+WHERE kpi_date = CURRENT_DATE() - 1
+GROUP BY kpi_name;            -- warehouse: SHARED_WH (SMALL), 9:00 AM`,
+    q: { elapsed: '3m 41s', queued: '3m 38s (overload)', compile: '95 ms', exec: '1.9 s', bytes: '210 MB', cache: '88%', bd: [61, 30, 0, 5, 2, 2] },
+    nodes: [
+      { id: 'r', t: 'Result', s: '24 rows', x: 260, y: 14, p: 0.5, st: [['Output rows', '24']], n: `Final output.` },
+      { id: 'a', t: 'Aggregate', s: 'GROUP BY kpi_name', x: 260, y: 112, p: 35.1, st: [['Input rows', '1,204,331'], ['Output rows', '24']], n: `Cheap aggregation over 1.2 million rows.` },
+      { id: 'f', t: 'Filter', s: 'kpi_date = CURRENT_DATE() - 1', x: 260, y: 210, p: 3.0, st: [['Input rows', '1,204,331'], ['Output rows', '1,204,331']], n: `All rows read pass the filter: pruning already removed the other days.` },
+      { id: 's', t: 'TableScan', s: 'DAILY_KPI', x: 260, y: 308, p: 61.4, st: [['Partitions scanned', '3'], ['Partitions total', '3,214'], ['Bytes scanned', '210 MB'], ['% scanned from cache', '88%'], ['Output rows', '1,204,331']], n: `Red because it's the largest share, but look at the numbers: <b>3 of 3,214 partitions</b>, mostly from cache. Excellent pruning. The whole execution took 1.9 seconds.` }
+    ],
+    edges: [['s', 'f', '1.2M rows'], ['f', 'a', '1.2M rows'], ['a', 'r', '24 rows']],
+    ans: 'queue',
+    right: `<b>Correct: queued.</b> Execution took 1.9 s; the other <b>3 minutes 38 seconds</b> were <code>QUEUED_OVERLOAD_TIME</code>: at 9 AM the nightly ELT is still running on SHARED_WH and 40 analysts open dashboards at once. The profile looks perfect because the problem happened <i>before</i> execution. Fix: separate warehouses for ELT and BI, and make the BI warehouse <b>multi-cluster</b> (e.g. <code>MIN_CLUSTER_COUNT = 1, MAX_CLUSTER_COUNT = 3</code>). A bigger size would not help much: each query is already fast.`,
+    wrong: { prune: `3 of 3,214 partitions: pruning is excellent. The "red" node is simply the biggest share of a 1.9-second execution.`, join: `No join here.`, spill: `No spill anywhere.`, compile: `Compilation was 95 ms. Compare elapsed time (3m 41s) with execution time (1.9 s).` }
+  }
+];
+let qpC = 0, qpSel = null;
+function qpDraw() {
+  const c = QP[qpC], W = 170, H = 54, by = id => c.nodes.find(n => n.id === id);
+  const maxP = Math.max(...c.nodes.map(n => n.p));
+  let s = '';
+  c.edges.forEach(([a, b, lbl, fat]) => {
+    const A = by(a), B = by(b), x1 = A.x, y1 = A.y, x2 = B.x, y2 = B.y + H;
+    s += `<path class="opedge${fat ? ' fat' : ''}" d="M${x1} ${y1} C ${x1} ${y1 - 24}, ${x2} ${y2 + 24}, ${x2} ${y2}"/>`;
+    const side = x1 === x2 ? 0 : (x1 < x2 ? -1 : 1), mx = side ? x1 + side * 8 : x1 + 8, my = side ? y1 - 10 : (y1 + y2) / 2;
+    s += `<text class="optxt" x="${mx}" y="${my}" text-anchor="${side < 0 ? 'end' : 'start'}" dominant-baseline="central"${fat ? ' style="fill:var(--red);font-weight:700"' : ''}>${lbl}</text>`;
+  });
+  c.nodes.forEach(n => {
+    const cls = n.p === maxP ? 'hot' : n.p >= 15 ? 'warm' : '', x = n.x - W / 2, sub = n.s.length > 28 ? n.s.slice(0, 27) + '…' : n.s;
+    s += `<g class="op ${cls}${qpSel === n.id ? ' sel' : ''}" data-id="${n.id}" tabindex="0"><rect x="${x}" y="${n.y}" width="${W}" height="${H}" rx="9"/>` +
+      `<text class="th" x="${x + 10}" y="${n.y + 17}" dominant-baseline="central">${n.t}</text>` +
+      `<text class="pct" x="${x + W - 10}" y="${n.y + 17}" text-anchor="end" dominant-baseline="central">${n.p}%</text>` +
+      `<text class="tm" x="${x + 10}" y="${n.y + 35}" dominant-baseline="central">${esc(sub)}</text>` +
+      `<rect class="bar" x="${x + 10}" y="${n.y + H - 7}" width="${W - 20}" height="3" rx="1.5" style="stroke:none"/><rect class="barf" x="${x + 10}" y="${n.y + H - 7}" width="${(W - 20) * n.p / 100}" height="3" rx="1.5" style="stroke:none"/></g>`;
+  });
+  $('#qpSvg').innerHTML = s;
+  $$('#qpSvg .op').forEach(g => g.addEventListener('click', () => { qpSel = g.dataset.id; qpDraw(); qpNode(); }));
+}
+function qpNode() {
+  const n = QP[qpC].nodes.find(x => x.id === qpSel);
+  if (!n) { $('#qpNode').innerHTML = '<b class="h">OPERATOR DETAILS</b>Click a node in the tree. Start with the one outlined in red.'; return; }
+  $('#qpNode').innerHTML = `<b class="h">${n.t.toUpperCase()} · ${esc(n.s)} · ${n.p}% OF EXECUTION</b><div class="statgrid">${n.st.map(([k, v, c]) => `<span>${k}</span><span class="${c || ''}">${esc(v)}</span>`).join('')}</div><p style="margin-top:8px;font-size:14px">${n.n}</p>`;
+}
+function qpQuery() {
+  const q = QP[qpC].q, cols = ['var(--ice)', 'var(--teal)', 'var(--red)', 'var(--amber)', 'var(--ink3)', 'var(--line2)'], nm = ['Processing', 'Local Disk IO', 'Remote Disk IO', 'Network', 'Synchronization', 'Initialization'];
+  $('#qpQuery').innerHTML = `<b class="h">QUERY DETAILS</b><div class="statgrid"><span>Total elapsed</span><span>${q.elapsed}</span><span>Queued</span><span class="${q.queued.startsWith('0') ? '' : 'red'}">${q.queued}</span><span>Compilation</span><span>${q.compile}</span><span>Execution</span><span>${q.exec}</span><span>Bytes scanned</span><span>${q.bytes}</span><span>% scanned from cache</span><span>${q.cache}</span></div>` +
+    `<div class="note-s" style="margin-top:8px">Execution time breakdown</div><div class="tbar2">${q.bd.map((v, i) => `<i style="width:${v}%;background:${cols[i]}" title="${nm[i]} ${v}%"></i>`).join('')}</div>` +
+    `<div class="legend" style="font-size:11.5px;gap:10px">${q.bd.map((v, i) => v ? `<span><i style="background:${cols[i]}"></i>${nm[i]} ${v}%</span>` : '').join('')}</div>`;
+}
+function qpLoad(i) {
+  qpC = i; qpSel = null;
+  $('#qpSql').textContent = QP[i].sql;
+  $$('#qpDiag button').forEach(b => b.classList.remove('right', 'wrong'));
+  $('#qpIns').innerHTML = 'Click the nodes (start with the red one), check the query details, then choose a diagnosis.';
+  qpDraw(); qpNode(); qpQuery();
+}
+$$('#qpDiag button').forEach(b => b.addEventListener('click', () => {
+  const c = QP[qpC], d = b.dataset.d, ok = d === c.ans;
+  b.classList.add(ok ? 'right' : 'wrong');
+  $('#qpIns').innerHTML = ok ? c.right : `<b>Not the main problem: ${QP_DIAG[d]}.</b> ${c.wrong[d]}`;
+}));
+tabs('#qpCase', d => qpLoad(+d.c));
+qpLoad(0);
+
+/* ===== 02 clustering simulator ===== */
+const CL_N = 28, CL_D = 365, CL_Q = { m: [59, 90, "order_date in March"], d: [185, 185, "order_date = '2024-07-04'"], h: [182, 364, 'order_date in H2'] };
+let clSeed = 7;
+const clRnd = () => { clSeed = (clSeed * 16807) % 2147483647; return (clSeed - 1) / 2147483646; };
+let CL = { p: [], cr: 0, q: 'm', auto: false, timer: null, passes: 0 };
+function clWide() { const a = clRnd() * 140, b = 220 + clRnd() * 144; return [a, b]; }
+function clInit() { clSeed = 7; CL.p = Array.from({ length: CL_N }, () => clWide()); CL.cr = 0; CL.passes = 0; }
+const clX = d => 40 + d / CL_D * 620;
+function clMetrics() {
+  let tot = 0, cnt = 0;
+  for (let d = 0; d < CL_D; d++) { const k = CL.p.filter(([a, b]) => a <= d + 0.5 && b >= d + 0.5).length; if (k) { tot += k; cnt++; } }
+  const depth = cnt ? tot / cnt : 0;
+  const ov = CL.p.reduce((s, [a, b], i) => s + CL.p.filter(([c, e], j) => j !== i && c < b && e > a).length, 0) / CL_N;
+  const [qa, qb] = CL_Q[CL.q];
+  const scan = CL.p.filter(([a, b]) => a <= qb + 0.5 && b >= qa - 0.5).length;
+  return { depth, ov, scan };
+}
+function clBuild() {
+  const months = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+  let s = `<rect id="clBand" x="0" y="24" width="0" height="312" fill="var(--amber-s)" stroke="var(--amber)" stroke-dasharray="4 3"/>`;
+  months.forEach((m, i) => { const x = clX(i * 30.4); s += `<line x1="${x}" x2="${x}" y1="22" y2="336" stroke="var(--line)"/><text class="tm" x="${x + 4}" y="16">${m}</text>`; });
+  for (let i = 0; i < CL_N; i++) s += `<text class="tm" x="34" y="${36 + i * 10.8}" text-anchor="end" dominant-baseline="central" style="font-size:8.5px">${i + 1}</text><rect class="mp" id="mp${i}" x="40" y="${31 + i * 10.8}" width="10" height="8.5" rx="2" stroke-width="1"/>`;
+  $('#clSvg').innerHTML = s;
+}
+function clDraw(msg) {
+  const [qa, qb] = CL_Q[CL.q], m = clMetrics(), band = $('#clBand');
+  band.setAttribute('x', clX(qa) - (qa === qb ? 2 : 0)); band.setAttribute('width', Math.max(4, clX(qb) - clX(qa)));
+  CL.p.forEach(([a, b], i) => {
+    const r = $('#mp' + i), hit = a <= qb + 0.5 && b >= qa - 0.5, x = clX(a), w = Math.max(3, clX(b) - clX(a));
+    r.setAttribute('x', x); r.setAttribute('width', w); r.style.x = x + 'px'; r.style.width = w + 'px';
+    r.style.fill = hit ? 'var(--ice-s)' : 'var(--card2)'; r.style.stroke = hit ? 'var(--ice)' : 'var(--line2)';
+  });
+  $('#clDepth').textContent = fmt(m.depth, 1); $('#clOv').textContent = fmt(m.ov, 1); $('#clScan').textContent = m.scan;
+  $('#clCr').textContent = fmt(CL.cr, 2); $('#clMeter').style.width = Math.min(100, CL.cr / 3 * 100) + '%';
+  if (msg) $('#clIns').innerHTML = msg;
+  return m;
+}
+function clPass() {
+  let moved = 0;
+  CL.p = CL.p.map(([a, b], i) => {
+    const ta = i * CL_D / CL_N, tb = (i + 1) * CL_D / CL_N - 0.6;
+    const na = a + (ta - a) * 0.55, nb = b + (tb - b) * 0.55;
+    moved += Math.abs(na - a) + Math.abs(nb - b);
+    return Math.abs(nb - tb) < 0.6 && Math.abs(na - ta) < 0.6 ? [ta, tb] : [na, nb];
+  });
+  CL.passes++;
+  const cost = moved / 3000;
+  CL.cr += cost;
+  return cost;
+}
+function clStepMsg(m, cost) {
+  if (m.depth < 1.25) return `<b>Well clustered.</b> Average depth ${fmt(m.depth, 2)}: each date lives in about one partition. The query now scans <b>${m.scan} of 28</b> partitions. Automatic Clustering goes <b>idle</b> when the table is well clustered, so the credit meter stops.`;
+  return `Pass ${CL.passes}: Snowflake picked overlapping partitions and <b>rewrote</b> them as new, narrower ones (cost this pass ≈ ${fmt(cost, 2)} credits). Depth fell to <b>${fmt(m.depth, 1)}</b>, partitions scanned to <b>${m.scan}</b>. Each pass has less to fix, so it costs less.`;
+}
+function clStop() { clearInterval(CL.timer); CL.timer = null; CL.auto = false; $('#clPlay').textContent = '▶ Auto-cluster'; }
+$('#clStep').onclick = () => { const c = clPass(), m = clDraw(); clDraw(clStepMsg(m, c)); };
+$('#clPlay').onclick = () => {
+  if (CL.auto) { clStop(); clDraw(`<b>ALTER TABLE sales SUSPEND RECLUSTER</b>: the background service stops. No more credits, but new DML will slowly degrade clustering again.`); return; }
+  CL.auto = true; $('#clPlay').textContent = '❚❚ SUSPEND RECLUSTER';
+  clDraw(`<b>ALTER TABLE sales CLUSTER BY (order_date)</b>: the serverless service starts working in the background. No warehouse needed.`);
+  CL.timer = setInterval(() => {
+    const m0 = clMetrics();
+    if (m0.depth < 1.25) { clDraw(clStepMsg(m0, 0)); return; }
+    const c = clPass(); const m = clMetrics(); clDraw(clStepMsg(m, c));
+  }, 800);
+};
+$('#clChurn').onclick = () => {
+  for (let k = 0; k < 6; k++) { const i = Math.floor(clRnd() * CL_N); CL.p[i] = clWide(); }
+  const m = clDraw();
+  clDraw(`<b>DML batch:</b> late-arriving and updated rows created partitions that span most of the year again. Depth jumped to <b>${fmt(m.depth, 1)}</b>. ${CL.auto ? 'Automatic Clustering notices and starts rewriting again, which costs credits. On a table with constant churn, <b>this never stops</b>: that is why high-churn tables are poor clustering candidates.' : 'Automatic clustering is not running, so pruning stays degraded until it is resumed.'}`);
+};
+$('#clReset').onclick = () => { clStop(); clInit(); clDraw(`Reset to the unclustered table. Average depth is high: for a typical day, many partitions contain rows for it.`); };
+tabs('#clQ', d => { CL.q = d.q; const m = clDraw(); clDraw(`Filter <b>${CL_Q[d.q][2]}</b> must scan <b>${m.scan} of 28</b> partitions with the current layout. ${d.q === 'h' ? 'A wide range (half the year) will always scan about half the partitions, even when perfectly clustered: clustering helps narrow filters most.' : ''}`); });
+clInit(); clBuild(); clDraw();
+
+/* key chooser */
+const CK = [
+  { s: 'ALTER TABLE events CLUSTER BY (event_ts);', v: 'bad', h: 'Too high cardinality', t: `Raw timestamps are nearly unique. Automatic Clustering would try to order by microseconds, rewriting constantly for almost no extra pruning versus a day-level key. High maintenance cost, little benefit.` },
+  { s: 'ALTER TABLE events CLUSTER BY (TO_DATE(event_ts));', v: 'ok', h: 'Good choice', t: `An <b>expression</b> lowers cardinality to one value per day. Date-range filters on <code>event_ts</code> still prune, because Snowflake tracks min/max per partition and the clustering keeps each day together. This is the classic recommendation.` },
+  { s: 'ALTER TABLE events CLUSTER BY (event_id);', v: 'bad', h: 'Wrong column', t: `Nobody filters by ranges of event_id, and it's unique: maximum cardinality, maximum maintenance. For point lookups on an ID, <b>Search Optimization</b> (EQUALITY) is the right tool.` },
+  { s: 'ALTER TABLE events CLUSTER BY (is_deleted);', v: 'bad', h: 'Too low cardinality', t: `Only two values. At best it splits the table in half; the date filters (the real access pattern) get no help at all.` },
+  { s: 'ALTER TABLE events CLUSTER BY (TO_DATE(event_ts), tenant_id);', v: 'ok', h: 'Good multi-column key', t: `Lower-cardinality column first, then the next filter. Queries filtering on date (or date + tenant) prune well. Queries filtering <i>only</i> on tenant_id get less benefit, because the second column is only ordered within each date.` },
+  { s: 'ALTER TABLE events CLUSTER BY (region, country, city, tenant_id, TO_DATE(event_ts));', v: 'mid', h: 'Too many columns', t: `Snowflake's guidance is a maximum of about 3–4 columns. Every extra column raises maintenance cost and dilutes the benefit; the date (your main filter) is last here, so it barely gets clustered.` }
+];
+tabs('#ckTabs', d => ckShow(+d.k));
+function ckShow(i) { const c = CK[i]; $('#ckSql').textContent = c.s; $('#ckOut').innerHTML = `<b class="h">VERDICT</b><span class="badge ${c.v}" style="margin-right:8px">${c.h}</span>${c.t}`; }
+ckShow(0);
+</script>
+
+<script>
+/* ===== 03 feature chooser ===== */
+const FC = [
+  { n: 'Point lookup by ID', sql: `SELECT * FROM orders WHERE order_id = 'ORD-88123';   -- 8 billion rows`, best: ['sos'], ok: [], i: `<b>Search Optimization (EQUALITY).</b> One row out of billions, and order_id values are scattered across every partition (the table is clustered by date). The search access path tells Snowflake which few partitions can contain this ID. Clustering by order_id would be a poor trade: unique values, huge maintenance.` },
+  { n: 'Last 30 days on a big fact', sql: `SELECT store_id, SUM(amount) FROM sales\nWHERE sale_date >= DATEADD('day', -30, CURRENT_DATE())\nGROUP BY store_id;                                     -- 20 TB table`, best: ['cl'], ok: ['mv'], i: `<b>Clustering (or natural load order).</b> A range filter returning a large slice is exactly what min/max pruning is for. If data is loaded daily it may already be well clustered for free; check <code>SYSTEM$CLUSTERING_INFORMATION</code> first. If the same aggregation is run constantly, an MV over a single table can help too.` },
+  { n: 'Substring search in logs', sql: `SELECT * FROM app_logs WHERE message LIKE '%PaymentTimeout%';`, best: ['sos'], ok: [], i: `<b>Search Optimization (SUBSTRING).</b> Leading-wildcard LIKE can't use min/max ranges at all. A SUBSTRING search access path lets Snowflake skip partitions that can't contain the string. EQUALITY alone would not help here.` },
+  { n: 'Field inside VARIANT', sql: `SELECT * FROM events\nWHERE payload:customer.email::STRING = 'asha@example.com';`, best: ['sos'], ok: [], i: `<b>Search Optimization on the VARIANT path</b> (<code>ON EQUALITY(payload:customer.email)</code>). Also consider extracting frequently filtered JSON fields into real columns during load (Module 06).` },
+  { n: 'Geospatial filter', sql: `SELECT * FROM deliveries\nWHERE ST_DWITHIN(drop_point, TO_GEOGRAPHY('POINT(77.59 12.97)'), 2000);`, best: ['sos'], ok: [], i: `<b>Search Optimization (GEO)</b> on the GEOGRAPHY column speeds up selective geospatial predicates such as ST_INTERSECTS, ST_CONTAINS and ST_DWITHIN.` },
+  { n: 'Occasional huge ad-hoc scan', sql: `-- analyst, once a week, on the shared BI_WH (MEDIUM):\nSELECT * FROM clickstream\nWHERE campaign = 'DIWALI' AND device = 'tablet';    -- scans 3 TB, returns 40k rows`, best: ['qas'], ok: ['sos'], i: `<b>Query Acceleration.</b> An unpredictable outlier with a big scan and a selective filter: QAS offloads the scan to serverless compute only while it runs, so you don't upsize the warehouse for everyone. If this lookup becomes routine and very selective, SOS becomes worth it.` },
+  { n: 'Same aggregate, 500×/day', sql: `SELECT region, product_line, SUM(amount), COUNT(*)\nFROM sales GROUP BY region, product_line;            -- single table, appends nightly`, best: ['mv'], ok: [], i: `<b>Materialized view.</b> Single table, supported aggregates, queried constantly, base table changes once a night: perfect. Snowflake maintains it serverlessly and can even rewrite queries on SALES to use it automatically.` },
+  { n: 'Identical dashboard re-run', sql: `-- same text, every 5 minutes, data loaded only at 2 AM\nSELECT kpi, value FROM kpi_summary WHERE kpi_date = '2024-03-15';`, best: ['none'], ok: [], i: `<b>Nothing to buy: the result cache.</b> Same text + unchanged data = result returned by cloud services in milliseconds, with no warehouse running. Keep query text stable (no CURRENT_TIMESTAMP).` },
+  { n: 'Lookup in a 2 GB dimension', sql: `SELECT * FROM dim_store WHERE store_code = 'BLR-014';  -- 2 GB, ~30 partitions`, best: ['none'], ok: [], i: `<b>None.</b> The table is tiny. Scanning 30 partitions takes well under a second; SOS or clustering would add cost for nothing.` },
+  { n: 'Window function spilling', sql: `SELECT *, RANK() OVER (PARTITION BY region ORDER BY ltv DESC)\nFROM customer_ltv;                                    -- spills 200 GB remote on X-SMALL`, best: ['none'], ok: [], i: `<b>None of these features.</b> Spilling happens in memory-hungry operators on the warehouse itself. Reduce the data (top-N with QUALIFY), then size the warehouse up. QAS does not fix spills in sorts or joins.` }
+];
+$('#fcList').innerHTML = FC.map((f, i) => `<button class="fcard" data-i="${i}"><b>${f.n}</b><small>${f.sql.split('\n')[0].slice(0, 48)}…</small></button>`).join('');
+function fcShow(i) {
+  const f = FC[i];
+  $$('#fcList .fcard').forEach((b, k) => b.classList.toggle('on', k === i));
+  $('#fcSql').textContent = f.sql;
+  $$('#fcFeat div').forEach(d => { const k = d.dataset.f; d.className = f.best.includes(k) ? 'best' : f.ok.includes(k) ? 'ok' : 'no'; });
+  $('#fcIns').innerHTML = f.i;
+}
+$$('#fcList .fcard').forEach(b => b.onclick = () => fcShow(+b.dataset.i));
+fcShow(0);
+
+/* ===== 04 QAS workload simulator ===== */
+const QW = [[0, 20], [5, 300, 0.9, 1], [10, 25], [20, 15], [30, 30], [40, 20], [50, 240, 0.85, 1], [60, 20], [70, 25], [80, 200, 0, 1], [90, 15], [100, 20], [110, 20], [120, 15]];
+let QA_ON = false, QA_SF = 8;
+function qaSim() {
+  const free = [0, 0, 0], out = []; let cr = 0;
+  QW.forEach(([arr, d, f = 0, big = 0], i) => {
+    let dur = d, acc = 0;
+    if (QA_ON && f > 0) { const sp = 1 + Math.min(QA_SF, 10) * 0.6; acc = d * f / sp; dur = d * (1 - f) + acc; cr += acc * Math.min(QA_SF, 10) * 0.6 * 4 / 3600; }
+    let k = 0; for (let j = 1; j < 3; j++) if (free[j] < free[k]) k = j;
+    const st = Math.max(arr, free[k]); free[k] = st + dur;
+    out.push({ i, arr, st, end: st + dur, acc, big, elig: f > 0 });
+  });
+  return { out, cr };
+}
+function qaDraw() {
+  const { out, cr } = qaSim(), maxE = Math.max(...out.map(o => o.end), 500), X = t => 60 + t / maxE * 600;
+  let s = '';
+  for (let t = 0; t <= maxE; t += 60) s += `<line x1="${X(t)}" x2="${X(t)}" y1="18" y2="318" stroke="var(--line)"/><text class="tm" x="${X(t)}" y="12" text-anchor="middle">${t / 60}m</text>`;
+  out.forEach((o, r) => {
+    const y = 26 + r * 21, dl = (o.st / maxE * 1.2).toFixed(2);
+    s += `<text class="tm" x="52" y="${y + 7}" text-anchor="end" dominant-baseline="central"${o.big ? ' style="fill:var(--red);font-weight:700"' : ''}>Q${o.i + 1}${o.big ? (o.elig ? ' ⚡' : ' ✕') : ''}</text>`;
+    if (o.st > o.arr) s += `<rect x="${X(o.arr)}" y="${y}" width="${X(o.st) - X(o.arr)}" height="14" rx="3" fill="var(--amber-s)" stroke="var(--amber)" stroke-width="1"/>`;
+    if (o.acc) s += `<rect class="grow" style="animation-delay:${dl}s" x="${X(o.st)}" y="${y}" width="${Math.max(2, X(o.st + o.acc) - X(o.st))}" height="14" rx="3" fill="var(--teal)"/>`;
+    s += `<rect class="grow" style="animation-delay:${dl}s" x="${X(o.st + o.acc)}" y="${y}" width="${Math.max(2, X(o.end) - X(o.st + o.acc))}" height="14" rx="3" fill="${o.big ? 'var(--red)' : 'var(--ice)'}"/>`;
+  });
+  $('#qaSvg').innerHTML = s;
+  const small = out.filter(o => !o.big), avgQ = small.reduce((a, o) => a + o.st - o.arr, 0) / small.length, q2 = out[1];
+  const endAll = Math.max(...out.map(o => o.end));
+  $('#qaEnd').textContent = `${Math.floor(endAll / 60)}m ${Math.round(endAll % 60)}s`;
+  $('#qaQ').textContent = fmt(avgQ, 0) + ' s';
+  $('#qaO').textContent = fmt(q2.end - q2.arr, 0) + ' s';
+  $('#qaC').textContent = fmt(cr, 2);
+  $('#qaSfV').textContent = QA_SF + (QA_SF > 10 ? ' (capped)' : '') + ' × size';
+  $('#qaIns').innerHTML = !QA_ON
+    ? `<b>QAS OFF.</b> Around minute 1.5, the three outliers occupy all three slots. Small dashboard queries wait in the queue (amber) for an average of <b>${fmt(avgQ, 0)} s</b>. The tempting fix is to upsize the whole warehouse all day.`
+    : `<b>QAS ON, scale factor ${QA_SF}.</b> The scan-heavy part of Q2 and Q7 (teal) is offloaded to serverless compute, so they finish much sooner and free their slots: small queries now queue ${fmt(avgQ, 0)} s on average. <b>Q10 is not eligible</b> (a giant sort with no selective filter), so it's unchanged. ${QA_SF > 10 ? 'Above ~10 the extra scale factor no longer helps in this model: like the real <code>upperLimitScaleFactor</code> in SYSTEM$ESTIMATE_QUERY_ACCELERATION, there is a point where more compute stops paying off.' : 'Slide the scale factor: more compute = faster outliers, but more serverless credits.'}`;
+}
+tabs('#qaTog', d => { QA_ON = d.v === '1'; qaDraw(); });
+$('#qaSf').oninput = e => { QA_SF = +e.target.value; qaDraw(); };
+$('#qaRun').onclick = qaDraw;
+qaDraw();
+
+/* ===== 05 result cache checker ===== */
+const RC = { text: 'same', data: '0', fn: '0', wh: '0', par: '1' };
+function rcDraw() {
+  const why = [];
+  if (RC.par === '0') why.push('<code>USE_CACHED_RESULT = FALSE</code> for this session, so the result cache is skipped on purpose (common in benchmarks).');
+  if (RC.text === 'ws') why.push('The query text no longer matches the cached query exactly, so it is treated as a different query.');
+  if (RC.data === '1') why.push('The underlying table changed since the result was cached (new micro-partitions), so the old result is no longer valid.');
+  if (RC.fn === '1') why.push('<code>CURRENT_TIMESTAMP()</code> must be evaluated at run time, so results containing it are not reused.');
+  const hit = !why.length;
+  const whTxt = RC.wh === '0'
+    ? (hit ? 'The warehouse <b>stays suspended</b>: a result-cache hit is served by cloud services and costs no warehouse credits.' : 'The warehouse must <b>resume</b> (provisioning time), and its local disk cache is cold after the suspend, so data comes from remote storage.')
+    : (hit ? 'Even though the warehouse is running, it isn\'t used for this query.' : 'The running warehouse executes the query; if it read the same partitions recently, its <b>local disk cache</b> can still make the scan faster (look at "% scanned from cache").');
+  $('#rcOut').innerHTML = `<b class="h">${hit ? 'RESULT CACHE HIT' : 'RESULT CACHE MISS'}</b><span class="badge ${hit ? 'ok' : 'bad'}" style="margin-right:8px">${hit ? '~ms · 0 warehouse credits' : 'query executes'}</span>${hit ? 'Same text, unchanged data, deterministic functions, and your role can read the tables. The 24-hour clock is reset by this reuse (up to 31 days from the first run).' : why.join(' ')} ${whTxt}`;
+}
+['Text', 'Data', 'Fn', 'Wh', 'Par'].forEach(k => tabs('#rc' + k, d => { RC[k.toLowerCase()] = d.v; rcDraw(); }));
+rcDraw();
+
+/* ===== 05 decision widget ===== */
+const DW = { join: '0', fresh: 'now', freq: 'hi', churn: 'lo' };
+function dwDraw() {
+  let h, b, t;
+  if (DW.freq === 'lo') { h = 'A REGULAR VIEW'; b = 'mid'; t = `Rarely queried: precomputing means paying maintenance for results nobody reads. A normal view (plus good pruning on the base table) is enough.`; }
+  else if (DW.join === '1') {
+    if (DW.fresh === 'lag') { h = 'DYNAMIC TABLE'; b = 'ok'; t = `Joins rule out a materialized view. A dynamic table handles joins and aggregations, refreshing incrementally where possible within your <code>TARGET_LAG</code>, on a warehouse you choose.`; }
+    else { h = 'VIEW + TUNING (OR A DT WITH A SHORT LAG)'; b = 'mid'; t = `MVs can't join, and DTs are always slightly behind. Options: a normal view with well-pruned base tables; an MV that pre-aggregates the big single table, joined to small dimensions at query time; or accept a short TARGET_LAG on a dynamic table.`; }
+  } else {
+    if (DW.churn === 'hi') { h = 'MEASURE FIRST: MV MAY BE EXPENSIVE'; b = 'mid'; t = `An MV fits technically, but heavy updates all day mean <b>constant serverless maintenance</b>. Check <code>MATERIALIZED_VIEW_REFRESH_HISTORY</code> on a trial. ${DW.fresh === 'lag' ? 'Since lag is acceptable, a dynamic table refreshing every few minutes may batch the work more cheaply.' : 'Alternatively, cluster the base table so the raw query prunes well.'}`; }
+    else { h = 'MATERIALIZED VIEW'; b = 'ok'; t = `Single table, mostly appends, queried constantly${DW.fresh === 'now' ? ', must be current' : ''}: the textbook MV. Always current (Snowflake combines it with fresh base data if maintenance is behind), maintained serverlessly, and the optimizer can rewrite queries on the base table to use it.${DW.fresh === 'lag' ? ' A dynamic table would also work; the MV adds automatic query rewrite.' : ''}`; }
+  }
+  $('#dwOut').innerHTML = `<b class="h">RECOMMENDATION</b><span class="badge ${b}" style="margin-right:8px">${h}</span>${t}`;
+}
+[['#dwJoin', 'join'], ['#dwFresh', 'fresh'], ['#dwFreq', 'freq'], ['#dwChurn', 'churn']].forEach(([s, k]) => tabs(s, d => { DW[k] = d.v; dwDraw(); }));
+dwDraw();
+
+/* ===== 06 join distribution animation ===== */
+function jsDraw(m) {
+  const nx = [20, 185, 350, 515], W = 145;
+  let s = `<g><rect class="L-st" x="30" y="14" width="250" height="50" rx="10" stroke-width="1"/><text class="th" x="155" y="34" text-anchor="middle" dominant-baseline="central">ORDERS (fact, 2 TB)</text><text class="ts" x="155" y="52" text-anchor="middle" dominant-baseline="central">partitions spread over all nodes</text></g>`;
+  s += `<g><rect class="${m === 'b' ? 'L-cs' : 'L-st'}" x="400" y="14" width="250" height="50" rx="10" stroke-width="1"/><text class="th" x="525" y="34" text-anchor="middle" dominant-baseline="central">${m === 'b' ? 'DIM_STORE (small, 40 MB)' : 'SHIPMENTS (fact, 1.5 TB)'}</text><text class="ts" x="525" y="52" text-anchor="middle" dominant-baseline="central">${m === 'b' ? 'build side' : 'also huge'}</text></g>`;
+  nx.forEach((x, i) => {
+    if (m === 'b') { s += `<path class="edge" d="M${100 + i * 30} 64 L${x + 45} 180"/><path class="edge on" d="M${470 + i * 30} 64 L${x + 100} 180"/>`; }
+    else { nx.forEach((x2, j) => { s += `<path class="edge ${i === j ? '' : 'on'}" d="M${60 + i * 60} 64 L${x2 + 40} 180"/><path class="edge on" d="M${430 + i * 60} 64 L${x2 + 105} 180"/>`; }); }
+  });
+  nx.forEach((x, i) => { s += `<g><rect class="L-cp" x="${x}" y="180" width="${W}" height="56" rx="10" stroke-width="1"/><text class="th" x="${x + W / 2}" y="199" text-anchor="middle" dominant-baseline="central">Node ${i + 1}</text><text class="tm" x="${x + W / 2}" y="219" text-anchor="middle" dominant-baseline="central">${m === 'b' ? '¼ ORDERS + all DIM' : 'keys with hash % 4 = ' + i}</text></g>`; });
+  $('#jsSvg').innerHTML = s;
+  $('#jsIns').innerHTML = m === 'b'
+    ? `<b>Broadcast:</b> the 40 MB dimension is copied to all 4 nodes (animated lines = network traffic, about 160 MB in total). Each node joins its own quarter of ORDERS locally, so the 2 TB fact table never crosses the network. Snowflake prefers this when one side is small.`
+    : `<b>Hash-partitioned:</b> both sides are big, so broadcasting either would be huge. Every row is sent to the node chosen by <code>hash(order_id) % 4</code>; matching keys meet on the same node. Most rows cross the network, which shows up as <b>Network Communication</b> in the profile. Filtering and projecting columns <i>before</i> the join shrinks this shuffle.`;
+}
+tabs('#jsTabs', d => jsDraw(d.v));
+jsDraw('b');
+
+/* ===== 06 exploding join calculator ===== */
+function exDraw() {
+  const a = +$('#exA').value, b = +$('#exB').value, K = 10e6;
+  $('#exAV').textContent = a + (a === 1 ? ' (unique)' : ' duplicates');
+  $('#exBV').textContent = b + (b === 1 ? ' (unique)' : ' rows/key');
+  const big = n => n >= 1e9 ? fmt(n / 1e9, 1) + 'B' : fmt(n / 1e6, 0) + 'M';
+  $('#exL').textContent = big(K * a); $('#exR').textContent = big(K * b); $('#exO').textContent = big(K * a * b); $('#exF').textContent = b + '×';
+  $('#exO').style.color = a * b > 3 ? 'var(--red)' : '';
+  $('#exIns').innerHTML = a * b === 1 ? `Both sides unique on order_id: rows out = 10 M. This is the join you expect.`
+    : `Each order matches <b>${b}</b> shipment rows${a > 1 ? ` and each order itself appears ${a} times` : ''}: output = 10 M × ${a} × ${b} = <b>${big(K * a * b)}</b> rows. Every <code>SUM(o.amount)</code> is multiplied by ${b}, so the numbers are <b>wrong</b>, and memory use (and spilling) grows with the output. Fix the grain: aggregate shipments per order first, or join on the full key.`;
+}
+['#exA', '#exB'].forEach(s => $(s).oninput = exDraw);
+exDraw();
+
+/* ===== 06 rewrite lab ===== */
+const RW = [
+  { t: 'Function on filter column', bad: `SELECT order_id, amount
+FROM sales
+WHERE TO_CHAR(order_date, 'YYYY-MM') = '2024-03';`, good: `SELECT order_id, amount
+FROM sales
+WHERE order_date >= '2024-03-01'
+  AND order_date <  '2024-04-01';`, m: [[48212, 1310, 'partitions'], [1920, 52, 'GB scanned'], [372, 9, 's elapsed'], [0, 0, 'GB spilled']], i: `Wrapping the column in a function forces Snowflake to evaluate it row by row, after reading the data. A plain range on the raw column can be compared to each partition's min/max and prune. Same rule for <code>YEAR(col) = 2024</code>, <code>col::DATE = …</code> on timestamps, <code>UPPER(code) = 'X'</code>: put the transformation on the literal side, or store a clean column.` },
+  { t: 'SELECT *', bad: `SELECT *
+FROM web_events            -- 180 columns
+WHERE event_date = '2024-03-15';`, good: `SELECT event_id, user_id, page, event_ts
+FROM web_events
+WHERE event_date = '2024-03-15';`, m: [[310, 310, 'partitions'], [96, 4.1, 'GB scanned'], [38, 3, 's elapsed'], [0, 0, 'GB spilled']], i: `Storage is columnar: Snowflake reads only the columns you ask for. <code>SELECT *</code> on a 180-column table reads all of them (and sends them over the network). Partitions scanned is the same; <b>bytes scanned</b> drops dramatically. In views and production code, list columns explicitly.` },
+  { t: 'ORDER BY without LIMIT', bad: `CREATE VIEW v_orders AS
+SELECT * FROM orders
+ORDER BY order_ts DESC;    -- sorted, then re-aggregated by every consumer`, good: `CREATE VIEW v_orders AS
+SELECT * FROM orders;      -- sort only where it matters:
+
+SELECT * FROM v_orders
+ORDER BY order_ts DESC
+LIMIT 100;                 -- top-K: SortWithLimit`, m: [[2400, 2400, 'partitions'], [210, 210, 'GB scanned'], [260, 21, 's elapsed'], [140, 0, 'GB spilled']], i: `A full sort of billions of rows is memory-heavy and spills. An ORDER BY inside a view or subquery is usually wasted, because the outer query re-sorts or aggregates anyway. With <code>LIMIT</code>, Snowflake can use a top-K sort (<b>SortWithLimit</b>) that keeps only the best 100 rows in memory.` },
+  { t: 'UNION instead of UNION ALL', bad: `SELECT order_id, amount FROM orders_2023
+UNION
+SELECT order_id, amount FROM orders_2024;`, good: `SELECT order_id, amount FROM orders_2023
+UNION ALL
+SELECT order_id, amount FROM orders_2024;`, m: [[3100, 3100, 'partitions'], [140, 140, 'GB scanned'], [95, 22, 's elapsed'], [36, 0, 'GB spilled']], i: `<code>UNION</code> removes duplicates, which means an extra aggregation over every row of both inputs. When the inputs can't overlap (different years), or duplicates are fine, <code>UNION ALL</code> just appends. Only use UNION when you really need de-duplication.` },
+  { t: 'OR in a join condition', bad: `SELECT c.name, o.amount
+FROM orders o
+JOIN customers c
+  ON o.customer_id = c.customer_id
+  OR o.alt_customer_id = c.customer_id;`, good: `SELECT c.name, o.amount
+FROM orders o JOIN customers c ON o.customer_id = c.customer_id
+UNION ALL
+SELECT c.name, o.amount
+FROM orders o JOIN customers c ON o.alt_customer_id = c.customer_id
+WHERE o.customer_id IS NULL;     -- avoid counting a row twice`, m: [[2412, 4824, 'partitions'], [88, 176, 'GB scanned'], [1850, 64, 's elapsed'], [310, 0, 'GB spilled']], i: `An OR across different columns in a join prevents a simple hash join on one key; the profile may show a much slower nested-loop style join (or even a <b>CartesianJoin</b> followed by a filter). Splitting into two equi-joins with <code>UNION ALL</code> reads the data twice but runs two fast hash joins. Write the second branch so a row can't match both. (OR across columns in a WHERE clause similarly weakens pruning.)` },
+  { t: 'DISTINCT as a band-aid', bad: `SELECT DISTINCT o.order_id, o.amount, c.segment
+FROM orders o
+JOIN customer_dim c ON o.customer_id = c.customer_id;
+-- customer_dim is SCD2: many rows per customer`, good: `SELECT o.order_id, o.amount, c.segment
+FROM orders o
+JOIN customer_dim c
+  ON o.customer_id = c.customer_id
+ AND c.is_current = TRUE;          -- correct grain, no DISTINCT`, m: [[900, 900, 'partitions'], [41, 41, 'GB scanned'], [420, 12, 's elapsed'], [120, 0, 'GB spilled']], i: `The join multiplied rows (one per historical version of each customer), then DISTINCT spent more time and memory collapsing them. Join at the right grain (current row, or the version valid at <code>order_date</code>) and the duplicates never exist.` },
+  { t: 'Implicit cast', bad: `-- order_code is VARCHAR
+SELECT * FROM orders
+WHERE order_code = 100234;          -- number literal`, good: `SELECT * FROM orders
+WHERE order_code = '100234';        -- same type as the column`, m: [[2410, 3, 'partitions'], [180, 0.2, 'GB scanned'], [64, 1, 's elapsed'], [0, 0, 'GB spilled']], i: `Comparing a VARCHAR column with a number makes Snowflake convert the <b>column</b> to a number for every row. That can fail outright on non-numeric codes ("Numeric value 'AB-1' is not recognized"), and it stops pruning (and Search Optimization) from using the column's stored values. Match the literal's type to the column.` },
+  { t: 'Huge IN list', bad: `SELECT * FROM orders
+WHERE customer_id IN (1001, 1002, 1003, /* … */ 58999);
+-- 20,000 literals pasted by a BI tool`, good: `CREATE TEMPORARY TABLE tmp_customers (customer_id NUMBER);
+-- load the 20,000 ids (INSERT / COPY / from another query)
+SELECT o.*
+FROM orders o
+JOIN tmp_customers t ON o.customer_id = t.customer_id;`, m: [[2410, 2410, 'partitions'], [180, 180, 'GB scanned'], [96, 14, 's elapsed'], [0, 0, 'GB spilled']], i: `Tens of thousands of literals blow up <b>compilation time</b> (watch <code>COMPILATION_TIME</code> in QUERY_HISTORY) and make huge query texts. Put the values in a table and join; the join filter can then prune the probe side at run time.` },
+  { t: 'Copy-pasted subqueries vs CTE', bad: `SELECT
+  (SELECT SUM(amount) FROM sales WHERE sale_date >= '2024-01-01') AS ytd,
+  (SELECT SUM(amount) FROM sales WHERE sale_date >= '2024-01-01'
+                                    AND region = 'APAC') AS ytd_apac,
+  (SELECT COUNT(*)    FROM sales WHERE sale_date >= '2024-01-01') AS ytd_orders;`, good: `SELECT
+  SUM(amount)                                  AS ytd,
+  SUM(IFF(region = 'APAC', amount, 0))         AS ytd_apac,
+  COUNT(*)                                     AS ytd_orders
+FROM sales
+WHERE sale_date >= '2024-01-01';     -- one scan instead of three`, m: [[3930, 1310, 'partitions'], [156, 52, 'GB scanned'], [27, 9, 's elapsed'], [0, 0, 'GB spilled']], i: `Three subqueries = three scans of the same data. Conditional aggregation computes everything in one pass. When a shared intermediate result is genuinely needed several times, put it in a <b>CTE</b>: Snowflake can compute a CTE that's referenced multiple times once and reuse it (WithClause / WithReference in the profile). It's an optimizer decision, so verify in the profile.` },
+  { t: 'Join before filtering', bad: `SELECT s.store_id, SUM(s.amount)
+FROM sales s
+JOIN stores st ON s.store_id = st.store_id
+GROUP BY s.store_id
+HAVING MAX(st.country) = 'IN';`, good: `SELECT s.store_id, SUM(s.amount)
+FROM sales s
+JOIN stores st ON s.store_id = st.store_id
+WHERE st.country = 'IN'              -- filter before aggregation
+GROUP BY s.store_id;`, m: [[48300, 6100, 'partitions'], [610, 77, 'GB scanned'], [190, 24, 's elapsed'], [22, 0, 'GB spilled']], i: `HAVING filters <b>after</b> aggregating every store in the world. A WHERE filter on the dimension is applied before the join and aggregation, and its keys can drive a <b>join filter</b> that prunes SALES at run time. Put row filters in WHERE; use HAVING only for conditions on aggregates.` }
+];
+$('#rwTabs').innerHTML = RW.map((r, i) => `<button data-i="${i}" class="${i ? '' : 'on'}">${r.t}</button>`).join('');
+function rwShow(i) {
+  const r = RW[i];
+  $('#rwBad').textContent = r.bad; $('#rwGood').textContent = r.good;
+  $('#rwBars').innerHTML = r.m.map(([b, a, u]) => {
+    const mx = Math.max(b, a) || 1, pb = b ? Math.max(3, b / mx * 100) : 0, pa = a ? Math.max(3, a / mx * 100) : 0, f = v => v >= 100 ? fmt(v) : fmt(v, v % 1 ? 1 : 0);
+    return `<div class="cmpbar"><span class="lbl">${u.toUpperCase()}</span><div class="b bad"><i style="width:${pb}%"></i><span>${f(b)}</span></div><div class="b good"><i style="width:${pa}%"></i><span>${f(a)}</span></div></div>`;
+  }).join('');
+  $('#rwIns').innerHTML = r.i;
+}
+tabs('#rwTabs', d => rwShow(+d.i));
+rwShow(0);
+
+/* ===== 07 size vs spill ===== */
+const WS = [['X-SMALL', 1], ['SMALL', 2], ['MEDIUM', 4], ['LARGE', 8], ['X-LARGE', 16], ['2X-LARGE', 32], ['3X-LARGE', 64], ['4X-LARGE', 128]];
+function wsDraw() {
+  const i = +$('#wsS').value, [nm, c] = WS[i], f = 2 ** i, need = 600, mem = 16 * f, loc = 64 * f;
+  const sl = Math.min(Math.max(0, need - mem), loc), sr = Math.max(0, need - mem - loc);
+  const t = 20 + (3200 + sl * 0.8 + sr * 6) / f, cr = c * t / 3600;
+  $('#wsSV').textContent = `${nm} · ${c} cr/h`;
+  $('#wsL').textContent = fmt(sl) + ' GB'; $('#wsR').textContent = fmt(sr) + ' GB';
+  $('#wsR').style.color = sr ? 'var(--red)' : ''; $('#wsL').style.color = sl ? 'var(--amber)' : '';
+  $('#wsT').textContent = t >= 3600 ? `${Math.floor(t / 3600)}h ${Math.round(t % 3600 / 60)}m` : t >= 60 ? `${Math.floor(t / 60)}m ${Math.round(t % 60)}s` : Math.round(t) + ' s';
+  $('#wsC').textContent = fmt(cr, 2);
+  const X = g => 20 + g / need * 640, inMem = Math.min(mem, need);
+  $('#wsSvg').innerHTML = `<text class="tm" x="20" y="16">600 GB working set of the join + sort: where does it live?</text>` +
+    `<rect x="20" y="28" width="${X(inMem) - 20}" height="34" rx="4" fill="var(--teal)"/>` +
+    (sl ? `<rect x="${X(inMem)}" y="28" width="${X(inMem + sl) - X(inMem)}" height="34" fill="var(--amber)"/>` : '') +
+    (sr ? `<rect x="${X(inMem + sl)}" y="28" width="${X(need) - X(inMem + sl)}" height="34" fill="var(--red)"/>` : '') +
+    `<rect x="20" y="28" width="640" height="34" rx="4" fill="none" stroke="var(--line2)"/>` +
+    `<text class="ts" x="20" y="84">■ memory ${fmt(inMem)} GB</text><text class="ts" x="250" y="84" style="fill:var(--amber)">■ local SSD spill ${fmt(sl)} GB</text><text class="ts" x="480" y="84" style="fill:var(--red)">■ remote spill ${fmt(sr)} GB</text>` +
+    `<text class="tm" x="20" y="108">memory and local SSD per size are illustrative; each size step doubles both</text>`;
+  $('#wsIns').innerHTML = sr ? `<b>Remote spilling</b> dominates: ${fmt(sr)} GB written to and read back from cloud storage. Notice that going up a size costs <i>about the same or fewer</i> credits for this query, because it runs more than twice as fast.`
+    : sl ? `<b>No more remote spill.</b> Only local SSD spill remains, which is much cheaper. This is close to the sweet spot: credits per query are near their lowest.`
+    : i >= 6 ? `Everything fits in memory, but doubling again barely shortens the query (fixed overheads, limited parallelism), so <b>credits per query rise</b>. Past the sweet spot you pay for idle nodes.`
+    : `<b>Fits in memory.</b> Fast and efficient. In real life, first try to shrink the working set (filter early, fewer columns, fix exploding joins) before choosing the size.`;
+}
+$('#wsS').oninput = wsDraw;
+wsDraw();
+
+/* ===== 07 debugging walkthrough ===== */
+const DB = [
+  { h: '1 · Get the facts, not the feeling', y: 'Find the dashboard\'s queries. The BI tool sets <code>QUERY_TAG = \'dash:revenue\'</code>, so filter on it and compare this week with last week by <code>QUERY_PARAMETERIZED_HASH</code>.', b: 'Same query shape, run 300×/day. Median elapsed went from <b>10 s</b> to <b>9 min 50 s</b> starting on Tuesday. Nothing else on the warehouse changed.', s: `SELECT DATE_TRUNC('day', start_time) AS day,
+       query_parameterized_hash,
+       COUNT(*) AS runs,
+       MEDIAN(total_elapsed_time)/1000 AS median_s
+FROM snowflake.account_usage.query_history
+WHERE query_tag = 'dash:revenue'
+  AND start_time >= DATEADD('day', -14, CURRENT_TIMESTAMP())
+GROUP BY 1, 2 ORDER BY 1;` },
+  { h: '2 · Split the elapsed time', y: 'Before opening the profile, check whether the time is <b>queued</b>, <b>compiling</b> or <b>executing</b>.', b: 'Queued ≈ 0.4 s, compilation 0.3 s, <b>execution 9 min 49 s</b>. So it\'s not concurrency; no point adding clusters. Something inside the query got expensive.', s: `SELECT query_id, total_elapsed_time/1000 AS elapsed_s,
+       queued_overload_time/1000 AS queued_s,
+       compilation_time/1000 AS compile_s,
+       execution_time/1000 AS exec_s,
+       bytes_spilled_to_local_storage, bytes_spilled_to_remote_storage,
+       partitions_scanned, partitions_total
+FROM snowflake.account_usage.query_history
+WHERE query_tag = 'dash:revenue'
+ORDER BY start_time DESC LIMIT 20;` },
+  { h: '3 · Compare the vitals: before vs after', y: 'Line up one fast run (last week) and one slow run (today).', b: 'Partitions scanned: <b>unchanged</b> (≈ 900). Bytes scanned: unchanged. But <b>bytes spilled to remote storage: 0 → 180 GB</b>. So pruning is fine; memory pressure appeared from nowhere. Why would the same query need far more memory?', s: `-- same columns as step 2, for one fast and one slow query_id
+-- fast:  partitions 902/48,300 · spill 0 · exec 9 s
+-- slow:  partitions 905/48,300 · spill remote 180 GB · exec 589 s` },
+  { h: '4 · Open the Query Profile of the slow run', y: 'Go to the <b>most expensive node</b>, and read the row counts on the arrows.', b: 'The <b>Join</b> between FACT_SALES and CUSTOMER_DIM takes 78%. Inputs: 40 M and 2.2 M rows. <b>Output: 1.2 billion rows</b>. Last week the same join output 40 M. The Aggregate after it is where the spill happens: it\'s aggregating 30× more rows.', s: `SELECT operator_id, operator_type,
+       operator_statistics:input_rows::NUMBER  AS rows_in,
+       operator_statistics:output_rows::NUMBER AS rows_out,
+       execution_time_breakdown:overall_percentage::FLOAT AS pct
+FROM TABLE(GET_QUERY_OPERATOR_STATS('<slow_query_id>'))
+ORDER BY pct DESC;` },
+  { h: '5 · Test the hypothesis: duplicate keys?', y: 'If the join exploded, the key must have stopped being unique on one side. Check CUSTOMER_DIM.', b: 'On Tuesday the customer pipeline was changed to <b>SCD Type 2</b>: every change now adds a new row. 2.2 M rows but only 74 K distinct customers have 30+ versions each. The dashboard SQL still joins on <code>customer_id</code> only. Revenue on the dashboard has also been <b>inflated</b> since Tuesday!', s: `SELECT customer_id, COUNT(*) AS versions
+FROM customer_dim
+GROUP BY customer_id
+HAVING COUNT(*) > 1
+ORDER BY versions DESC
+LIMIT 20;` },
+  { h: '6 · Fix the cause (not the symptom)', y: 'Join on the right grain. Resizing to a 2XL would have hidden the slowness for a while at 8× the cost, and the numbers would still be wrong.', b: 'Add <code>AND c.is_current = TRUE</code> (or the version valid at the sale date: <code>s.sale_date BETWEEN c.valid_from AND c.valid_to</code>). Better still, publish a <code>customer_dim_current</code> view for BI so nobody repeats this mistake.', s: `SELECT c.segment, SUM(s.amount) AS revenue
+FROM fact_sales s
+JOIN customer_dim c
+  ON s.customer_id = c.customer_id
+ AND c.is_current = TRUE
+WHERE s.sale_date >= DATEADD('day', -90, CURRENT_DATE())
+GROUP BY c.segment;` },
+  { h: '7 · Re-measure', y: 'Run the fixed query twice and compare against the baseline from step 3.', b: 'Execution <b>8.7 s</b>, join output 40 M rows, <b>spill 0</b>, revenue matches the finance report again. Result-cache hits are back for repeated dashboard loads because the text is stable.', s: `ALTER SESSION SET USE_CACHED_RESULT = FALSE;   -- measure real execution, not cache
+-- run the fixed query, note its query_id, then:
+SELECT execution_time/1000 AS exec_s, bytes_spilled_to_remote_storage
+FROM TABLE(INFORMATION_SCHEMA.QUERY_HISTORY_BY_SESSION())
+ORDER BY start_time DESC LIMIT 1;
+ALTER SESSION UNSET USE_CACHED_RESULT;` },
+  { h: '8 · Prevent the next one', y: 'Turn the lesson into guardrails, so the next regression is caught in hours, not days.', b: 'A uniqueness test on dimension keys in the pipeline; a statement timeout on the BI warehouse; an alert on spill/elapsed regressions per query hash; a note in the post-mortem for the team that changed the dimension.', s: `ALTER WAREHOUSE bi_wh SET STATEMENT_TIMEOUT_IN_SECONDS = 600;
+
+CREATE OR REPLACE ALERT alert_spill_regression
+  WAREHOUSE = admin_wh
+  SCHEDULE = '60 MINUTE'
+  IF (EXISTS (SELECT 1 FROM snowflake.account_usage.query_history
+              WHERE warehouse_name = 'BI_WH'
+                AND bytes_spilled_to_remote_storage > 10 * POWER(1024, 3)
+                AND start_time > DATEADD('hour', -1, CURRENT_TIMESTAMP())))
+  THEN CALL SYSTEM$SEND_EMAIL('my_email_int', 'data-team@example.com',
+                              'BI_WH remote spill', 'Check QUERY_HISTORY');` }
+];
+let dbI = -1;
+DB.forEach((_, i) => { const s = document.createElement('span'); s.onclick = () => { dbI = i; dbDraw(); }; $('#dbBar').appendChild(s); });
+function dbDraw() {
+  [...$('#dbBar').children].forEach((s, k) => s.classList.toggle('on', k <= dbI));
+  if (dbI < 0) { $('#dbDesc').innerHTML = `<h4>Monday 9:15 AM</h4><div style="font-size:14.5px;color:var(--ink2)">The head of sales messages you: <i>"The revenue dashboard used to load in 10 seconds. Since Tuesday it takes 10 minutes. Can you fix it?"</i> Press <b>Start</b> and investigate the way a senior engineer would.</div>`; $('#dbSql').textContent = '-- SQL for each step appears here'; $('#dbNext').textContent = 'Start'; $('#dbPrev').disabled = true; return; }
+  const d = DB[dbI];
+  $('#dbDesc').innerHTML = `<h4>${d.h}</h4><div class="two"><div class="you"><b class="l">WHAT YOU DO</b>${d.y}</div><div class="be"><b class="l">WHAT YOU FIND</b>${d.b}</div></div>`;
+  $('#dbSql').textContent = d.s;
+  $('#dbNext').textContent = dbI === DB.length - 1 ? 'Done ✓' : 'Next step';
+  $('#dbNext').disabled = dbI === DB.length - 1; $('#dbPrev').disabled = false;
+}
+$('#dbNext').onclick = () => { if (dbI < DB.length - 1) { dbI++; dbDraw(); } };
+$('#dbPrev').onclick = () => { if (dbI > -1) { dbI--; dbDraw(); } };
+$('#dbReset').onclick = () => { dbI = -1; $('#dbNext').disabled = false; dbDraw(); };
+dbDraw();
+</script>
+
+<script>
+/* ===== 08 SQL lab ===== */
+const SQL = [
+  { t: 'Find slow queries', l: [
+    ['-- 1) The 50 slowest queries on BI_WH this week, with their vitals', 'A comment. The first query lists individual slow runs with every number you need for a first diagnosis.'],
+    ['SELECT query_id,', 'The unique ID of each query. You paste it into Snowsight to open the Query Profile, or pass it to GET_QUERY_OPERATOR_STATS.'],
+    ['       query_parameterized_hash,', 'A hash of the query text with literals removed, so runs of the same query with different dates or IDs share one value. Great for grouping.'],
+    ['       warehouse_name, warehouse_size,', 'Which warehouse ran it, and at what size, so you can tell if a resize changed things.'],
+    ['       total_elapsed_time / 1000 AS elapsed_s,', 'Total wall-clock time the user waited, converted from milliseconds to seconds.'],
+    ['       queued_overload_time / 1000 AS queued_s,', 'Time spent waiting because the warehouse was busy. High values mean a concurrency problem, not a slow query.'],
+    ['       compilation_time / 1000 AS compile_s,', 'Time cloud services spent parsing and optimizing. High with huge IN lists or very complex views.'],
+    ['       execution_time / 1000 AS exec_s,', 'Time the warehouse actually spent running the operator tree.'],
+    ['       partitions_scanned, partitions_total,', 'Pruning efficiency. If scanned is close to total for a selective filter, pruning failed.'],
+    ['       bytes_scanned / POWER(1024, 3) AS gb_scanned,', 'How much data was read, converted to GB. SELECT * and poor pruning both inflate it.'],
+    ['       percentage_scanned_from_cache,', 'Fraction (0 to 1) of bytes served from the warehouse local disk cache.'],
+    ['       bytes_spilled_to_local_storage / POWER(1024, 3) AS gb_spill_local,', 'Data that overflowed memory onto the local SSD. Some is tolerable.'],
+    ['       bytes_spilled_to_remote_storage / POWER(1024, 3) AS gb_spill_remote', 'Data that overflowed local SSD into remote storage. Very slow: investigate any non-zero value.'],
+    ['FROM snowflake.account_usage.query_history', 'Account-wide history for the last 365 days. It has some latency (data can be delayed by up to roughly 45 minutes); for the last few minutes use INFORMATION_SCHEMA.QUERY_HISTORY().'],
+    ["WHERE start_time >= DATEADD('day', -7, CURRENT_TIMESTAMP())", 'Only the last 7 days. Always filter on start_time: this view is big.'],
+    ["  AND execution_status = 'SUCCESS'", 'Ignore failed queries for this analysis.'],
+    ["  AND warehouse_name = 'BI_WH'", 'Focus on one workload.'],
+    ['ORDER BY total_elapsed_time DESC', 'Slowest first.'],
+    ['LIMIT 50;', 'Top 50 is plenty for a first look.'],
+    ['', ''],
+    ['-- 2) Which query SHAPES cost the most time in total?', 'Second query: a query that runs 5,000 times a day for 3 seconds matters more than one that runs once for 5 minutes.'],
+    ['SELECT query_parameterized_hash,', 'Group by the literal-free hash.'],
+    ['       ANY_VALUE(query_text) AS sample_text,', 'One example of the text, so you know which query it is.'],
+    ['       COUNT(*) AS runs,', 'How many times this shape ran.'],
+    ['       SUM(total_elapsed_time) / 3600000 AS total_hours', 'Total elapsed hours across all runs (milliseconds / 3,600,000).'],
+    ['FROM snowflake.account_usage.query_history', 'Same source view.'],
+    ["WHERE start_time >= DATEADD('day', -7, CURRENT_TIMESTAMP())", 'Last 7 days.'],
+    ['GROUP BY query_parameterized_hash', 'One row per query shape.'],
+    ['ORDER BY total_hours DESC', 'Biggest total time first: these are your tuning priorities.'],
+    ['LIMIT 20;', 'Top 20.']
+  ] },
+  { t: 'Profile in SQL', l: [
+    ["SELECT * FROM sales WHERE region = 'APAC';", 'Run the query you want to analyse (or take a query_id from QUERY_HISTORY).'],
+    ['SET qid = LAST_QUERY_ID();', 'Store the ID of the previous query in a session variable.'],
+    ['SELECT operator_id,', 'GET_QUERY_OPERATOR_STATS returns one row per operator in the profile. operator_id identifies the node.'],
+    ['       operator_type,', 'TableScan, Filter, Join, Aggregate, Sort, WindowFunction, Result, and so on.'],
+    ['       parent_operators,', 'Which node(s) this operator feeds into: lets you rebuild the tree.'],
+    ['       operator_statistics:input_rows::NUMBER AS rows_in,', 'operator_statistics is a VARIANT; the colon path extracts input_rows and ::NUMBER casts it.'],
+    ['       operator_statistics:output_rows::NUMBER AS rows_out,', 'Rows produced. Compare with rows_in to spot filters that discard most data or joins that explode.'],
+    ['       operator_statistics:pruning:partitions_scanned::NUMBER AS parts_scanned,', 'For TableScan nodes: partitions actually read.'],
+    ['       operator_statistics:pruning:partitions_total::NUMBER AS parts_total,', 'For TableScan nodes: partitions in the table. scanned / total = pruning efficiency.'],
+    ['       operator_statistics:spilling:bytes_spilled_remote_storage::NUMBER AS spill_remote,', 'Remote spill for this specific operator, so you know exactly which join or sort ran out of memory.'],
+    ['       execution_time_breakdown:overall_percentage::FLOAT AS pct_of_query', 'Share of the total query time spent in this operator: the "most expensive nodes" list, in SQL.'],
+    ['FROM TABLE(GET_QUERY_OPERATOR_STATS($qid))', 'The table function. It works for queries that completed recently (within the last 14 days) and that your role can see.'],
+    ['ORDER BY pct_of_query DESC;', 'Most expensive operator first.'],
+    ['', ''],
+    ['-- Detect exploding joins automatically', 'Second query: compute a rough explosion ratio for every Join operator.'],
+    ['SELECT operator_id,', 'The join node.'],
+    ['       operator_attributes:equality_join_condition::STRING AS join_cond,', 'operator_attributes holds the join condition, so you can see which keys were used.'],
+    ['       operator_statistics:output_rows::NUMBER', 'Rows out of the join...'],
+    ['         / NULLIF(operator_statistics:input_rows::NUMBER, 0) AS explosion_ratio', '...divided by rows in. A ratio far above 1 means duplicate keys or a missing condition. NULLIF avoids division by zero.'],
+    ['FROM TABLE(GET_QUERY_OPERATOR_STATS($qid))', 'Same function, same query.'],
+    ["WHERE operator_type = 'Join';", 'Only join operators.']
+  ] },
+  { t: 'Clustering', l: [
+    ["SELECT SYSTEM$CLUSTERING_INFORMATION('sales', '(order_date)');", 'Returns JSON: total_partition_count, total_constant_partition_count, average_overlaps, average_depth and a partition_depth_histogram for the given column(s). Works even if the table has no clustering key yet, so you can evaluate candidates.'],
+    ["SELECT SYSTEM$CLUSTERING_DEPTH('sales', '(order_date)');", 'Just the average depth as a number. 1 is ideal; large values mean many overlapping partitions.'],
+    ['ALTER TABLE sales CLUSTER BY (TO_DATE(order_ts), region);', 'Define a clustering key: an expression to lower cardinality (day instead of timestamp), then a second column. Automatic Clustering starts maintaining it in the background.'],
+    ["SHOW TABLES LIKE 'SALES';", 'The cluster_by column shows the key, and automatic_clustering shows whether the service is ON.'],
+    ['ALTER TABLE sales SUSPEND RECLUSTER;', 'Pause Automatic Clustering for this table: no more serverless credits, but clustering will slowly degrade as data changes.'],
+    ['ALTER TABLE sales RESUME RECLUSTER;', 'Turn it back on.'],
+    ['SELECT start_time, end_time, credits_used,', 'How much has reclustering cost? These columns come from the history table function below.'],
+    ['       num_bytes_reclustered, num_rows_reclustered', 'How much data was rewritten in each period.'],
+    ['FROM TABLE(INFORMATION_SCHEMA.AUTOMATIC_CLUSTERING_HISTORY(', 'Table function with recent clustering history (ACCOUNT_USAGE.AUTOMATIC_CLUSTERING_HISTORY covers 365 days).'],
+    ["  DATE_RANGE_START => DATEADD('day', -7, CURRENT_DATE()),", 'Start of the time window.'],
+    ["  TABLE_NAME => 'SALES_DB.PUBLIC.SALES'));", 'Limit to one table (fully qualified name).'],
+    ['ALTER TABLE sales DROP CLUSTERING KEY;', 'Remove the key if its cost outweighs the benefit. Existing partitions keep their current layout.']
+  ] },
+  { t: 'Search Optimization', l: [
+    ["SELECT SYSTEM$ESTIMATE_SEARCH_OPTIMIZATION_COSTS('app_logs',", 'Estimate before enabling: returns JSON with expected build cost, storage size and maintenance cost.'],
+    ["       'EQUALITY(user_id), SUBSTRING(message)');", 'The search methods and columns you plan to enable.'],
+    ['ALTER TABLE app_logs ADD SEARCH OPTIMIZATION', 'Enable SOS (Enterprise Edition or higher). The serverless build starts in the background.'],
+    ['  ON EQUALITY(user_id), SUBSTRING(message);', 'Only on these columns and methods: equality/IN lookups on user_id, LIKE/regex searches on message.'],
+    ['ALTER TABLE events ADD SEARCH OPTIMIZATION ON EQUALITY(payload:customer.email);', 'Search optimization on a field inside a VARIANT column.'],
+    ['ALTER TABLE deliveries ADD SEARCH OPTIMIZATION ON GEO(drop_point);', 'For geospatial predicates on a GEOGRAPHY column.'],
+    ['DESCRIBE SEARCH OPTIMIZATION ON app_logs;', 'Lists each configured method and column, and whether it is active.'],
+    ["SHOW TABLES LIKE 'APP_LOGS';", 'Columns search_optimization, search_optimization_progress (build %) and search_optimization_bytes (storage used).'],
+    ["SELECT * FROM app_logs WHERE user_id = 'u-7781' AND message LIKE '%timeout%';", 'A query that can benefit. In the Query Profile, look for the Search Optimization Access node and fewer partitions scanned.'],
+    ['ALTER TABLE app_logs DROP SEARCH OPTIMIZATION ON SUBSTRING(message);', 'Remove one method if nobody uses it: saves storage and maintenance.'],
+    ['SELECT table_name, SUM(credits_used) AS credits', 'Track ongoing cost per table.'],
+    ['FROM snowflake.account_usage.search_optimization_history', 'Serverless credits used to build and maintain search access paths.'],
+    ["WHERE start_time >= DATEADD('day', -30, CURRENT_TIMESTAMP())", 'Last 30 days.'],
+    ['GROUP BY table_name ORDER BY credits DESC;', 'Most expensive tables first.']
+  ] },
+  { t: 'Query Acceleration', l: [
+    ["SELECT SYSTEM$ESTIMATE_QUERY_ACCELERATION('01b2c3d4-0000-1234-0000-00010a2b3c4d');", 'For one past query: returns JSON with status (eligible or not), its original time and estimated times at several scale factors, plus an upper-limit scale factor.'],
+    ['SELECT query_id, warehouse_name,', 'Account-wide search for queries that would have benefited.'],
+    ['       eligible_query_acceleration_time,', 'How much of the query time could have been accelerated (seconds).'],
+    ['       upper_limit_scale_factor', 'The scale factor beyond which there would be no extra benefit for that query.'],
+    ['FROM snowflake.account_usage.query_acceleration_eligible', 'View listing queries eligible for QAS.'],
+    ["WHERE start_time >= DATEADD('day', -7, CURRENT_TIMESTAMP())", 'Last 7 days.'],
+    ['ORDER BY eligible_query_acceleration_time DESC LIMIT 20;', 'The biggest opportunities first. Group by warehouse_name to decide where to enable it.'],
+    ['ALTER WAREHOUSE bi_wh SET ENABLE_QUERY_ACCELERATION = TRUE;', 'Enable QAS on the warehouse (Enterprise Edition or higher).'],
+    ['ALTER WAREHOUSE bi_wh SET QUERY_ACCELERATION_MAX_SCALE_FACTOR = 4;', 'Cap acceleration compute at 4 × the warehouse size. Default is 8; 0 means no limit.'],
+    ["SHOW WAREHOUSES LIKE 'BI_WH';", 'Confirms enable_query_acceleration and query_acceleration_max_scale_factor.'],
+    ['SELECT warehouse_name, SUM(credits_used) AS qas_credits', 'What does acceleration cost?'],
+    ['FROM snowflake.account_usage.query_acceleration_history', 'Serverless credits consumed by QAS, per warehouse and time window.'],
+    ["WHERE start_time >= DATEADD('day', -30, CURRENT_TIMESTAMP())", 'Last 30 days.'],
+    ['GROUP BY warehouse_name;', 'One row per warehouse. Compare with the warehouse credits you avoided by not upsizing.']
+  ] },
+  { t: 'Materialized view', l: [
+    ['CREATE OR REPLACE MATERIALIZED VIEW mv_daily_sales', 'Create an MV (Enterprise Edition or higher). Its result is stored and maintained by a serverless service.'],
+    ['  CLUSTER BY (sale_date)', 'MVs can have their own clustering key, independent of the base table.'],
+    ['AS', 'The defining query follows.'],
+    ['SELECT sale_date, region, SUM(amount) AS revenue, COUNT(*) AS orders', 'Supported aggregates only (SUM, COUNT, MIN, MAX, AVG and a few others).'],
+    ['FROM sales', 'Exactly one table: no joins allowed in an MV.'],
+    ['GROUP BY sale_date, region;', 'The stored result is tiny compared with the base table.'],
+    ["SELECT region, SUM(amount) FROM sales WHERE sale_date = '2024-03-15' GROUP BY region;", 'A query on the BASE table. The optimizer may rewrite it to read mv_daily_sales instead (check the Query Profile for a scan of the MV).'],
+    ["SHOW MATERIALIZED VIEWS LIKE 'MV_DAILY%';", 'Shows refreshed_on and behind_by: how far maintenance is behind the base table. Queries are still correct, because Snowflake fills the gap from the base table.'],
+    ['SELECT * FROM TABLE(INFORMATION_SCHEMA.MATERIALIZED_VIEW_REFRESH_HISTORY(', 'Serverless credits spent maintaining MVs.'],
+    ["  DATE_RANGE_START => DATEADD('day', -7, CURRENT_TIMESTAMP()),", 'Time window.'],
+    ["  MATERIALIZED_VIEW_NAME => 'MV_DAILY_SALES'));", 'One MV.'],
+    ['ALTER MATERIALIZED VIEW mv_daily_sales SUSPEND;', 'Stop maintenance (e.g. during a huge backfill). While suspended, the MV cannot be queried.'],
+    ['ALTER MATERIALIZED VIEW mv_daily_sales RESUME;', 'Resume maintenance; Snowflake catches up in the background.'],
+    ['ALTER SESSION SET USE_CACHED_RESULT = FALSE;', 'When benchmarking an MV (or any change), disable the result cache so you measure real execution.']
+  ] },
+  { t: 'Warehouse guardrails', l: [
+    ["ALTER WAREHOUSE bi_wh SET WAREHOUSE_SIZE = 'MEDIUM'", 'Size for the typical BI query: no spilling, fast enough.'],
+    ['  MIN_CLUSTER_COUNT = 1 MAX_CLUSTER_COUNT = 3', 'Multi-cluster (Enterprise Edition): up to 3 clusters start automatically when queries begin to queue.'],
+    ["  SCALING_POLICY = 'STANDARD';", 'STANDARD favours performance (starts clusters quickly); ECONOMY favours cost (waits for sustained load).'],
+    ['ALTER WAREHOUSE bi_wh SET MAX_CONCURRENCY_LEVEL = 8;', 'Queries a single cluster runs at once before queuing. 8 is the default.'],
+    ['ALTER WAREHOUSE bi_wh SET STATEMENT_TIMEOUT_IN_SECONDS = 600', 'Cancel any query on this warehouse that runs longer than 10 minutes (default is 2 days).'],
+    ['  STATEMENT_QUEUED_TIMEOUT_IN_SECONDS = 120;', 'Cancel queries that wait in the queue for more than 2 minutes (default 0 = wait forever).'],
+    ['ALTER WAREHOUSE bi_wh SET AUTO_SUSPEND = 300;', 'Suspend after 5 idle minutes. Too short throws away the local disk cache between dashboard refreshes.'],
+    ["ALTER SESSION SET QUERY_TAG = 'dash:revenue';", 'Label every query from this session. Set it in the BI tool connection so you can filter QUERY_HISTORY by workload.'],
+    ["CREATE WAREHOUSE ml_wh WAREHOUSE_SIZE = 'MEDIUM' WAREHOUSE_TYPE = 'SNOWPARK-OPTIMIZED';", 'A Snowpark-optimized warehouse: much more memory per node, for memory-heavy Python, UDFs and ML training.'],
+    ['SELECT warehouse_name, AVG(avg_running) AS running, AVG(avg_queued_load) AS queued', 'Is a warehouse overloaded? Average running vs queued load.'],
+    ['FROM snowflake.account_usage.warehouse_load_history', 'Load samples per warehouse over time.'],
+    ["WHERE start_time >= DATEADD('day', -7, CURRENT_TIMESTAMP())", 'Last 7 days.'],
+    ['GROUP BY warehouse_name ORDER BY queued DESC;', 'Warehouses with the most queuing first: candidates for multi-cluster or workload separation.']
+  ] }
+];
+const KW = /\b(CREATE|OR|REPLACE|TABLE|ON|IF|NOT|EXISTS|ALTER|SET|UNSET|SELECT|FROM|WHERE|GROUP|BY|ORDER|DESC|AS|SUM|COUNT|AVG|SHOW|LIKE|AND|LIMIT|JOIN|WAREHOUSE|SESSION|MATERIALIZED|VIEW|VIEWS|TABLES|WAREHOUSES|CLUSTER|DROP|ADD|SEARCH|OPTIMIZATION|EQUALITY|SUBSTRING|GEO|DESCRIBE|SUSPEND|RESUME|RECLUSTER|CLUSTERING|KEY|TRUE|FALSE|POWER|DATEADD|CURRENT_TIMESTAMP|CURRENT_DATE|NULLIF|ANY_VALUE|LAST_QUERY_ID|TO_DATE|INFORMATION_SCHEMA|GET_QUERY_OPERATOR_STATS|NUMBER|FLOAT|STRING)\b/g;
+const hl = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/('[^']*')/g, '\u0001$1\u0002').replace(KW, '<span class="kw">$1</span>').replace(/\b(\d+)\b/g, '<span class="num">$1</span>').replace(/\u0001([^\u0002]*)\u0002/g, (m, a) => '<span class="str">' + a.replace(/<[^>]+>/g, '') + '</span>');
+let sqlI = 0;
+function sqlShow(i) {
+  sqlI = i;
+  $$('#sqlTabs button').forEach((b, k) => b.classList.toggle('on', k === i));
+  $('#sqlCode').innerHTML = SQL[i].l.map(([l], k) => `<div data-k="${k}"><em>${k + 1}</em>${l.startsWith('--') ? '<span style="color:var(--ink3)">' + esc(l) + '</span>' : hl(l) || ' '}</div>`).join('');
+  $('#sqlExp').innerHTML = '<b class="h">CLICK A LINE</b>Each line is explained in plain English.';
+  $$('#sqlCode div').forEach(d => d.onclick = () => {
+    const e = SQL[sqlI].l[d.dataset.k][1]; if (!e) return;
+    $$('#sqlCode div').forEach(x => x.classList.remove('on')); d.classList.add('on');
+    $('#sqlExp').innerHTML = `<b class="h">LINE ${+d.dataset.k + 1}</b>${esc(e)}`;
+  });
+}
+$('#sqlTabs').innerHTML = SQL.map(s => `<button>${s.t}</button>`).join('');
+$$('#sqlTabs button').forEach((b, i) => b.onclick = () => sqlShow(i));
+sqlShow(0);
+
+/* ===== 09 Q&A ===== */
+const QA = [
+  ['Profile', 'b', `How do you approach a slow query in Snowflake?`, `<p>Measure, find the bottleneck, fix the cause, re-measure. (1) From <code>QUERY_HISTORY</code>: split elapsed time into queued, compilation and execution. (2) If execution dominates, open the <b>Query Profile</b> and start at the most expensive node: check partitions scanned vs total (pruning), bytes spilled local/remote (memory), and rows in vs out on joins (explosions). (3) Fix the cause with the cheapest change: SQL rewrite first, then data layout (clustering, SOS), then compute (size, multi-cluster, QAS). (4) Re-run with <code>USE_CACHED_RESULT = FALSE</code> and compare the same numbers.</p>`],
+  ['Profile', 't', `The Query Profile shows 4 seconds of execution, but the user waited 3 minutes. What happened?`, `<p>The profile covers execution only. The rest is almost certainly <b>queued time</b> (<code>QUEUED_OVERLOAD_TIME</code>: warehouse busy) or <code>QUEUED_PROVISIONING_TIME</code> (warehouse resuming or resizing), occasionally long compilation. Fix queuing with a multi-cluster warehouse or by separating workloads (ELT vs BI), not by making the warehouse bigger. Also check that the client wasn't slow fetching a huge result set.</p>`],
+  ['Profile', 't', `What's the difference between local and remote spilling, and what do you do about it?`, `<p>When a join, sort, aggregation or window function needs more memory than the warehouse has, it spills intermediate data to the node's <b>local SSD</b>; if that fills, it spills to <b>remote storage</b>, which is much slower. Fixes, in order: reduce the data the operator handles (filter earlier, select fewer columns, fix exploding joins, top-N with QUALIFY instead of ranking everything), then move the query to a <b>larger warehouse</b> (more memory and SSD per query). Multi-cluster and QAS do not fix spilling.</p>`],
+  ['Clustering', 'b', `What is clustering depth and how do you check it?`, `<p>For a given value of the clustering column(s), depth is the number of micro-partitions whose min/max range contains it. The average over the table is the <b>average depth</b>; 1 is ideal. Overlap is the number of partitions sharing range with a given partition. Check with <code>SYSTEM$CLUSTERING_INFORMATION('t', '(col)')</code> (JSON with average_depth, average_overlaps, histogram) or <code>SYSTEM$CLUSTERING_DEPTH</code>. Also look at the practical result: partitions scanned for your real queries.</p>`],
+  ['Clustering', 't', `When would you NOT define a clustering key?`, `<p>On small tables (few partitions; nothing to prune). On tables whose natural load order already matches the filters (e.g. daily appends filtered by date). On tables with heavy churn everywhere, where Automatic Clustering would rewrite constantly and the serverless credits would exceed the query savings. When queries filter on many different columns with no dominant pattern (consider Search Optimization instead). And never on a near-unique column like a raw timestamp or an ID; use an expression like <code>TO_DATE(ts)</code>.</p>`],
+  ['Clustering', 's', `A 30 TB fact table's date-filtered queries got slower over a year. Walk me through your fix.`, `<p>Confirm with evidence: partitions scanned vs total for typical queries has grown, and <code>SYSTEM$CLUSTERING_INFORMATION('fact', '(TO_DATE(event_ts))')</code> shows high average depth (late-arriving data and updates broke natural order). Test on a zero-copy clone rebuilt with <code>ORDER BY</code> to measure the achievable pruning. Then <code>ALTER TABLE fact CLUSTER BY (TO_DATE(event_ts))</code> (maybe plus a low-cardinality second column used in filters). Monitor <code>AUTOMATIC_CLUSTERING_HISTORY</code> for initial and steady-state cost and compare it with warehouse time saved. Fix the SQL side too: make sure filters are on the raw column, not wrapped in functions.</p>`],
+  ['SOS/QAS', 'b', `What is the Search Optimization Service and which queries does it help?`, `<p>An Enterprise feature that builds and maintains a <b>search access path</b> for chosen columns, letting the optimizer skip partitions that can't contain the searched value. It helps highly selective queries: equality and IN lookups, substring and regex searches (LIKE '%x%', RLIKE), lookups on VARIANT fields, and geospatial predicates. Costs: storage for the access path plus serverless build and maintenance compute. Enable it per column/method: <code>ADD SEARCH OPTIMIZATION ON EQUALITY(id), SUBSTRING(msg)</code>.</p>`],
+  ['SOS/QAS', 't', `Clustering key or Search Optimization: how do you decide?`, `<p>Clustering reorders data for <b>one</b> main access pattern and helps range filters that return large slices (a month of data). SOS adds pruning for <b>many</b> columns and helps needle-in-a-haystack lookups that return few rows, plus substring/VARIANT/geo searches that clustering can't help. They combine well: cluster a log table by date, add SOS on user_id and message. Decide with data: query patterns from history, partitions scanned today, and the cost estimates (<code>SYSTEM$ESTIMATE_SEARCH_OPTIMIZATION_COSTS</code>).</p>`],
+  ['SOS/QAS', 't', `How does the Query Acceleration Service work, and what does the scale factor control?`, `<p>For eligible queries on a QAS-enabled warehouse, Snowflake offloads parts of the work (mainly large scans with selective filters, and some aggregation) to shared serverless compute, then the warehouse finishes the query. <code>QUERY_ACCELERATION_MAX_SCALE_FACTOR</code> caps the leased compute as a multiple of the warehouse size: default 8, 0 = no limit. Check candidates with <code>SYSTEM$ESTIMATE_QUERY_ACCELERATION(query_id)</code> and the <code>QUERY_ACCELERATION_ELIGIBLE</code> view; cost appears in <code>QUERY_ACCELERATION_HISTORY</code>.</p>`],
+  ['SOS/QAS', 's', `A MEDIUM BI warehouse is fine except when analysts run occasional huge ad-hoc queries that block dashboards. Options?`, `<p>(1) Separate the workloads: give analysts their own warehouse so dashboards are never blocked. (2) Enable <b>QAS</b> on the analyst warehouse if those queries are eligible (big scans, selective filters): they get extra compute only while they run. (3) Multi-cluster on the BI warehouse to absorb concurrency peaks. (4) <code>STATEMENT_TIMEOUT_IN_SECONDS</code> to stop runaways. (5) Look at the ad-hoc queries themselves: if the same lookups recur, SOS or clustering may make them cheap. Upsizing the BI warehouse permanently is usually the most expensive answer.</p>`],
+  ['MV/Cache', 'b', `What are the main restrictions of materialized views in Snowflake?`, `<p>An MV can query <b>only one table</b>: no joins, including self-joins. It can't use window functions, HAVING, ORDER BY, LIMIT, UDFs or non-deterministic functions such as CURRENT_TIMESTAMP, and only a subset of aggregate functions is supported. It can't select from another view or MV. It requires Enterprise Edition. Maintenance is automatic and serverless (billed), and the MV is always current: if it's behind, Snowflake combines it with recent base-table data.</p>`],
+  ['MV/Cache', 't', `Materialized view vs dynamic table: when do you choose each?`, `<p><b>MV</b>: single-table aggregation or filtered subset that is queried very often, must be exactly current, and benefits from <b>automatic query rewrite</b> (queries on the base table can use it). <b>Dynamic table</b>: multi-table transformations with joins, window functions and so on, where a defined lag (TARGET_LAG) is acceptable; it refreshes on a warehouse you choose, incrementally when possible. DTs are a pipeline tool; MVs are a query-acceleration tool.</p>`],
+  ['MV/Cache', 't', `When is a query served from the result cache?`, `<p>When the new query text matches a previous query exactly, the underlying data hasn't changed, it doesn't use functions that must be evaluated at run time (CURRENT_TIMESTAMP, RANDOM...), the role has the needed privileges, and <code>USE_CACHED_RESULT</code> is TRUE. Results are kept for 24 hours, and each reuse extends that, up to 31 days from the first execution. A hit is served by cloud services with no warehouse running. Don't confuse it with the <b>local disk cache</b> on the warehouse SSD, which caches table data (not results) and is lost when the warehouse suspends.</p>`],
+  ['SQL', 'b', `Why does wrapping a column in a function in WHERE slow a query down?`, `<p>Pruning works by comparing your filter with each micro-partition's stored min/max for the column. <code>WHERE TO_CHAR(order_date, 'YYYY-MM') = '2024-03'</code> asks about a derived value that has no stored min/max, so Snowflake often has to read every partition and evaluate the function row by row. Rewrite it as a range on the raw column: <code>order_date &gt;= '2024-03-01' AND order_date &lt; '2024-04-01'</code>. The same applies to implicit casts caused by comparing a VARCHAR column with a number.</p>`],
+  ['SQL', 't', `What is an exploding join and how do you spot and fix it?`, `<p>A join whose output has far more rows than expected because the join key isn't unique on one or both sides (or a condition is missing). In the profile, the Join node's output rows are much greater than its inputs, often followed by spilling and a heavy Aggregate. It also produces <b>wrong totals</b>. Fix the grain: join on the full key, filter SCD2 dimensions to the current/valid version, pre-aggregate the many side, or use EXISTS for existence checks. Adding DISTINCT hides it at extra cost.</p>`],
+  ['SQL', 't', `Broadcast vs hash-partitioned join: what's the difference?`, `<p>In a multi-node warehouse, matching rows must meet on the same node. <b>Broadcast</b>: the small (build) side is copied to every node, and each node joins its local share of the big side; cheap network-wise when one side is small. <b>Hash-partitioned</b>: both sides are redistributed by hash of the join key; needed when both are large, and shows up as network communication in the profile. Snowflake's optimizer chooses automatically; you help by filtering and projecting before the join and keeping keys unique.</p>`],
+  ['Warehouse', 'b', `Scale up vs scale out: when do you use each?`, `<p><b>Scale up</b> (bigger size) gives each query more nodes, memory and SSD: for big, slow, spilling queries. Each size doubles credits per hour, but well-parallelised queries also run about twice as fast. <b>Scale out</b> (multi-cluster, Enterprise) adds clusters of the same size when queries queue: for many concurrent users. Bigger doesn't fix queuing well; more clusters don't make a single query faster.</p>`],
+  ['Warehouse', 's', `The revenue dashboard went from 10 seconds to 10 minutes overnight. How do you investigate?`, `<p>Find the queries (QUERY_TAG or user) and compare runs by <code>QUERY_PARAMETERIZED_HASH</code> before and after. Split the time: if it's queued, it's concurrency (another workload moved onto the warehouse); if it's execution, compare the vitals: partitions scanned (pruning broke? e.g. a new function on the filter column), spill (memory), rows on joins (duplicates in a dimension after a pipeline change). Open the profile of a slow run at its most expensive node, form a hypothesis, test it with a quick SQL check (e.g. duplicate keys), fix the cause, re-measure, then add guardrails: data tests, statement timeouts, regression alerts.</p>`]
+];
+const LV = { b: 'FUNDAMENTAL', t: 'TRICKY', s: 'SCENARIO' };
+function qa(f) { $('#qaList').innerHTML = QA.filter(q => f === 'all' || q[0] === f).map(([tp, l, q, a]) => `<details class="qa"><summary><span class="lv ${l}">${LV[l]}</span><span class="tp">${tp.toUpperCase()}</span>${q}</summary><div class="ans">${a}</div></details>`).join(''); }
+tabs('#qaTabs', d => qa(d.f));
+qa('all');
+
+/* ===== 10 quiz ===== */
+const QZ = [
+  [`A TableScan shows "Partitions scanned 47,900 / Partitions total 48,000" for a query filtering one day. What's the most likely problem?`, [`The warehouse is too small`, `Pruning is failing, e.g. a function wrapped around the filter column or poor clustering`, `The result cache is disabled`, `Too many concurrent queries`], 1, `Scanned ≈ total on a selective filter means min/max pruning didn't work. Check the predicate (sargable?) and the clustering of that column.`],
+  [`Which statistic indicates the most serious memory problem?`, [`Percentage scanned from cache`, `Bytes spilled to local storage`, `Bytes spilled to remote storage`, `Partitions total`], 2, `Remote spilling means memory and the local SSD were both exhausted; data goes to remote storage and back, which is very slow.`],
+  [`A Join node has 40 M and 2 M input rows and 1.3 B output rows. What do you suspect?`, [`Remote spilling`, `Queuing`, `A stale result cache`, `A duplicate (non-unique) join key: an exploding join`], 3, `Output far larger than the inputs means each row matched many rows on the other side. The totals are probably wrong too.`],
+  [`A query's profile shows 2 s of execution, but elapsed time was 4 minutes. The best fix is usually…`, [`Increase the warehouse size`, `Add a clustering key`, `Multi-cluster warehouse or separate warehouses for the competing workloads`, `Enable Search Optimization`], 2, `The time was spent queued. Concurrency is solved by scaling out or separating workloads, not by a bigger size.`],
+  [`What is the best possible (lowest) average clustering depth for a populated table?`, [`1`, `0`, `10`, `It depends on the warehouse size`], 0, `Depth 1 means each value lives in only one partition (no overlap).`],
+  [`Which clustering key is the best choice for a large events table filtered by date ranges?`, [`event_ts (raw timestamp)`, `event_id`, `TO_DATE(event_ts)`, `is_deleted`], 2, `An expression that lowers cardinality to one value per day gives good pruning with reasonable maintenance cost. Raw timestamps and IDs are too high-cardinality, booleans too low.`],
+  [`How is Automatic Clustering billed?`, [`It uses your warehouse credits`, `It's free`, `A flat monthly fee per table`, `Serverless credits, plus extra storage for rewritten partitions retained by Time Travel/Fail-safe`], 3, `Reclustering runs on Snowflake-managed serverless compute; rewritten partitions also temporarily increase storage.`],
+  [`Which query benefits most from Search Optimization?`, [`SELECT * FROM logs WHERE message LIKE '%PaymentTimeout%'`, `SELECT SUM(amount) FROM sales`, `SELECT * FROM sales WHERE sale_date >= '2024-01-01'`, `SELECT * FROM a 2 GB dimension table`], 0, `Selective substring search is a classic SOS case (SUBSTRING method). Full aggregations and broad range scans aren't selective; tiny tables don't need it.`],
+  [`What does QUERY_ACCELERATION_MAX_SCALE_FACTOR = 0 mean?`, [`QAS is disabled`, `No upper limit on acceleration compute`, `Use the default of 8`, `Only one extra node`], 1, `0 removes the cap. The default is 8 (times the warehouse size).`],
+  [`Which problem does the Query Acceleration Service NOT fix?`, [`An outlier query scanning terabytes with a selective filter`, `Ad-hoc queries with unpredictable data volume`, `Large scans that block other queries`, `A huge sort spilling to remote storage on the warehouse`], 3, `QAS offloads eligible scan/filter work. Memory-heavy sorts and joins still run on the warehouse; fix them by reducing data or sizing up.`],
+  [`Which of these can a Snowflake materialized view contain?`, [`A join between orders and customers`, `A window function`, `SUM and COUNT over a single table with GROUP BY`, `CURRENT_TIMESTAMP()`], 2, `MVs are single-table, with a subset of aggregates. Joins, window functions and non-deterministic functions aren't allowed.`],
+  [`A dashboard query is re-run with identical text, but Snowpipe loaded new rows into the table in between. What happens?`, [`Result cache miss: the data changed, so the query executes`, `Result cache hit`, `The query fails`, `Snowflake returns the old result for up to 24 hours`], 0, `Any change to the underlying data invalidates the cached result.`],
+  [`Which rewrite removes an anti-pattern?`, [`UNION → UNION ALL when inputs can't overlap`, `Adding DISTINCT after a join that duplicates rows`, `Adding ORDER BY inside a view`, `Replacing a range filter with YEAR(col) = 2024`], 0, `UNION ALL skips an unnecessary de-duplication step. The other three are anti-patterns.`],
+  [`What is the default MAX_CONCURRENCY_LEVEL of a warehouse?`, [`4`, `8`, `1`, `Unlimited`], 1, `By default a cluster runs up to 8 concurrent queries before additional ones queue (actual concurrency also depends on query size).`]
+];
+let qi = 0; const qAns = Array(QZ.length).fill(null);
+QZ.forEach((_, i) => { const s = document.createElement('span'); s.onclick = () => qShow(i); $('#qzBar').appendChild(s); });
+function qShow(i) {
+  qi = i; const [q, opts, ok, ex] = QZ[i], a = qAns[i];
+  $('#qzN').textContent = i + 1;
+  [...$('#qzBar').children].forEach((s, k) => { s.classList.toggle('on', qAns[k] !== null); s.style.outline = k === i ? '2px solid var(--ice)' : ''; });
+  $('#qzBody').innerHTML = `<h3 style="margin-top:6px">${q}</h3>` + opts.map((o, k) => `<button class="opt ${a !== null ? (k === ok ? 'ok' : (k === a ? 'bad' : '')) : ''}" data-k="${k}">${String.fromCharCode(65 + k)}. ${esc(o)}</button>`).join('') + (a !== null ? `<div class="qexp"><b>${a === ok ? 'Correct.' : 'Not quite.'}</b> ${ex}</div>` : '');
+  $$('#qzBody .opt').forEach(b => b.onclick = () => { if (qAns[qi] !== null) return; qAns[qi] = +b.dataset.k; qShow(qi); $('#qzS').textContent = qAns.filter((x, j) => x === QZ[j][2]).length; });
+  $('#qzNext').textContent = i === QZ.length - 1 ? 'See result' : 'Next';
+}
+function qResult() {
+  const s = qAns.filter((x, j) => x === QZ[j][2]).length;
+  const msg = s >= QZ.length - 2 ? 'Interview-ready on performance tuning.' : s >= Math.round(QZ.length * 0.6) ? 'Solid. Replay the Query Profile cases and the rewrite lab, then retry.' : 'Walk through the Query Profile simulator, the clustering animation and the debugging stepper again, then retry.';
+  $('#qzBody').innerHTML = `<div class="score">${s} / ${QZ.length}</div><p style="margin-top:8px">${msg}</p><button class="btn pri" id="qzAgain" style="margin-top:10px">Retry quiz</button>`;
+  $('#qzAgain').onclick = () => { qAns.fill(null); $('#qzS').textContent = 0; qShow(0); };
+}
+$('#qzNext').onclick = () => qi === QZ.length - 1 ? qResult() : qShow(qi + 1);
+$('#qzPrev').onclick = () => qShow(Math.max(0, qi - 1));
+qShow(0);
+</script>
+<div class="toast" id="toast"></div>
+<script>
+(() => {
+  const t = document.getElementById('toast'); let h;
+  document.querySelectorAll('.road a.soon').forEach(a => a.addEventListener('click', e => {
+    e.preventDefault();
+    t.textContent = `Module ${a.dataset.m} isn't built yet. Ask for it in chat and it will be added here.`;
+    t.classList.add('on'); clearTimeout(h); h = setTimeout(() => t.classList.remove('on'), 2800);
+  }));
+})();
+</script>
+</body>
+</html>

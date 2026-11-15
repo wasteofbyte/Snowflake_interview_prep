@@ -1,0 +1,1348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Snowflake Interview Lab · Module 07 · Data Protection: Time Travel, Fail-safe, Cloning &amp; Replication</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/space-grotesk@5/300.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/space-grotesk@5/700.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/ibm-plex-sans@5/300.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/ibm-plex-sans@5/400.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/ibm-plex-sans@5/600.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/jetbrains-mono@5/400.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/jetbrains-mono@5/700.css">
+<style>
+:root{
+  --bg:#F2F6FA; --card:#FFFFFF; --card2:#E9EFF5; --ink:#0B1B2B; --ink2:#46596B; --ink3:#7F90A2;
+  --line:rgba(11,27,43,.12); --line2:rgba(11,27,43,.22);
+  --ice:#0A86C2; --ice-s:#DCEFF9; --amber:#B86F00; --amber-s:#FFF0D4; --teal:#0B8A6A; --teal-s:#DAF3EB;
+  --red:#C93C3C; --red-s:#FCE4E4; --grid:rgba(10,134,194,.06);
+  --f-head:"Space Grotesk",sans-serif; --f-body:"IBM Plex Sans",sans-serif; --f-mono:"JetBrains Mono",monospace;
+  --r:10px;
+}
+[data-theme="dark"]{
+  --bg:#08121D; --card:#0F1D2C; --card2:#16293B; --ink:#E5EDF5; --ink2:#9DB0C3; --ink3:#687D91;
+  --line:rgba(229,237,245,.10); --line2:rgba(229,237,245,.22);
+  --ice:#4CC3F0; --ice-s:rgba(76,195,240,.13); --amber:#FFB938; --amber-s:rgba(255,185,56,.13); --teal:#3FD3A8; --teal-s:rgba(63,211,168,.13);
+  --red:#FF7070; --red-s:rgba(255,112,112,.14); --grid:rgba(76,195,240,.05);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:var(--f-body);color:var(--ink);line-height:1.7;font-size:16px;
+  background:radial-gradient(1200px 600px at 85% -10%, var(--ice-s), transparent 60%),radial-gradient(900px 500px at -10% 30%, var(--teal-s), transparent 60%),
+  linear-gradient(var(--grid) 1px, transparent 1px) 0 0/32px 32px,linear-gradient(90deg, var(--grid) 1px, transparent 1px) 0 0/32px 32px,var(--bg);background-attachment:fixed}
+code,.mono{font-family:var(--f-mono);font-size:.88em}
+p code,li code,td code{background:var(--card2);padding:1px 6px;border-radius:5px}
+button{font-family:var(--f-body);cursor:pointer}
+.top{position:sticky;top:0;z-index:30;display:flex;align-items:center;gap:16px;padding:12px 28px;border-bottom:1px solid var(--line);background:color-mix(in srgb,var(--bg) 82%,transparent);backdrop-filter:saturate(1.4) blur(8px)}
+.brand{font-family:var(--f-mono);font-weight:700;letter-spacing:.06em;font-size:13px}.brand b{color:var(--ice)}
+.pill{font-family:var(--f-mono);font-size:12px;padding:3px 10px;border-radius:99px;border:1px solid var(--line2);color:var(--ink2)}
+.prog{flex:1;height:4px;background:var(--card2);border-radius:4px;overflow:hidden;max-width:360px;margin-left:auto}
+.prog i{display:block;height:100%;width:0;background:var(--ice);transition:width .4s}
+.prog-l{font-family:var(--f-mono);font-size:12px;color:var(--ink2);min-width:84px}
+.theme{border:1px solid var(--line2);background:var(--card);color:var(--ink);border-radius:8px;padding:5px 10px;font-size:13px}
+.wrap{display:grid;grid-template-columns:270px minmax(0,1fr);gap:36px;max-width:1340px;margin:0 auto;padding:28px}
+nav.side{position:sticky;top:76px;align-self:start;max-height:calc(100vh - 96px);overflow:auto;padding-right:6px}
+.side h4{font-family:var(--f-mono);font-size:11px;letter-spacing:.14em;color:var(--ink3);margin:6px 0 10px;font-weight:400}
+.side a{display:flex;gap:10px;align-items:baseline;padding:6px 10px;border-radius:8px;color:var(--ink2);text-decoration:none;font-size:14px;border-left:2px solid transparent}
+.side a span{font-family:var(--f-mono);font-size:11px;color:var(--ink3)}
+.side a:hover{background:var(--card)}
+.side a.act{color:var(--ink);background:var(--card);border-left-color:var(--ice);border-radius:0 8px 8px 0}
+.side a.seen span{color:var(--teal)}
+.road{margin-top:22px;border-top:1px solid var(--line);padding-top:14px}
+.road div{font-size:13px;color:var(--ink3);padding:3px 10px;display:flex;gap:8px}
+.road div.now{color:var(--ink);font-weight:600}.road div.done{color:var(--teal)}
+.road div em{font-style:normal;font-family:var(--f-mono);font-size:11px;min-width:20px}
+main{min-width:0}
+section{padding:36px 0 44px;border-bottom:1px dashed var(--line2);scroll-margin-top:70px}
+.eyebrow{font-family:var(--f-mono);font-size:12px;letter-spacing:.16em;color:var(--ice);margin-bottom:6px}
+h1{font-family:var(--f-head);font-weight:700;font-size:clamp(40px,6vw,76px);line-height:1;letter-spacing:-.03em}
+h1 .thin,h2 .thin{font-weight:300;color:var(--ink2)}
+h2{font-family:var(--f-head);font-weight:700;font-size:clamp(28px,3.4vw,40px);letter-spacing:-.02em;line-height:1.1;margin-bottom:12px}
+h3{font-family:var(--f-head);font-weight:700;font-size:20px;margin:26px 0 10px;letter-spacing:-.01em}
+.lead{font-size:18px;font-weight:300;color:var(--ink2);max-width:820px}
+p{margin:8px 0}
+ul.dots{margin:8px 0 8px 20px}ul.dots li{margin:4px 0}
+.wwh{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:20px 0}
+.wwh .box{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:18px 20px;position:relative;overflow:hidden}
+.wwh .box.how{grid-column:1/-1}
+.wwh .tag{font-family:var(--f-mono);font-size:11px;letter-spacing:.14em;display:inline-block;padding:2px 8px;border-radius:5px;margin-bottom:8px}
+.box.what .tag{background:var(--ice-s);color:var(--ice)}.box.why .tag{background:var(--amber-s);color:var(--amber)}.box.how .tag{background:var(--teal-s);color:var(--teal)}
+.box::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px}
+.box.what::before{background:var(--ice)}.box.why::before{background:var(--amber)}.box.how::before{background:var(--teal)}
+.call{display:flex;gap:14px;padding:14px 18px;border-radius:var(--r);margin:14px 0;border:1px solid var(--line)}
+.call b.k{font-family:var(--f-mono);font-size:11px;letter-spacing:.12em;white-space:nowrap;padding-top:3px}
+.call.analogy{background:var(--ice-s)}.call.analogy b.k{color:var(--ice)}
+.call.trap{background:var(--red-s)}.call.trap b.k{color:var(--red)}
+.call.pro{background:var(--teal-s)}.call.pro b.k{color:var(--teal)}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px;margin:18px 0}
+.panel-h{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+.panel-h .t{font-family:var(--f-mono);font-size:12px;letter-spacing:.12em;color:var(--ink2)}.panel-h .t b{color:var(--ink)}
+.btn{border:1px solid var(--line2);background:var(--card);color:var(--ink);padding:7px 14px;border-radius:8px;font-size:14px;transition:all .15s}
+.btn:hover{border-color:var(--ice);color:var(--ice)}
+.btn.pri{background:var(--ice);color:var(--card);border-color:var(--ice)}.btn.pri:hover{color:var(--card);filter:brightness(1.08)}
+.btn.warn{border-color:var(--red);color:var(--red)}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.ctl{display:flex;align-items:center;gap:12px;font-size:14px;color:var(--ink2);margin:8px 0}
+.ctl label{min-width:150px}.ctl input[type=range]{flex:1;accent-color:var(--ice)}
+.ctl .v{font-family:var(--f-mono);font-size:13px;color:var(--ink);min-width:110px;text-align:right}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:14px 0}
+.stat{background:var(--card2);border-radius:10px;padding:12px 14px}
+.stat .k{font-family:var(--f-mono);font-size:11px;color:var(--ink3);letter-spacing:.08em}
+.stat .n{font-family:var(--f-head);font-weight:700;font-size:28px;line-height:1.2}
+.stat .s{font-size:12px;color:var(--ink2)}
+.sqlbox{font-family:var(--f-mono);font-size:13px;background:var(--card2);border-radius:8px;padding:10px 14px;white-space:pre-wrap;color:var(--ink);border-left:3px solid var(--ice);overflow:auto}
+.insight{font-size:14px;padding:10px 14px;border-radius:8px;background:var(--amber-s);color:var(--ink);margin-top:10px}.insight b{color:var(--amber)}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+.tabs button{border:1px solid var(--line2);background:transparent;color:var(--ink2);padding:6px 12px;border-radius:99px;font-size:13px}
+.tabs button.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}.grid2>div{min-width:0}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.mini{background:var(--card2);border-radius:10px;padding:14px}
+.mini h5{font-family:var(--f-head);font-size:15px;margin-bottom:4px}
+.mini p{font-size:14px;color:var(--ink2);margin:0}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:13px;color:var(--ink2);margin:8px 0}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:-1px;margin-right:6px}
+table.t{width:100%;border-collapse:collapse;font-size:14px}
+table.t th,table.t td{padding:7px 10px;border-bottom:1px solid var(--line);text-align:left}
+table.t th{font-family:var(--f-mono);font-size:11px;letter-spacing:.1em;color:var(--ink3);font-weight:400}
+table.t td.m{font-family:var(--f-mono);font-size:12px}
+svg{width:100%;height:auto;display:block}
+svg .t{font-family:var(--f-body);font-size:14px;fill:var(--ink)}
+svg .ts{font-family:var(--f-body);font-size:12px;fill:var(--ink2)}
+svg .th{font-family:var(--f-head);font-size:14px;font-weight:700;fill:var(--ink)}
+svg .tm{font-family:var(--f-mono);font-size:11px;fill:var(--ink2)}
+.L-cs{fill:var(--amber-s);stroke:var(--amber)}.L-cp{fill:var(--ice-s);stroke:var(--ice)}.L-st{fill:var(--teal-s);stroke:var(--teal)}
+.neutral{fill:var(--card);stroke:var(--line2)}
+.arr{stroke:var(--ink3);stroke-width:1.2;fill:none}
+.fn{transition:opacity .3s}
+.flow.playing .fn{opacity:.25}
+.flow.playing .fn.on{opacity:1}
+.fn.on rect{stroke-width:2.4}
+.edge{stroke:var(--ink3);stroke-width:1.4;fill:none;transition:opacity .3s}
+.flow.playing .edge{opacity:.2}
+.flow.playing .edge.on{opacity:1;stroke:var(--ice);stroke-width:2.4;stroke-dasharray:7 5}
+@media (prefers-reduced-motion:no-preference){
+  .flow.playing .edge.on{animation:dash .8s linear infinite}
+  @keyframes dash{to{stroke-dashoffset:-24}}
+  .pulse{animation:pulse 1.2s ease-in-out infinite}
+  @keyframes pulse{0%,100%{opacity:.35}50%{opacity:1}}
+  .rise{animation:rise .5s both}
+  @keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+  .grow{transform-box:fill-box;transform-origin:left center;animation:grow .6s both}
+  @keyframes grow{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+}
+.stepbar{display:flex;gap:6px;margin:12px 0}
+.stepbar span{flex:1;height:4px;border-radius:4px;background:var(--card2);cursor:pointer}
+.stepbar span.on{background:var(--ice)}
+.stepdesc{min-height:120px;background:var(--card2);border-radius:10px;padding:14px 16px}
+.stepdesc h4{font-family:var(--f-head);font-size:17px;margin-bottom:6px}
+.stepdesc .two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.stepdesc .two div{font-size:14px;color:var(--ink2)}
+.stepdesc .two b.l{display:block;font-family:var(--f-mono);font-size:11px;letter-spacing:.12em;margin-bottom:4px}
+.stepdesc .two .you b.l{color:var(--ice)}.stepdesc .two .be b.l{color:var(--teal)}
+.term{background:#0A141F;color:#D6E2EE;font-family:var(--f-mono);font-size:12.5px;border-radius:12px;padding:14px 16px;height:340px;overflow:auto;border:1px solid #1E3247}
+.term div{white-space:pre;line-height:1.5}
+.term .tin{color:#FFB938}.term .terr{color:#FF7A7A}.term .tok{color:#3FD3A8}.term .tdim{color:#6F8499}
+.tbar{display:flex;gap:6px;align-items:center;margin-bottom:8px}
+.tbar i{width:10px;height:10px;border-radius:50%;display:inline-block}
+.tinput{display:flex;gap:8px;margin-top:8px}
+.tinput input{flex:1;font-family:var(--f-mono);font-size:13px;padding:8px 10px;border-radius:8px;border:1px solid var(--line2);background:var(--card);color:var(--ink)}
+.cmds{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}
+.cmds button{font-family:var(--f-mono);font-size:11.5px;border:1px solid var(--line2);background:var(--card);color:var(--ink);padding:5px 9px;border-radius:7px;text-align:left}
+.cmds button:hover{border-color:var(--amber);color:var(--amber)}
+.cmds button small{display:block;font-family:var(--f-body);font-size:11px;color:var(--ink3)}
+.explain{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 16px;min-height:90px;font-size:14.5px}
+.explain b.h{font-family:var(--f-mono);font-size:12px;color:var(--ice);letter-spacing:.1em;display:block;margin-bottom:4px}
+.gantt-l{font-family:var(--f-mono);font-size:11px;fill:var(--ink2)}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font-family:var(--f-mono);font-size:12px;border:1px solid var(--line2);padding:5px 10px;border-radius:99px;cursor:pointer;user-select:none;background:var(--card);color:var(--ink2)}
+.chip.on{background:var(--ice-s);border-color:var(--ice);color:var(--ice)}
+.chip.now{outline:2px solid var(--amber);outline-offset:2px}
+.fcard{border:1px solid var(--line2);border-radius:10px;padding:10px 12px;cursor:pointer;background:var(--card);text-align:left;color:var(--ink)}
+.fcard.on{border-color:var(--ice);background:var(--ice-s)}
+.fcard b{display:block;font-family:var(--f-mono);font-size:12px}
+.fcard small{color:var(--ink3);font-size:12px}
+.out{font-family:var(--f-mono);font-size:12px;background:var(--card2);border-radius:8px;padding:10px 14px;white-space:pre-wrap;border-left:3px solid var(--teal);max-height:260px;overflow:auto}
+.chunk{border:1px solid var(--line2);border-radius:8px;padding:8px 10px;font-size:13px;margin:6px 0;background:var(--card)}
+.chunk em{font-style:normal;background:var(--amber-s);color:var(--ink);border-bottom:2px solid var(--amber)}
+.chunk b{font-family:var(--f-mono);font-size:11px;color:var(--ice);margin-right:8px}
+.act-i{color:var(--teal);font-family:var(--f-mono);font-size:12px;font-weight:700}
+.act-d{color:var(--red);font-family:var(--f-mono);font-size:12px;font-weight:700}
+.badge{font-family:var(--f-mono);font-size:11px;padding:2px 8px;border-radius:99px;white-space:nowrap}
+.badge.ok{background:var(--teal-s);color:var(--teal)}.badge.bad{background:var(--red-s);color:var(--red)}.badge.mid{background:var(--amber-s);color:var(--amber)}.badge.off{background:var(--card2);color:var(--ink3)}
+.flash{animation:flash 1s}
+@keyframes flash{0%{box-shadow:0 0 0 3px var(--amber)}100%{box-shadow:0 0 0 0 transparent}}
+.tn rect{fill:var(--card);stroke:var(--line2);transition:all .3s}
+.tn.run rect{fill:var(--amber-s);stroke:var(--amber);stroke-width:2.4}
+.tn.ok rect{fill:var(--teal-s);stroke:var(--teal);stroke-width:2}
+.tn.skip rect{fill:var(--card2);stroke:var(--ink3);stroke-dasharray:5 4}
+.tn.fail rect{fill:var(--red-s);stroke:var(--red);stroke-width:2}
+.tn .st{font-family:var(--f-mono);font-size:10px;fill:var(--ink3)}
+.log{max-height:240px;overflow:auto}
+.pk{transition:transform .8s cubic-bezier(.5,.05,.3,1)}
+.code{font-family:var(--f-mono);font-size:13px;background:var(--card2);border-radius:10px;padding:10px 0;overflow:auto}
+.code div{padding:2px 16px 2px 0;cursor:pointer;white-space:pre;display:block}
+.code div em{font-style:normal;color:var(--ink3);width:40px;text-align:right;padding-right:14px;display:inline-block;user-select:none}
+.code div:hover{background:var(--ice-s)}
+.code div.on{background:var(--ice-s);box-shadow:inset 3px 0 var(--ice)}
+.kw{color:var(--ice);font-weight:700}.str{color:var(--teal)}.num{color:var(--amber)}
+.qa{border:1px solid var(--line);border-radius:10px;margin:8px 0;background:var(--card);overflow:hidden}
+.qa summary{list-style:none;cursor:pointer;padding:14px 18px;display:flex;gap:12px;align-items:baseline;font-weight:600}
+.qa summary::-webkit-details-marker{display:none}
+.qa summary .lv{font-family:var(--f-mono);font-size:10px;letter-spacing:.1em;padding:2px 8px;border-radius:99px;flex:none;font-weight:400}
+.lv.b{background:var(--teal-s);color:var(--teal)}.lv.t{background:var(--red-s);color:var(--red)}.lv.s{background:var(--amber-s);color:var(--amber)}
+.qa summary .tp{font-family:var(--f-mono);font-size:10px;color:var(--ink3);flex:none;font-weight:400}
+.qa summary::after{content:"+";margin-left:auto;font-family:var(--f-mono);color:var(--ink3)}
+.qa[open] summary::after{content:"−"}
+.qa .ans{padding:0 18px 16px;color:var(--ink2);font-size:15px;border-top:1px solid var(--line)}
+.qa .ans p:first-child{margin-top:12px}
+.opt{display:block;width:100%;text-align:left;padding:12px 14px;margin:8px 0;border:1px solid var(--line2);border-radius:10px;background:var(--card);color:var(--ink);font-size:15px}
+.opt:hover{border-color:var(--ice)}
+.opt.ok{border-color:var(--teal);background:var(--teal-s)}.opt.bad{border-color:var(--red);background:var(--red-s)}
+.qexp{margin-top:10px;padding:12px 14px;border-radius:10px;background:var(--card2);font-size:14px;color:var(--ink2)}
+.score{font-family:var(--f-head);font-weight:700;font-size:56px;line-height:1}
+.cheat{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+.cheat div{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 16px;font-size:14px}
+.cheat div em{font-style:normal;font-family:var(--f-mono);font-size:20px;font-weight:700;color:var(--ice);display:block;line-height:1.1;margin-bottom:4px}
+.analogy-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:18px}
+.ag{border-radius:12px;padding:16px;border:1px solid var(--line);background:var(--card)}
+.ag .k{font-family:var(--f-mono);font-size:11px;letter-spacing:.12em}
+.ag h5{font-family:var(--f-head);font-size:18px;margin:2px 0 4px}
+.ag p{font-size:14px;color:var(--ink2);margin:0}
+.ag.a1{border-top:3px solid var(--amber)}.ag.a1 .k{color:var(--amber)}
+.ag.a2{border-top:3px solid var(--ice)}.ag.a2 .k{color:var(--ice)}
+.ag.a3{border-top:3px solid var(--teal)}.ag.a3 .k{color:var(--teal)}
+.ag.a4{border-top:3px solid var(--red)}.ag.a4 .k{color:var(--red)}
+footer{padding:40px 0;color:var(--ink3);font-size:13px;font-family:var(--f-mono)}
+.note-s{font-size:12px;color:var(--ink3);font-style:italic}
+@media (max-width:1000px){
+  .wrap{grid-template-columns:1fr;padding:16px}
+  nav.side{display:none}
+  .wwh,.grid2,.stepdesc .two{grid-template-columns:1fr}
+  .grid3,.analogy-grid{grid-template-columns:1fr}
+  .prog{display:none}
+}
+.road a.rm{display:flex;gap:8px;align-items:baseline;font-size:13px;padding:5px 10px;border-radius:8px;text-decoration:none;color:var(--ink2);border-left:2px solid transparent}
+.road a.rm:hover{background:var(--card);color:var(--ink)}
+.road a.rm em{font-style:normal;font-family:var(--f-mono);font-size:11px;min-width:20px}
+.road a.rm i{font-style:normal;font-family:var(--f-mono);font-size:9.5px;margin-left:auto;border:1px solid var(--line2);border-radius:99px;padding:0 6px;white-space:nowrap;color:var(--ink3)}
+.road a.rm.now{color:var(--ink);font-weight:600;border-left-color:var(--ice);background:var(--card);border-radius:0 8px 8px 0}
+.road a.rm.now i{border-color:var(--ice);color:var(--ice)}
+.road a.rm.ready em,.road a.rm.ready i{color:var(--teal)}.road a.rm.ready i{border-color:var(--teal)}
+.road a.rm.soon{color:var(--ink3)}
+.toast{position:fixed;bottom:24px;left:50%;transform:translate(-50%,20px);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;font-size:14px;opacity:0;transition:all .3s;z-index:60;pointer-events:none;max-width:90vw}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+.code div.pdone{box-shadow:inset 3px 0 var(--teal)}
+#pcCode{max-height:600px;position:relative}
+/* ===== Module 07 extras ===== */
+.vt-sel{font-family:var(--f-mono);font-size:12.5px;padding:6px 8px;border-radius:8px;border:1px solid var(--line2);background:var(--card);color:var(--ink);max-width:100%}
+.mp rect{transition:all .35s}
+.mp.shared rect{fill:var(--teal-s);stroke:var(--teal)}
+.mp.src rect{fill:var(--ice-s);stroke:var(--ice)}
+.mp.cln rect{fill:var(--amber-s);stroke:var(--amber)}
+.mp.ret rect{fill:var(--red-s);stroke:var(--red);stroke-dasharray:5 4}
+.mp.tt rect{fill:var(--card2);stroke:var(--ink3);stroke-dasharray:4 4}
+.mp text{font-family:var(--f-mono);font-size:11px;fill:var(--ink)}
+.lnk{stroke:var(--teal);stroke-width:1.2;stroke-dasharray:3 4;fill:none;opacity:.7}
+.ttype{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:10px 0}
+.ttype .fcard{padding:14px}
+.ttype .fcard h5{font-family:var(--f-head);font-size:17px;margin-bottom:2px}
+.ttype .fcard p{font-size:13px;color:var(--ink2);margin:4px 0 0}
+table.t td.hl,table.t th.hl{background:var(--ice-s)}
+.dr-st{font-family:var(--f-mono);font-size:11px}
+.region rect{transition:all .35s}
+.region.down rect.rb{fill:var(--red-s);stroke:var(--red);stroke-width:2.4}
+.region.up rect.rb{fill:var(--teal-s);stroke:var(--teal);stroke-width:2.4}
+.tier-out td{vertical-align:top}
+@media (max-width:1000px){.top{flex-wrap:wrap;padding:10px 16px;gap:8px}.prog-l{display:none}.ttype{grid-template-columns:1fr}.ctl{flex-wrap:wrap}.ctl label{min-width:0;width:100%}.ctl .v{min-width:0}.call{flex-direction:column;gap:4px}#ttTbl,#bkOut,main table.t{display:block;overflow-x:auto}}
+/* course-wide phone layout */
+@media (max-width:560px){
+  .top{flex-wrap:wrap;gap:8px;padding:10px 14px}
+  .top .pill,.top .prog-l,.top .prog{display:none}
+  .brand{flex:1}
+  .ctl{flex-wrap:wrap}.ctl label{min-width:0;flex:1 1 100%}.ctl .v{min-width:0;text-align:left}
+  table{display:block;overflow-x:auto;max-width:100%}
+  .grid2,.grid3,.analogy-grid,[style*="grid-template-columns"]{grid-template-columns:1fr!important}
+  .grid2>*,.grid3>*,.call>div{min-width:0}
+  p code,li code,td code{word-break:break-word}
+  .code,.sqlbox,.out,.term,pre{max-width:100%;overflow-x:auto}
+  .call{flex-direction:column;gap:6px}
+  main,section,.panel,.wwh .box,.mini{min-width:0;max-width:100%}
+}
+</style>
+</head>
+<body>
+<div class="top">
+  <div class="brand">SNOWFLAKE<b>//</b>INTERVIEW LAB</div>
+  <span class="pill">Module 07 · Data protection</span>
+  <div class="prog"><i id="progBar"></i></div>
+  <span class="prog-l" id="progLbl">0% explored</span>
+  <button class="theme" id="themeBtn">Dark / light</button>
+</div>
+<div class="wrap">
+<nav class="side">
+  <h4>MODULE 07 · CHAPTERS</h4>
+  <a href="#intro"><span>00</span>Start here: data lifecycle</a>
+  <a href="#tt"><span>01</span>Time Travel</a>
+  <a href="#fs"><span>02</span>Fail-safe</a>
+  <a href="#types"><span>03</span>Table types</a>
+  <a href="#clone"><span>04</span>Zero-copy cloning</a>
+  <a href="#repl"><span>05</span>Replication &amp; failover</a>
+  <a href="#backup"><span>06</span>Backups &amp; strategy</a>
+  <a href="#sql"><span>07</span>SQL lab</a>
+  <a href="#qa"><span>08</span>Interview Q&amp;A</a>
+  <a href="#quiz"><span>09</span>Quiz</a>
+  <a href="#cheat"><span>10</span>Cheat sheet</a>
+  <div class="road">
+    <h4>COURSE ROADMAP · CLICK TO OPEN</h4>
+    <a class="rm ready" href="../module01/"><em>01</em>Architecture<i>open</i></a>
+    <a class="rm ready" href="../module02/"><em>02</em>SnowSQL · unstructured · streams, tasks &amp; procedures<i>open</i></a>
+    <a class="rm ready" href="../module03/"><em>03</em>Performance tuning<i>open</i></a>
+    <a class="rm ready" href="../module04/"><em>04</em>Data ingestion (Snowpipe)<i>open</i></a>
+    <a class="rm ready" href="../module05/"><em>05</em>Dynamic tables &amp; transforms<i>open</i></a>
+    <a class="rm ready" href="../module06/"><em>06</em>Semi-structured data<i>open</i></a>
+    <a class="rm now" href="../module07/"><em>07</em>Data protection<i>you are here</i></a>
+    <a class="rm ready" href="../module08/"><em>08</em>Security &amp; governance<i>open</i></a>
+    <a class="rm ready" href="../module09/"><em>09</em>Cost optimization<i>open</i></a>
+    <a class="rm ready" href="../module10/"><em>10</em>Data sharing<i>open</i></a>
+    <a class="rm ready" href="../module11/"><em>11</em>Snowpark &amp; Cortex AI<i>open</i></a>
+    <a class="rm ready" href="../module12/"><em>12</em>Advanced SQL<i>open</i></a>
+    <a class="rm ready" href="../module13/"><em>13</em>Modeling &amp; tooling<i>open</i></a>
+    <a class="rm ready" href="../module14/"><em>14</em>System design &amp; behavioral<i>open</i></a>
+  </div>
+</nav>
+<main>
+
+<section id="intro">
+  <div class="eyebrow">MODULE 07 · DATA PROTECTION</div>
+  <h1>Nothing is overwritten.<br><span class="thin">So almost anything can be undone.</span></h1>
+  <p class="lead" style="margin-top:18px">Module 1 taught you that Snowflake stores table data in <b>immutable micro-partitions</b>: files that are written once and never edited. This module shows the payoff. Because old files are kept instead of overwritten, Snowflake can rewind tables (<b>Time Travel</b>), keep a last-resort copy (<b>Fail-safe</b>), copy terabytes in seconds (<b>zero-copy cloning</b>), and ship only the changed files to another region (<b>replication</b>).</p>
+  <p style="margin-top:14px">Four everyday analogies for this module:</p>
+  <div class="analogy-grid">
+    <div class="ag a1 rise"><div class="k">TIME TRAVEL</div><h5>Google Docs version history</h5><p>You deleted a paragraph by mistake? Open the history and pick the version from 10 minutes ago. You can do it yourself, for a limited number of days.</p></div>
+    <div class="ag a2 rise" style="animation-delay:.1s"><div class="k">FAIL-SAFE</div><h5>The bank's back-room vault</h5><p>After your own history expires, the bank still keeps a copy for 7 days. You can't open the vault yourself. Only bank staff (Snowflake Support) can, and only in an emergency.</p></div>
+    <div class="ag a3 rise" style="animation-delay:.2s"><div class="k">ZERO-COPY CLONE</div><h5>A playlist, not a CD burn</h5><p>Making a new playlist doesn't copy the songs. It points at the same songs. Only songs you add or change are new.</p></div>
+    <div class="ag a4 rise" style="animation-delay:.3s"><div class="k">REPLICATION</div><h5>A second kitchen in another city</h5><p>The same recipes and stock, kept in sync on a schedule. If the first kitchen floods, you open the second one and send the customers there.</p></div>
+  </div>
+  <div class="wwh">
+    <div class="box what"><span class="tag">01 · WHAT IS IT</span>
+      <p><b>Data protection</b> in Snowflake is a set of features that keep your data recoverable after human mistakes, bad code, or a whole-region outage. Snowflake calls the built-in part <b>Continuous Data Protection (CDP)</b>: Time Travel + Fail-safe, which are on by default for permanent tables.</p>
+      <p>Every version of a table's data moves through the same lifecycle: <b>Active → Time Travel → Fail-safe → purged</b>.</p>
+    </div>
+    <div class="box why"><span class="tag">02 · WHY WE USE IT</span>
+      <ul class="dots">
+        <li><b>People make mistakes:</b> an UPDATE without a WHERE, a DROP in the wrong schema, a buggy dbt model.</li>
+        <li><b>No backup jobs to run:</b> traditional databases need nightly dumps. Here, history is kept automatically.</li>
+        <li><b>Cheap dev/test copies:</b> clone production in seconds without doubling storage.</li>
+        <li><b>Business continuity:</b> replicate to another region or cloud and fail over when needed.</li>
+      </ul>
+    </div>
+    <div class="box how"><span class="tag">03 · HOW IT WORKS · FOLLOW ONE MICRO-PARTITION (click Next)</span>
+      <p>The key idea: a table is just <b>metadata pointing at a list of micro-partition files</b>. Changing data never edits a file; it writes new files and moves the pointers. The old files become history. Step through it:</p>
+      <svg viewBox="0 0 680 250" class="flow" id="lcFlow">
+        <path class="edge" id="lce0" d="M290 62 L110 112"/>
+        <path class="edge" id="lce4" d="M390 62 L270 112"/>
+        <path class="edge" id="lce1" d="M160 152 L190 152"/>
+        <path class="edge" id="lce2" d="M330 152 L360 152"/>
+        <path class="edge" id="lce3" d="M500 152 L530 152"/>
+        <g class="fn" id="lcMeta"><rect class="L-cs" x="200" y="12" width="280" height="50" rx="10" stroke-width="1"/><text class="th" x="340" y="30" text-anchor="middle" dominant-baseline="central">Cloud services · table metadata</text><text class="tm" x="340" y="48" text-anchor="middle" dominant-baseline="central" id="lcMetaT">ORDERS v1 → MP1, MP2, MP3</text></g>
+        <g class="fn" id="lcAct"><rect class="L-st" x="20" y="112" width="140" height="80" rx="10" stroke-width="1"/><text class="th" x="90" y="134" text-anchor="middle" dominant-baseline="central">Active</text><text class="ts" x="90" y="156" text-anchor="middle" dominant-baseline="central">current version</text><text class="tm" x="90" y="176" text-anchor="middle" dominant-baseline="central" id="lcActT">MP1 MP2 MP3</text></g>
+        <g class="fn" id="lcTT"><rect class="L-cp" x="190" y="112" width="140" height="80" rx="10" stroke-width="1"/><text class="th" x="260" y="134" text-anchor="middle" dominant-baseline="central">Time Travel</text><text class="ts" x="260" y="156" text-anchor="middle" dominant-baseline="central">you can query it</text><text class="tm" x="260" y="176" text-anchor="middle" dominant-baseline="central" id="lcTTT">–</text></g>
+        <g class="fn" id="lcFS"><rect class="L-cs" x="360" y="112" width="140" height="80" rx="10" stroke-width="1"/><text class="th" x="430" y="134" text-anchor="middle" dominant-baseline="central">Fail-safe</text><text class="ts" x="430" y="156" text-anchor="middle" dominant-baseline="central">Support only · 7 days</text><text class="tm" x="430" y="176" text-anchor="middle" dominant-baseline="central" id="lcFST">–</text></g>
+        <g class="fn" id="lcPg"><rect class="neutral" x="530" y="112" width="140" height="80" rx="10" stroke-width="1"/><text class="th" x="600" y="134" text-anchor="middle" dominant-baseline="central">Purged</text><text class="ts" x="600" y="156" text-anchor="middle" dominant-baseline="central">storage freed</text><text class="tm" x="600" y="176" text-anchor="middle" dominant-baseline="central" id="lcPgT">–</text></g>
+        <text class="tm" x="340" y="228" text-anchor="middle">retention days (you choose) →  7 days (fixed, permanent tables) →  gone</text>
+      </svg>
+      <div class="stepbar" id="lcBar"></div>
+      <div class="stepdesc" id="lcDesc"></div>
+      <div class="row" style="margin-top:12px"><button class="btn" id="lcPrev">Back</button><button class="btn pri" id="lcNext">Start</button><button class="btn" id="lcReset">Reset</button></div>
+    </div>
+  </div>
+  <div class="call pro"><b class="k">SENIOR ANGLE</b><div>When an interviewer asks "how can Snowflake offer Time Travel, cloning and incremental replication so cheaply?", the one-line answer is: <b>immutable micro-partitions plus versioned metadata</b>. Time Travel = keep old files and old metadata versions. Clone = new metadata pointing at the same files. Replication = copy only the files the secondary doesn't have yet.</div></div>
+</section>
+
+<section id="tt">
+  <div class="eyebrow">CHAPTER 01</div>
+  <h2>Time Travel <span class="thin">· query and restore the past</span></h2>
+  <div class="wwh">
+    <div class="box what"><span class="tag">01 · WHAT IS IT</span>
+      <p><b>Time Travel</b> lets you read, clone, or restore data <b>as it was at an earlier point</b> within a retention window. You use it in three ways:</p>
+      <ul class="dots">
+        <li><b>Query the past:</b> <code>SELECT … FROM orders AT(OFFSET =&gt; -3600)</code></li>
+        <li><b>Clone the past:</b> <code>CREATE TABLE orders_fix CLONE orders BEFORE(STATEMENT =&gt; '&lt;query_id&gt;')</code></li>
+        <li><b>Bring back dropped objects:</b> <code>UNDROP TABLE | SCHEMA | DATABASE</code></li>
+      </ul>
+      <p>The point in time is given with <code>AT</code> (inclusive) or <code>BEFORE</code> (just before), using one of: <code>TIMESTAMP =&gt;</code>, <code>OFFSET =&gt;</code> (seconds back from now, negative), or <code>STATEMENT =&gt;</code> (a query ID).</p>
+    </div>
+    <div class="box why"><span class="tag">02 · WHY WE USE IT</span>
+      <ul class="dots">
+        <li><b>Undo mistakes</b> without a restore ticket: bad UPDATE, accidental DELETE, wrong DROP.</li>
+        <li><b>Audit and debugging:</b> "what did this row look like before last night's job ran?"</li>
+        <li><b>Reproducibility:</b> rerun a report on yesterday's exact data.</li>
+        <li><b>Safe deployments:</b> note the time before a release, and roll back data if it goes wrong.</li>
+      </ul>
+    </div>
+    <div class="box how"><span class="tag">03 · HOW IT WORKS · IN THE BACKEND</span>
+      <div class="grid3">
+        <div class="mini"><h5>1 · Every commit is a version</h5><p>Each committed DML creates a new table version in the metadata store (cloud services): a list of the micro-partitions that make up the table at that moment. Replaced partitions are not deleted; they are marked as historical.</p></div>
+        <div class="mini"><h5>2 · AT / BEFORE picks a version</h5><p>Cloud services finds the version that was current at your timestamp, offset or statement, and hands that list of partitions to the warehouse. Pruning works as normal, using the old version's min/max metadata.</p></div>
+        <div class="mini"><h5>3 · Retention decides how far back</h5><p>Historical partitions stay queryable for <code>DATA_RETENTION_TIME_IN_DAYS</code>. After that a background process moves them into Fail-safe (permanent tables) or removes them.</p></div>
+      </div>
+      <p style="margin-top:10px">Querying Time Travel <b>needs a warehouse</b> (it is a normal read). Cloning and UNDROP are <b>metadata operations</b> handled by cloud services, so they don't scan data.</p>
+    </div>
+  </div>
+
+  <h3>How long can you go back?</h3>
+  <table class="t">
+    <tr><th>OBJECT</th><th>STANDARD EDITION</th><th>ENTERPRISE EDITION AND HIGHER</th><th>FAIL-SAFE AFTERWARDS</th></tr>
+    <tr><td>Permanent table / schema / database</td><td>0 or 1 day (default 1)</td><td>0 to 90 days (default 1)</td><td>7 days</td></tr>
+    <tr><td>Transient table / schema / database</td><td>0 or 1 day</td><td>0 or 1 day</td><td>None</td></tr>
+    <tr><td>Temporary table</td><td>0 or 1 day, and never beyond the session</td><td>0 or 1 day, and never beyond the session</td><td>None</td></tr>
+  </table>
+  <div class="grid2" style="margin-top:12px">
+    <div class="mini"><h5>DATA_RETENTION_TIME_IN_DAYS</h5><p>Set at <b>account, database, schema or table</b> level. The lowest level that sets it explicitly wins (table beats schema beats database beats account). Setting it to <b>0</b> turns Time Travel off for that object.</p></div>
+    <div class="mini"><h5>MIN_DATA_RETENTION_TIME_IN_DAYS</h5><p>An <b>account-level</b> safety floor set by ACCOUNTADMIN. Effective retention = <code>MAX(DATA_RETENTION_TIME_IN_DAYS, MIN_DATA_RETENTION_TIME_IN_DAYS)</code>, so a developer can't quietly set a table to 0. It doesn't apply to transient or temporary objects.</p></div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-h"><div class="t">SIMULATOR · <b>VERSION TIMELINE</b> · table ORDERS</div><span class="note-s">Illustrative model: each statement advances the clock 5 minutes; query IDs are fake.</span></div>
+    <div class="row" style="margin-bottom:6px"><span class="note-s" style="min-width:120px">1 · Run DML:</span>
+      <button class="btn" id="vtAdd">INSERT 2 orders</button><button class="btn warn" id="vtUpd">Bad UPDATE (SET amount = 0, no WHERE)</button><button class="btn warn" id="vtDel">DELETE WHERE region = 'EU'</button><button class="btn warn" id="vtDrop">DROP TABLE orders</button></div>
+    <div class="row" style="margin-bottom:6px"><span class="note-s" style="min-width:120px">Clock &amp; settings:</span>
+      <button class="btn" id="vtWait">Wait 1 day</button><button class="btn" id="vtReset">Reset</button>
+      <span class="note-s" style="margin-left:10px">DATA_RETENTION_TIME_IN_DAYS:</span><div class="tabs" id="vtRet" style="margin:0"><button data-r="0">0 (off)</button><button class="on" data-r="1">1 (default)</button><button data-r="7">7 (Enterprise)</button></div></div>
+    <svg viewBox="0 0 680 120" id="vtTl"></svg>
+    <div class="grid2">
+      <div><div class="note-s">ORDERS right now</div><div id="vtNow"></div></div>
+      <div>
+        <div class="note-s">2 · Pick a Time Travel action</div>
+        <div class="tabs" id="vtMode" style="margin:4px 0 8px"><button class="on" data-m="off">AT(OFFSET)</button><button data-m="stmt">BEFORE(STATEMENT)</button><button data-m="atst">AT(STATEMENT)</button><button data-m="undrop">UNDROP</button></div>
+        <div id="vtCtl"></div>
+        <button class="btn pri" id="vtRun" style="margin-top:8px">Run it</button>
+      </div>
+    </div>
+    <div class="sqlbox" id="vtSql" style="margin-top:12px"></div>
+    <div id="vtRes" style="margin-top:8px"></div>
+    <div class="stats">
+      <div class="stat"><div class="k">CLOCK</div><div class="n" id="vtClock" style="font-size:20px">–</div></div>
+      <div class="stat"><div class="k">VERSIONS IN METADATA</div><div class="n" id="vtVer">1</div></div>
+      <div class="stat"><div class="k">QUERYABLE WINDOW</div><div class="n" id="vtWin" style="font-size:20px">–</div></div>
+      <div class="stat"><div class="k">TABLE STATE</div><div class="n" id="vtState" style="font-size:20px">–</div></div>
+    </div>
+    <div class="insight" id="vtIns">Run the <b>Bad UPDATE</b>, then try <b>BEFORE(STATEMENT)</b> on it. Then try the same with <b>AT(STATEMENT)</b> and compare.</div>
+  </div>
+
+  <div class="grid2">
+    <div class="call trap" style="margin:0"><b class="k">INTERVIEW TRAP</b><div><b>AT vs BEFORE with STATEMENT.</b> <code>AT(STATEMENT =&gt; id)</code> <i>includes</i> the changes made by that statement. <code>BEFORE(STATEMENT =&gt; id)</code> shows the table <i>just before</i> it ran. To undo a bad UPDATE, you want <b>BEFORE</b>.</div></div>
+    <div class="call trap" style="margin:0"><b class="k">INTERVIEW TRAP</b><div><b>Timestamps and time zones.</b> <code>AT(TIMESTAMP =&gt; '2024-06-01 09:00')</code> may be parsed as a different type than you expect. Cast explicitly, e.g. <code>'2024-06-01 09:00:00 -0700'::TIMESTAMP_TZ</code> or <code>::TIMESTAMP_LTZ</code>. If you ask for a time before the table existed or older than retention, the query errors.</div></div>
+  </div>
+  <div class="call trap"><b class="k">INTERVIEW TRAP</b><div><b>CREATE OR REPLACE then UNDROP.</b> <code>CREATE OR REPLACE TABLE orders …</code> silently <i>drops</i> the old table. To get it back, first rename the new one (<code>ALTER TABLE orders RENAME TO orders_new</code>), then <code>UNDROP TABLE orders</code>. UNDROP fails if an object with the same name already exists. If a name was dropped several times, UNDROP restores the most recently dropped version first (<code>SHOW TABLES HISTORY</code> shows them all).</div></div>
+  <div class="call pro"><b class="k">SENIOR ANGLE</b><div><b>Parent retention wins on drop.</b> If you drop a <i>database</i> or <i>schema</i>, its child tables are retained for the <b>parent's</b> retention period, even if a child had a longer retention set explicitly. Critical tables in a schema with 1-day retention can therefore only be UNDROPped for 1 day if the whole schema is dropped. Also: changing retention is not retroactive in the way people think. Increasing it extends history that is still in Time Travel; decreasing it pushes history older than the new limit into Fail-safe (permanent tables).</div></div>
+</section>
+
+<section id="fs">
+  <div class="eyebrow">CHAPTER 02</div>
+  <h2>Fail-safe <span class="thin">· the last-resort safety net</span></h2>
+  <div class="wwh">
+    <div class="box what"><span class="tag">01 · WHAT IS IT</span>
+      <p><b>Fail-safe</b> is a fixed <b>7-day</b> period that starts <b>after Time Travel ends</b>, for <b>permanent</b> tables only. During this time Snowflake still keeps the historical micro-partitions, but <b>you can't query, clone or UNDROP them</b>. Only <b>Snowflake Support</b> can recover the data, on a best-effort basis.</p>
+      <p>Transient and temporary tables have <b>no Fail-safe</b>.</p>
+    </div>
+    <div class="box why"><span class="tag">02 · WHY IT EXISTS</span>
+      <p>It protects against disasters that Time Travel doesn't cover: for example someone sets retention to 0 and drops a table, or a mistake is noticed only after the retention window has passed. It is Snowflake's internal safety net, not a backup feature you operate.</p>
+      <p>The catch: <b>you pay for its storage</b>, and you can't turn it off for permanent tables. That is the main reason transient tables exist.</p>
+    </div>
+    <div class="box how"><span class="tag">03 · HOW IT WORKS</span>
+      <p>When a historical micro-partition ages out of Time Travel, a background service re-tags it as Fail-safe instead of deleting it. Seven days later it is permanently purged and the storage is freed. Recovery from Fail-safe means opening a support case; Snowflake documents that it can take from <b>hours to days</b> and is not guaranteed for any particular scenario. You can see the bytes per table in <code>TABLE_STORAGE_METRICS</code> (columns <code>ACTIVE_BYTES</code>, <code>TIME_TRAVEL_BYTES</code>, <code>FAILSAFE_BYTES</code>, <code>RETAINED_FOR_CLONE_BYTES</code>).</p>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-h"><div class="t">SIMULATOR · <b>STORAGE LIFECYCLE</b> · 120 days of one table</div><span class="note-s">Illustrative model, not a benchmark. Price assumed at $23 per TB-month; check your contract.</span></div>
+    <div class="row" style="margin-bottom:6px"><span class="note-s" style="min-width:120px">Table type:</span><div class="tabs" id="fsType" style="margin:0"><button class="on" data-v="perm">Permanent</button><button data-v="trans">Transient</button><button data-v="temp">Temporary</button></div>
+      <span class="note-s" style="margin-left:10px">Edition:</span><div class="tabs" id="fsEd" style="margin:0"><button data-v="std">Standard</button><button class="on" data-v="ent">Enterprise+</button></div></div>
+    <div class="row" style="margin-bottom:6px"><span class="note-s" style="min-width:120px">Event:</span><div class="tabs" id="fsDrop" style="margin:0"><button class="on" data-v="0">Keep the table</button><button data-v="1">DROP TABLE on day 40</button></div></div>
+    <div class="ctl"><label>Retention days</label><input type="range" id="fsRet" min="0" max="90" value="1"><span class="v" id="fsRetV"></span></div>
+    <div class="ctl"><label>Daily churn</label><input type="range" id="fsChurn" min="0" max="50" value="10"><span class="v" id="fsChurnV"></span></div>
+    <div class="ctl"><label>Active table size</label><input type="range" id="fsSize" min="1" max="20" value="4"><span class="v" id="fsSizeV"></span></div>
+    <div class="ctl"><label>Look at day</label><input type="range" id="fsDay" min="0" max="120" value="60"><span class="v" id="fsDayV"></span></div>
+    <svg viewBox="0 0 680 230" id="fsSvg"></svg>
+    <div class="legend"><span><i style="background:var(--teal)"></i>Active</span><span><i style="background:var(--ice)"></i>Time Travel (queryable)</span><span><i style="background:var(--amber)"></i>Fail-safe (Support only)</span></div>
+    <div class="stats">
+      <div class="stat"><div class="k">ACTIVE</div><div class="n" id="fsA">–</div></div>
+      <div class="stat"><div class="k">TIME TRAVEL</div><div class="n" id="fsT">–</div></div>
+      <div class="stat"><div class="k">FAIL-SAFE</div><div class="n" id="fsF">–</div></div>
+      <div class="stat"><div class="k">STORAGE COST / MONTH</div><div class="n" id="fsC">–</div><div class="s" id="fsCs"></div></div>
+    </div>
+    <div class="insight" id="fsIns"></div>
+  </div>
+
+  <table class="t">
+    <tr><th></th><th>TIME TRAVEL</th><th>FAIL-SAFE</th></tr>
+    <tr><td><b>Who can use it</b></td><td>You, with SQL (AT / BEFORE, CLONE, UNDROP)</td><td>Only Snowflake Support</td></tr>
+    <tr><td><b>Duration</b></td><td>0–1 day (Standard), up to 90 days (Enterprise+, permanent objects)</td><td>7 days, not configurable</td></tr>
+    <tr><td><b>Applies to</b></td><td>Permanent, transient, temporary (transient/temporary max 1 day)</td><td>Permanent objects only</td></tr>
+    <tr><td><b>Recovery speed</b></td><td>Seconds to minutes</td><td>Hours to days, best effort</td></tr>
+    <tr><td><b>Storage billed?</b></td><td>Yes</td><td>Yes</td></tr>
+  </table>
+  <div class="grid2" style="margin-top:14px">
+    <div class="call trap" style="margin:0"><b class="k">INTERVIEW TRAP</b><div>"Fail-safe is our backup strategy." <b>Wrong.</b> You can't access it, can't test a restore, and recovery isn't guaranteed. It is a safety net for Snowflake to use in rare cases. Your real recovery tools are Time Travel, clones, replication, and (where available) Snowflake's backup features.</div></div>
+    <div class="call pro" style="margin:0"><b class="k">SENIOR ANGLE</b><div><b>High-churn tables are expensive.</b> A 1 TB table fully reloaded every day with 1-day retention can carry around 1 TB of Time Travel plus up to 7 TB of Fail-safe. Make staging and reload-every-run tables <b>transient</b>, and keep permanent + longer retention for curated, hard-to-rebuild data.</div></div>
+  </div>
+</section>
+
+<section id="types">
+  <div class="eyebrow">CHAPTER 03</div>
+  <h2>Table types <span class="thin">· permanent, transient, temporary</span></h2>
+  <div class="wwh">
+    <div class="box what"><span class="tag">01 · WHAT IS IT</span>
+      <p>Snowflake has three table types that differ only in <b>how much protection they get</b> (and therefore how much history storage they cost). Data is stored the same way, query speed is the same.</p>
+      <ul class="dots">
+        <li><b>Permanent</b> (default): Time Travel up to 90 days (Enterprise+) + 7 days Fail-safe.</li>
+        <li><b>Transient</b>: <code>CREATE TRANSIENT TABLE</code>. Persists until dropped, visible to anyone with privileges, but Time Travel 0 or 1 day and <b>no Fail-safe</b>.</li>
+        <li><b>Temporary</b>: <code>CREATE TEMPORARY TABLE</code>. Exists only in <b>your session</b>, invisible to other sessions, dropped automatically when the session ends. Time Travel 0 or 1 day, no Fail-safe.</li>
+      </ul>
+    </div>
+    <div class="box why"><span class="tag">02 · WHY WE USE IT</span>
+      <p>Protection costs storage. Data you can <b>easily rebuild</b> (staging copies of files still sitting in S3, intermediate ETL results, scratch work) doesn't need 7 days of Fail-safe. Making those tables transient or temporary can cut a large part of the storage bill on high-churn pipelines.</p>
+      <p>Analogy: permanent = a signed contract in the office safe; transient = a whiteboard in the team room; temporary = a sticky note on your own screen that goes in the bin when you leave.</p>
+    </div>
+    <div class="box how"><span class="tag">03 · HOW IT WORKS · CLICK A TYPE</span>
+      <div class="ttype" id="ttCards">
+        <button class="fcard on" data-v="0"><h5>Permanent</h5><p>Core facts and dimensions, anything hard to rebuild.</p></button>
+        <button class="fcard" data-v="1"><h5>Transient</h5><p>Staging, landing, ETL intermediates shared across jobs.</p></button>
+        <button class="fcard" data-v="2"><h5>Temporary</h5><p>Session scratch inside a script or procedure.</p></button>
+      </div>
+      <table class="t" id="ttTbl"></table>
+      <div class="insight" id="ttIns"></div>
+    </div>
+  </div>
+  <div class="panel">
+    <div class="panel-h"><div class="t">WIDGET · <b>WHICH TABLE TYPE WOULD YOU CHOOSE?</b></div><span class="note-s" id="ttScore">0 / 6 answered</span></div>
+    <div class="tabs" id="ttScen"></div>
+    <div class="mini" id="ttQ" style="margin-bottom:10px"></div>
+    <div class="row" id="ttPick"><button class="btn" data-v="0">Permanent</button><button class="btn" data-v="1">Transient</button><button class="btn" data-v="2">Temporary</button></div>
+    <div class="explain" id="ttFb" style="margin-top:10px"><b class="h">YOUR CALL</b>Pick a type for this scenario.</div>
+  </div>
+  <div class="grid2">
+    <div class="call trap" style="margin:0"><b class="k">INTERVIEW TRAP</b><div><b>You can't ALTER a table's type.</b> There is no <code>ALTER TABLE … SET TRANSIENT</code>. To change it, create a new table of the right type (CTAS or <code>CREATE TRANSIENT TABLE … LIKE</code> + INSERT), then swap names with <code>ALTER TABLE … SWAP WITH</code>. Also, every table created inside a <b>transient database or schema</b> is transient.</div></div>
+    <div class="call trap" style="margin:0"><b class="k">INTERVIEW TRAP</b><div><b>Temporary tables shadow permanent ones.</b> A temporary table can have the same name as an existing table in the same schema; inside your session the temporary one wins. That can make a script silently read the wrong data. Use distinct names (e.g. a <code>tmp_</code> prefix).</div></div>
+  </div>
+</section>
+
+<section id="clone">
+  <div class="eyebrow">CHAPTER 04</div>
+  <h2>Zero-copy cloning <span class="thin">· a full copy in seconds, for free (at first)</span></h2>
+  <div class="wwh">
+    <div class="box what"><span class="tag">01 · WHAT IS IT</span>
+      <p><code>CREATE TABLE orders_dev CLONE orders;</code> creates a <b>new, independent object</b> that initially contains exactly the same data as the source, <b>without copying any data</b>. You can clone tables, schemas and whole databases (and some other objects, below), optionally <b>as of a point in time</b> with AT / BEFORE.</p>
+      <p>After cloning, the two objects are independent: changes to one never appear in the other.</p>
+    </div>
+    <div class="box why"><span class="tag">02 · WHY WE USE IT</span>
+      <ul class="dots">
+        <li><b>Dev / test / QA environments</b> with real production-shaped data, created in seconds.</li>
+        <li><b>Safe experiments:</b> clone before a risky migration or backfill; if it goes wrong, swap back.</li>
+        <li><b>Point-in-time snapshots:</b> "month-end close as of 23:59" kept as a table.</li>
+        <li><b>Recovery:</b> clone a table BEFORE a bad statement, then swap it in.</li>
+      </ul>
+    </div>
+    <div class="box how"><span class="tag">03 · HOW IT WORKS · METADATA POINTERS + COPY-ON-WRITE</span>
+      <p>A clone is a new metadata entry in cloud services that points at the <b>same immutable micro-partitions</b> as the source. No warehouse is needed and no bytes are copied. When either side later changes data, Snowflake writes <b>new</b> micro-partitions for that side only (copy-on-write); the other side keeps pointing at the old ones. Storage cost therefore grows only with the <b>divergence</b>. Shared partitions are billed to the table that originally wrote them; if the source later drops a partition the clone still needs, the source keeps paying for it as <code>RETAINED_FOR_CLONE_BYTES</code>.</p>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-h"><div class="t">SIMULATOR · <b>CLONE DIVERGENCE</b> · ORDERS = 8 micro-partitions of ~100 MB</div><span class="note-s">Illustrative model, not a benchmark.</span></div>
+    <div class="row" style="margin-bottom:6px">
+      <button class="btn pri" id="clMake">CREATE TABLE orders_dev CLONE orders</button>
+      <button class="btn" id="clSrcUpd">UPDATE source (touches 2 partitions)</button>
+      <button class="btn" id="clClnUpd">UPDATE clone (touches 1 partition)</button>
+      <button class="btn" id="clClnIns">INSERT into clone (new partition)</button>
+      <button class="btn warn" id="clSrcDel">DELETE old rows in source (drops 2 partitions)</button>
+      <button class="btn" id="clReset">Reset</button>
+    </div>
+    <svg viewBox="0 0 680 250" id="clSvg"></svg>
+    <div class="legend"><span><i style="background:var(--teal)"></i>shared by both</span><span><i style="background:var(--ice)"></i>only source</span><span><i style="background:var(--amber)"></i>only clone</span><span><i style="background:var(--ink3)"></i>source Time Travel</span><span><i style="background:var(--red)"></i>retained for clone (billed to source)</span></div>
+    <div class="stats">
+      <div class="stat"><div class="k">SHARED PARTITIONS</div><div class="n" id="clShared">–</div></div>
+      <div class="stat"><div class="k">UNIQUE: SOURCE / CLONE</div><div class="n" id="clUniq">–</div></div>
+      <div class="stat"><div class="k">PHYSICAL STORAGE</div><div class="n" id="clPhys">–</div><div class="s">all bytes actually kept</div></div>
+      <div class="stat"><div class="k">BILLED TO SOURCE / CLONE</div><div class="n" id="clBill" style="font-size:22px">–</div></div>
+    </div>
+    <div class="insight" id="clIns">Press <b>CREATE … CLONE</b>. Watch how storage changes, or rather doesn't.</div>
+  </div>
+
+  <h3>What gets cloned, and what doesn't</h3>
+  <div class="grid3">
+    <div class="mini"><h5>Cloneable</h5><p>Databases, schemas, tables (including clones of clones), and several schema objects such as streams, tasks, sequences, file formats and external stages. A cloned database/schema clones its child objects. Check the docs for the current list (it grows over time).</p></div>
+    <div class="mini"><h5>Be careful with</h5><p><b>Internal named stages</b> and staged files are not copied the way tables are (rules have evolved, check current docs). <b>Pipes</b> are only cloned when they reference external stages. <b>Tasks</b> in a clone start suspended. <b>Streams</b> in a cloned schema/database lose their unconsumed records.</p></div>
+    <div class="mini"><h5>Privileges</h5><p>Cloning a <b>single table</b> does not copy grants unless you add <code>COPY GRANTS</code>. Cloning a <b>database or schema</b> keeps the grants on the child objects, but not the grants on the database/schema itself. The clone is owned by the role that created it.</p></div>
+  </div>
+  <div class="grid2" style="margin-top:14px">
+    <div class="call trap" style="margin:0"><b class="k">INTERVIEW TRAP</b><div><b>Load history is not cloned.</b> A cloned table has no COPY load metadata, so running the same <code>COPY INTO</code> against the clone can load files <b>again</b> and create duplicates. Same for a cloned pipe.</div></div>
+    <div class="call pro" style="margin:0"><b class="k">SENIOR ANGLE</b><div><b>Clone + Time Travel = point-in-time environments.</b> <code>CREATE DATABASE qa_db CLONE prod_db AT(TIMESTAMP =&gt; …)</code>. If some child tables don't have enough retention for that time, the clone errors; the <code>IGNORE TABLES WITH INSUFFICIENT DATA RETENTION</code> option skips them. Long-lived dev clones diverge over time, so refresh them (re-clone) on a schedule rather than letting them become a second copy of prod.</div></div>
+  </div>
+</section>
+
+<section id="repl">
+  <div class="eyebrow">CHAPTER 05</div>
+  <h2>Replication &amp; failover <span class="thin">· surviving a region outage</span></h2>
+  <div class="wwh">
+    <div class="box what"><span class="tag">01 · WHAT IS IT</span>
+      <p><b>Replication</b> keeps a read-only copy (<b>secondary</b>) of databases, and optionally account objects, in <b>another Snowflake account</b> in the same organization, which can be in a different region or even a different cloud. <b>Failover</b> promotes that secondary to be the writable <b>primary</b> when the original region is down.</p>
+      <ul class="dots">
+        <li><b>Replication group:</b> a set of objects replicated together, point-in-time consistent. Secondaries are read-only.</li>
+        <li><b>Failover group:</b> a replication group that can also be <b>promoted</b> (failed over). Requires <b>Business Critical</b> edition or higher.</li>
+        <li><b>Connection object (client redirect):</b> a stable URL that you can re-point to the new primary account. Business Critical or higher.</li>
+      </ul>
+    </div>
+    <div class="box why"><span class="tag">02 · WHY WE USE IT</span>
+      <ul class="dots">
+        <li><b>Disaster recovery</b> for region- or cloud-level outages.</li>
+        <li><b>Meet RPO / RTO targets</b>: RPO = how much data you can afford to lose; RTO = how long you can afford to be down.</li>
+        <li><b>Data locality:</b> serve read-only copies close to users in other regions.</li>
+        <li><b>Migrations</b> between regions or clouds.</li>
+      </ul>
+      <p class="note-s">Database (and share) replication is available on all editions. Replicating other account objects and failover/failback require Business Critical or higher.</p>
+    </div>
+    <div class="box how"><span class="tag">03 · HOW IT WORKS</span>
+      <div class="grid3">
+        <div class="mini"><h5>1 · Initial refresh</h5><p>The first refresh copies all micro-partitions of the group's databases to the target account's storage. This can take a long time for large data.</p></div>
+        <div class="mini"><h5>2 · Incremental refreshes</h5><p>On each refresh (<code>REPLICATION_SCHEDULE</code>, e.g. every 10 minutes, or manual <code>REFRESH</code>), Snowflake compares metadata and copies <b>only new micro-partitions</b>. Immutability makes the diff cheap: unchanged files never move again.</p></div>
+        <div class="mini"><h5>3 · Failover + redirect</h5><p>On the target account: <code>ALTER FAILOVER GROUP … PRIMARY</code> makes it writable. <code>ALTER CONNECTION … PRIMARY</code> points the connection URL at it, so clients reconnect without config changes.</p></div>
+      </div>
+      <p style="margin-top:10px"><b>Cost:</b> data transfer (especially cross-region / cross-cloud), serverless compute for each refresh, and storage of the secondary copy. More frequent refreshes = lower RPO but more refresh compute.</p>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-h"><div class="t">SIMULATOR · <b>DR DRILL</b> · primary AWS us-east-1 → secondary AWS us-west-2</div><span class="note-s">Illustrative model; real refresh and failover times depend on data volume and change rate.</span></div>
+    <div class="row" style="margin-bottom:6px"><span class="note-s" style="min-width:140px">Edition:</span><div class="tabs" id="drEd" style="margin:0"><button data-v="ent">Enterprise (replication group)</button><button class="on" data-v="bc">Business Critical (failover group)</button></div></div>
+    <div class="row" style="margin-bottom:6px"><span class="note-s" style="min-width:140px">REPLICATION_SCHEDULE:</span><div class="tabs" id="drInt" style="margin:0"><button data-v="1">1 MINUTE</button><button class="on" data-v="10">10 MINUTE</button><button data-v="60">60 MINUTE</button><button data-v="240">4 HOURS</button><button data-v="1440">DAILY</button></div></div>
+    <div class="row" style="margin-bottom:10px"><span class="note-s" style="min-width:140px">Clients connect via:</span><div class="tabs" id="drRed" style="margin:0"><button class="on" data-v="1">Connection URL (client redirect)</button><button data-v="0">Account URL hard-coded</button></div></div>
+    <svg viewBox="0 0 680 230" id="drSvg">
+      <path class="arr" id="drRepl" d="M260 100 L420 100"/>
+      <text class="tm" x="340" y="24" text-anchor="middle" id="drReplT">refresh every 10 min</text>
+      <text class="tm" x="340" y="92" text-anchor="middle">replication →</text>
+      <g class="region" id="drP"><rect class="rb neutral" x="20" y="40" width="240" height="110" rx="12" stroke-width="1"/><text class="th" x="140" y="66" text-anchor="middle">PRIMARY · us-east-1</text><text class="ts" x="140" y="92" text-anchor="middle" id="drPt">read-write</text><text class="tm" x="140" y="116" text-anchor="middle" id="drPt2">failover group:</text><text class="tm" x="140" y="132" text-anchor="middle" id="drPt3">SALES_DB + roles, users</text></g>
+      <g class="region" id="drS"><rect class="rb neutral" x="420" y="40" width="240" height="110" rx="12" stroke-width="1"/><text class="th" x="540" y="66" text-anchor="middle">SECONDARY · us-west-2</text><text class="ts" x="540" y="92" text-anchor="middle" id="drSt">read-only replica</text><text class="tm" x="540" y="120" text-anchor="middle" id="drSt2">last refresh: –</text></g>
+      <g><rect class="neutral" x="270" y="180" width="140" height="40" rx="10" stroke-width="1"/><text class="th" x="340" y="200" text-anchor="middle" dominant-baseline="central">BI · ETL · apps</text></g>
+      <path class="edge" id="drCP" d="M300 180 L170 150" style="opacity:1"/>
+      <path class="edge" id="drCS" d="M380 180 L510 150" style="opacity:.15"/>
+    </svg>
+    <svg viewBox="0 0 680 70" id="drTl"></svg>
+    <div class="stepbar" id="drBar"></div>
+    <div class="stepdesc" id="drDesc"></div>
+    <div class="row" style="margin-top:10px"><button class="btn warn" id="drOut">Primary region outage at 14:37</button><button class="btn pri" id="drNext" disabled>Next failover step</button><button class="btn" id="drReset">Reset</button></div>
+    <div class="stats">
+      <div class="stat"><div class="k">WORST-CASE RPO</div><div class="n" id="drRpoW">–</div><div class="s">schedule + refresh time</div></div>
+      <div class="stat"><div class="k">DATA LOST IN THIS DRILL</div><div class="n" id="drRpo">–</div><div class="s">commits since last good refresh</div></div>
+      <div class="stat"><div class="k">RTO (THIS DRILL)</div><div class="n" id="drRto">–</div></div>
+      <div class="stat"><div class="k">REFRESHES / DAY</div><div class="n" id="drRef">–</div><div class="s">each costs transfer + compute</div></div>
+    </div>
+    <div class="insight" id="drIns"></div>
+  </div>
+  <div class="grid2">
+    <div class="call trap" style="margin:0"><b class="k">INTERVIEW TRAP</b><div><b>Replication is not a backup.</b> A bad UPDATE or DROP on the primary is replicated to the secondary at the next refresh. Replication protects against <i>losing a region</i>; Time Travel, clones and backups protect against <i>bad changes</i>. You need both.</div></div>
+    <div class="call pro" style="margin:0"><b class="k">SENIOR ANGLE</b><div><b>Run DR drills.</b> Fail over to the secondary, run smoke tests, then fail back. Things that commonly break: integrations, external stages and pipes pointing at region-specific buckets, tasks that must be resumed on the new primary, and clients using the account URL instead of the connection URL. Monitor lag with <code>REPLICATION_GROUP_REFRESH_HISTORY</code>.</div></div>
+  </div>
+</section>
+
+<section id="backup">
+  <div class="eyebrow">CHAPTER 06</div>
+  <h2>Backups &amp; protection strategy <span class="thin">· putting it all together</span></h2>
+  <div class="wwh">
+    <div class="box what"><span class="tag">01 · WHAT IS IT</span>
+      <p>Besides Time Travel, Fail-safe, clones and replication, Snowflake has added dedicated <b>backup</b> features: point-in-time, read-only copies of tables, schemas or databases created on a schedule by a <b>backup policy</b>, kept for a retention period you choose, and optionally protected by a <b>retention lock</b> so nobody, not even an admin, can delete them early (useful for ransomware protection and WORM-style compliance). These features were introduced recently and earlier previews used the name "snapshots", so <b>check current docs for names, syntax and edition requirements</b>.</p>
+    </div>
+    <div class="box why"><span class="tag">02 · WHY IT MATTERS</span>
+      <p>Time Travel tops out at 90 days, and anyone with enough privileges can lower retention or drop objects. Regulated data often needs <b>longer, tamper-proof</b> history. Before dedicated backups, teams kept <b>dated clones</b> (e.g. <code>finance_db_2024_06_30</code>) via a scheduled task, which works but relies on everyone not dropping them.</p>
+    </div>
+    <div class="box how"><span class="tag">03 · HOW TO DESIGN A STRATEGY · PICK A DATA TIER</span>
+      <p>A good answer in an interview is <b>tiered</b>: match protection (and cost) to how hard the data is to rebuild and how critical it is.</p>
+      <div class="tabs" id="bkTier" style="margin-top:8px"><button class="on" data-v="0">Raw / landing</button><button data-v="1">Staging / ETL intermediates</button><button data-v="2">Curated core (facts, dims)</button><button data-v="3">Regulated finance</button><button data-v="4">Dev / sandbox</button></div>
+      <table class="t tier-out" id="bkOut"></table>
+      <div class="insight" id="bkIns"></div>
+    </div>
+  </div>
+  <div class="call trap"><b class="k">INTERVIEW TRAP</b><div><b>Protection against whom?</b> Time Travel protects against accidents but not against a malicious admin who sets retention to 0 and drops everything. Defences: <code>MIN_DATA_RETENTION_TIME_IN_DAYS</code> at account level, tightly controlled ACCOUNTADMIN / OWNERSHIP, replication to another account, and immutable backups with a retention lock.</div></div>
+</section>
+
+<section id="sql">
+  <div class="eyebrow">CHAPTER 07</div>
+  <h2>SQL lab <span class="thin">· click any line for an explanation</span></h2>
+  <div class="panel">
+    <div class="tabs" id="sqlTabs"></div>
+    <div class="grid2" style="grid-template-columns:1.35fr 1fr">
+      <div class="code" id="sqlCode"></div>
+      <div class="explain" id="sqlExp"><b class="h">CLICK A LINE</b>Each line is explained in plain English.</div>
+    </div>
+  </div>
+</section>
+
+<section id="qa">
+  <div class="eyebrow">CHAPTER 08</div>
+  <h2>Interview Q&amp;A <span class="thin">· answer out loud first, then open</span></h2>
+  <div class="tabs" id="qaTabs"><button class="on" data-f="all">All</button><button data-f="Time Travel">Time Travel</button><button data-f="Fail-safe">Fail-safe</button><button data-f="Table types">Table types</button><button data-f="Cloning">Cloning</button><button data-f="Replication">Replication</button><button data-f="Strategy">Strategy</button></div>
+  <div id="qaList"></div>
+</section>
+
+<section id="quiz">
+  <div class="eyebrow">CHAPTER 09</div>
+  <h2>Quiz <span class="thin">· 14 questions</span></h2>
+  <div class="panel">
+    <div class="panel-h"><div class="t">QUESTION <b id="qzN">1</b> / 14</div><div class="t">SCORE <b id="qzS">0</b></div></div>
+    <div class="stepbar" id="qzBar"></div>
+    <div id="qzBody"></div>
+    <div class="row" style="margin-top:12px"><button class="btn" id="qzPrev">Back</button><button class="btn pri" id="qzNext">Next</button></div>
+  </div>
+</section>
+
+<section id="cheat">
+  <div class="eyebrow">CHAPTER 10</div>
+  <h2>Cheat sheet <span class="thin">· if you remember only these</span></h2>
+  <div class="cheat">
+    <div><em>Immutable</em>Micro-partitions are never edited. DML writes new ones; old ones become history. This powers everything in this module.</div>
+    <div><em>Active → TT → FS → gone</em>Retention days (you choose), then 7 days Fail-safe (permanent only), then purged.</div>
+    <div><em>1 / 90 days</em>Time Travel max: 1 day on Standard; up to 90 days on Enterprise+ for permanent objects. Default 1.</div>
+    <div><em>AT vs BEFORE</em>AT includes the point; BEFORE is just before it. Undo a bad statement with BEFORE(STATEMENT =&gt; id).</div>
+    <div><em>OFFSET in seconds</em><code>AT(OFFSET =&gt; -60*30)</code> = 30 minutes ago. Cast TIMESTAMP values explicitly.</div>
+    <div><em>UNDROP</em>Table, schema, database. Fails if the name exists: rename the new object first.</div>
+    <div><em>MIN_DATA_RETENTION</em>Account-level floor: effective = MAX(table setting, minimum). Stops "retention 0" accidents.</div>
+    <div><em>Fail-safe = 7 days</em>Not queryable, Support-only, best effort, billed. Not your backup.</div>
+    <div><em>Transient / temporary</em>0–1 day Time Travel, no Fail-safe. Temporary = session only. Type can't be altered later.</div>
+    <div><em>Clone = pointers</em>Metadata-only, no warehouse, storage grows with divergence. COPY GRANTS for single-table clones. Load history not cloned.</div>
+    <div><em>Failover group</em>Business Critical+. Replication group = read-only copies. Promote with ALTER FAILOVER GROUP … PRIMARY.</div>
+    <div><em>RPO / RTO</em>RPO ≈ schedule interval + refresh time. RTO shrinks with failover groups + connection objects (client redirect).</div>
+  </div>
+  <div class="call analogy" style="margin-top:20px"><b class="k">NEXT MODULE</b><div><b>Module 08: Security &amp; governance.</b> Authentication, RBAC role hierarchies, network policies, masking and row access policies, tags and data classification. <a href="../module08/" style="color:var(--ice);font-weight:600">Open Module 08 →</a></div></div>
+</section>
+<footer>Snowflake Interview Lab · Module 07 · Data Protection: Time Travel, Fail-safe, Cloning &amp; Replication · Prepared for Saurav Patel</footer>
+</main>
+</div>
+
+<script>
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+const fmt = (n, d = 0) => Number(n).toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d });
+const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+const tabs = (sel, cb) => $$(sel + ' button').forEach(b => b.addEventListener('click', () => { $$(sel + ' button').forEach(x => x.classList.remove('on')); b.classList.add('on'); cb(b.dataset); }));
+
+/* theme + progress */
+const root = document.documentElement;
+root.dataset.theme = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+$('#themeBtn').onclick = () => { root.dataset.theme = root.dataset.theme === 'dark' ? 'light' : 'dark'; };
+const secs = $$('main section'), seen = new Set();
+const io = new IntersectionObserver(es => es.forEach(e => {
+  if (!e.isIntersecting) return;
+  seen.add(e.target.id);
+  $$('.side > a').forEach(a => { const id = a.getAttribute('href').slice(1); a.classList.toggle('act', id === e.target.id); if (seen.has(id)) a.classList.add('seen'); });
+  const pct = Math.round(seen.size / secs.length * 100);
+  $('#progBar').style.width = pct + '%'; $('#progLbl').textContent = pct + '% explored';
+}), { rootMargin: '-40% 0px -55% 0px' });
+secs.forEach(s => io.observe(s));
+
+/* ===== 00 lifecycle stepper ===== */
+const LC = [
+  { n: ['lcMeta', 'lcAct'], e: ['lce0'], tx: { lcMetaT: 'ORDERS v1 → MP1, MP2, MP3', lcActT: 'MP1 MP2 MP3', lcTTT: '–', lcFST: '–', lcPgT: '–' }, h: '1 · Load: files are written once',
+    you: '<code>COPY INTO orders FROM @stage;</code> loads 3 batches of rows.', be: 'The warehouse writes three compressed, columnar files: <b>MP1, MP2, MP3</b>. Cloud services records <b>version 1</b> of ORDERS = "these three files" plus min/max stats per column. The files are now <b>immutable</b>: Snowflake will never edit them in place.' },
+  { n: ['lcMeta', 'lcAct', 'lcTT'], e: ['lce0', 'lce1'], tx: { lcMetaT: 'ORDERS v2 → MP1, MP4, MP3', lcActT: 'MP1 MP4 MP3', lcTTT: 'MP2 (from v1)', lcFST: '–', lcPgT: '–' }, h: '2 · UPDATE: write new, keep old',
+    you: "<code>UPDATE orders SET status = 'SHIPPED' WHERE order_id = 42;</code> changes one row that lives in MP2.", be: 'The warehouse reads MP2, applies the change, and writes the <b>whole partition again as a new file MP4</b>. On commit, cloud services saves <b>version 2</b> = MP1, MP4, MP3. MP2 is <b>not deleted</b>: it is simply no longer part of the current version. It is now historical data, kept for Time Travel. No backup job copied anything.' },
+  { n: ['lcMeta', 'lcTT'], e: ['lce4'], tx: { lcMetaT: 'AT(OFFSET => -600) → v1 → MP1, MP2, MP3', lcActT: 'MP1 MP4 MP3', lcTTT: 'MP2 (from v1)', lcFST: '–', lcPgT: '–' }, h: '3 · Time Travel query: read an old version',
+    you: '<code>SELECT * FROM orders AT(OFFSET =&gt; -600);</code> (10 minutes ago)', be: 'Cloud services looks up which version was current 10 minutes ago (v1) and gives the warehouse its file list: MP1, MP2, MP3. The warehouse reads them like any other query, with normal pruning. That is all Time Travel is: <b>reading an older file list</b>.' },
+  { n: ['lcMeta', 'lcAct'], e: ['lce0'], tx: { lcMetaT: 'ORDERS_DEV v1 → MP1, MP4, MP3 (same files)', lcActT: 'MP1 MP4 MP3', lcTTT: 'MP2 (from v1)', lcFST: '–', lcPgT: '–' }, h: '4 · Bonus: a clone is just another file list',
+    you: '<code>CREATE TABLE orders_dev CLONE orders;</code>', be: 'Cloud services creates a new table entry that points at <b>the same files</b> MP1, MP4, MP3. Zero bytes copied, no warehouse used. Because files are immutable, sharing them is safe: a later change on either side writes new files for that side only.' },
+  { n: ['lcTT', 'lcFS'], e: ['lce2'], tx: { lcMetaT: 'ORDERS v1 no longer queryable', lcActT: 'MP1 MP4 MP3', lcTTT: '–', lcFST: 'MP2', lcPgT: '–' }, h: '5 · Retention ends: into Fail-safe',
+    you: 'Nothing. The table has <code>DATA_RETENTION_TIME_IN_DAYS = 1</code>, and a day has passed.', be: 'A background service notices MP2 is older than the retention window. For a <b>permanent</b> table it moves to <b>Fail-safe</b> for 7 days: still stored (and billed), but no longer reachable by SQL. AT/BEFORE for that time now errors. Only Snowflake Support can recover it. (A transient or temporary table would skip this stage.)' },
+  { n: ['lcFS', 'lcPg'], e: ['lce3'], tx: { lcMetaT: 'ORDERS v2 → MP1, MP4, MP3', lcActT: 'MP1 MP4 MP3', lcTTT: '–', lcFST: '–', lcPgT: 'MP2 deleted' }, h: '6 · Purged: storage freed',
+    you: 'Nothing.', be: 'After 7 days in Fail-safe, MP2 is permanently deleted from cloud storage and you stop paying for it. (If a clone still referenced MP2, it would stay alive and be billed to its original table as retained-for-clone bytes.)' }
+];
+let lci = -1;
+LC.forEach((_, i) => { const s = document.createElement('span'); s.onclick = () => lcGo(i); $('#lcBar').appendChild(s); });
+function lcGo(i) {
+  lci = i;
+  $('#lcFlow').classList.toggle('playing', i >= 0);
+  [...$('#lcBar').children].forEach((s, k) => s.classList.toggle('on', k <= i));
+  if (i < 0) {
+    $$('#lcFlow .fn,#lcFlow .edge').forEach(x => x.classList.remove('on'));
+    Object.entries(LC[0].tx).forEach(([k, v]) => { $('#' + k).textContent = v; });
+    $('#lcDesc').innerHTML = '<h4>Ready</h4><div style="font-size:14px;color:var(--ink2)">Press Start to follow micro-partition MP2 from birth to deletion.</div>';
+    $('#lcNext').textContent = 'Start'; return;
+  }
+  const st = LC[i];
+  $$('#lcFlow .fn').forEach(g => g.classList.toggle('on', st.n.includes(g.id)));
+  $$('#lcFlow .edge').forEach(e => e.classList.toggle('on', st.e.includes(e.id)));
+  Object.entries(st.tx).forEach(([k, v]) => { $('#' + k).textContent = v; });
+  $('#lcDesc').innerHTML = `<h4>${st.h}</h4><div class="two"><div class="you"><b class="l">WHAT YOU DO</b>${st.you}</div><div class="be"><b class="l">WHAT HAPPENS IN THE BACKEND</b>${st.be}</div></div>`;
+  $('#lcNext').textContent = i === LC.length - 1 ? 'Replay' : 'Next';
+}
+$('#lcNext').onclick = () => lcGo(lci === LC.length - 1 ? 0 : lci + 1);
+$('#lcPrev').onclick = () => lcGo(Math.max(-1, lci - 1));
+$('#lcReset').onclick = () => lcGo(-1);
+lcGo(-1);
+
+/* ===== 01 Time Travel version timeline ===== */
+const VT_ROWS = [{ id: 1, r: 'US', a: 120 }, { id: 2, r: 'EU', a: 80 }, { id: 3, r: 'EU', a: 45 }, { id: 4, r: 'APAC', a: 200 }];
+let VT = null;
+const vtQid = n => '01b4-' + (4096 + n * 977).toString(16) + '-' + ('000' + n).slice(-4);
+function vtInit() {
+  const ret = VT ? VT.ret : 1, mode = VT ? VT.mode : 'off';
+  VT = { now: 0, ret, mode, n: 0, nid: 5, hit: -1, vers: [{ t: 0, qid: vtQid(0), lbl: 'CREATE', kind: 'create', rows: VT_ROWS.map(r => ({ ...r })), dropped: false }] };
+}
+const vtCur = () => VT.vers[VT.vers.length - 1];
+const vtTime = t => { const d = Math.floor(t / 1440), m = t % 1440, h = 9 + Math.floor(m / 60); return `Day ${d + 1} ${String(h % 24).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`; };
+const vtOldest = () => VT.now - VT.ret * 1440;
+function vtReach(i) { const v = VT.vers[i], nx = VT.vers[i + 1]; if (!nx) return true; if (VT.ret === 0) return false; return nx.t > vtOldest(); }
+function vtPush(kind, lbl, rows, dropped, dt = 5) { VT.now += dt; VT.n++; VT.vers.push({ t: VT.now, qid: vtQid(VT.n), lbl, kind, rows, dropped }); VT.hit = -1; }
+function vtTable(rows, cap) {
+  if (!rows) return `<div class="explain"><b class="h">${cap || 'NO TABLE'}</b>Object does not exist.</div>`;
+  return `<table class="t"><tr><th>ORDER_ID</th><th>REGION</th><th>AMOUNT</th></tr>${rows.map(r => `<tr><td class="m">${r.id}</td><td>${r.r}</td><td class="m" style="${r.a === 0 ? 'color:var(--red);font-weight:700' : ''}">${r.a}</td></tr>`).join('')}</table><div class="note-s">${rows.length} rows · total amount ${fmt(rows.reduce((s, r) => s + r.a, 0))}</div>`;
+}
+function vtDml(kind) {
+  const c = vtCur();
+  if (c.dropped) { $('#vtIns').innerHTML = `<b>SQL compilation error: Object 'ORDERS' does not exist or not authorized.</b> The table is dropped. Use <b>UNDROP</b> first.`; return; }
+  if (kind === 'ins') { const rows = [...c.rows.map(r => ({ ...r })), { id: VT.nid, r: 'US', a: 60 }, { id: VT.nid + 1, r: 'APAC', a: 95 }]; VT.nid += 2; vtPush('ins', 'INSERT', rows, false); $('#vtIns').innerHTML = 'INSERT committed: a <b>new version</b> whose file list adds one new micro-partition. Older versions are untouched.'; }
+  if (kind === 'upd') { vtPush('upd', 'UPDATE', c.rows.map(r => ({ ...r, a: 0 })), false); $('#vtIns').innerHTML = '<b>Oops.</b> Every amount is now 0. Snowflake rewrote the affected micro-partitions as new files; the old files are still there for Time Travel. Try <b>BEFORE(STATEMENT)</b> on this UPDATE.'; }
+  if (kind === 'del') { vtPush('del', 'DELETE', c.rows.filter(r => r.r !== 'EU').map(r => ({ ...r })), false); $('#vtIns').innerHTML = 'DELETE committed. EU rows are gone from the current version, but still visible through Time Travel.'; }
+  if (kind === 'drop') { vtPush('drop', 'DROP', c.rows, true); $('#vtIns').innerHTML = '<b>DROP TABLE</b> only marks the table as dropped in metadata. The data stays for the retention period, so <b>UNDROP</b> can bring it back. Note: AT / BEFORE queries on a dropped table fail until you UNDROP it.'; }
+  vtDraw();
+}
+function vtCtl() {
+  const m = VT.mode, box = $('#vtCtl');
+  if (m === 'off') {
+    const mx = Math.max(60, VT.now + 30);
+    const cur = Math.min(+(VT.off || 10), mx);
+    box.innerHTML = `<div class="ctl" style="margin:0"><label style="min-width:90px">Minutes back</label><input type="range" id="vtOff" min="0" max="${mx}" step="5" value="${cur}"><span class="v" id="vtOffV"></span></div>`;
+    const upd = () => { VT.off = +$('#vtOff').value; $('#vtOffV').textContent = `${VT.off} min → ${vtTime(Math.max(0, VT.now - VT.off))}${VT.now - VT.off < 0 ? ' (before CREATE)' : ''}`; };
+    $('#vtOff').oninput = upd; upd();
+  } else if (m === 'stmt' || m === 'atst') {
+    const opts = VT.vers.map((v, i) => ({ v, i })).filter(o => o.v.kind !== 'create');
+    if (!opts.length) { box.innerHTML = '<div class="note-s">No statements yet. Run some DML first.</div>'; VT.sel = null; return; }
+    if (VT.sel == null || !VT.vers[VT.sel] || VT.vers[VT.sel].kind === 'create') VT.sel = opts[opts.length - 1].i;
+    box.innerHTML = `<select class="vt-sel" id="vtStmt">${opts.map(o => `<option value="${o.i}" ${o.i === VT.sel ? 'selected' : ''}>${o.v.qid} · ${o.v.lbl} at ${vtTime(o.v.t)}</option>`).join('')}</select>`;
+    $('#vtStmt').onchange = e => { VT.sel = +e.target.value; };
+  } else {
+    box.innerHTML = '<div class="note-s">UNDROP restores the most recently dropped version of ORDERS, if it is still inside the retention period and no table named ORDERS exists.</div>';
+  }
+}
+function vtRun() {
+  const c = vtCur(), m = VT.mode, out = $('#vtRes'), ret = VT.ret;
+  const errTT = '<b>Time travel data is not available for table ORDERS.</b> The requested time is either beyond the allowed time travel period or before the object creation time.';
+  let sql, html, ins, hit = -1;
+  if (m === 'undrop') {
+    sql = 'UNDROP TABLE orders;';
+    if (!c.dropped) { html = vtTable(null, 'ERROR'); ins = '<b>Object ORDERS already exists.</b> UNDROP only works when no object with that name exists. (After CREATE OR REPLACE, rename the new table first.)'; }
+    else if (ret === 0 || VT.now - c.t > ret * 1440) { html = vtTable(null, 'ERROR'); ins = `<b>Cannot UNDROP: the dropped table is outside its Time Travel retention.</b> ${ret === 0 ? 'With retention 0, a dropped permanent table goes straight to Fail-safe.' : 'It has moved to Fail-safe.'} Only Snowflake Support can attempt recovery now (best effort, hours to days).`; }
+    else { vtPush('undrop', 'UNDROP', c.rows.map(r => ({ ...r })), false, 1); hit = VT.vers.length - 1; html = vtTable(vtCur().rows); ins = '<b>Restored.</b> UNDROP is a metadata operation: the table entry is un-marked and points again at its micro-partitions. It takes seconds and needs no warehouse.'; }
+  } else if (c.dropped) {
+    sql = m === 'off' ? `SELECT * FROM orders AT(OFFSET => -60*${VT.off});` : `SELECT * FROM orders ${m === 'stmt' ? 'BEFORE' : 'AT'}(STATEMENT => '${VT.sel != null ? VT.vers[VT.sel].qid : '?'}');`;
+    html = vtTable(null, 'ERROR'); ins = "<b>Object 'ORDERS' does not exist.</b> Time Travel queries need the table to exist by name. UNDROP it first (or clone from it after UNDROP).";
+  } else if (m === 'off') {
+    const off = VT.off, target = VT.now - off;
+    sql = `SELECT * FROM orders AT(OFFSET => -60*${off});   -- ${off} minutes ago = ${vtTime(Math.max(0, target))}`;
+    if (target < 0) { html = vtTable(null, 'ERROR'); ins = errTT + ' (Here: before the table was created.)'; }
+    else if (off > 0 && (ret === 0 || off > ret * 1440)) { html = vtTable(null, 'ERROR'); ins = errTT + (ret === 0 ? ' Retention is 0, so only the current version exists.' : ` Retention is ${ret} day(s).`); }
+    else { let k = 0; VT.vers.forEach((v, i) => { if (v.t <= target) k = i; }); const v = VT.vers[k]; if (v.dropped) { html = vtTable(null, 'ERROR'); ins = 'At that moment the table was dropped, so there is nothing to read.'; } else { hit = k; html = vtTable(v.rows); ins = `Cloud services picked <b>version ${k}</b> (${v.lbl}, ${vtTime(v.t)}): the last version committed at or before ${vtTime(target)}. To keep this result, wrap it in <code>CREATE TABLE … CLONE orders AT(…)</code> or CTAS.`; } }
+  } else {
+    if (VT.sel == null) { $('#vtSql').textContent = '-- run some DML first'; return; }
+    const k = VT.sel, v = VT.vers[k];
+    sql = `SELECT * FROM orders ${m === 'stmt' ? 'BEFORE' : 'AT'}(STATEMENT => '${v.qid}');   -- the ${v.lbl}`;
+    const idx = m === 'stmt' ? k - 1 : k, tgt = VT.vers[idx];
+    const needT = m === 'stmt' ? v.t - 1 : v.t;
+    const inWin = ret > 0 && needT >= vtOldest() || (m === 'atst' && k === VT.vers.length - 1);
+    if (!inWin) { html = vtTable(null, 'ERROR'); ins = errTT + ' That statement is older than the retention window.'; }
+    else if (tgt.dropped) { html = vtTable(null, 'ERROR'); ins = 'At that point the table was dropped.'; }
+    else { hit = idx; html = vtTable(tgt.rows); ins = m === 'stmt' ? `<b>BEFORE</b> = the table just before ${v.lbl} ran (version ${idx}). ${v.kind === 'upd' ? 'The amounts are back. This is exactly what you restore from.' : ''}` : `<b>AT</b> includes the changes made by the statement itself (version ${idx}). ${v.kind === 'upd' ? 'Still all zeros: AT(STATEMENT) is the wrong choice to undo a bad UPDATE.' : ''}`; }
+  }
+  VT.hit = hit;
+  $('#vtSql').textContent = sql; out.innerHTML = `<div class="note-s">Result</div>${html}`; $('#vtIns').innerHTML = ins;
+  vtDraw(true);
+}
+function vtDraw(keep) {
+  const vs = VT.vers, n = vs.length, start = Math.max(0, n - 9), show = vs.slice(start);
+  const W = 600, step = show.length > 1 ? W / (show.length - 1) : 0;
+  let s = `<line x1="30" y1="50" x2="650" y2="50" stroke="var(--line2)" stroke-width="2"/>`;
+  s += `<text class="tm" x="30" y="16">blue = still in Time Travel · green = current · grey = aged out (Fail-safe for permanent tables)</text>`;
+  show.forEach((v, j) => {
+    const i = start + j, x = 40 + j * step, cur = i === n - 1, ok = vtReach(i);
+    const col = cur ? 'var(--teal)' : ok ? 'var(--ice)' : 'var(--ink3)';
+    s += `<circle cx="${x}" cy="50" r="11" fill="${cur ? 'var(--teal-s)' : ok ? 'var(--ice-s)' : 'var(--card2)'}" stroke="${col}" stroke-width="${i === VT.hit ? 4 : 2}" ${i === VT.hit ? 'class="pulse"' : ''}/>`;
+    if (i === VT.hit) s += `<circle cx="${x}" cy="50" r="17" fill="none" stroke="var(--amber)" stroke-width="2"/>`;
+    s += `<text class="tm" x="${x}" y="54" text-anchor="middle" style="fill:${col};font-weight:700">${v.dropped ? '✕' : i}</text>`;
+    s += `<text class="tm" x="${x}" y="84" text-anchor="middle" style="fill:var(--ink)">${v.lbl}</text><text class="tm" x="${x}" y="100" text-anchor="middle">${vtTime(v.t).replace('Day ', 'D')}</text>`;
+  });
+  $('#vtTl').innerHTML = s;
+  const c = vtCur();
+  $('#vtNow').innerHTML = vtTable(c.dropped ? null : c.rows, 'DROPPED');
+  $('#vtClock').textContent = vtTime(VT.now);
+  $('#vtVer').textContent = n;
+  $('#vtWin').textContent = VT.ret === 0 ? 'current only' : `since ${vtTime(Math.max(0, vtOldest()))}`;
+  $('#vtState').innerHTML = c.dropped ? '<span class="badge bad">DROPPED</span>' : '<span class="badge ok">EXISTS</span>';
+  if (!keep) { $('#vtRes').innerHTML = ''; $('#vtSql').textContent = '-- pick a Time Travel action and press Run it'; }
+  vtCtl();
+}
+$('#vtAdd').onclick = () => vtDml('ins');
+$('#vtUpd').onclick = () => vtDml('upd');
+$('#vtDel').onclick = () => vtDml('del');
+$('#vtDrop').onclick = () => vtDml('drop');
+$('#vtWait').onclick = () => { VT.now += 1440; VT.hit = -1; $('#vtIns').innerHTML = `A day passed. Versions replaced more than ${VT.ret} day(s) ago are now outside Time Travel (grey). For a permanent table they sit in Fail-safe for 7 more days, invisible to SQL.`; vtDraw(); };
+$('#vtReset').onclick = () => { vtInit(); $('#vtIns').innerHTML = 'Reset. Run the <b>Bad UPDATE</b>, then try <b>BEFORE(STATEMENT)</b> on it.'; vtDraw(); };
+$('#vtRun').onclick = vtRun;
+tabs('#vtRet', d => { VT.ret = +d.r; VT.hit = -1; $('#vtIns').innerHTML = VT.ret === 0 ? '<b>Retention 0</b> disables Time Travel: only the current version is queryable, and a dropped permanent table goes straight to Fail-safe. (MIN_DATA_RETENTION_TIME_IN_DAYS at account level can block this.)' : `Retention is now <b>${VT.ret} day(s)</b>. ${VT.ret > 1 ? 'More than 1 day requires Enterprise edition or higher.' : ''}`; vtDraw(); });
+tabs('#vtMode', d => { VT.mode = d.m; vtCtl(); });
+vtInit(); vtDraw();
+
+/* ===== 02 Fail-safe storage lifecycle ===== */
+const FS = { type: 'perm', ed: 'ent', drop: 0 };
+function fsModel() {
+  const raw = +$('#fsRet').value, churn = +$('#fsChurn').value / 100, size = +$('#fsSize').value;
+  const cap = FS.type !== 'perm' || FS.ed === 'std' ? 1 : 90, R = Math.min(raw, cap), F = FS.type === 'perm' ? 7 : 0;
+  const coh = [], days = [];
+  for (let d = 0; d <= 120; d++) {
+    const alive = !FS.drop || d < 40;
+    if (alive && d > 0 && churn > 0) coh.push([d, size * churn]);
+    if (FS.drop && d === 40) coh.push([d, size]);
+    let t = 0, f = 0;
+    coh.forEach(([b, x]) => { const age = d - b; if (age < R) t += x; else if (age < R + F) f += x; });
+    days.push({ a: alive ? size : 0, t, f });
+  }
+  return { days, R, F, raw, cap, size, churn };
+}
+function fsDraw() {
+  const M = fsModel(), D = M.days, day = +$('#fsDay').value;
+  $('#fsRetV').textContent = M.raw > M.cap ? `${M.R} (capped from ${M.raw})` : `${M.R} day${M.R === 1 ? '' : 's'}`;
+  $('#fsChurnV').textContent = Math.round(M.churn * 100) + '% / day';
+  $('#fsSizeV').textContent = M.size + ' TB';
+  $('#fsDayV').textContent = 'day ' + day;
+  const mx = Math.max(...D.map(x => x.a + x.t + x.f), 0.5);
+  const X = d => 50 + d * (590 / 120), Y = v => 200 - v / mx * 170;
+  const area = (lo, hi) => { let p = 'M' + X(0) + ' ' + Y(hi(D[0])); D.forEach((x, d) => { p += ' L' + X(d) + ' ' + Y(hi(x)); }); for (let d = 120; d >= 0; d--) p += ' L' + X(d) + ' ' + Y(lo(D[d])); return p + ' Z'; };
+  let s = `<line x1="50" y1="200" x2="640" y2="200" stroke="var(--line2)"/><line x1="50" y1="30" x2="50" y2="200" stroke="var(--line2)"/>`;
+  s += `<path d="${area(x => 0, x => x.a)}" fill="var(--teal)" fill-opacity=".35" stroke="var(--teal)"/>`;
+  s += `<path d="${area(x => x.a, x => x.a + x.t)}" fill="var(--ice)" fill-opacity=".35" stroke="var(--ice)"/>`;
+  s += `<path d="${area(x => x.a + x.t, x => x.a + x.t + x.f)}" fill="var(--amber)" fill-opacity=".35" stroke="var(--amber)"/>`;
+  [0, 30, 60, 90, 120].forEach(d => { s += `<text class="tm" x="${X(d)}" y="216" text-anchor="${d === 120 ? 'end' : d === 0 ? 'start' : 'middle'}">day ${d}</text>`; });
+  s += `<text class="tm" x="44" y="${Y(mx) + 4}" text-anchor="end">${fmt(mx, 1)}</text><text class="tm" x="44" y="204" text-anchor="end">0 TB</text>`;
+  if (FS.drop) s += `<line x1="${X(40)}" y1="30" x2="${X(40)}" y2="200" stroke="var(--red)" stroke-dasharray="4 4"/><text class="tm" x="${X(40) + 4}" y="56" style="fill:var(--red)">DROP</text>`;
+  s += `<line x1="${X(day)}" y1="24" x2="${X(day)}" y2="200" stroke="var(--ink)" stroke-width="1.5"/><text class="tm" x="${Math.min(X(day) + 4, 600)}" y="28" style="fill:var(--ink)">day ${day}</text>`;
+  $('#fsSvg').innerHTML = s;
+  const p = D[day], tot = p.a + p.t + p.f, price = 23;
+  $('#fsA').textContent = fmt(p.a, 2) + ' TB'; $('#fsT').textContent = fmt(p.t, 2) + ' TB'; $('#fsF').textContent = fmt(p.f, 2) + ' TB';
+  $('#fsC').textContent = '$' + fmt(tot * price); $('#fsCs').textContent = `${fmt(tot, 2)} TB total · ${p.a > 0 ? fmt((p.t + p.f) / p.a * 100) + '% overhead' : 'table dropped'}`;
+  let ins;
+  if (FS.type === 'temp') ins = '<b>Temporary:</b> max 1 day Time Travel, no Fail-safe, and in real life the whole table disappears when your session ends (shown here as if the session stayed open). Perfect for scratch work inside a script.';
+  else if (FS.drop && FS.type === 'perm') ins = `<b>After DROP on day 40:</b> the whole table sits in Time Travel for ${M.R} day(s) (UNDROP works), then in Fail-safe for 7 days (Support only), then it is purged around day ${40 + M.R + 7}. You keep paying until then.`;
+  else if (FS.drop) ins = `<b>Transient DROP:</b> ${M.R} day(s) of Time Travel and then it is gone. No Fail-safe means no storage tail, but also no last resort.`;
+  else if (FS.type === 'perm' && M.R === 0) ins = '<b>Retention 0 does not remove Fail-safe.</b> On a permanent table, replaced data goes straight into the 7-day Fail-safe, so you still pay for history but can no longer use it yourself.';
+  else if (p.a > 0 && (p.t + p.f) > p.a) ins = `<b>History now costs more than the table itself.</b> With ${Math.round(M.churn * 100)}% daily churn, every day of retention plus ${M.F} days of Fail-safe stacks up. If this data is rebuildable, make it transient.`;
+  else if (FS.type === 'trans') ins = '<b>Transient:</b> no Fail-safe band at all. Storage is mostly just the active data, at the price of having no Support-only last resort.';
+  else ins = `Steady state: Time Travel ≈ churn × ${M.R} day(s), Fail-safe ≈ churn × ${M.F} days. Raise churn or retention and watch the blue and amber bands grow.`;
+  if (FS.ed === 'std' && FS.type === 'perm' && M.raw > 1) ins += ' <b>Standard edition caps retention at 1 day.</b>';
+  $('#fsIns').innerHTML = ins;
+}
+tabs('#fsType', d => { FS.type = d.v; fsDraw(); });
+tabs('#fsEd', d => { FS.ed = d.v; fsDraw(); });
+tabs('#fsDrop', d => { FS.drop = +d.v; fsDraw(); });
+['#fsRet', '#fsChurn', '#fsSize', '#fsDay'].forEach(id => $(id).addEventListener('input', fsDraw));
+fsDraw();
+</script>
+
+<script>
+/* ===== 03 table types ===== */
+const TT_ROWS = [
+  ['Created with', 'CREATE TABLE', 'CREATE TRANSIENT TABLE', 'CREATE TEMPORARY TABLE'],
+  ['Lives until', 'You drop it', 'You drop it', 'Your session ends (or you drop it)'],
+  ['Visible to', 'Any role with privileges', 'Any role with privileges', 'Only the session that created it'],
+  ['Time Travel', '0–1 day (Standard) · 0–90 days (Enterprise+)', '0 or 1 day', '0 or 1 day, never beyond the session'],
+  ['Fail-safe', '7 days', 'None', 'None'],
+  ['History storage cost', 'Highest', 'Low', 'Lowest'],
+  ['Container option', 'Permanent database / schema', 'TRANSIENT database / schema makes every table inside transient', 'n/a (session object)'],
+  ['Typical use', 'Facts, dimensions, anything hard to rebuild', 'Staging, landing, ETL intermediates, dbt models rebuilt each run', 'Scratch results inside one script, procedure or worksheet']
+];
+const TT_NOTE = [
+  '<b>Permanent</b> is the default and the only type with Fail-safe. Pay for the full protection where losing data would really hurt.',
+  '<b>Transient</b> behaves like a permanent table for every user, but has no Fail-safe and at most 1 day of Time Travel. If the source files are still in S3, re-loading <i>is</i> your recovery plan.',
+  '<b>Temporary</b> is private to your session. Two sessions can each have their own <code>tmp_dedup</code> without conflict. When the session ends, it is gone for good: no Fail-safe, no recovery.'
+];
+function ttDraw(k) {
+  $$('#ttCards .fcard').forEach(b => b.classList.toggle('on', +b.dataset.v === k));
+  $('#ttTbl').innerHTML = `<tr><th></th>${['PERMANENT', 'TRANSIENT', 'TEMPORARY'].map((h, i) => `<th class="${i === k ? 'hl' : ''}">${h}</th>`).join('')}</tr>` +
+    TT_ROWS.map(r => `<tr><td><b>${r[0]}</b></td>${r.slice(1).map((c, i) => `<td class="${i === k ? 'hl' : ''}">${c}</td>`).join('')}</tr>`).join('');
+  $('#ttIns').innerHTML = TT_NOTE[k];
+}
+$$('#ttCards .fcard').forEach(b => b.onclick = () => ttDraw(+b.dataset.v));
+ttDraw(0);
+const TTS = [
+  { q: 'RAW_ORDERS_LANDING is truncated and fully reloaded every night from Parquet files that stay in S3 for 30 days.', a: 1, e: 'Rebuildable from files you still have, and fully rewritten daily, so on a permanent table every reload would create a full copy in Time Travel and then 7 days of Fail-safe. <b>Transient</b> (often in a transient STAGING schema).' },
+  { q: 'FACT_SALES holds 5 years of history. The source systems purge their data after 90 days.', a: 0, e: 'This data can no longer be rebuilt from the source. <b>Permanent</b>, with a longer retention (Enterprise) and ideally backups or replication.' },
+  { q: 'Inside a stored procedure you dedup a batch into an intermediate result that only the next two statements read.', a: 2, e: 'Only this session needs it and it is worthless afterwards. <b>Temporary</b>: no name clashes with parallel runs, cleaned up automatically.' },
+  { q: 'dbt intermediate models rebuilt on every run and read by other jobs and BI sessions.', a: 1, e: 'Other sessions must see them, so temporary won\'t work, but they are rebuilt each run. <b>Transient</b>. (dbt-snowflake creates tables as transient by default; check your project config.)' },
+  { q: 'The general-ledger table that auditors may ask you to restore to any point in the last quarter.', a: 0, e: '<b>Permanent</b> with 90-day retention (Enterprise+), an account-level MIN_DATA_RETENTION_TIME_IN_DAYS floor, and long-term backups for anything older.' },
+  { q: 'An analyst saves an ad-hoc result to join against a few times during this worksheet session.', a: 2, e: '<b>Temporary</b>: private, free of naming conflicts, and it cleans itself up when the session ends.' }
+];
+const TT_ANS = Array(TTS.length).fill(null);
+let tti = 0;
+$('#ttScen').innerHTML = TTS.map((_, i) => `<button data-i="${i}" class="${i === 0 ? 'on' : ''}">Scenario ${i + 1}</button>`).join('');
+function ttsShow(i) {
+  tti = i; $('#ttQ').innerHTML = `<h5>Scenario ${i + 1}</h5><p>${TTS[i].q}</p>`;
+  const a = TT_ANS[i];
+  $$('#ttPick button').forEach(b => { const v = +b.dataset.v; b.classList.toggle('pri', a !== null && v === TTS[i].a); b.classList.toggle('warn', a !== null && v === a && a !== TTS[i].a); });
+  $('#ttFb').innerHTML = a === null ? '<b class="h">YOUR CALL</b>Pick a type for this scenario.' : `<b class="h">${a === TTS[i].a ? 'CORRECT' : 'NOT QUITE'}</b>${TTS[i].e}`;
+  $('#ttScore').textContent = `${TT_ANS.filter((x, j) => x === TTS[j].a).length} correct · ${TT_ANS.filter(x => x !== null).length} / ${TTS.length} answered`;
+}
+tabs('#ttScen', d => ttsShow(+d.i));
+$$('#ttPick button').forEach(b => b.onclick = () => { TT_ANS[tti] = +b.dataset.v; ttsShow(tti); });
+ttsShow(0);
+
+/* ===== 04 clone divergence ===== */
+let CL;
+function clInit() { CL = { parts: {}, src: [], cln: null, next: 9 }; for (let i = 1; i <= 8; i++) { CL.parts['P' + i] = 'src'; CL.src.push('P' + i); } }
+function clNew(owner) { const id = 'P' + CL.next++; CL.parts[id] = owner; return id; }
+function clStatus(id) {
+  const s = CL.src.includes(id), c = CL.cln ? CL.cln.includes(id) : false, o = CL.parts[id];
+  if (s && c) return 'shared'; if (s) return 'src'; if (c) return o === 'src' ? 'ret' : 'cln'; return 'tt';
+}
+function clDraw(msg) {
+  const box = (id, x, y, h = 36) => `<g class="mp ${clStatus(id)}"><rect x="${x}" y="${y}" width="50" height="${h}" rx="6" stroke-width="1.5"/><text x="${x + 25}" y="${y + h / 2 + 4}" text-anchor="middle">${id}</text></g>`;
+  const X = i => 150 + i * 58;
+  let s = `<text class="th" x="10" y="52">ORDERS</text><text class="tm" x="10" y="68">source</text>`;
+  s += `<text class="th" x="10" y="152">ORDERS_DEV</text><text class="tm" x="10" y="168">${CL.cln ? 'clone' : 'not created'}</text>`;
+  s += `<text class="th" x="10" y="222">History</text><text class="tm" x="10" y="238">kept, not current</text>`;
+  if (CL.cln) CL.cln.forEach((id, j) => { const i = CL.src.indexOf(id); if (i >= 0 && i < 9) s += `<path class="lnk" d="M${X(i) + 25} 72 L${X(j) + 25} 132"/>`; });
+  CL.src.slice(0, 9).forEach((id, i) => { s += box(id, X(i), 36); });
+  if (CL.cln) CL.cln.slice(0, 9).forEach((id, i) => { s += box(id, X(i), 132); });
+  else s += `<rect x="150" y="132" width="514" height="36" rx="6" fill="none" stroke="var(--line2)" stroke-dasharray="5 5"/><text class="tm" x="407" y="154" text-anchor="middle">no clone yet</text>`;
+  const histOnly = Object.keys(CL.parts).filter(id => clStatus(id) === 'tt');
+  histOnly.slice(-9).forEach((id, i) => { s += box(id, X(i), 206, 28); });
+  if (!histOnly.length) s += `<text class="tm" x="150" y="224">none yet</text>`;
+  $('#clSvg').innerHTML = s;
+  const ids = Object.keys(CL.parts), st = ids.map(clStatus);
+  const cnt = k => st.filter(x => x === k).length;
+  const srcBill = ids.filter(id => CL.parts[id] === 'src').length, clnBill = ids.filter(id => CL.parts[id] === 'cln').length;
+  const mb = n => n * 100 >= 1000 ? fmt(n * 0.1, 1) + ' GB' : n * 100 + ' MB';
+  $('#clShared').textContent = CL.cln ? cnt('shared') : '–';
+  $('#clUniq').textContent = CL.cln ? `${cnt('src')} / ${cnt('cln')}` : `${cnt('src')} / –`;
+  $('#clPhys').textContent = mb(ids.length);
+  $('#clBill').textContent = `${mb(srcBill)} / ${mb(clnBill)}`;
+  $('#clMake').disabled = !!CL.cln;
+  ['#clClnUpd', '#clClnIns'].forEach(id => { $(id).disabled = !CL.cln; });
+  $('#clClnIns').disabled = !CL.cln || CL.cln.length >= 9;
+  $('#clSrcDel').disabled = CL.src.length < 2;
+  $('#clSrcUpd').disabled = CL.src.length < 1;
+  if (msg) $('#clIns').innerHTML = msg;
+}
+$('#clMake').onclick = () => { CL.cln = [...CL.src]; clDraw('<b>Clone created in seconds.</b> Cloud services wrote a new metadata entry pointing at the same 8 files. Physical storage is <b>unchanged</b> and the clone is billed nothing. No warehouse ran. Now change one side.'); };
+$('#clSrcUpd').onclick = () => {
+  const pick = CL.src.filter(id => !CL.cln || CL.cln.includes(id)).slice(1, 3);
+  const tgt = pick.length ? pick : CL.src.slice(0, 1);
+  tgt.forEach(id => { const i = CL.src.indexOf(id); CL.src[i] = clNew('src'); });
+  clDraw(`UPDATE on the source rewrote <b>${tgt.join(', ')}</b> as new files owned by the source. ${CL.cln ? 'The clone still points at the old files, so they become clone-only but stay <b>billed to the source</b> (red: first as Time Travel, later as RETAINED_FOR_CLONE_BYTES). The clone is unaffected: copy-on-write.' : 'With no clone, the old files are just source Time Travel history.'}`);
+};
+$('#clClnUpd').onclick = () => {
+  const sh = CL.cln.filter(id => CL.src.includes(id));
+  const id = sh.length ? sh[sh.length - 1] : CL.cln[CL.cln.length - 1];
+  const j = CL.cln.indexOf(id); CL.cln[j] = clNew('cln');
+  clDraw(`UPDATE on the clone wrote a new file <b>${CL.cln[j]}</b> owned by (and billed to) the clone. ${CL.src.includes(id) ? `The source still uses ${id}, so nothing changes for it.` : `${id} is no longer used by anyone current, so it becomes history.`}`);
+};
+$('#clClnIns').onclick = () => { CL.cln.push(clNew('cln')); clDraw('INSERT into the clone added a brand-new micro-partition that only the clone owns. The source never sees these rows.'); };
+$('#clSrcDel').onclick = () => {
+  const gone = CL.src.splice(0, 2);
+  clDraw(`DELETE removed every row in <b>${gone.join(', ')}</b>, so those files simply left the source's file list (no rewrite needed). ${CL.cln && gone.some(id => CL.cln.includes(id)) ? 'The clone still needs them, so they live on, <b>billed to the source</b> as RETAINED_FOR_CLONE_BYTES. Dropping or rebuilding a big source table does not free storage while clones still reference its files.' : 'No clone references them, so they move into the source\'s Time Travel (then Fail-safe).'}`);
+};
+$('#clReset').onclick = () => { clInit(); clDraw('Reset. Press <b>CREATE … CLONE</b>.'); };
+clInit(); clDraw();
+
+/* ===== 05 DR drill ===== */
+const DR = { ed: 'bc', int: 10, red: 1, out: false, i: -1 };
+const OUT_T = 14 * 60 + 37;
+const drDur = n => n <= 1 ? 1 : n <= 10 ? 2 : n <= 60 ? 4 : n <= 240 ? 8 : 20;
+const hm = m => `${String(Math.floor(((m % 1440) + 1440) % 1440 / 60)).padStart(2, '0')}:${String(((m % 60) + 60) % 60).padStart(2, '0')}`;
+function drSnap() { const d = drDur(DR.int); let s = Math.floor(OUT_T / DR.int) * DR.int; while (s + d > OUT_T) s -= DR.int; return s; }
+function drSteps() {
+  const bc = DR.ed === 'bc', red = bc && DR.red;
+  return [
+    { m: 5, h: 'Detect the outage', t: 'Monitoring alerts fire and the Snowflake status page confirms a regional incident in us-east-1. (Illustrative: 5 min.)' },
+    { m: 10, h: 'Decide to fail over', t: `Incident call: is the data loss window acceptable? The last good refresh snapshot is from <b>${hm(drSnap())}</b>. Failing over is a business decision, not automatic. (10 min.)` },
+    bc ? { m: 2, h: 'Promote the secondary', t: 'On the <b>target</b> account: <code>ALTER FAILOVER GROUP sales_fg PRIMARY;</code> The replica databases, roles and users become read-write. (Illustrative: about 2 min.)', promote: 1 }
+       : { m: 240, h: 'Cannot promote', t: 'Enterprise edition has <b>replication groups only</b>: the secondary is read-only and cannot be promoted. You can read it, but making it writable means building new databases from it (e.g. CTAS), plus recreating users, roles and grants, which were not replicated. (Illustrative: 4 hours.)', promote: 1 },
+    red ? { m: 2, h: 'Redirect clients', t: 'On the target: <code>ALTER CONNECTION prodconn PRIMARY;</code> The connection URL <code>myorg-prodconn.snowflakecomputing.com</code> now resolves to us-west-2. Clients reconnect without any config change. (About 2 min.)', redirect: 1 }
+        : { m: 120, h: 'Redirect clients by hand', t: `${bc ? 'No connection object is used, so' : 'Client redirect needs Business Critical, so'} every BI tool, ETL job and app has a hard-coded account URL that must be edited and redeployed. (Illustrative: 2 hours, often more.)`, redirect: 1 },
+    { m: 15, h: 'Stabilise', t: 'Resume tasks on the new primary, check pipes/stages/integrations that point at region-specific buckets, run smoke tests, tell users. Later: fail back once us-east-1 is healthy.' }
+  ];
+}
+function drDraw() {
+  const d = drDur(DR.int), snap = drSnap(), lost = OUT_T - snap, st = drSteps();
+  const done = st.slice(0, DR.i + 1), rto = done.reduce((a, s) => a + s.m, 0);
+  $('#drReplT').textContent = `refresh every ${DR.int >= 1440 ? '24 h' : DR.int >= 60 ? DR.int / 60 + ' h' : DR.int + ' min'} · ~${d} min each`;
+  $('#drRpoW').textContent = (DR.int + d) >= 120 ? fmt((DR.int + d) / 60, 1) + ' h' : (DR.int + d) + ' min';
+  $('#drRef').textContent = fmt(1440 / DR.int);
+  $('#drRpo').textContent = DR.out ? (lost >= 120 ? fmt(lost / 60, 1) + ' h' : lost + ' min') : '–';
+  $('#drRto').textContent = DR.out && DR.i >= 0 ? (rto >= 120 ? fmt(rto / 60, 1) + ' h' : rto + ' min') + (DR.i < st.length - 1 ? ' so far' : '') : '–';
+  const promoted = DR.out && done.some(s => s.promote) && DR.ed === 'bc';
+  const redirected = DR.out && done.some(s => s.redirect);
+  $('#drP').classList.toggle('down', DR.out); $('#drS').classList.toggle('up', promoted);
+  $('#drPt').textContent = DR.out ? 'REGION OUTAGE' : 'read-write';
+  $('#drPt2').textContent = DR.ed === 'bc' ? 'failover group:' : 'replication group:'; $('#drPt3').textContent = DR.ed === 'bc' ? 'SALES_DB + roles, users' : 'SALES_DB only (read-only copy)';
+  $('#drSt').textContent = promoted ? 'PROMOTED · read-write' : 'read-only replica';
+  $('#drSt2').textContent = `last refresh snapshot: ${hm(DR.out ? snap : Math.floor(OUT_T / DR.int) * DR.int)}`;
+  $('#drCP').style.opacity = redirected ? .15 : 1; $('#drCS').style.opacity = redirected ? 1 : .15;
+  $('#drCP').style.stroke = DR.out && !redirected ? 'var(--red)' : ''; $('#drCS').style.stroke = redirected ? 'var(--teal)' : '';
+  /* timeline 13:00 - 15:00 */
+  const t0 = 13 * 60, X = m => 40 + (m - t0) * (600 / 120);
+  let s = `<line x1="40" y1="34" x2="640" y2="34" stroke="var(--line2)" stroke-width="2"/>`;
+  for (let m = t0; m <= t0 + 120; m += 30) s += `<text class="tm" x="${X(m)}" y="64" text-anchor="middle">${hm(m)}</text>`;
+  if (DR.out) { const a = Math.max(t0, snap); s += `<rect x="${X(a)}" y="22" width="${X(OUT_T) - X(a)}" height="24" fill="var(--red-s)" stroke="var(--red)"/>`; if (snap < t0) s += `<text class="tm" x="44" y="16" style="fill:var(--red)">◀ loss window starts ${hm(snap)}</text>`; }
+  for (let m = Math.ceil(t0 / DR.int) * DR.int; m <= t0 + 120; m += DR.int) { s += `<line x1="${X(m)}" y1="26" x2="${X(m)}" y2="42" stroke="var(--teal)" stroke-width="2"/>`; if (DR.int >= 10) s += `<rect x="${X(m)}" y="38" width="${Math.max(2, drDur(DR.int) * 5)}" height="4" fill="var(--teal)"/>`; }
+  s += `<line x1="${X(OUT_T)}" y1="12" x2="${X(OUT_T)}" y2="52" stroke="var(--red)" stroke-width="2.5"/><text class="tm" x="${X(OUT_T) + 4}" y="12" style="fill:var(--red)">outage 14:37</text>`;
+  $('#drTl').innerHTML = s;
+  $('#drBar').innerHTML = st.map((_, k) => `<span class="${DR.out && k <= DR.i ? 'on' : ''}"></span>`).join('');
+  if (!DR.out) $('#drDesc').innerHTML = '<h4>Normal operations</h4><div style="font-size:14px;color:var(--ink2)">Green ticks are scheduled refreshes. Each refresh copies only micro-partitions created since the previous one. Choose a schedule, then trigger the outage.</div>';
+  else if (DR.i < 0) $('#drDesc').innerHTML = `<h4>Outage at 14:37</h4><div style="font-size:14px;color:var(--ink2)">Everything committed on the primary after <b>${hm(snap)}</b> (the start of the last refresh that finished) never reached the secondary: <b>${lost} minutes</b> of changes are at risk. Press <b>Next failover step</b>.</div>`;
+  else { const x = st[DR.i]; $('#drDesc').innerHTML = `<h4>Step ${DR.i + 1} / ${st.length} · ${x.h} <span class="badge mid">+${x.m} min</span></h4><div style="font-size:14px;color:var(--ink2)">${x.t}</div>`; }
+  $('#drNext').disabled = !DR.out || DR.i >= st.length - 1;
+  $('#drOut').disabled = DR.out;
+  let ins = `Worst-case RPO ≈ schedule interval + refresh time = <b>${DR.int + d} min</b>. ${DR.int <= 1 ? 'Very frequent refreshes mean many small refresh jobs: more serverless compute and transfer cost.' : DR.int >= 240 ? 'Cheap, but you could lose hours of data.' : 'A common middle ground.'}`;
+  if (DR.out && DR.i === st.length - 1) ins = `<b>Drill complete:</b> lost about ${lost} min of data (RPO), back in business after about ${rto >= 120 ? fmt(rto / 60, 1) + ' hours' : rto + ' min'} (RTO). ${DR.ed !== 'bc' ? 'Without failover groups and client redirect, RTO is measured in hours.' : !DR.red ? 'Client redirect would have saved most of that time.' : 'Failover group + connection object = the fastest path.'}`;
+  if (DR.ed !== 'bc') ins += ' <b>Enterprise:</b> no failover, no client redirect, and only databases (not users/roles) are replicated.';
+  $('#drIns').innerHTML = ins;
+}
+tabs('#drEd', d => { DR.ed = d.v; DR.i = Math.min(DR.i, drSteps().length - 1); drDraw(); });
+tabs('#drInt', d => { DR.int = +d.v; drDraw(); });
+tabs('#drRed', d => { DR.red = +d.v; drDraw(); });
+$('#drOut').onclick = () => { DR.out = true; DR.i = -1; drDraw(); };
+$('#drNext').onclick = () => { if (DR.i < drSteps().length - 1) { DR.i++; drDraw(); } };
+$('#drReset').onclick = () => { DR.out = false; DR.i = -1; drDraw(); };
+drDraw();
+
+/* ===== 06 protection strategy by tier ===== */
+const BK = [
+  { t: ['Transient (or permanent if source files are not kept)', '1 day', 'None', 'None: the files in the stage / S3 (with a lifecycle rule) are the backup', 'Usually not; re-ingest in the DR region or replicate if replay is impossible'], i: 'Raw data that can be re-loaded from files you still hold doesn\'t need Fail-safe. Make sure the files really are retained long enough.' },
+  { t: ['Transient schema', '0–1 day', 'None', 'None', 'No: rebuilt by the pipeline'], i: 'Intermediates are rebuilt every run. Paying for 7 days of Fail-safe on data that churns daily is pure waste.' },
+  { t: ['Permanent', '7–30 days (Enterprise+)', '7 days', 'Clone before risky releases; scheduled backups or dated clones for month-end', 'Failover group (Business Critical), schedule sized to the RPO, e.g. 10–30 min'], i: 'The data your business runs on. Longer retention catches mistakes found days later; replication covers region loss.' },
+  { t: ['Permanent', '90 days + account MIN_DATA_RETENTION_TIME_IN_DAYS', '7 days', 'Backups with a retention lock for long-term, tamper-proof history (check edition/availability)', 'Failover group to another region or cloud, tested with regular drills'], i: 'Regulators care about tamper-proof history and proven restores. Combine long Time Travel, immutable backups and a separate replicated account, and restrict ACCOUNTADMIN / OWNERSHIP.' },
+  { t: ['Transient database', '0–1 day', 'None', 'Re-clone from prod (with masking policies applied) on a schedule', 'No'], i: 'Dev data is disposable. Clone from prod for realism, keep it transient, and refresh it rather than protecting it.' }
+];
+const BK_H = ['Table type', 'Time Travel retention', 'Fail-safe', 'Clones / backups', 'Replication'];
+function bkDraw(k) { $('#bkOut').innerHTML = `<tr><th>SETTING</th><th>RECOMMENDATION</th></tr>` + BK[k].t.map((v, i) => `<tr><td><b>${BK_H[i]}</b></td><td>${v}</td></tr>`).join(''); $('#bkIns').innerHTML = BK[k].i; }
+tabs('#bkTier', d => bkDraw(+d.v));
+bkDraw(0);
+</script>
+
+<script>
+/* ===== 07 SQL lab ===== */
+const SQL = [
+  { t: 'Time Travel queries', l: [
+    ['-- 1. The table as it was 30 minutes ago', 'Comment: OFFSET is measured in seconds relative to now, so it must be negative.'],
+    ['SELECT * FROM orders AT(OFFSET => -60*30);', 'AT(OFFSET => -1800) reads the table version that was current 30 minutes ago. Runs on your warehouse like a normal query.'],
+    ['', ''],
+    ['-- 2. As of an exact moment (always cast the timestamp)', 'Comment: an uncast string may be interpreted in a different time zone or type than you expect.'],
+    ["SELECT * FROM orders AT(TIMESTAMP => '2024-06-01 09:00:00 -0700'::TIMESTAMP_TZ);", 'AT(TIMESTAMP => …) with an explicit TIMESTAMP_TZ, so 09:00 Pacific is unambiguous. Errors if that time is beyond retention or before the table existed.'],
+    ['', ''],
+    ['-- 3. Find the query ID of the bad statement', 'Comment: STATEMENT => needs the query ID of the statement you want to go back before.'],
+    ['SELECT query_id, query_text, start_time', 'Pick the ID, the SQL text and when it started.'],
+    ['FROM TABLE(INFORMATION_SCHEMA.QUERY_HISTORY())', 'Table function over recent query history (for older history use SNOWFLAKE.ACCOUNT_USAGE.QUERY_HISTORY, which has some latency).'],
+    ["WHERE query_text ILIKE 'update orders%'", 'Case-insensitive search for the UPDATE that broke the data.'],
+    ['ORDER BY start_time DESC LIMIT 5;', 'Newest first, just a few rows.'],
+    ['', ''],
+    ['-- 4. The table just BEFORE that statement ran', 'Comment: BEFORE excludes the statement\'s own changes; AT would include them.'],
+    ["SELECT * FROM orders BEFORE(STATEMENT => '01b4c3d2-0001-a1b2-0000-0001234abcd2');", 'Reads the version immediately before the bad UPDATE committed: the good data.'],
+    ['', ''],
+    ['-- 5. What changed in the last hour?', 'Comment: set difference between two versions.'],
+    ['SELECT * FROM orders AT(OFFSET => -3600)', 'All rows as they were one hour ago…'],
+    ['MINUS', '…minus…'],
+    ['SELECT * FROM orders;', '…the rows as they are now = rows that were deleted or changed in the last hour.']
+  ] },
+  { t: 'UNDROP & restore', l: [
+    ['DROP TABLE orders;', 'Marks the table as dropped in metadata. Its data is retained for the table\'s Time Travel period.'],
+    ["SHOW TABLES HISTORY LIKE 'ORDERS' IN SCHEMA sales_db.public;", 'Lists current AND dropped tables named ORDERS, with a DROPPED_ON column. Useful when a name was dropped several times.'],
+    ['UNDROP TABLE orders;', 'Restores the most recently dropped ORDERS. Metadata-only: seconds, no warehouse.'],
+    ['', ''],
+    ['-- someone ran CREATE OR REPLACE TABLE orders … by mistake', 'Comment: CREATE OR REPLACE silently drops the old table, so a new ORDERS now occupies the name.'],
+    ['ALTER TABLE orders RENAME TO orders_wrong;', 'Move the new table out of the way, because UNDROP fails if the name exists.'],
+    ['UNDROP TABLE orders;', 'Now the old, replaced table comes back under its original name.'],
+    ['', ''],
+    ['UNDROP SCHEMA sales_db.staging;', 'Schemas can be undropped too, with all their tables (retained for the schema\'s retention period).'],
+    ['UNDROP DATABASE sales_db;', 'Same for a whole database.'],
+    ['', ''],
+    ['-- restore after a bad UPDATE: clone the good version, then swap', 'Comment: the safest restore pattern, because you can inspect the result before switching.'],
+    ["CREATE TABLE orders_restored CLONE orders BEFORE(STATEMENT => '01b4c3d2-0001-a1b2-0000-0001234abcd2') COPY GRANTS;", 'Zero-copy clone of the pre-UPDATE version. COPY GRANTS copies the source table\'s privileges onto the new table so readers keep access after the swap.'],
+    ['SELECT COUNT(*), SUM(amount) FROM orders_restored;', 'Sanity-check the restored data before going live.'],
+    ['ALTER TABLE orders SWAP WITH orders_restored;', 'Atomically swaps the two table names: ORDERS now holds the good data.'],
+    ['DROP TABLE orders_restored;', 'This name now holds the bad version. Dropping it is fine: it stays in Time Travel in case you need it.']
+  ] },
+  { t: 'Retention settings', l: [
+    ['ALTER ACCOUNT SET DATA_RETENTION_TIME_IN_DAYS = 1;', 'Account-wide default retention, inherited by databases, schemas and tables that don\'t set their own.'],
+    ['ALTER ACCOUNT SET MIN_DATA_RETENTION_TIME_IN_DAYS = 7;', 'Safety floor (ACCOUNTADMIN only). Effective retention for permanent objects = MAX(their setting, 7). Needs Enterprise+ for values above 1.'],
+    ['ALTER DATABASE sales_db SET DATA_RETENTION_TIME_IN_DAYS = 30;', 'Database-level setting, inherited by its schemas and tables unless they override it.'],
+    ['ALTER SCHEMA sales_db.staging SET DATA_RETENTION_TIME_IN_DAYS = 1;', 'Lower level wins: staging tables keep only 1 day.'],
+    ['CREATE TABLE sales_db.core.fact_sales (sale_id NUMBER, amount NUMBER(12,2))', 'A critical fact table…'],
+    ['  DATA_RETENTION_TIME_IN_DAYS = 90;', '…with the maximum 90 days of Time Travel (Enterprise+ only, permanent tables).'],
+    ['ALTER TABLE sales_db.core.fact_sales SET DATA_RETENTION_TIME_IN_DAYS = 60;', 'Lowering retention: history older than 60 days moves out of Time Travel (into Fail-safe for a permanent table).'],
+    ["SHOW PARAMETERS LIKE 'DATA_RETENTION%' IN TABLE sales_db.core.fact_sales;", 'Shows the value and the LEVEL it was set at (table, schema, database, account).'],
+    ['', ''],
+    ['SELECT table_name, active_bytes, time_travel_bytes, failsafe_bytes, retained_for_clone_bytes', 'Storage per table, split by lifecycle stage.'],
+    ['FROM SNOWFLAKE.ACCOUNT_USAGE.TABLE_STORAGE_METRICS', 'Account Usage view (has some latency). Each database also has INFORMATION_SCHEMA.TABLE_STORAGE_METRICS.'],
+    ["WHERE table_catalog = 'SALES_DB' AND deleted = FALSE", 'Only live tables in SALES_DB.'],
+    ['ORDER BY failsafe_bytes DESC LIMIT 20;', 'Top Fail-safe consumers: often high-churn tables that should be transient.']
+  ] },
+  { t: 'Zero-copy clones', l: [
+    ['CREATE TABLE orders_dev CLONE orders;', 'Metadata-only copy: points at the same micro-partitions. No warehouse, no extra storage until one side changes.'],
+    ['CREATE TABLE orders_dev2 CLONE orders COPY GRANTS;', 'Same, but also copies the privileges granted on ORDERS (single-table clones don\'t copy grants by default).'],
+    ["CREATE TABLE orders_jun30 CLONE orders AT(TIMESTAMP => '2024-06-30 23:59:59'::TIMESTAMP_LTZ);", 'Point-in-time clone: a month-end snapshot built from Time Travel. Must be within retention.'],
+    ['CREATE SCHEMA sales_db.core_test CLONE sales_db.core;', 'Clones the schema and its child objects. Grants on the child objects are kept; grants on the schema itself are not.'],
+    ['CREATE OR REPLACE DATABASE qa_db CLONE prod_db AT(OFFSET => -3600);', 'A full QA database as of one hour ago, recreated in seconds (OR REPLACE drops the previous qa_db).'],
+    ['CREATE DATABASE qa_db2 CLONE prod_db', 'Another database clone…'],
+    ['  AT(TIMESTAMP => DATEADD(day, -2, CURRENT_TIMESTAMP()))', '…as of two days ago…'],
+    ['  IGNORE TABLES WITH INSUFFICIENT DATA RETENTION;', '…skipping tables whose retention is too short for that point, instead of failing the whole clone.'],
+    ['', ''],
+    ['SELECT table_name, id, clone_group_id, active_bytes, retained_for_clone_bytes', 'Tables in the same clone family share a CLONE_GROUP_ID.'],
+    ['FROM sales_db.INFORMATION_SCHEMA.TABLE_STORAGE_METRICS', 'Per-database storage view.'],
+    ["WHERE table_name IN ('ORDERS', 'ORDERS_DEV');", 'Right after cloning, ORDERS_DEV shows ~0 active bytes owned by itself.'],
+    ['', ''],
+    ['ALTER TABLE orders SWAP WITH orders_dev;', 'Promote a tested clone to production in one atomic rename.']
+  ] },
+  { t: 'Transient & temporary', l: [
+    ['CREATE TRANSIENT DATABASE staging_db;', 'Every schema and table created inside it is transient: no Fail-safe, Time Travel 0 or 1 day.'],
+    ['CREATE TRANSIENT TABLE sales_db.public.stg_orders (order_id NUMBER, payload VARIANT)', 'A transient staging table in a normal database…'],
+    ['  DATA_RETENTION_TIME_IN_DAYS = 0;', '…with Time Travel switched off: the cheapest option for data reloaded every run.'],
+    ['CREATE TEMPORARY TABLE tmp_dedup AS SELECT DISTINCT * FROM sales_db.public.stg_orders;', 'Session-only scratch table. Invisible to other sessions and dropped automatically at session end.'],
+    ["SHOW TABLES LIKE 'STG_ORDERS' IN SCHEMA sales_db.public;", 'The KIND column shows TRANSIENT, TEMPORARY or TABLE (permanent); retention_time shows the setting.'],
+    ['', ''],
+    ['-- you cannot ALTER a table to change its type: rebuild and swap', 'Comment: table type is fixed at creation time.'],
+    ['CREATE TRANSIENT TABLE orders_t LIKE orders;', 'Empty transient table with the same columns as ORDERS.'],
+    ['INSERT INTO orders_t SELECT * FROM orders;', 'Copy the data (this one uses a warehouse, it is a real copy).'],
+    ['ALTER TABLE orders SWAP WITH orders_t;', 'ORDERS is now the transient table.'],
+    ['DROP TABLE orders_t;', 'Remove the old permanent version (it still goes through Time Travel and Fail-safe).']
+  ] },
+  { t: 'Replication & failover groups', l: [
+    ['-- ORGADMIN: enable replication for each account involved', 'Comment: replication must be enabled for both source and target accounts in the organization.'],
+    ["SELECT SYSTEM$GLOBAL_ACCOUNT_SET_PARAMETER('myorg.prod_account', 'ENABLE_ACCOUNT_DATABASE_REPLICATION', 'true');", 'One way an organization administrator enables replication for an account (repeat for the DR account). Check current docs for the preferred method.'],
+    ['', ''],
+    ['-- on the SOURCE account', 'Comment: the primary group is created where the data lives today.'],
+    ['CREATE FAILOVER GROUP sales_fg', 'A failover group: replicated together and can be promoted. Requires Business Critical or higher.'],
+    ['  OBJECT_TYPES = DATABASES, ROLES, USERS, WAREHOUSES', 'Besides databases, replicate account objects so the DR account works without manual setup.'],
+    ['  ALLOWED_DATABASES = sales_db, ref_db', 'Which databases belong to the group.'],
+    ['  ALLOWED_ACCOUNTS = myorg.dr_account', 'Which accounts may hold a replica (org_name.account_name).'],
+    ["  REPLICATION_SCHEDULE = '10 MINUTE';", 'Automatic refresh every 10 minutes. Worst-case RPO ≈ 10 minutes + refresh time.'],
+    ['', ''],
+    ['-- on the TARGET (DR) account', 'Comment: create the secondary group, which pulls from the primary.'],
+    ['CREATE FAILOVER GROUP sales_fg AS REPLICA OF myorg.prod_account.sales_fg;', 'Creates the secondary group. Its databases are read-only until promoted.'],
+    ['ALTER FAILOVER GROUP sales_fg REFRESH;', 'Manual refresh, e.g. for the very first (full) copy. Later refreshes copy only new micro-partitions.'],
+    ["SELECT * FROM TABLE(INFORMATION_SCHEMA.REPLICATION_GROUP_REFRESH_HISTORY('sales_fg'));", 'Refresh history: phases, start/end times, bytes transferred. Use it to monitor lag.'],
+    ['', ''],
+    ['-- disaster: run on the TARGET account', 'Comment: failover is a manual, deliberate action.'],
+    ['ALTER FAILOVER GROUP sales_fg PRIMARY;', 'Promotes this account\'s group to primary: its databases become writable. The old primary becomes secondary.'],
+    ['', ''],
+    ['-- Enterprise edition: read-only replicas of databases', 'Comment: replication groups don\'t support failover.'],
+    ["CREATE REPLICATION GROUP sales_rg OBJECT_TYPES = DATABASES ALLOWED_DATABASES = sales_db ALLOWED_ACCOUNTS = myorg.reporting_account REPLICATION_SCHEDULE = '60 MINUTE';", 'A replication group: good for read-only copies near users in another region, or for migrations.']
+  ] },
+  { t: 'Client redirect', l: [
+    ['-- on the SOURCE account', 'Comment: a connection object gives clients a URL that can be re-pointed.'],
+    ['CREATE CONNECTION prodconn;', 'Creates the primary connection. Requires Business Critical or higher.'],
+    ['ALTER CONNECTION prodconn ENABLE FAILOVER TO ACCOUNTS myorg.dr_account;', 'Allows the DR account to hold a secondary connection and take over.'],
+    ['SHOW CONNECTIONS;', 'Lists connections, which one is primary, and the connection URL.'],
+    ['', ''],
+    ['-- on the TARGET account', 'Comment: create the secondary connection.'],
+    ['CREATE CONNECTION prodconn AS REPLICA OF myorg.prod_account.prodconn;', 'The secondary connection in the DR account.'],
+    ['', ''],
+    ['-- clients connect to: myorg-prodconn.snowflakecomputing.com', 'Comment: BI tools, drivers and jobs use this connection URL instead of an account URL.'],
+    ['', ''],
+    ['-- during failover, run on the TARGET account', 'Comment: after promoting the failover group.'],
+    ['ALTER CONNECTION prodconn PRIMARY;', 'Re-points the connection URL to the DR account. Clients reconnect (after DNS updates) without any config change.']
+  ] }
+];
+const KW = /\b(CREATE|OR|REPLACE|TABLE|TRANSIENT|TEMPORARY|DATABASE|SCHEMA|ON|IF|NOT|EXISTS|ALTER|SET|SELECT|FROM|WHERE|BY|ORDER|DESC|LIMIT|AS|SUM|COUNT|SHOW|LIKE|INTO|INSERT|DISTINCT|DROP|UNDROP|RENAME|TO|SWAP|WITH|CLONE|AT|BEFORE|OFFSET|TIMESTAMP|STATEMENT|COPY|GRANTS|AND|IN|MINUS|ACCOUNT|FAILOVER|REPLICATION|GROUP|REPLICA|OF|PRIMARY|REFRESH|CONNECTION|CONNECTIONS|ENABLE|ACCOUNTS|IGNORE|TABLES|INSUFFICIENT|DATA|RETENTION|HISTORY|PARAMETERS|ILIKE|FALSE|TRUE|INFORMATION_SCHEMA|DATEADD|CURRENT_TIMESTAMP|NUMBER|VARIANT)\b/g;
+const hl = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/('[^']*')/g, '\u0001$1\u0002').replace(KW, '<span class="kw">$1</span>').replace(/\b(\d+)\b/g, '<span class="num">$1</span>').replace(/\u0001([^\u0002]*)\u0002/g, (m, a) => '<span class="str">' + a.replace(/<[^>]+>/g, '') + '</span>');
+let sqlI = 0;
+function sqlShow(i) {
+  sqlI = i;
+  $$('#sqlTabs button').forEach((b, k) => b.classList.toggle('on', k === i));
+  $('#sqlCode').innerHTML = SQL[i].l.map(([l], k) => `<div data-k="${k}"><em>${k + 1}</em>${l.trim().startsWith('--') ? '<span style="color:var(--ink3)">' + esc(l) + '</span>' : hl(l) || ' '}</div>`).join('');
+  $('#sqlExp').innerHTML = '<b class="h">CLICK A LINE</b>Each line is explained in plain English.';
+  $$('#sqlCode div').forEach(d => d.onclick = () => {
+    const e = SQL[sqlI].l[d.dataset.k][1]; if (!e) return;
+    $$('#sqlCode div').forEach(x => x.classList.remove('on')); d.classList.add('on');
+    $('#sqlExp').innerHTML = `<b class="h">LINE ${+d.dataset.k + 1}</b>${esc(e)}`;
+  });
+}
+$('#sqlTabs').innerHTML = SQL.map(s => `<button>${s.t}</button>`).join('');
+$$('#sqlTabs button').forEach((b, i) => b.onclick = () => sqlShow(i));
+sqlShow(0);
+
+/* ===== 08 Q&A ===== */
+const QA = [
+  ['Time Travel', 'b', `What is Time Travel and how does it work internally?`, `<p>Time Travel lets you query, clone or restore data as of an earlier point within the retention period, using <code>AT</code>/<code>BEFORE</code> with TIMESTAMP, OFFSET or STATEMENT, and <code>UNDROP</code> for dropped objects. Internally, micro-partitions are immutable: each DML writes new partitions and commits a new table version in the metadata store. Old partitions are kept and marked historical. A Time Travel query simply asks cloud services for the older version's partition list and reads it with a warehouse.</p>`],
+  ['Time Travel', 'b', `What are the retention limits by edition and object type?`, `<p>Standard edition: 0 or 1 day. Enterprise and higher: 0–90 days for permanent databases, schemas and tables. Transient and temporary objects: 0 or 1 day on any edition. The default is 1 day. Retention is set with <code>DATA_RETENTION_TIME_IN_DAYS</code> at account, database, schema or table level (most specific wins), and an account-level <code>MIN_DATA_RETENTION_TIME_IN_DAYS</code> can enforce a floor.</p>`],
+  ['Time Travel', 't', `AT(STATEMENT => id) vs BEFORE(STATEMENT => id): which one undoes a bad UPDATE?`, `<p><b>BEFORE.</b> AT includes the changes made by that statement; BEFORE shows the state immediately before it. So the restore is: <code>CREATE TABLE t_fix CLONE t BEFORE(STATEMENT =&gt; '&lt;bad_query_id&gt;')</code>, verify, then <code>ALTER TABLE t SWAP WITH t_fix</code>. Find the query ID in QUERY_HISTORY.</p>`],
+  ['Time Travel', 't', `Someone ran CREATE OR REPLACE TABLE orders and lost the old data. How do you recover it?`, `<p>CREATE OR REPLACE drops the old table, which then sits in Time Travel as a dropped version. UNDROP fails while a table called ORDERS exists, so: <code>ALTER TABLE orders RENAME TO orders_new;</code> then <code>UNDROP TABLE orders;</code>. <code>SHOW TABLES HISTORY</code> shows all dropped versions; UNDROP restores the most recent drop first. Then merge whatever you need from orders_new.</p>`],
+  ['Time Travel', 't', `You drop a schema whose tables have 30-day retention, but the schema has 1-day retention. How long can you recover the tables?`, `<p>When a parent (database or schema) is dropped, child objects are retained for the <b>parent's</b> retention period; explicitly longer retention on the children is not honored in that case. So you'd have about 1 day to <code>UNDROP SCHEMA</code>. Lesson: set retention on containers holding critical data, or use MIN_DATA_RETENTION_TIME_IN_DAYS.</p>`],
+  ['Time Travel', 's', `A nightly job wrote wrong values into FACT_SALES three days ago and nobody noticed. Walk me through recovery.`, `<p>(1) Check retention: <code>SHOW PARAMETERS LIKE 'DATA_RETENTION%' IN TABLE fact_sales</code>; you need ≥ 3 days (Enterprise). (2) Find the job's query ID(s) in ACCOUNT_USAGE.QUERY_HISTORY. (3) <code>CREATE TABLE fact_sales_fix CLONE fact_sales BEFORE(STATEMENT =&gt; id) COPY GRANTS</code>. (4) The last three days of <i>good</i> loads are missing from the clone, so either re-run those loads against it, or surgically repair: MERGE the affected keys from the old version into the current table. (5) Validate counts and sums, then SWAP. If retention was 1 day, Time Travel can't help: the old data is in Fail-safe (Support only) or you rebuild from source or backups.</p>`],
+  ['Fail-safe', 'b', `What is Fail-safe? Can you query it?`, `<p>A non-configurable 7-day period after Time Travel ends, for permanent objects only. Data is still stored (and billed), but you <b>cannot</b> query, clone or UNDROP it. Only Snowflake Support can attempt recovery, best effort, typically taking hours to days. Transient and temporary tables have no Fail-safe.</p>`],
+  ['Fail-safe', 't', `Your storage bill shows Fail-safe bytes larger than the active table. Why, and what do you do?`, `<p>High churn: each full reload or large rewrite turns the whole old version into history, which sits in Time Travel for the retention days and then in Fail-safe for 7 more days. A table rewritten daily can carry roughly 7× its size in Fail-safe. Check <code>TABLE_STORAGE_METRICS</code>; if the data is rebuildable, recreate it as <b>transient</b> (CTAS/LIKE + SWAP); prefer incremental MERGE over truncate-and-reload; lower retention where appropriate.</p>`],
+  ['Table types', 'b', `Permanent vs transient vs temporary tables?`, `<p><b>Permanent</b>: default, Time Travel up to 90 days (Enterprise+), 7-day Fail-safe. <b>Transient</b>: persists until dropped and is visible to other sessions, Time Travel 0–1 day, no Fail-safe. <b>Temporary</b>: exists only in the creating session, dropped at session end, Time Travel 0–1 day, no Fail-safe. Same storage format and performance; the difference is protection and cost. Transient databases/schemas make all their tables transient.</p>`],
+  ['Table types', 't', `Can you convert a permanent table to transient with ALTER TABLE?`, `<p>No, the type is fixed at creation. Create a transient table (<code>CREATE TRANSIENT TABLE t2 LIKE t</code> + INSERT, or CTAS), then <code>ALTER TABLE t SWAP WITH t2</code> and drop the old one. Remember grants (COPY GRANTS on CTAS) and that the dropped permanent version still goes through Time Travel and Fail-safe.</p>`],
+  ['Cloning', 'b', `How does zero-copy cloning work, and what does it cost?`, `<p>A clone is a new metadata object that references the source's existing micro-partitions; no data is copied and no warehouse is needed. Afterwards each side is independent: any change writes new partitions owned by the side that changed (copy-on-write). Cost starts near zero and grows with divergence. Shared partitions are billed to the table that originally created them; if the source drops partitions a clone still uses, they show up as RETAINED_FOR_CLONE_BYTES on the source.</p>`],
+  ['Cloning', 't', `What is NOT carried over when you clone a table?`, `<p>Grants (unless <code>COPY GRANTS</code>), the COPY load history (so reloading the same files can duplicate data), and for clones of schemas/databases: unconsumed stream records, and tasks start suspended. Internal named stage contents and some pipes are not cloned the same way as tables (check current docs for the exact rules). The clone's own Time Travel history starts at creation; you can't time travel the clone to before it existed (but you can clone the source AT an earlier point).</p>`],
+  ['Cloning', 's', `Design a dev/test environment strategy using clones.`, `<p>Nightly or on-demand task: <code>CREATE OR REPLACE DATABASE dev_db CLONE prod_db</code> (or AT a timestamp for a consistent point). Apply masking/row access policies so dev users never see raw PII (policies travel with cloned objects, but verify). Make dev transient-like: short retention, and drop/re-clone regularly so divergence (and cost) stays small. Grant dev roles on the clone, not on prod. For CI, clone a schema per pull request, run tests, drop it.</p>`],
+  ['Replication', 'b', `Replication group vs failover group?`, `<p>Both replicate a set of objects (databases, and optionally account objects like users, roles, warehouses) to other accounts in the organization, keeping them point-in-time consistent, with a refresh schedule. A <b>replication group</b> gives read-only secondaries. A <b>failover group</b> can also be promoted to primary (<code>ALTER FAILOVER GROUP … PRIMARY</code>). Failover and account-object replication require Business Critical or higher; database replication is available on all editions.</p>`],
+  ['Replication', 't', `How do you estimate RPO and RTO for Snowflake DR?`, `<p><b>RPO</b> ≈ replication schedule interval + time a refresh takes (changes committed after the last successful refresh started are lost). Shorter schedules lower RPO but add refresh compute and transfer cost. <b>RTO</b> = detect + decide + promote the failover group + redirect clients + stabilise. Client redirect via connection objects removes the slowest part (reconfiguring every client). Measure both in regular drills using REPLICATION_GROUP_REFRESH_HISTORY.</p>`],
+  ['Replication', 't', `Is replication a backup?`, `<p>No. A bad UPDATE or DROP on the primary replicates to the secondary at the next refresh. Replication protects against losing a region/cloud. Logical mistakes need Time Travel, clones or backups. Mature designs combine both.</p>`],
+  ['Replication', 's', `Your Business Critical account in AWS us-east-1 must survive a regional outage with RPO 15 min and RTO 30 min. Design it.`, `<p>Create a second account in another region (or cloud). Failover group with DATABASES plus ROLES, USERS, WAREHOUSES, integrations as supported, <code>REPLICATION_SCHEDULE = '10 MINUTE'</code> (leaves headroom for refresh time). A connection object with failover enabled; all clients use the connection URL. Runbook: promote failover group, <code>ALTER CONNECTION … PRIMARY</code>, resume tasks, repoint stages/pipes to regional buckets (or use replicated storage). Monitor refresh lag and alert if it exceeds 15 min. Drill quarterly and budget for transfer + refresh compute + secondary storage.</p>`],
+  ['Strategy', 's', `How would you design a data protection strategy for a whole platform?`, `<p>Tier it. Raw/landing: transient, rely on retained source files. Staging/intermediates: transient schemas, 0–1 day. Curated core: permanent, 7–30 days retention, clones before releases, failover group for DR. Regulated: 90 days, account MIN_DATA_RETENTION_TIME_IN_DAYS, immutable backups with retention lock where available, replication to a separate account, tight control of ACCOUNTADMIN and OWNERSHIP. Dev: transient clones refreshed on a schedule. Monitor TABLE_STORAGE_METRICS for cost and test restores regularly.</p>`]
+];
+const LV = { b: 'FUNDAMENTAL', t: 'TRICKY', s: 'SCENARIO' };
+function qa(f) { $('#qaList').innerHTML = QA.filter(q => f === 'all' || q[0] === f).map(([tp, l, q, a]) => `<details class="qa"><summary><span class="lv ${l}">${LV[l]}</span><span class="tp">${tp.toUpperCase()}</span>${q}</summary><div class="ans">${a}</div></details>`).join(''); }
+tabs('#qaTabs', d => qa(d.f));
+qa('all');
+
+/* ===== 09 quiz ===== */
+const QZ = [
+  [`Why can Snowflake offer Time Travel without copying data?`, [`It takes hourly snapshots`, `Micro-partitions are immutable; old ones are kept and older metadata versions point at them`, `It logs every row change in a redo log`, `It mirrors every table to a backup table`], 1, `DML writes new micro-partitions and commits a new version; the old partitions remain and older versions still reference them.`],
+  [`Maximum Time Travel retention for a permanent table on Standard edition?`, [`0 days`, `1 day`, `7 days`, `90 days`], 1, `Standard edition allows 0 or 1 day. Up to 90 days requires Enterprise or higher.`],
+  [`Which clause shows the table just before a bad UPDATE with query ID X?`, [`AT(STATEMENT => 'X')`, `BEFORE(STATEMENT => 'X')`, `AT(OFFSET => 'X')`, `UNDROP STATEMENT 'X'`], 1, `BEFORE excludes the statement's own changes; AT would include them.`],
+  [`AT(OFFSET => -3600) means…`, [`3600 days ago`, `3600 minutes ago`, `one hour ago`, `3600 versions ago`], 2, `OFFSET is a negative number of seconds relative to now.`],
+  [`UNDROP TABLE orders fails with "object already exists". What do you do?`, [`Use UNDROP FORCE`, `Rename the existing ORDERS table, then UNDROP`, `Ask Support`, `Increase retention`], 1, `UNDROP needs the name to be free. Rename (or drop) the current object first.`],
+  [`Who can recover data from Fail-safe?`, [`Any ACCOUNTADMIN with SQL`, `The table owner with UNDROP`, `Only Snowflake Support, best effort`, `Nobody, it is not stored`], 2, `Fail-safe is not accessible through SQL. Only Support can attempt recovery.`],
+  [`Which table type has no Fail-safe AND is visible to other sessions?`, [`Permanent`, `Transient`, `Temporary`, `External`], 1, `Transient tables persist and are shared, but have no Fail-safe. Temporary tables are session-private.`],
+  [`What does MIN_DATA_RETENTION_TIME_IN_DAYS do?`, [`Sets the Fail-safe period`, `Sets an account-level floor: effective retention = MAX(object setting, minimum)`, `Sets the maximum retention`, `Applies only to transient tables`], 1, `It's an account-level parameter that prevents objects from having less retention than the floor.`],
+  [`Right after CREATE TABLE b CLONE a on a 2 TB table, how much new storage is used?`, [`2 TB`, `1 TB`, `Roughly zero; it grows only as a or b change`, `It depends on the warehouse size`], 2, `Clones share micro-partitions; new storage appears only as either side diverges.`],
+  [`You clone a single table. Are the source table's grants copied?`, [`Always`, `Only with COPY GRANTS`, `Never possible`, `Only for transient tables`], 1, `Single-table clones don't copy grants unless you specify COPY GRANTS.`],
+  [`You clone a table and re-run the same COPY INTO against the clone. What can happen?`, [`COPY skips everything`, `Files may load again, creating duplicates, because load history isn't cloned`, `The clone is locked`, `COPY fails`], 1, `Load metadata is not copied to the clone.`],
+  [`Which feature requires Business Critical edition or higher?`, [`Database replication`, `Zero-copy cloning`, `Failover groups and client redirect`, `UNDROP`], 2, `Database replication works on all editions; failover/failback and client redirect need Business Critical+.`],
+  [`Replication schedule is 60 minutes and refreshes take ~4 minutes. Worst-case data loss (RPO)?`, [`About 4 minutes`, `About 64 minutes`, `Zero`, `24 hours`], 1, `RPO ≈ interval + refresh time.`],
+  [`Which statement redirects clients to the DR account during failover?`, [`ALTER ACCOUNT SET REDIRECT = TRUE`, `ALTER CONNECTION prodconn PRIMARY (on the target)`, `ALTER FAILOVER GROUP fg REFRESH`, `UNDROP CONNECTION`], 1, `Promoting the secondary connection re-points the connection URL to that account.`]
+];
+let qi = 0; const qAns = Array(QZ.length).fill(null);
+QZ.forEach((_, i) => { const s = document.createElement('span'); s.onclick = () => qShow(i); $('#qzBar').appendChild(s); });
+function qShow(i) {
+  qi = i; const [q, opts, ok, ex] = QZ[i], a = qAns[i];
+  $('#qzN').textContent = i + 1;
+  [...$('#qzBar').children].forEach((s, k) => { s.classList.toggle('on', qAns[k] !== null); s.style.outline = k === i ? '2px solid var(--ice)' : ''; });
+  $('#qzBody').innerHTML = `<h3 style="margin-top:6px">${esc(q)}</h3>` + opts.map((o, k) => `<button class="opt ${a !== null ? (k === ok ? 'ok' : (k === a ? 'bad' : '')) : ''}" data-k="${k}">${String.fromCharCode(65 + k)}. ${esc(o)}</button>`).join('') + (a !== null ? `<div class="qexp"><b>${a === ok ? 'Correct.' : 'Not quite.'}</b> ${esc(ex)}</div>` : '');
+  $$('#qzBody .opt').forEach(b => b.onclick = () => { if (qAns[qi] !== null) return; qAns[qi] = +b.dataset.k; qShow(qi); $('#qzS').textContent = qAns.filter((x, j) => x === QZ[j][2]).length; });
+  $('#qzNext').textContent = i === QZ.length - 1 ? 'See result' : 'Next';
+}
+function qResult() {
+  const s = qAns.filter((x, j) => x === QZ[j][2]).length;
+  const msg = s >= QZ.length - 2 ? 'Interview-ready on data protection.' : s >= Math.round(QZ.length * 0.6) ? 'Solid. Replay the Time Travel and DR simulators, then retry.' : 'Walk through the version timeline, clone divergence and DR drill again, then retry.';
+  $('#qzBody').innerHTML = `<div class="score">${s} / ${QZ.length}</div><p style="margin-top:8px">${msg}</p><button class="btn pri" id="qzAgain" style="margin-top:10px">Retry quiz</button>`;
+  $('#qzAgain').onclick = () => { qAns.fill(null); $('#qzS').textContent = 0; qShow(0); };
+}
+$('#qzNext').onclick = () => qi === QZ.length - 1 ? qResult() : qShow(qi + 1);
+$('#qzPrev').onclick = () => qShow(Math.max(0, qi - 1));
+qShow(0);
+</script>
+<div class="toast" id="toast"></div>
+<script>
+(() => {
+  const t = document.getElementById('toast'); let h;
+  document.querySelectorAll('.road a.soon').forEach(a => a.addEventListener('click', e => {
+    e.preventDefault();
+    t.textContent = `Module ${a.dataset.m} isn't built yet. Ask for it in chat and it will be added here.`;
+    t.classList.add('on'); clearTimeout(h); h = setTimeout(() => t.classList.remove('on'), 2800);
+  }));
+})();
+</script>
+</body>
+</html>

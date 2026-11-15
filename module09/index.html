@@ -1,0 +1,1465 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Snowflake Interview Lab · Module 09 · Cost Optimization</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/space-grotesk@5/300.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/space-grotesk@5/700.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/ibm-plex-sans@5/300.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/ibm-plex-sans@5/400.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/ibm-plex-sans@5/600.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/jetbrains-mono@5/400.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/jetbrains-mono@5/700.css">
+<style>
+:root{
+  --bg:#F2F6FA; --card:#FFFFFF; --card2:#E9EFF5; --ink:#0B1B2B; --ink2:#46596B; --ink3:#7F90A2;
+  --line:rgba(11,27,43,.12); --line2:rgba(11,27,43,.22);
+  --ice:#0A86C2; --ice-s:#DCEFF9; --amber:#B86F00; --amber-s:#FFF0D4; --teal:#0B8A6A; --teal-s:#DAF3EB;
+  --red:#C93C3C; --red-s:#FCE4E4; --grid:rgba(10,134,194,.06);
+  --f-head:"Space Grotesk",sans-serif; --f-body:"IBM Plex Sans",sans-serif; --f-mono:"JetBrains Mono",monospace;
+  --r:10px;
+}
+[data-theme="dark"]{
+  --bg:#08121D; --card:#0F1D2C; --card2:#16293B; --ink:#E5EDF5; --ink2:#9DB0C3; --ink3:#687D91;
+  --line:rgba(229,237,245,.10); --line2:rgba(229,237,245,.22);
+  --ice:#4CC3F0; --ice-s:rgba(76,195,240,.13); --amber:#FFB938; --amber-s:rgba(255,185,56,.13); --teal:#3FD3A8; --teal-s:rgba(63,211,168,.13);
+  --red:#FF7070; --red-s:rgba(255,112,112,.14); --grid:rgba(76,195,240,.05);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:var(--f-body);color:var(--ink);line-height:1.7;font-size:16px;
+  background:radial-gradient(1200px 600px at 85% -10%, var(--ice-s), transparent 60%),radial-gradient(900px 500px at -10% 30%, var(--teal-s), transparent 60%),
+  linear-gradient(var(--grid) 1px, transparent 1px) 0 0/32px 32px,linear-gradient(90deg, var(--grid) 1px, transparent 1px) 0 0/32px 32px,var(--bg);background-attachment:fixed}
+code,.mono{font-family:var(--f-mono);font-size:.88em}
+p code,li code,td code{background:var(--card2);padding:1px 6px;border-radius:5px}
+button{font-family:var(--f-body);cursor:pointer}
+.top{position:sticky;top:0;z-index:30;display:flex;align-items:center;gap:16px;padding:12px 28px;border-bottom:1px solid var(--line);background:color-mix(in srgb,var(--bg) 82%,transparent);backdrop-filter:saturate(1.4) blur(8px)}
+.brand{font-family:var(--f-mono);font-weight:700;letter-spacing:.06em;font-size:13px}.brand b{color:var(--ice)}
+.pill{font-family:var(--f-mono);font-size:12px;padding:3px 10px;border-radius:99px;border:1px solid var(--line2);color:var(--ink2)}
+.prog{flex:1;height:4px;background:var(--card2);border-radius:4px;overflow:hidden;max-width:360px;margin-left:auto}
+.prog i{display:block;height:100%;width:0;background:var(--ice);transition:width .4s}
+.prog-l{font-family:var(--f-mono);font-size:12px;color:var(--ink2);min-width:84px}
+.theme{border:1px solid var(--line2);background:var(--card);color:var(--ink);border-radius:8px;padding:5px 10px;font-size:13px}
+.wrap{display:grid;grid-template-columns:270px minmax(0,1fr);gap:36px;max-width:1340px;margin:0 auto;padding:28px}
+nav.side{position:sticky;top:76px;align-self:start;max-height:calc(100vh - 96px);overflow:auto;padding-right:6px}
+.side h4{font-family:var(--f-mono);font-size:11px;letter-spacing:.14em;color:var(--ink3);margin:6px 0 10px;font-weight:400}
+.side a{display:flex;gap:10px;align-items:baseline;padding:6px 10px;border-radius:8px;color:var(--ink2);text-decoration:none;font-size:14px;border-left:2px solid transparent}
+.side a span{font-family:var(--f-mono);font-size:11px;color:var(--ink3)}
+.side a:hover{background:var(--card)}
+.side a.act{color:var(--ink);background:var(--card);border-left-color:var(--ice);border-radius:0 8px 8px 0}
+.side a.seen span{color:var(--teal)}
+.road{margin-top:22px;border-top:1px solid var(--line);padding-top:14px}
+.road div{font-size:13px;color:var(--ink3);padding:3px 10px;display:flex;gap:8px}
+.road div.now{color:var(--ink);font-weight:600}.road div.done{color:var(--teal)}
+.road div em{font-style:normal;font-family:var(--f-mono);font-size:11px;min-width:20px}
+main{min-width:0}
+section{padding:36px 0 44px;border-bottom:1px dashed var(--line2);scroll-margin-top:70px}
+.eyebrow{font-family:var(--f-mono);font-size:12px;letter-spacing:.16em;color:var(--ice);margin-bottom:6px}
+h1{font-family:var(--f-head);font-weight:700;font-size:clamp(40px,6vw,76px);line-height:1;letter-spacing:-.03em}
+h1 .thin,h2 .thin{font-weight:300;color:var(--ink2)}
+h2{font-family:var(--f-head);font-weight:700;font-size:clamp(28px,3.4vw,40px);letter-spacing:-.02em;line-height:1.1;margin-bottom:12px}
+h3{font-family:var(--f-head);font-weight:700;font-size:20px;margin:26px 0 10px;letter-spacing:-.01em}
+.lead{font-size:18px;font-weight:300;color:var(--ink2);max-width:820px}
+p{margin:8px 0}
+ul.dots{margin:8px 0 8px 20px}ul.dots li{margin:4px 0}
+.wwh{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:20px 0}
+.wwh .box{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:18px 20px;position:relative;overflow:hidden}
+.wwh .box.how{grid-column:1/-1}
+.wwh .tag{font-family:var(--f-mono);font-size:11px;letter-spacing:.14em;display:inline-block;padding:2px 8px;border-radius:5px;margin-bottom:8px}
+.box.what .tag{background:var(--ice-s);color:var(--ice)}.box.why .tag{background:var(--amber-s);color:var(--amber)}.box.how .tag{background:var(--teal-s);color:var(--teal)}
+.box::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px}
+.box.what::before{background:var(--ice)}.box.why::before{background:var(--amber)}.box.how::before{background:var(--teal)}
+.call{display:flex;gap:14px;padding:14px 18px;border-radius:var(--r);margin:14px 0;border:1px solid var(--line)}
+.call b.k{font-family:var(--f-mono);font-size:11px;letter-spacing:.12em;white-space:nowrap;padding-top:3px}
+.call.analogy{background:var(--ice-s)}.call.analogy b.k{color:var(--ice)}
+.call.trap{background:var(--red-s)}.call.trap b.k{color:var(--red)}
+.call.pro{background:var(--teal-s)}.call.pro b.k{color:var(--teal)}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px;margin:18px 0}
+.panel-h{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+.panel-h .t{font-family:var(--f-mono);font-size:12px;letter-spacing:.12em;color:var(--ink2)}.panel-h .t b{color:var(--ink)}
+.btn{border:1px solid var(--line2);background:var(--card);color:var(--ink);padding:7px 14px;border-radius:8px;font-size:14px;transition:all .15s}
+.btn:hover{border-color:var(--ice);color:var(--ice)}
+.btn.pri{background:var(--ice);color:var(--card);border-color:var(--ice)}.btn.pri:hover{color:var(--card);filter:brightness(1.08)}
+.btn.warn{border-color:var(--red);color:var(--red)}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.ctl{display:flex;align-items:center;gap:12px;font-size:14px;color:var(--ink2);margin:8px 0}
+.ctl label{min-width:150px}.ctl input[type=range]{flex:1;accent-color:var(--ice)}
+.ctl .v{font-family:var(--f-mono);font-size:13px;color:var(--ink);min-width:110px;text-align:right}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:14px 0}
+.stat{background:var(--card2);border-radius:10px;padding:12px 14px}
+.stat .k{font-family:var(--f-mono);font-size:11px;color:var(--ink3);letter-spacing:.08em}
+.stat .n{font-family:var(--f-head);font-weight:700;font-size:28px;line-height:1.2}
+.stat .s{font-size:12px;color:var(--ink2)}
+.sqlbox{font-family:var(--f-mono);font-size:13px;background:var(--card2);border-radius:8px;padding:10px 14px;white-space:pre-wrap;color:var(--ink);border-left:3px solid var(--ice);overflow:auto}
+.insight{font-size:14px;padding:10px 14px;border-radius:8px;background:var(--amber-s);color:var(--ink);margin-top:10px}.insight b{color:var(--amber)}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+.tabs button{border:1px solid var(--line2);background:transparent;color:var(--ink2);padding:6px 12px;border-radius:99px;font-size:13px}
+.tabs button.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}.grid2>div{min-width:0}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.mini{background:var(--card2);border-radius:10px;padding:14px}
+.mini h5{font-family:var(--f-head);font-size:15px;margin-bottom:4px}
+.mini p{font-size:14px;color:var(--ink2);margin:0}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:13px;color:var(--ink2);margin:8px 0}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:-1px;margin-right:6px}
+table.t{width:100%;border-collapse:collapse;font-size:14px}
+table.t th,table.t td{padding:7px 10px;border-bottom:1px solid var(--line);text-align:left}
+table.t th{font-family:var(--f-mono);font-size:11px;letter-spacing:.1em;color:var(--ink3);font-weight:400}
+table.t td.m{font-family:var(--f-mono);font-size:12px}
+svg{width:100%;height:auto;display:block}
+svg .t{font-family:var(--f-body);font-size:14px;fill:var(--ink)}
+svg .ts{font-family:var(--f-body);font-size:12px;fill:var(--ink2)}
+svg .th{font-family:var(--f-head);font-size:14px;font-weight:700;fill:var(--ink)}
+svg .tm{font-family:var(--f-mono);font-size:11px;fill:var(--ink2)}
+.L-cs{fill:var(--amber-s);stroke:var(--amber)}.L-cp{fill:var(--ice-s);stroke:var(--ice)}.L-st{fill:var(--teal-s);stroke:var(--teal)}
+.neutral{fill:var(--card);stroke:var(--line2)}
+.arr{stroke:var(--ink3);stroke-width:1.2;fill:none}
+.fn{transition:opacity .3s}
+.flow.playing .fn{opacity:.25}
+.flow.playing .fn.on{opacity:1}
+.fn.on rect{stroke-width:2.4}
+.edge{stroke:var(--ink3);stroke-width:1.4;fill:none;transition:opacity .3s}
+.flow.playing .edge{opacity:.2}
+.flow.playing .edge.on{opacity:1;stroke:var(--ice);stroke-width:2.4;stroke-dasharray:7 5}
+@media (prefers-reduced-motion:no-preference){
+  .flow.playing .edge.on{animation:dash .8s linear infinite}
+  @keyframes dash{to{stroke-dashoffset:-24}}
+  .pulse{animation:pulse 1.2s ease-in-out infinite}
+  @keyframes pulse{0%,100%{opacity:.35}50%{opacity:1}}
+  .rise{animation:rise .5s both}
+  @keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+  .grow{transform-box:fill-box;transform-origin:left center;animation:grow .6s both}
+  @keyframes grow{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+}
+.stepbar{display:flex;gap:6px;margin:12px 0}
+.stepbar span{flex:1;height:4px;border-radius:4px;background:var(--card2);cursor:pointer}
+.stepbar span.on{background:var(--ice)}
+.stepdesc{min-height:120px;background:var(--card2);border-radius:10px;padding:14px 16px}
+.stepdesc h4{font-family:var(--f-head);font-size:17px;margin-bottom:6px}
+.stepdesc .two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.stepdesc .two div{font-size:14px;color:var(--ink2)}
+.stepdesc .two b.l{display:block;font-family:var(--f-mono);font-size:11px;letter-spacing:.12em;margin-bottom:4px}
+.stepdesc .two .you b.l{color:var(--ice)}.stepdesc .two .be b.l{color:var(--teal)}
+.term{background:#0A141F;color:#D6E2EE;font-family:var(--f-mono);font-size:12.5px;border-radius:12px;padding:14px 16px;height:340px;overflow:auto;border:1px solid #1E3247}
+.term div{white-space:pre;line-height:1.5}
+.term .tin{color:#FFB938}.term .terr{color:#FF7A7A}.term .tok{color:#3FD3A8}.term .tdim{color:#6F8499}
+.tbar{display:flex;gap:6px;align-items:center;margin-bottom:8px}
+.tbar i{width:10px;height:10px;border-radius:50%;display:inline-block}
+.tinput{display:flex;gap:8px;margin-top:8px}
+.tinput input{flex:1;font-family:var(--f-mono);font-size:13px;padding:8px 10px;border-radius:8px;border:1px solid var(--line2);background:var(--card);color:var(--ink)}
+.cmds{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}
+.cmds button{font-family:var(--f-mono);font-size:11.5px;border:1px solid var(--line2);background:var(--card);color:var(--ink);padding:5px 9px;border-radius:7px;text-align:left}
+.cmds button:hover{border-color:var(--amber);color:var(--amber)}
+.cmds button small{display:block;font-family:var(--f-body);font-size:11px;color:var(--ink3)}
+.explain{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 16px;min-height:90px;font-size:14.5px}
+.explain b.h{font-family:var(--f-mono);font-size:12px;color:var(--ice);letter-spacing:.1em;display:block;margin-bottom:4px}
+.gantt-l{font-family:var(--f-mono);font-size:11px;fill:var(--ink2)}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font-family:var(--f-mono);font-size:12px;border:1px solid var(--line2);padding:5px 10px;border-radius:99px;cursor:pointer;user-select:none;background:var(--card);color:var(--ink2)}
+.chip.on{background:var(--ice-s);border-color:var(--ice);color:var(--ice)}
+.chip.now{outline:2px solid var(--amber);outline-offset:2px}
+.fcard{border:1px solid var(--line2);border-radius:10px;padding:10px 12px;cursor:pointer;background:var(--card);text-align:left;color:var(--ink)}
+.fcard.on{border-color:var(--ice);background:var(--ice-s)}
+.fcard b{display:block;font-family:var(--f-mono);font-size:12px}
+.fcard small{color:var(--ink3);font-size:12px}
+.out{font-family:var(--f-mono);font-size:12px;background:var(--card2);border-radius:8px;padding:10px 14px;white-space:pre-wrap;border-left:3px solid var(--teal);max-height:260px;overflow:auto}
+.chunk{border:1px solid var(--line2);border-radius:8px;padding:8px 10px;font-size:13px;margin:6px 0;background:var(--card)}
+.chunk em{font-style:normal;background:var(--amber-s);color:var(--ink);border-bottom:2px solid var(--amber)}
+.chunk b{font-family:var(--f-mono);font-size:11px;color:var(--ice);margin-right:8px}
+.act-i{color:var(--teal);font-family:var(--f-mono);font-size:12px;font-weight:700}
+.act-d{color:var(--red);font-family:var(--f-mono);font-size:12px;font-weight:700}
+.badge{font-family:var(--f-mono);font-size:11px;padding:2px 8px;border-radius:99px;white-space:nowrap}
+.badge.ok{background:var(--teal-s);color:var(--teal)}.badge.bad{background:var(--red-s);color:var(--red)}.badge.mid{background:var(--amber-s);color:var(--amber)}.badge.off{background:var(--card2);color:var(--ink3)}
+.flash{animation:flash 1s}
+@keyframes flash{0%{box-shadow:0 0 0 3px var(--amber)}100%{box-shadow:0 0 0 0 transparent}}
+.tn rect{fill:var(--card);stroke:var(--line2);transition:all .3s}
+.tn.run rect{fill:var(--amber-s);stroke:var(--amber);stroke-width:2.4}
+.tn.ok rect{fill:var(--teal-s);stroke:var(--teal);stroke-width:2}
+.tn.skip rect{fill:var(--card2);stroke:var(--ink3);stroke-dasharray:5 4}
+.tn.fail rect{fill:var(--red-s);stroke:var(--red);stroke-width:2}
+.tn .st{font-family:var(--f-mono);font-size:10px;fill:var(--ink3)}
+.log{max-height:240px;overflow:auto}
+.pk{transition:transform .8s cubic-bezier(.5,.05,.3,1)}
+.code{font-family:var(--f-mono);font-size:13px;background:var(--card2);border-radius:10px;padding:10px 0;overflow:auto}
+.code div{padding:2px 16px 2px 0;cursor:pointer;white-space:pre;display:block}
+.code div em{font-style:normal;color:var(--ink3);width:40px;text-align:right;padding-right:14px;display:inline-block;user-select:none}
+.code div:hover{background:var(--ice-s)}
+.code div.on{background:var(--ice-s);box-shadow:inset 3px 0 var(--ice)}
+.kw{color:var(--ice);font-weight:700}.str{color:var(--teal)}.num{color:var(--amber)}
+.qa{border:1px solid var(--line);border-radius:10px;margin:8px 0;background:var(--card);overflow:hidden}
+.qa summary{list-style:none;cursor:pointer;padding:14px 18px;display:flex;gap:12px;align-items:baseline;font-weight:600}
+.qa summary::-webkit-details-marker{display:none}
+.qa summary .lv{font-family:var(--f-mono);font-size:10px;letter-spacing:.1em;padding:2px 8px;border-radius:99px;flex:none;font-weight:400}
+.lv.b{background:var(--teal-s);color:var(--teal)}.lv.t{background:var(--red-s);color:var(--red)}.lv.s{background:var(--amber-s);color:var(--amber)}
+.qa summary .tp{font-family:var(--f-mono);font-size:10px;color:var(--ink3);flex:none;font-weight:400}
+.qa summary::after{content:"+";margin-left:auto;font-family:var(--f-mono);color:var(--ink3)}
+.qa[open] summary::after{content:"−"}
+.qa .ans{padding:0 18px 16px;color:var(--ink2);font-size:15px;border-top:1px solid var(--line)}
+.qa .ans p:first-child{margin-top:12px}
+.opt{display:block;width:100%;text-align:left;padding:12px 14px;margin:8px 0;border:1px solid var(--line2);border-radius:10px;background:var(--card);color:var(--ink);font-size:15px}
+.opt:hover{border-color:var(--ice)}
+.opt.ok{border-color:var(--teal);background:var(--teal-s)}.opt.bad{border-color:var(--red);background:var(--red-s)}
+.qexp{margin-top:10px;padding:12px 14px;border-radius:10px;background:var(--card2);font-size:14px;color:var(--ink2)}
+.score{font-family:var(--f-head);font-weight:700;font-size:56px;line-height:1}
+.cheat{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+.cheat div{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 16px;font-size:14px}
+.cheat div em{font-style:normal;font-family:var(--f-mono);font-size:20px;font-weight:700;color:var(--ice);display:block;line-height:1.1;margin-bottom:4px}
+.analogy-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:18px}
+.ag{border-radius:12px;padding:16px;border:1px solid var(--line);background:var(--card)}
+.ag .k{font-family:var(--f-mono);font-size:11px;letter-spacing:.12em}
+.ag h5{font-family:var(--f-head);font-size:18px;margin:2px 0 4px}
+.ag p{font-size:14px;color:var(--ink2);margin:0}
+.ag.a1{border-top:3px solid var(--amber)}.ag.a1 .k{color:var(--amber)}
+.ag.a2{border-top:3px solid var(--ice)}.ag.a2 .k{color:var(--ice)}
+.ag.a3{border-top:3px solid var(--teal)}.ag.a3 .k{color:var(--teal)}
+.ag.a4{border-top:3px solid var(--red)}.ag.a4 .k{color:var(--red)}
+footer{padding:40px 0;color:var(--ink3);font-size:13px;font-family:var(--f-mono)}
+.note-s{font-size:12px;color:var(--ink3);font-style:italic}
+@media (max-width:1000px){
+  .wrap{grid-template-columns:1fr;padding:16px}
+  nav.side{display:none}
+  .wwh,.grid2,.stepdesc .two{grid-template-columns:1fr}
+  .grid3,.analogy-grid{grid-template-columns:1fr}
+  .prog{display:none}
+}
+.road a.rm{display:flex;gap:8px;align-items:baseline;font-size:13px;padding:5px 10px;border-radius:8px;text-decoration:none;color:var(--ink2);border-left:2px solid transparent}
+.road a.rm:hover{background:var(--card);color:var(--ink)}
+.road a.rm em{font-style:normal;font-family:var(--f-mono);font-size:11px;min-width:20px}
+.road a.rm i{font-style:normal;font-family:var(--f-mono);font-size:9.5px;margin-left:auto;border:1px solid var(--line2);border-radius:99px;padding:0 6px;white-space:nowrap;color:var(--ink3)}
+.road a.rm.now{color:var(--ink);font-weight:600;border-left-color:var(--ice);background:var(--card);border-radius:0 8px 8px 0}
+.road a.rm.now i{border-color:var(--ice);color:var(--ice)}
+.road a.rm.ready em,.road a.rm.ready i{color:var(--teal)}.road a.rm.ready i{border-color:var(--teal)}
+.road a.rm.soon{color:var(--ink3)}
+.toast{position:fixed;bottom:24px;left:50%;transform:translate(-50%,20px);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;font-size:14px;opacity:0;transition:all .3s;z-index:60;pointer-events:none;max-width:90vw}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+.code div.pdone{box-shadow:inset 3px 0 var(--teal)}
+#pcCode{max-height:600px;position:relative}
+/* ===== module 09 extras ===== */
+.tblwrap{overflow-x:auto;min-width:0}
+.fin select,.fin input[type=number]{font-family:var(--f-mono);font-size:12.5px;padding:5px 6px;border-radius:7px;border:1px solid var(--line2);background:var(--card);color:var(--ink);max-width:100%}
+.fin input[type=number]{width:90px}
+.fin input[type=range]{accent-color:var(--ice);width:110px;vertical-align:middle}
+table.fleet td{vertical-align:middle;white-space:nowrap}
+table.fleet td.wn{font-family:var(--f-mono);font-size:12.5px;font-weight:700}
+.sugg{display:flex;gap:12px;align-items:center;justify-content:space-between;background:var(--card2);border-radius:10px;padding:10px 14px;margin:8px 0;font-size:14px;border-left:3px solid var(--teal)}
+.sugg b.sv{font-family:var(--f-mono);color:var(--teal);white-space:nowrap}
+.sugg.none{border-left-color:var(--ink3);color:var(--ink2)}
+.ckl label{display:flex;gap:10px;align-items:flex-start;padding:9px 12px;border:1px solid var(--line);border-radius:10px;margin:6px 0;background:var(--card);cursor:pointer;font-size:14px}
+.ckl label input{margin-top:5px;accent-color:var(--teal)}
+.ckl label .im{margin-left:auto;font-family:var(--f-mono);font-size:11px;white-space:nowrap}
+.ckl label.on{border-color:var(--teal);background:var(--teal-s)}
+.evlog{font-family:var(--f-mono);font-size:12px;background:var(--card2);border-radius:8px;padding:10px 14px;max-height:200px;overflow:auto;min-height:80px}
+.evlog div{padding:2px 0}
+.evlog .n{color:var(--amber)}.evlog .s{color:var(--red)}.evlog .k{color:var(--teal)}
+.bkt{cursor:pointer;transition:opacity .2s}
+.bkt.dim{opacity:.35}
+.findings{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-top:10px}
+.find{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:13.5px}
+.find b{display:block;font-family:var(--f-mono);font-size:11px;letter-spacing:.1em;color:var(--ink3);margin-bottom:2px}
+.find.hot{border-color:var(--red);background:var(--red-s)}
+.find.hot b{color:var(--red)}
+.g4{grid-template-columns:repeat(4,1fr)}
+.call>div,.mini p,.explain,.insight,.wwh .box,.qa .ans{min-width:0;overflow-wrap:anywhere}
+@media (max-width:1000px){.top{flex-wrap:wrap;gap:8px;padding:10px 16px}.prog-l{display:none}.call{flex-direction:column;gap:4px}.sugg,.ckl label{flex-wrap:wrap}.g4{grid-template-columns:1fr}.grid2[style]{grid-template-columns:1fr!important}.fin .ctl{flex-wrap:wrap}}
+/* course-wide phone layout */
+@media (max-width:560px){
+  .top{flex-wrap:wrap;gap:8px;padding:10px 14px}
+  .top .pill,.top .prog-l,.top .prog{display:none}
+  .brand{flex:1}
+  .ctl{flex-wrap:wrap}.ctl label{min-width:0;flex:1 1 100%}.ctl .v{min-width:0;text-align:left}
+  table{display:block;overflow-x:auto;max-width:100%}
+  .grid2,.grid3,.analogy-grid,[style*="grid-template-columns"]{grid-template-columns:1fr!important}
+  .grid2>*,.grid3>*,.call>div{min-width:0}
+  p code,li code,td code{word-break:break-word}
+  .code,.sqlbox,.out,.term,pre{max-width:100%;overflow-x:auto}
+  .call{flex-direction:column;gap:6px}
+  main,section,.panel,.wwh .box,.mini{min-width:0;max-width:100%}
+}
+</style>
+</head>
+<body>
+<div class="top">
+  <div class="brand">SNOWFLAKE<b>//</b>INTERVIEW LAB</div>
+  <span class="pill">Module 09 · Cost optimization</span>
+  <div class="prog"><i id="progBar"></i></div>
+  <span class="prog-l" id="progLbl">0% explored</span>
+  <button class="theme" id="themeBtn">Dark / light</button>
+</div>
+<div class="wrap">
+<nav class="side">
+  <h4>MODULE 09 · CHAPTERS</h4>
+  <a href="#intro"><span>00</span>Start here</a>
+  <a href="#buckets"><span>01</span>The three cost buckets</a>
+  <a href="#compute"><span>02</span>Warehouse compute</a>
+  <a href="#storage"><span>03</span>Storage cost</a>
+  <a href="#serverless"><span>04</span>Serverless &amp; cloud services</a>
+  <a href="#guard"><span>05</span>Guardrails</a>
+  <a href="#visib"><span>06</span>Visibility &amp; attribution</a>
+  <a href="#playbook"><span>07</span>Investigation playbook</a>
+  <a href="#sql"><span>08</span>SQL lab</a>
+  <a href="#qa"><span>09</span>Interview Q&amp;A</a>
+  <a href="#quiz"><span>10</span>Quiz</a>
+  <a href="#cheat"><span>11</span>Cheat sheet</a>
+  <div class="road">
+    <h4>COURSE ROADMAP · CLICK TO OPEN</h4>
+    <a class="rm ready" href="../module01/"><em>01</em>Architecture<i>open</i></a>
+    <a class="rm ready" href="../module02/"><em>02</em>SnowSQL · unstructured · streams, tasks &amp; procedures<i>open</i></a>
+    <a class="rm ready" href="../module03/"><em>03</em>Performance tuning<i>open</i></a>
+    <a class="rm ready" href="../module04/"><em>04</em>Data ingestion (Snowpipe)<i>open</i></a>
+    <a class="rm ready" href="../module05/"><em>05</em>Dynamic tables &amp; transforms<i>open</i></a>
+    <a class="rm ready" href="../module06/"><em>06</em>Semi-structured data<i>open</i></a>
+    <a class="rm ready" href="../module07/"><em>07</em>Data protection<i>open</i></a>
+    <a class="rm ready" href="../module08/"><em>08</em>Security &amp; governance<i>open</i></a>
+    <a class="rm now" href="../module09/"><em>09</em>Cost optimization<i>you are here</i></a>
+    <a class="rm ready" href="../module10/"><em>10</em>Data sharing<i>open</i></a>
+    <a class="rm ready" href="../module11/"><em>11</em>Snowpark &amp; Cortex AI<i>open</i></a>
+    <a class="rm ready" href="../module12/"><em>12</em>Advanced SQL<i>open</i></a>
+    <a class="rm ready" href="../module13/"><em>13</em>Modeling &amp; tooling<i>open</i></a>
+    <a class="rm ready" href="../module14/"><em>14</em>System design &amp; behavioral<i>open</i></a>
+  </div>
+</nav>
+<main>
+
+<section id="intro">
+  <div class="eyebrow">MODULE 09 · COST OPTIMIZATION</div>
+  <h1>Every second costs.<br><span class="thin">Know where it goes.</span></h1>
+  <p class="lead" style="margin-top:18px">Module 1 introduced credits and warehouse sizes. This module goes much further: exactly how compute, storage and serverless features turn into a bill, the guardrails that stop runaway spend, the views that tell you <i>who</i> spent <i>what</i>, and a repeatable playbook for the most common interview scenario of all: <b>"our Snowflake bill went up 40% last month. What do you do?"</b></p>
+  <p style="margin-top:14px">Think of Snowflake as a <b>serviced office building</b>. Four characters explain the whole bill:</p>
+  <div class="analogy-grid">
+    <div class="ag a1 rise"><div class="k">WAREHOUSE COMPUTE</div><h5>The taxi meter</h5><p>Runs while the car is moving <i>and</i> while it waits outside with the engine on. Bigger car = faster meter. Turn the engine off (suspend) and the meter stops.</p></div>
+    <div class="ag a2 rise" style="animation-delay:.1s"><div class="k">STORAGE</div><h5>The storage locker</h5><p>A monthly rent per terabyte. Old copies you keep "just in case" (Time Travel, Fail-safe, clones) take up shelf space too.</p></div>
+    <div class="ag a3 rise" style="animation-delay:.2s"><div class="k">SERVERLESS</div><h5>The cleaning crew</h5><p>Snowflake sends its own staff (Snowpipe, auto-clustering, MV refresh) to do work in the background. You don't see them, but they bill by the hour.</p></div>
+    <div class="ag a4 rise" style="animation-delay:.3s"><div class="k">GUARDRAILS</div><h5>The prepaid card</h5><p>Resource monitors and budgets: a spending limit that texts you at 75% and freezes the card at 100%.</p></div>
+  </div>
+</section>
+
+<section id="buckets">
+  <div class="eyebrow">CHAPTER 01</div>
+  <h2>The three cost buckets <span class="thin">· credits vs dollars</span></h2>
+  <div class="wwh">
+    <div class="box what"><span class="tag">01 · WHAT IS IT</span>
+      <p>A Snowflake bill has three buckets:</p>
+      <ul class="dots">
+        <li><b>Compute</b>, measured in <b>credits</b>: virtual warehouses (usually the biggest share), serverless features (Snowpipe, automatic clustering, serverless tasks…), and cloud services above a free allowance.</li>
+        <li><b>Storage</b>, measured in <b>average compressed TB per month</b>: tables (including Time Travel and Fail-safe bytes), internal stages, and clone-owned data.</li>
+        <li><b>Data transfer</b>, measured in <b>bytes</b>: data leaving the region or cloud (cross-region replication, unloading to another region, external function calls). Data coming <i>in</i> is generally not charged by Snowflake.</li>
+      </ul>
+    </div>
+    <div class="box why"><span class="tag">02 · WHY IT MATTERS</span>
+      <p>Snowflake is <b>pay-per-use</b>: no servers to buy, but also no natural ceiling. One warehouse left running all weekend, or one task scheduled every minute instead of every hour, can quietly double a bill. Senior engineers are expected to <b>design for cost</b>, explain it in business terms, and investigate when it spikes.</p>
+      <p><b>Credits are not dollars.</b> A credit is a unit of compute. The <b>price per credit</b> depends on your <b>edition</b> (Standard, Enterprise, Business Critical, VPS), your <b>cloud and region</b>, and your <b>contract</b> (on-demand or pre-purchased capacity). That's why this module never quotes a fixed dollar price. Always reason in credits, then multiply by <i>your</i> rate.</p>
+    </div>
+    <div class="box how"><span class="tag">03 · HOW IT WORKS · BUILD A SAMPLE BILL</span>
+      <p>Click a bucket to highlight what lives inside it, then type your own rates. The math is the same for every account: <b>credits × price per credit</b> + <b>TB-months × storage rate</b> + <b>GB transferred × transfer rate</b>.</p>
+      <div class="grid2" style="grid-template-columns:1.1fr 1fr;margin-top:10px">
+        <div>
+          <svg viewBox="0 0 560 300" id="bkSvg">
+            <g class="bkt" data-b="c"><rect class="L-cp" x="10" y="20" width="170" height="260" rx="12" stroke-width="1.4"/><text class="th" x="95" y="46" text-anchor="middle">COMPUTE</text><text class="tm" x="95" y="64" text-anchor="middle">credits</text>
+              <text class="ts" x="95" y="100" text-anchor="middle">Virtual warehouses</text><text class="ts" x="95" y="128" text-anchor="middle">Serverless features</text><text class="ts" x="95" y="156" text-anchor="middle">Cloud services</text><text class="ts" x="95" y="172" text-anchor="middle">(above 10% of WH)</text><text class="ts" x="95" y="200" text-anchor="middle">AI services (Cortex)</text><text class="tm" x="95" y="250" text-anchor="middle">usually the largest</text></g>
+            <g class="bkt" data-b="s"><rect class="L-st" x="195" y="20" width="170" height="260" rx="12" stroke-width="1.4"/><text class="th" x="280" y="46" text-anchor="middle">STORAGE</text><text class="tm" x="280" y="64" text-anchor="middle">avg TB / month</text>
+              <text class="ts" x="280" y="100" text-anchor="middle">Active table bytes</text><text class="ts" x="280" y="128" text-anchor="middle">Time Travel bytes</text><text class="ts" x="280" y="156" text-anchor="middle">Fail-safe bytes</text><text class="ts" x="280" y="184" text-anchor="middle">Clone-owned bytes</text><text class="ts" x="280" y="212" text-anchor="middle">Internal stage files</text><text class="tm" x="280" y="250" text-anchor="middle">compressed bytes</text></g>
+            <g class="bkt" data-b="t"><rect class="L-cs" x="380" y="20" width="170" height="260" rx="12" stroke-width="1.4"/><text class="th" x="465" y="46" text-anchor="middle">DATA TRANSFER</text><text class="tm" x="465" y="64" text-anchor="middle">per byte out</text>
+              <text class="ts" x="465" y="100" text-anchor="middle">Cross-region replication</text><text class="ts" x="465" y="128" text-anchor="middle">Unload to other region</text><text class="ts" x="465" y="156" text-anchor="middle">External functions</text><text class="ts" x="465" y="184" text-anchor="middle">Cross-cloud sharing</text><text class="tm" x="465" y="250" text-anchor="middle">ingress: generally free</text></g>
+          </svg>
+          <div class="explain" id="bkExp"><b class="h">CLICK A BUCKET</b>Each one is metered differently.</div>
+        </div>
+        <div class="fin">
+          <div class="ctl"><label>Credits used / month</label><input type="range" id="bkCr" min="100" max="20000" step="100" value="4000"><span class="v" id="bkCrV"></span></div>
+          <div class="ctl"><label>Price per credit ($)</label><input type="number" id="bkPc" min="0.5" max="10" step="0.05" value="3.00"><span class="note-s">example only: use your contract rate</span></div>
+          <div class="ctl"><label>Storage (avg TB)</label><input type="range" id="bkTb" min="1" max="500" step="1" value="40"><span class="v" id="bkTbV"></span></div>
+          <div class="ctl"><label>Storage $ / TB-month</label><input type="number" id="bkSr" min="5" max="60" step="1" value="23"><span class="note-s">example only</span></div>
+          <div class="ctl"><label>Egress (GB / month)</label><input type="range" id="bkGb" min="0" max="20000" step="100" value="1000"><span class="v" id="bkGbV"></span></div>
+          <div class="ctl"><label>Transfer $ / GB</label><input type="number" id="bkTr" min="0" max="0.2" step="0.01" value="0.02"><span class="note-s">varies by route</span></div>
+          <div class="stats">
+            <div class="stat"><div class="k">COMPUTE</div><div class="n" id="bkC">–</div></div>
+            <div class="stat"><div class="k">STORAGE</div><div class="n" id="bkS">–</div></div>
+            <div class="stat"><div class="k">TRANSFER</div><div class="n" id="bkT">–</div></div>
+          </div>
+          <svg viewBox="0 0 400 34" id="bkBar"></svg>
+          <div class="insight" id="bkIns"></div>
+          <p class="note-s">Illustrative model, not a benchmark. All rates are placeholders you type in; real prices vary by edition, cloud, region and contract.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="grid2">
+    <div class="call trap" style="margin:0"><b class="k">INTERVIEW TRAP</b><div>"How much does an X-Small warehouse cost per hour?" Don't answer with a dollar number. Say: <b>"1 credit per hour, billed per second with a 60-second minimum; the dollar value depends on edition, cloud, region and contract."</b> That answer shows you understand the pricing model instead of quoting a blog post.</div></div>
+    <div class="call pro" style="margin:0"><b class="k">SENIOR ANGLE</b><div>Translate credits into the business's language: <b>cost per dashboard refresh, per pipeline run, per team, per TB ingested</b>. Unit cost is what finance and leadership actually track. "The orders pipeline costs 0.8 credits per run, 96 runs a day" is far more useful than "ETL_WH used 2,300 credits".</div></div>
+  </div>
+</section>
+
+<section id="compute">
+  <div class="eyebrow">CHAPTER 02</div>
+  <h2>Warehouse compute <span class="thin">· size × running time</span></h2>
+  <div class="wwh">
+    <div class="box what"><span class="tag">01 · WHAT IS IT</span>
+      <p>A <b>virtual warehouse</b> is a cluster of compute nodes. It burns credits <b>only while it is running</b>: from the moment it starts or resumes until it suspends. Each size up <b>doubles</b> the nodes and the credit rate:</p>
+      <table class="t" style="margin-top:6px">
+        <tr><th>SIZE</th><th>XS</th><th>S</th><th>M</th><th>L</th><th>XL</th><th>2XL</th><th>3XL</th><th>4XL</th></tr>
+        <tr><td>Credits / hour</td><td class="m">1</td><td class="m">2</td><td class="m">4</td><td class="m">8</td><td class="m">16</td><td class="m">32</td><td class="m">64</td><td class="m">128</td></tr>
+      </table>
+      <p class="note-s">Standard (Gen1) warehouses. 5XL and 6XL exist too (256 and 512). Snowpark-optimized and Gen2 warehouses use different rates, so check the current credit table.</p>
+    </div>
+    <div class="box why"><span class="tag">02 · WHY IT MATTERS</span>
+      <p>Warehouse compute is usually the <b>largest line on the bill</b>, and it's the part you control most directly. Three settings decide almost all of it: <b>size</b>, <b>how long it stays running</b> (auto-suspend), and <b>how many clusters</b> run at once.</p>
+      <p>The money leaks in a predictable place: <b>idle time</b>. A warehouse with no queries but not yet suspended bills at the full rate. Ten minutes of idle after every short query adds up fast.</p>
+    </div>
+    <div class="box how"><span class="tag">03 · HOW IT WORKS · THE BILLING RULES</span>
+      <div class="grid3 g4">
+        <div class="mini"><h5>Per-second, 60 s minimum</h5><p>Billing is per second, but each <b>start or resume</b> bills at least 60 seconds. A 5-second query on a suspended warehouse costs one full minute. Resizing up also bills the added compute with its own 60-second minimum.</p></div>
+        <div class="mini"><h5>Auto-suspend</h5><p>After the last query finishes, a timer starts. When it hits <code>AUTO_SUSPEND</code> seconds with no new work, the warehouse suspends and billing stops. Warehouses created with SQL default to 600 s (10 minutes).</p></div>
+        <div class="mini"><h5>Auto-resume</h5><p>With <code>AUTO_RESUME = TRUE</code> (the default), the next query wakes the warehouse automatically, usually within seconds. Users never notice the warehouse was asleep.</p></div>
+        <div class="mini"><h5>Multi-cluster</h5><p>(Enterprise+) Extra clusters of the <b>same size</b> start when queries queue. Each running cluster bills like a separate warehouse. <code>SCALING_POLICY = ECONOMY</code> waits longer before adding clusters, so it saves credits but allows more queuing.</p></div>
+      </div>
+      <p style="margin-top:10px"><b>Formula:</b> <code>credits = credits_per_hour(size) × running_hours × running_clusters</code>. Bigger is not automatically more expensive: if a big, parallel query runs <b>twice as fast</b> on double the size, the cost is the same and you get the answer sooner. But small queries can't use the extra nodes, so oversizing them simply <b>doubles the rate</b> for the same runtime.</p>
+    </div>
+  </div>
+
+  <div class="panel fin">
+    <div class="panel-h"><div class="t">SIMULATOR · <b>MONTHLY WAREHOUSE FLEET COST</b> · edit any cell</div>
+      <div class="row"><span class="note-s">Price per credit ($):</span><input type="number" id="flPc" min="0.5" max="10" step="0.05" value="3.00"><button class="btn" id="flReset">Reset fleet</button></div></div>
+    <div class="tblwrap">
+      <table class="t fleet" id="flTbl"></table>
+    </div>
+    <div class="stats">
+      <div class="stat"><div class="k">CREDITS / MONTH</div><div class="n" id="flCr">–</div></div>
+      <div class="stat"><div class="k">ESTIMATED $ / MONTH</div><div class="n" id="flUsd">–</div><div class="s">at your price per credit</div></div>
+      <div class="stat"><div class="k">IDLE SHARE</div><div class="n" id="flIdle">–</div><div class="s">billed hours with no queries</div></div>
+      <div class="stat"><div class="k">POTENTIAL SAVINGS</div><div class="n" id="flSave" style="color:var(--teal)">–</div><div class="s">if you apply every suggestion</div></div>
+    </div>
+    <svg viewBox="0 0 680 150" id="flSvg"></svg>
+    <div class="legend"><span><i style="background:var(--ice)"></i>busy (running queries)</span><span><i style="background:var(--amber)"></i>idle (waiting for auto-suspend)</span></div>
+    <h3 style="margin-top:12px">Optimize suggestions</h3>
+    <div id="flSug"></div>
+    <div class="insight" id="flIns"></div>
+    <p class="note-s">Illustrative model, not a benchmark. Billed hours/day = busy hours + (query bursts × auto-suspend minutes), capped at 24. "Never" = runs 24 h. The downsize suggestion assumes the smaller size runs 1.4× longer, which is typical for small BI/ad-hoc queries but must be verified with real query history.</p>
+  </div>
+
+  <div class="grid2">
+    <div class="call trap" style="margin:0"><b class="k">INTERVIEW TRAP</b><div>"Set AUTO_SUSPEND to 1 second to save money." Not so fast. (1) Every resume bills <b>at least 60 seconds</b>, so a warehouse that suspends and resumes every few seconds can cost <i>more</i>. (2) Suspending <b>drops the local SSD cache</b>, so the next BI query re-reads data from remote storage and runs slower. Typical guidance: ~60 s for batch/ETL, a few minutes (often 5–10) for BI warehouses that benefit from a warm cache.</div></div>
+    <div class="call pro" style="margin:0"><b class="k">SENIOR ANGLE</b><div><b>Scale up vs scale out.</b> Slow, heavy single queries (spilling, big joins) → a <b>bigger size</b>. Many concurrent users queuing → <b>more clusters</b> (multi-cluster), not a bigger size. And split workloads into <b>separate warehouses</b> (ETL, BI, ad-hoc, data science): you can size each correctly, isolate noisy neighbours, and see each team's cost clearly.</div></div>
+  </div>
+  <h3>Right-sizing in practice</h3>
+  <div class="grid3">
+    <div class="mini"><h5>Signals it's too small</h5><p><code>BYTES_SPILLED_TO_REMOTE_STORAGE</code> &gt; 0, long execution time on large scans, queries that would finish proportionally faster on a bigger size. Fix: size up (cost can stay flat if runtime halves).</p></div>
+    <div class="mini"><h5>Signals it's too big</h5><p>Mostly small queries (seconds, little data scanned), low average load, no spilling. Doubling size gives no speed-up, just double the rate. Fix: size down and compare the runtime before/after.</p></div>
+    <div class="mini"><h5>Signals you need clusters</h5><p>High <code>QUEUED_OVERLOAD_TIME</code> at peak hours while individual queries are fast. Fix: multi-cluster with sensible <code>MIN</code>/<code>MAX_CLUSTER_COUNT</code>, not a larger size.</p></div>
+  </div>
+</section>
+
+<section id="storage">
+  <div class="eyebrow">CHAPTER 03</div>
+  <h2>Storage cost <span class="thin">· the bytes you can't see</span></h2>
+  <div class="wwh">
+    <div class="box what"><span class="tag">01 · WHAT IS IT</span>
+      <p>Snowflake bills storage as the <b>average number of compressed bytes stored per day</b> across the month, priced per TB. It's not just your "live" data. The total includes:</p>
+      <ul class="dots">
+        <li><b>Active bytes</b>: the current micro-partitions of every table.</li>
+        <li><b>Time Travel bytes</b>: old versions of changed or deleted micro-partitions, kept for <code>DATA_RETENTION_TIME_IN_DAYS</code>.</li>
+        <li><b>Fail-safe bytes</b>: 7 more days after Time Travel ends, for <b>permanent</b> tables only. Not configurable; only Snowflake Support can recover from it.</li>
+        <li><b>Clone-owned bytes</b>, <b>internal stage files</b>, and storage used by materialized views and search optimization.</li>
+      </ul>
+    </div>
+    <div class="box why"><span class="tag">02 · WHY IT MATTERS</span>
+      <p>Storage per TB is relatively cheap, so teams ignore it, until a <b>high-churn table</b> with 90-day Time Travel quietly holds 10× its own size in history. Or a forgotten stage keeps three years of raw CSVs. Or a dev clone of production drifts until it owns a full copy.</p>
+      <p>Storage problems grow <b>silently</b>: no query fails and no warehouse is busy. You only find them by looking at the storage views.</p>
+    </div>
+    <div class="box how"><span class="tag">03 · HOW IT WORKS · WHY CHURN IS EXPENSIVE</span>
+      <div class="grid3 g4">
+        <div class="mini"><h5>Micro-partitions are immutable</h5><p>Updating one row doesn't edit a file. Snowflake writes a <b>new</b> micro-partition with the change, and the old one moves into Time Travel. An UPDATE touching 1 row in each of 1,000 partitions rewrites 1,000 partitions.</p></div>
+        <div class="mini"><h5>Time Travel then Fail-safe</h5><p>Replaced partitions stay in Time Travel for the retention period (default <b>1 day</b>; up to <b>90</b> on Enterprise+ for permanent tables), then 7 days in Fail-safe, then they're purged.</p></div>
+        <div class="mini"><h5>Transient &amp; temporary</h5><p><b>Transient</b> tables: Time Travel 0 or 1 day and <b>no Fail-safe</b>. <b>Temporary</b>: same, and they vanish at the end of the session. Ideal for staging and intermediate ETL tables you can rebuild.</p></div>
+        <div class="mini"><h5>Clones</h5><p>A clone is <b>zero-copy</b> at creation: it points at the same partitions. Storage starts when either side changes. If you drop the source, partitions still referenced by the clone stay billed (<code>RETAINED_FOR_CLONE_BYTES</code>).</p></div>
+      </div>
+    </div>
+  </div>
+  <div class="panel fin">
+    <div class="panel-h"><div class="t">SIMULATOR · <b>STORAGE BREAKDOWN</b> · one fact table and its hidden bytes</div><span class="note-s">Illustrative model, not a benchmark</span></div>
+    <div class="row" style="margin:4px 0 8px"><span class="note-s" style="min-width:150px">Table type:</span><div class="tabs" id="stType" style="margin:0"><button class="on" data-v="perm">Permanent</button><button data-v="trans">Transient</button></div></div>
+    <div class="grid2">
+      <div>
+        <div class="ctl"><label>Active data (TB)</label><input type="range" id="stAct" min="1" max="100" value="10"><span class="v" id="stActV"></span></div>
+        <div class="ctl"><label>Daily churn (% rewritten)</label><input type="range" id="stChurn" min="0" max="40" value="10"><span class="v" id="stChurnV"></span></div>
+        <div class="ctl"><label>Time Travel (days)</label><input type="range" id="stTT" min="0" max="90" value="30"><span class="v" id="stTTV"></span></div>
+      </div>
+      <div>
+        <div class="ctl"><label>Clones of this table</label><input type="range" id="stCl" min="0" max="5" value="2"><span class="v" id="stClV"></span></div>
+        <div class="ctl"><label>Clone divergence</label><input type="range" id="stDiv" min="0" max="100" value="25"><span class="v" id="stDivV"></span></div>
+        <div class="ctl"><label>Stale stage files (TB)</label><input type="range" id="stStg" min="0" max="30" value="4"><span class="v" id="stStgV"></span></div>
+        <div class="ctl"><label>Storage $ / TB-month</label><input type="number" id="stRate" min="5" max="60" step="1" value="23"><span class="note-s">example rate</span></div>
+      </div>
+    </div>
+    <svg viewBox="0 0 680 90" id="stSvg"></svg>
+    <div class="legend"><span><i style="background:var(--ice)"></i>active</span><span><i style="background:var(--amber)"></i>Time Travel</span><span><i style="background:var(--red)"></i>Fail-safe</span><span><i style="background:var(--teal)"></i>clone-owned</span><span><i style="background:var(--ink3)"></i>stage files</span></div>
+    <div class="stats">
+      <div class="stat"><div class="k">TOTAL BILLED</div><div class="n" id="stTot">–</div><div class="s" id="stTotS"></div></div>
+      <div class="stat"><div class="k">HIDDEN / ACTIVE</div><div class="n" id="stRatio">–</div><div class="s">bytes beyond the live table</div></div>
+      <div class="stat"><div class="k">$ / MONTH</div><div class="n" id="stUsd">–</div><div class="s">at your rate</div></div>
+    </div>
+    <div class="insight" id="stIns"></div>
+    <p class="note-s">Model: Time Travel ≈ active × churn × retention days; Fail-safe ≈ active × churn × 7 (permanent only); clone-owned ≈ clones × active × divergence. Real numbers depend on how changes cluster in micro-partitions. Check <code>TABLE_STORAGE_METRICS</code>.</p>
+  </div>
+  <div class="grid2">
+    <div class="call trap" style="margin:0"><b class="k">INTERVIEW TRAP</b><div>"We dropped the 50 TB table, why didn't storage drop?" A dropped permanent table is still in <b>Time Travel</b> (so <code>UNDROP</code> works), then <b>Fail-safe</b> for 7 days, and any partitions shared with a <b>clone</b> stay as long as the clone exists. Storage only falls after all three let go.</div></div>
+    <div class="call pro" style="margin:0"><b class="k">SENIOR ANGLE</b><div>Set retention <b>per layer</b>: raw/staging = transient with 0–1 day (it can be reloaded), curated/marts = permanent with a modest retention, and only truly critical tables get long Time Travel. Rebuild-every-night tables (<code>CREATE OR REPLACE</code>/truncate-reload) should almost always be <b>transient</b>, or each rebuild leaves a full copy in Fail-safe.</div></div>
+  </div>
+</section>
+
+<section id="serverless">
+  <div class="eyebrow">CHAPTER 04</div>
+  <h2>Serverless &amp; cloud services <span class="thin">· compute you never sized</span></h2>
+  <div class="wwh">
+    <div class="box what"><span class="tag">01 · WHAT IS IT</span>
+      <p><b>Serverless features</b> run on compute that Snowflake provides and scales for you. There's no warehouse to size or suspend. You pay credits for the compute actually used, each feature at its own rate (Snowflake publishes a credit consumption table with per-feature multipliers).</p>
+      <p><b>Cloud services</b> is Snowflake's "brain": login, metadata, query compilation and optimization, the result cache, access control. It also consumes credits, but most accounts pay nothing for it thanks to the <b>10% adjustment</b>.</p>
+    </div>
+    <div class="box why"><span class="tag">02 · WHY IT MATTERS</span>
+      <p>Serverless costs are the most common <b>surprise</b> on a bill. Nobody "turned anything on" this morning, yet automatic clustering on a churny table or a materialized view on a constantly-updated table can burn credits around the clock.</p>
+      <p>Also: <b>resource monitors don't cover serverless features</b>. They only watch warehouses. You need budgets and the serverless usage views to see this bucket.</p>
+    </div>
+    <div class="box how"><span class="tag">03 · HOW IT WORKS · THE 10% CLOUD SERVICES ADJUSTMENT</span>
+      <p>Every day (in <b>UTC</b>), Snowflake compares your cloud services credits with <b>10% of that day's warehouse compute credits</b>. You're only billed for the part above 10%. Try the scenarios:</p>
+      <div class="tabs" id="csScen" style="margin-top:8px"><button class="on" data-v="etl">Normal ETL day</button><button data-v="bi">Metadata-heavy BI tool</button><button data-v="tiny">Millions of tiny queries</button><button data-v="srv">Serverless-only day</button></div>
+      <div class="grid2" style="grid-template-columns:1fr 1.1fr">
+        <div class="fin">
+          <div class="ctl"><label>Warehouse credits / day</label><input type="range" id="csWh" min="0" max="500" value="200"><span class="v" id="csWhV"></span></div>
+          <div class="ctl"><label>Cloud services credits / day</label><input type="range" id="csCs" min="0" max="120" value="12"><span class="v" id="csCsV"></span></div>
+          <div class="stats">
+            <div class="stat"><div class="k">FREE ALLOWANCE</div><div class="n" id="csAllow">–</div><div class="s">10% of warehouse credits</div></div>
+            <div class="stat"><div class="k">CS BILLED</div><div class="n" id="csBill">–</div><div class="s">credits above the allowance</div></div>
+          </div>
+        </div>
+        <div>
+          <svg viewBox="0 0 400 170" id="csSvg"></svg>
+          <div class="insight" id="csIns"></div>
+        </div>
+      </div>
+      <p class="note-s">Illustrative numbers. In <code>METERING_DAILY_HISTORY</code> you see this as <code>CREDITS_ADJUSTMENT_CLOUD_SERVICES</code> (a negative number) and <code>CREDITS_BILLED</code>.</p>
+    </div>
+  </div>
+  <div class="panel">
+    <div class="panel-h"><div class="t">EXPLORER · <b>SERVERLESS FEATURES</b> · what drives the cost, where to see it, which knob to turn</div></div>
+    <div class="tabs" id="svTabs"></div>
+    <div class="grid2" style="grid-template-columns:1fr 1fr">
+      <div class="explain" id="svA"></div>
+      <div class="explain" id="svB"></div>
+    </div>
+  </div>
+  <div class="grid2">
+    <div class="call trap" style="margin:0"><b class="k">INTERVIEW TRAP</b><div>"Dynamic tables are serverless, right?" <b>No.</b> Dynamic table refreshes run on the <b>warehouse you specify</b>, and that warehouse's normal billing applies. Same for user-managed tasks. Serverless tasks, Snowpipe, auto-clustering, MV maintenance, search optimization and QAS run on Snowflake-managed compute.</div></div>
+    <div class="call pro" style="margin:0"><b class="k">SENIOR ANGLE</b><div>Before enabling auto-clustering, search optimization or an MV, estimate the cost: <code>SYSTEM$ESTIMATE_SEARCH_OPTIMIZATION_COSTS</code> and <code>SYSTEM$ESTIMATE_AUTOMATIC_CLUSTERING_COSTS</code> exist for exactly this. Then compare <b>maintenance credits</b> against the <b>warehouse credits saved</b> by faster queries. If the table changes far more often than it's queried, the feature probably loses money.</div></div>
+  </div>
+</section>
+
+<section id="guard">
+  <div class="eyebrow">CHAPTER 05</div>
+  <h2>Guardrails <span class="thin">· stop the spend before finance does</span></h2>
+  <div class="wwh">
+    <div class="box what"><span class="tag">01 · WHAT IS IT</span>
+      <p>Four layers of protection:</p>
+      <ul class="dots">
+        <li><b>Resource monitors</b>: a credit quota per interval (daily, weekly, monthly, yearly or never-resetting) for the <b>whole account</b> or for <b>specific warehouses</b>, with triggers at percentages of that quota: <code>NOTIFY</code>, <code>SUSPEND</code>, <code>SUSPEND_IMMEDIATE</code>.</li>
+        <li><b>Budgets</b>: a monthly spending limit for the account or for a custom group of objects, <b>including serverless features</b>, that sends notifications when spend is projected to exceed the limit.</li>
+        <li><b>STATEMENT_TIMEOUT_IN_SECONDS</b>: cancels any single query that runs too long.</li>
+        <li><b>STATEMENT_QUEUED_TIMEOUT_IN_SECONDS</b>: cancels a query that waits in the queue too long.</li>
+      </ul>
+    </div>
+    <div class="box why"><span class="tag">02 · WHY WE USE THEM</span>
+      <p>Usage-based pricing means a mistake becomes a bill: a cartesian join that runs for 40 hours on a 2XL, a scheduler bug that starts a job every minute, a warehouse resized to 4XL "just for one test". Guardrails turn an <b>unbounded</b> mistake into a <b>bounded</b> one, and tell a human early.</p>
+      <p>The default <code>STATEMENT_TIMEOUT_IN_SECONDS</code> is <b>172,800 seconds (2 days)</b>. On a large warehouse, a single bad query can burn thousands of credits before that default fires.</p>
+    </div>
+    <div class="box how"><span class="tag">03 · HOW RESOURCE MONITORS WORK</span>
+      <div class="grid3 g4">
+        <div class="mini"><h5>Who creates them</h5><p>By default only <b>ACCOUNTADMIN</b> can create resource monitors. It can grant <code>MONITOR</code> (view) and <code>MODIFY</code> (change) on a monitor to other roles.</p></div>
+        <div class="mini"><h5>Account vs warehouse</h5><p><b>Account-level</b> (one per account): counts all warehouses and can suspend them all. <b>Warehouse-level</b>: assigned to one or more warehouses; each warehouse can be assigned to only one monitor.</p></div>
+        <div class="mini"><h5>The three actions</h5><p><b>NOTIFY</b>: alert only. <b>SUSPEND</b>: suspend, but let running queries finish (some overshoot). <b>SUSPEND_IMMEDIATE</b>: suspend and cancel running queries. Thresholds can be above 100%.</p></div>
+        <div class="mini"><h5>What they don't see</h5><p>Only <b>warehouse</b> credits. Serverless features (Snowpipe, auto-clustering, serverless tasks…) and AI services are not tracked or stopped. Use budgets for those.</p></div>
+      </div>
+      <p style="margin-top:10px">Once a monitor suspends a warehouse, it can't be resumed until the next interval starts, the quota or threshold is raised, or the warehouse is removed from the monitor. Monitors check usage periodically, not per second, so expect a little overshoot even with <code>SUSPEND_IMMEDIATE</code>.</p>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-h"><div class="t">SIMULATOR · <b>RESOURCE MONITOR OVER ONE MONTH</b> · FREQUENCY = MONTHLY</div>
+      <div class="row"><button class="btn pri" id="rmPlay">Play month ▶</button><button class="btn" id="rmStep">+1 day</button><button class="btn" id="rmReset">Reset</button></div></div>
+    <div class="grid2">
+      <div class="fin">
+        <div class="ctl"><label>CREDIT_QUOTA</label><input type="range" id="rmQ" min="1000" max="6000" step="100" value="3000"><span class="v" id="rmQV"></span></div>
+        <div class="ctl"><label>Normal burn / weekday</label><input type="range" id="rmB" min="40" max="200" step="5" value="90"><span class="v" id="rmBV"></span></div>
+      </div>
+      <div>
+        <div class="row" style="margin:4px 0"><span class="note-s" style="min-width:110px">Monitor level:</span><div class="tabs" id="rmLvl" style="margin:0"><button class="on" data-v="acct">Account</button><button data-v="wh">Warehouse (ETL_WH only)</button></div></div>
+        <div class="row" style="margin:4px 0"><span class="note-s" style="min-width:110px">Day 12 incident:</span><div class="tabs" id="rmInc" style="margin:0"><button class="on" data-v="1">ETL_WH resized to 2XL and forgotten</button><button data-v="0">No incident</button></div></div>
+      </div>
+    </div>
+    <div class="row" style="margin:6px 0"><span class="note-s" style="min-width:110px">Triggers (click):</span><div class="chips" id="rmTrig"></div></div>
+    <div class="sqlbox" id="rmSql"></div>
+    <svg viewBox="0 0 680 260" id="rmSvg"></svg>
+    <div class="legend"><span><i style="background:var(--ice)"></i>credits counted by the monitor</span><span><i style="background:var(--ink3)"></i>same month with no monitor</span><span><i style="background:var(--teal)"></i>serverless (never counted)</span></div>
+    <div class="grid2" style="grid-template-columns:1fr 1fr">
+      <div class="evlog" id="rmLog"></div>
+      <div class="stats" style="margin:0">
+        <div class="stat"><div class="k">DAY</div><div class="n" id="rmDay">0</div></div>
+        <div class="stat"><div class="k">USED / QUOTA</div><div class="n" id="rmUsed">0%</div></div>
+        <div class="stat"><div class="k">SAVED VS NO MONITOR</div><div class="n" id="rmSaved" style="color:var(--teal)">0</div><div class="s">credits</div></div>
+      </div>
+    </div>
+    <div class="insight" id="rmIns">Press <b>Play month</b> and watch the triggers fire.</div>
+    <p class="note-s">Illustrative model, not a benchmark. Weekends burn 30% of a weekday; ETL_WH is 60% of normal warehouse spend; SUSPEND lets in-flight queries add a small overshoot on the day it fires.</p>
+  </div>
+
+  <h3>Timeouts: the per-query guardrail</h3>
+  <div class="grid2">
+    <div class="mini"><h5>STATEMENT_TIMEOUT_IN_SECONDS</h5><p>Maximum run time for a statement, after which Snowflake cancels it. Default 172,800 s (2 days). Set it on the <b>account, user, session or warehouse</b>. If both the warehouse and the session set a value, the <b>smaller non-zero</b> one wins. Typical: 1–2 hours on ETL warehouses, 10–30 minutes on ad-hoc/BI.</p></div>
+    <div class="mini"><h5>STATEMENT_QUEUED_TIMEOUT_IN_SECONDS</h5><p>Maximum time a statement can wait in a warehouse's queue before being cancelled. Default 0 = no limit. Useful on BI warehouses so dashboards fail fast with a clear error instead of hanging during an overload, and to stop queued jobs piling up behind a stuck one.</p></div>
+  </div>
+  <div class="grid2" style="margin-top:14px">
+    <div class="call trap" style="margin:0"><b class="k">INTERVIEW TRAP</b><div>"We have an account-level resource monitor at 100% SUSPEND, so cost is fully capped." Not true: serverless features and AI services keep running, <code>SUSPEND</code> lets in-flight queries finish, and checks aren't instant. Also, suspending <b>every</b> warehouse mid-month can stop production pipelines. That's an outage, so many teams only NOTIFY at account level and SUSPEND at warehouse level for non-critical warehouses.</div></div>
+    <div class="call pro" style="margin:0"><b class="k">SENIOR ANGLE</b><div>Layer it: <b>account monitor</b> with NOTIFY at 75/90/100% (early warning for the whole bill) → <b>warehouse monitors</b> with SUSPEND for dev/ad-hoc and SUSPEND_IMMEDIATE at ~110% → <b>budgets</b> to cover serverless and per-team groups → <b>statement timeouts</b> on every warehouse. Phrase budgets carefully in interviews: they <i>notify</i> (and in newer releases can trigger actions); they don't suspend warehouses by themselves.</div></div>
+  </div>
+</section>
+
+<section id="visib">
+  <div class="eyebrow">CHAPTER 06</div>
+  <h2>Visibility &amp; attribution <span class="thin">· who spent what</span></h2>
+  <div class="wwh">
+    <div class="box what"><span class="tag">01 · WHAT IS IT</span>
+      <p>Snowflake exposes usage through three families of views:</p>
+      <ul class="dots">
+        <li><b>SNOWFLAKE.ACCOUNT_USAGE</b>: account-wide views with about <b>1 year</b> of history, including dropped objects, but with <b>latency</b> (typically from ~45 minutes up to a few hours depending on the view).</li>
+        <li><b>INFORMATION_SCHEMA</b> (in every database): views and table functions with <b>near-zero latency</b> but <b>short retention</b> (often 7 days up to 6 months depending on the function) and no dropped objects.</li>
+        <li><b>SNOWFLAKE.ORGANIZATION_USAGE</b>: usage across <b>all accounts</b> in the organization, including views that show spend in <b>currency</b>. Typically accessed from the organization account/ORGADMIN context and with longer latency.</li>
+      </ul>
+    </div>
+    <div class="box why"><span class="tag">02 · WHY IT MATTERS</span>
+      <p>You can't optimize what you can't see, and you can't make teams responsible for cost unless you can show each team <b>its</b> number. Attribution answers: which warehouse, which user, which pipeline, which query pattern, which business unit.</p>
+      <p>Access: by default only ACCOUNTADMIN can query the <code>SNOWFLAKE</code> database. Grant <code>IMPORTED PRIVILEGES</code> or a SNOWFLAKE database role (such as <code>USAGE_VIEWER</code>) to a FinOps/monitoring role.</p>
+    </div>
+    <div class="box how"><span class="tag">03 · HOW ATTRIBUTION WORKS</span>
+      <div class="grid3">
+        <div class="mini"><h5>Warehouse level</h5><p><code>WAREHOUSE_METERING_HISTORY</code>: credits per warehouse per hour (compute and cloud services columns). Easiest and most reliable: one warehouse per team = clean chargeback.</p></div>
+        <div class="mini"><h5>Query level</h5><p><code>QUERY_ATTRIBUTION_HISTORY</code>: compute credits attributed to individual queries on shared warehouses. Per Snowflake's docs it <b>excludes idle time</b> and very short queries, and arrives with several hours of latency. Check the docs for current rules.</p></div>
+        <div class="mini"><h5>Tags</h5><p><b>Query tags</b> (<code>ALTER SESSION SET QUERY_TAG = …</code>) label queries by pipeline or app. <b>Object tags</b> (<code>CREATE TAG cost_center</code>) label warehouses, databases, users; join <code>TAG_REFERENCES</code> to metering views for chargeback.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-h"><div class="t">PICKER · <b>WHICH VIEW ANSWERS THIS QUESTION?</b></div></div>
+    <div class="tabs" id="vwTabs"></div>
+    <div class="explain" id="vwOut"></div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-h"><div class="t">SIMULATOR · <b>CHARGEBACK ON A SHARED WAREHOUSE</b> · 1,000 credits last month</div><span class="note-s">Illustrative numbers</span></div>
+    <div class="tabs" id="cbTabs"><button class="on" data-v="wh">1 · By warehouse tag only</button><button data-v="q">2 · By query (QUERY_ATTRIBUTION_HISTORY)</button><button data-v="qi">3 · By query + spread idle cost</button></div>
+    <div class="grid2" style="grid-template-columns:1.2fr 1fr">
+      <div><svg viewBox="0 0 460 200" id="cbSvg"></svg></div>
+      <div><table class="t" id="cbTbl"></table></div>
+    </div>
+    <div class="insight" id="cbIns"></div>
+  </div>
+
+  <div class="grid2">
+    <div class="call trap" style="margin:0"><b class="k">INTERVIEW TRAP</b><div>"Sum the credits in QUERY_ATTRIBUTION_HISTORY and you get the warehouse bill." No: <b>idle time</b> (and cloud services) isn't attributed to any query, so the sum is lower than <code>WAREHOUSE_METERING_HISTORY</code>. The gap <i>is</i> your idle cost, which is a useful metric on its own.</div></div>
+    <div class="call pro" style="margin:0"><b class="k">SENIOR ANGLE</b><div>Make tagging <b>enforced, not optional</b>: set a default <code>QUERY_TAG</code> per service user (<code>ALTER USER svc_dbt SET QUERY_TAG = …</code>), have dbt/Airflow inject JSON tags (<code>{"team":"finance","pipeline":"orders_daily"}</code>), tag every warehouse with <code>cost_center</code>, and publish a weekly cost-by-team dashboard. Visibility alone changes behaviour.</div></div>
+  </div>
+</section>
+
+<section id="playbook">
+  <div class="eyebrow">CHAPTER 07</div>
+  <h2>Investigation playbook <span class="thin">· "the bill went up 40%"</span></h2>
+  <div class="wwh">
+    <div class="box what"><span class="tag">01 · WHAT IS IT</span>
+      <p>A repeatable, top-down method for explaining a cost increase: <b>bucket → service → warehouse → idle vs busy → workload → individual query or object</b>. At each level you run one query, read the result, and either find a root cause or drill one level deeper.</p>
+    </div>
+    <div class="box why"><span class="tag">02 · WHY IT MATTERS</span>
+      <p>It's the single most common senior cost question in interviews, and in real life. Interviewers aren't looking for one magic answer. They want to see a <b>structured approach</b>, the right <b>system views</b>, the usual <b>root causes</b>, and <b>fixes plus prevention</b> so it doesn't happen again.</p>
+    </div>
+    <div class="box how"><span class="tag">03 · HOW IT WORKS · STEP THROUGH A REAL INVESTIGATION</span>
+      <p>Last month: 10,000 credits. This month: 14,000. Press <b>Next</b>. Each step shows the query you'd run, an <b>illustrative</b> result, and what it tells you. Root causes light up on the board as you find them.</p>
+      <svg viewBox="0 0 680 80" class="flow" id="pbFlow">
+        <path class="edge" id="pe1" d="M100 40 L120 40"/><path class="edge" id="pe2" d="M200 40 L220 40"/><path class="edge" id="pe3" d="M300 40 L320 40"/><path class="edge" id="pe4" d="M400 40 L420 40"/><path class="edge" id="pe5" d="M500 40 L520 40"/><path class="edge" id="pe6" d="M600 40 L610 40"/>
+        <g class="fn" id="pn1"><rect class="L-cs" x="20" y="18" width="80" height="44" rx="8" stroke-width="1"/><text class="ts" x="60" y="40" text-anchor="middle" dominant-baseline="central">Bucket</text></g>
+        <g class="fn" id="pn2"><rect class="L-cp" x="120" y="18" width="80" height="44" rx="8" stroke-width="1"/><text class="ts" x="160" y="40" text-anchor="middle" dominant-baseline="central">Warehouse</text></g>
+        <g class="fn" id="pn3"><rect class="L-cp" x="220" y="18" width="80" height="44" rx="8" stroke-width="1"/><text class="ts" x="260" y="40" text-anchor="middle" dominant-baseline="central">Idle vs busy</text></g>
+        <g class="fn" id="pn4"><rect class="L-cp" x="320" y="18" width="80" height="44" rx="8" stroke-width="1"/><text class="ts" x="360" y="40" text-anchor="middle" dominant-baseline="central">Size</text></g>
+        <g class="fn" id="pn5"><rect class="L-cp" x="420" y="18" width="80" height="44" rx="8" stroke-width="1"/><text class="ts" x="460" y="40" text-anchor="middle" dominant-baseline="central">Workload</text></g>
+        <g class="fn" id="pn6"><rect class="L-st" x="520" y="18" width="80" height="44" rx="8" stroke-width="1"/><text class="ts" x="560" y="40" text-anchor="middle" dominant-baseline="central">Query</text></g>
+        <g class="fn" id="pn7"><rect class="neutral" x="610" y="18" width="60" height="44" rx="8" stroke-width="1"/><text class="ts" x="640" y="40" text-anchor="middle" dominant-baseline="central">Fix</text></g>
+      </svg>
+      <div class="stepbar" id="pbBar"></div>
+      <div class="stepdesc" id="pbDesc"></div>
+      <div class="row" style="margin-top:12px"><button class="btn" id="pbPrev">Back</button><button class="btn pri" id="pbNext">Start</button><button class="btn" id="pbReset">Reset</button></div>
+      <div class="findings" id="pbFind"></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-h"><div class="t">CHECKLIST · <b>COST OPTIMIZATION REVIEW</b> · tick what your account already does</div><span class="note-s" id="ckScore"></span></div>
+    <div class="grid2">
+      <div class="ckl" id="ckA"></div>
+      <div class="ckl" id="ckB"></div>
+    </div>
+    <div class="insight" id="ckIns"></div>
+    <p class="note-s">Impact labels are typical, qualitative guidance from common practice, not guaranteed savings. Measure before and after with the SQL lab queries.</p>
+  </div>
+  <div class="grid2">
+    <div class="call trap" style="margin:0"><b class="k">INTERVIEW TRAP</b><div>Jumping straight to "make the warehouses smaller". First <b>locate</b> the increase (which bucket, which warehouse, idle or busy, which workload); otherwise you might shrink a warehouse that wasn't the problem and slow down every dashboard. Also check whether the increase is <b>legitimate growth</b> (more data, more users, a new product launch) before calling it waste.</div></div>
+    <div class="call pro" style="margin:0"><b class="k">SENIOR ANGLE</b><div>Close every investigation with <b>prevention</b>: a resource monitor on the warehouse that leaked, statement timeouts, a weekly "top 20 queries by credits" report, a change process for warehouse size and auto-suspend (ideally managed in Terraform/code review), and an alert when daily credits exceed the 30-day average by X%.</div></div>
+  </div>
+</section>
+
+<section id="sql">
+  <div class="eyebrow">CHAPTER 08</div>
+  <h2>SQL lab <span class="thin">· click any line for an explanation</span></h2>
+  <div class="panel">
+    <div class="tabs" id="sqlTabs"></div>
+    <div class="grid2" style="grid-template-columns:1.35fr 1fr">
+      <div class="code" id="sqlCode"></div>
+      <div class="explain" id="sqlExp"><b class="h">CLICK A LINE</b>Each line is explained in plain English.</div>
+    </div>
+  </div>
+</section>
+
+<section id="qa">
+  <div class="eyebrow">CHAPTER 09</div>
+  <h2>Interview Q&amp;A <span class="thin">· answer out loud first, then open</span></h2>
+  <div class="tabs" id="qaTabs"><button class="on" data-f="all">All</button><button data-f="Basics">Basics</button><button data-f="Compute">Compute</button><button data-f="Storage">Storage</button><button data-f="Serverless">Serverless</button><button data-f="Guardrails">Guardrails</button><button data-f="Visibility">Visibility</button></div>
+  <div id="qaList"></div>
+</section>
+
+<section id="quiz">
+  <div class="eyebrow">CHAPTER 10</div>
+  <h2>Quiz <span class="thin">· 14 questions</span></h2>
+  <div class="panel">
+    <div class="panel-h"><div class="t">QUESTION <b id="qzN">1</b> / 14</div><div class="t">SCORE <b id="qzS">0</b></div></div>
+    <div class="stepbar" id="qzBar"></div>
+    <div id="qzBody"></div>
+    <div class="row" style="margin-top:12px"><button class="btn" id="qzPrev">Back</button><button class="btn pri" id="qzNext">Next</button></div>
+  </div>
+</section>
+
+<section id="cheat">
+  <div class="eyebrow">CHAPTER 11</div>
+  <h2>Cheat sheet <span class="thin">· if you remember only these</span></h2>
+  <div class="cheat">
+    <div><em>Credits ≠ $</em>Price per credit depends on edition, cloud, region and contract. Reason in credits, multiply by your rate.</div>
+    <div><em>1-2-4-8-16</em>Credits/hour XS→XL (Gen1 standard). Each size doubles nodes and rate. Billed per second.</div>
+    <div><em>60 s minimum</em>Every start/resume bills at least 60 seconds. Very low auto-suspend + chatty workload = many minimums.</div>
+    <div><em>Idle = full price</em>A running warehouse with no queries bills like a busy one. AUTO_SUSPEND ~60 s for batch, a few minutes for BI.</div>
+    <div><em>Scale up vs out</em>Slow heavy query → bigger size. Many users queuing → more clusters (Enterprise+). ECONOMY policy saves credits.</div>
+    <div><em>TT + FS bytes</em>Storage = active + Time Travel + Fail-safe (7 days, permanent only) + clone-owned + stages. Churn multiplies it.</div>
+    <div><em>TRANSIENT</em>No Fail-safe, Time Travel 0–1 day. Use for staging and rebuildable tables.</div>
+    <div><em>10% rule</em>Cloud services billed only above 10% of daily warehouse credits (computed daily, UTC).</div>
+    <div><em>Monitors = warehouses</em>Resource monitors track warehouses only. NOTIFY / SUSPEND (finish running) / SUSPEND_IMMEDIATE (cancel). ACCOUNTADMIN creates.</div>
+    <div><em>172,800 s</em>Default STATEMENT_TIMEOUT_IN_SECONDS (2 days). Lower it per warehouse. Queued timeout default 0 = unlimited.</div>
+    <div><em>ACCOUNT_USAGE</em>~1 year, latency (minutes to hours). INFORMATION_SCHEMA: real-time, short retention. ORGANIZATION_USAGE: all accounts, currency.</div>
+    <div><em>Metered − attributed</em>WAREHOUSE_METERING_HISTORY minus QUERY_ATTRIBUTION_HISTORY ≈ idle cost per warehouse.</div>
+  </div>
+  <div class="call analogy" style="margin-top:20px"><b class="k">NEXT MODULE</b><div><b><a href="../module10/" style="color:inherit">Module 10: Data sharing →</a></b> Secure data sharing, reader accounts, listings and the Marketplace, cross-region sharing with replication, and who pays for what when data is shared (a nice follow-on from this module).</div></div>
+</section>
+<footer>Snowflake Interview Lab · Module 09 · Cost Optimization · Prepared for Saurav Patel</footer>
+</main>
+</div>
+
+<script>
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+const fmt = (n, d = 0) => Number(n).toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d });
+const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+const tabs = (sel, cb) => $$(sel + ' button').forEach(b => b.addEventListener('click', () => { $$(sel + ' button').forEach(x => x.classList.remove('on')); b.classList.add('on'); cb(b.dataset); }));
+const usd = n => '$' + fmt(n);
+const num = (id, d) => { const v = parseFloat($(id).value); return isFinite(v) && v >= 0 ? v : d; };
+
+/* theme + progress */
+const root = document.documentElement;
+root.dataset.theme = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+$('#themeBtn').onclick = () => { root.dataset.theme = root.dataset.theme === 'dark' ? 'light' : 'dark'; };
+const secs = $$('main section'), seen = new Set();
+const io = new IntersectionObserver(es => es.forEach(e => {
+  if (!e.isIntersecting) return;
+  seen.add(e.target.id);
+  $$('.side a').forEach(a => { const id = a.getAttribute('href').slice(1); a.classList.toggle('act', id === e.target.id); if (seen.has(id)) a.classList.add('seen'); });
+  const pct = Math.round(seen.size / secs.length * 100);
+  $('#progBar').style.width = pct + '%'; $('#progLbl').textContent = pct + '% explored';
+}), { rootMargin: '-40% 0px -55% 0px' });
+secs.forEach(s => io.observe(s));
+
+/* ===== 01 cost buckets ===== */
+const BK = {
+  c: `<b class="h">COMPUTE · CREDITS</b>Warehouses bill credits per second while running (60-second minimum per start). Serverless features bill credits for the compute Snowflake runs for you. Cloud services credits are billed only above 10% of daily warehouse usage. Cortex AI functions consume credits by tokens or pages. For most accounts this is by far the biggest bucket.`,
+  s: `<b class="h">STORAGE · AVERAGE COMPRESSED TB / MONTH</b>Snowflake measures compressed bytes daily and bills the monthly average per TB. That includes Time Travel and Fail-safe copies, clone-owned partitions and internal stage files, not just the live tables. Files in <i>external</i> stages are billed by your own cloud provider, not Snowflake.`,
+  t: `<b class="h">DATA TRANSFER · PER BYTE</b>Charged when data <b>leaves</b> the region or cloud where your account lives: replication to another region, unloading to a bucket in another region, external functions, cross-cloud auto-fulfillment for listings. Transfers within the same region are typically free, and Snowflake doesn't charge for ingress.`
+};
+$$('#bkSvg .bkt').forEach(g => g.addEventListener('click', () => {
+  $$('#bkSvg .bkt').forEach(x => x.classList.toggle('dim', x !== g));
+  $('#bkExp').innerHTML = BK[g.dataset.b];
+}));
+function bkCalc() {
+  const cr = +$('#bkCr').value, tb = +$('#bkTb').value, gb = +$('#bkGb').value;
+  const c = cr * num('#bkPc', 3), s = tb * num('#bkSr', 23), t = gb * num('#bkTr', 0.02), tot = c + s + t || 1;
+  $('#bkCrV').textContent = fmt(cr) + ' cr'; $('#bkTbV').textContent = fmt(tb) + ' TB'; $('#bkGbV').textContent = fmt(gb) + ' GB';
+  $('#bkC').textContent = usd(c); $('#bkS').textContent = usd(s); $('#bkT').textContent = usd(t);
+  const wc = c / tot * 400, ws = s / tot * 400, wt = t / tot * 400;
+  $('#bkBar').innerHTML = `<rect x="0" y="4" width="${wc}" height="26" fill="var(--ice)" rx="3"/><rect x="${wc}" y="4" width="${ws}" height="26" fill="var(--teal)"/><rect x="${wc + ws}" y="4" width="${wt}" height="26" fill="var(--amber)"/>`;
+  const pc = Math.round(c / tot * 100);
+  $('#bkIns').innerHTML = `Total ≈ <b>${usd(c + s + t)}/month</b>. Compute is <b>${pc}%</b> of it. ` + (pc > 70 ? `This shape is typical: optimization effort pays back most on warehouses and serverless features.` : pc > 40 ? `A more balanced bill. Check storage for high-churn tables, long Time Travel and forgotten stages.` : `Unusual: storage or transfer dominates. Look for long retention, huge clones, stale stages or heavy cross-region replication.`);
+}
+['#bkCr', '#bkPc', '#bkTb', '#bkSr', '#bkGb', '#bkTr'].forEach(id => $(id).addEventListener('input', bkCalc));
+bkCalc();
+
+/* ===== 02 warehouse fleet ===== */
+const SZ = ['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL'], RATE = [1, 2, 4, 8, 16, 32, 64, 128];
+const ASO = [[1, '1 min'], [5, '5 min'], [10, '10 min'], [30, '30 min'], [60, '60 min'], [0, 'Never']];
+const CLO = [1, 1.5, 2, 2.5, 3, 4];
+const WLS = ['ETL', 'BI', 'Ad-hoc', 'Data science'];
+const AS_TARGET = { 'ETL': 1, 'BI': 5, 'Ad-hoc': 1, 'Data science': 5 };
+const FL0 = [
+  { n: 'ETL_WH', sz: 3, act: 5, bu: 8, as: 10, cl: 2, days: 30, wl: 'ETL' },
+  { n: 'BI_WH', sz: 2, act: 9, bu: 30, as: 10, cl: 2, days: 22, wl: 'BI' },
+  { n: 'ADHOC_WH', sz: 4, act: 3, bu: 25, as: 30, cl: 1, days: 22, wl: 'Ad-hoc' },
+  { n: 'DS_WH', sz: 2, act: 2, bu: 4, as: 0, cl: 1, days: 22, wl: 'Data science' }
+];
+let FL = FL0.map(w => ({ ...w }));
+function whCalc(w, serial) {
+  const idleH = w.as === 0 ? Math.max(0, 24 - w.act) : w.bu * w.as / 60;
+  let billed;
+  if (serial) billed = Math.min(24, w.act * serial + idleH);
+  else billed = Math.min(24, w.act + idleH) * w.cl;
+  billed = Math.max(billed, w.bu / 60);
+  const busy = Math.min(24, w.act) * (serial ? serial : w.cl);
+  const cr = RATE[w.sz] * billed * w.days;
+  return { cr, busyCr: Math.min(cr, RATE[w.sz] * busy * w.days), billed };
+}
+function flSuggest(state) {
+  const out = [];
+  state.forEach((w, i) => {
+    const cur = whCalc(w).cr, tgt = AS_TARGET[w.wl];
+    if (w.as === 0 || w.as > tgt) {
+      const nw = { ...w, as: tgt }, sv = cur - whCalc(nw).cr;
+      if (sv > 0.5) out.push({ i, k: 'as', v: tgt, save: sv, txt: `<b>${w.n}</b>: AUTO_SUSPEND ${w.as === 0 ? 'is NEVER' : w.as + ' min'} → <b>${tgt === 1 ? '60 s' : tgt + ' min'}</b>. ${w.wl === 'BI' || w.wl === 'Data science' ? 'Keeps a short warm-cache window for interactive users.' : 'Batch and ad-hoc work rarely benefits from a long idle tail.'}` });
+    }
+    if ((w.wl === 'BI' || w.wl === 'Ad-hoc') && w.sz >= 3) {
+      const nw = { ...w, sz: w.sz - 1, act: Math.min(24, w.act * 1.4) }, sv = cur - whCalc(nw).cr;
+      if (sv > 0.5) out.push({ i, k: 'sz', save: sv, txt: `<b>${w.n}</b>: downsize ${SZ[w.sz]} → <b>${SZ[w.sz - 1]}</b>. ${w.wl} queries are usually small and don't use all the nodes. Half the rate, assumed 1.4× runtime: verify with QUERY_HISTORY.` });
+    }
+    if (w.wl === 'ETL' && w.cl > 1) {
+      const sv = cur - whCalc({ ...w, cl: 1 }, w.cl).cr;
+      if (sv > 0.5) out.push({ i, k: 'cl1', save: sv, txt: `<b>${w.n}</b>: ${w.cl} avg clusters → <b>1</b>. Scheduled jobs can usually run back-to-back; multi-cluster is for concurrent users. Check QUEUED_OVERLOAD_TIME first.` });
+    }
+    if (w.wl === 'BI' && w.cl >= 1.5) {
+      const nw = { ...w, cl: Math.max(1, w.cl - 0.5) }, sv = cur - whCalc(nw).cr;
+      if (sv > 0.5) out.push({ i, k: 'eco', save: sv, txt: `<b>${w.n}</b>: SCALING_POLICY = <b>ECONOMY</b> (and a sensible MAX_CLUSTER_COUNT). Extra clusters start only when there's enough queued work to keep them busy. Modelled as −0.5 avg clusters.` });
+    }
+  });
+  return out.sort((a, b) => b.save - a.save);
+}
+function flApplyOne(state, s) {
+  const w = state[s.i];
+  if (s.k === 'as') w.as = s.v;
+  if (s.k === 'sz') { w.sz -= 1; w.act = Math.min(24, +(w.act * 1.4).toFixed(1)); }
+  if (s.k === 'cl1') { w.act = Math.min(24, +(w.act * w.cl).toFixed(1)); w.cl = 1; }
+  if (s.k === 'eco') w.cl = Math.max(1, w.cl - 0.5);
+}
+const sel = (k, i, opts, v) => `<select data-i="${i}" data-k="${k}">${opts.map(([val, lab]) => `<option value="${val}"${String(val) === String(v) ? ' selected' : ''}>${lab}</option>`).join('')}</select>`;
+function flTable() {
+  $('#flTbl').innerHTML = `<tr><th>WAREHOUSE</th><th>WORKLOAD</th><th>SIZE</th><th>BUSY H/DAY</th><th>BURSTS/DAY</th><th>AUTO-SUSPEND</th><th>AVG CLUSTERS</th><th>DAYS/MO</th><th>CREDITS/MO</th></tr>` +
+    FL.map((w, i) => `<tr><td class="wn">${w.n}</td><td>${sel('wl', i, WLS.map(x => [x, x]), w.wl)}</td><td>${sel('sz', i, SZ.map((x, k) => [k, x + ' · ' + RATE[k] + '/h']), w.sz)}</td>
+      <td><input type="range" min="0.5" max="24" step="0.5" value="${w.act}" data-i="${i}" data-k="act"> <span class="mono" id="flA${i}">${w.act}h</span></td>
+      <td><input type="number" min="1" max="200" value="${w.bu}" data-i="${i}" data-k="bu" style="width:64px"></td>
+      <td>${sel('as', i, ASO, w.as)}</td><td>${sel('cl', i, CLO.map(x => [x, x]), w.cl)}</td><td>${sel('days', i, [[22, '22 (weekdays)'], [30, '30 (daily)']], w.days)}</td>
+      <td class="m" id="flC${i}">–</td></tr>`).join('');
+}
+function flCalc() {
+  const pc = num('#flPc', 3);
+  let tot = 0, busy = 0;
+  const rows = FL.map((w, i) => { const r = whCalc(w); tot += r.cr; busy += r.busyCr; $('#flC' + i).textContent = fmt(r.cr); $('#flA' + i).textContent = w.act + 'h'; return r; });
+  $('#flCr').textContent = fmt(tot); $('#flUsd').textContent = usd(tot * pc);
+  $('#flIdle').textContent = Math.round((1 - busy / (tot || 1)) * 100) + '%';
+  let st = FL.map(w => ({ ...w })), guard = 0, s;
+  while ((s = flSuggest(st)).length && guard++ < 20) flApplyOne(st, s[0]);
+  const optTot = st.reduce((a, w) => a + whCalc(w).cr, 0), save = Math.max(0, tot - optTot);
+  $('#flSave').textContent = fmt(save) + ' cr';
+  const mx = Math.max(...rows.map(r => r.cr), 1);
+  $('#flSvg').innerHTML = rows.map((r, i) => { const y = 10 + i * 34, wb = r.busyCr / mx * 400, wi = (r.cr - r.busyCr) / mx * 400;
+    return `<text class="tm" x="0" y="${y + 15}">${FL[i].n}</text><rect x="110" y="${y}" width="${wb}" height="22" fill="var(--ice)" rx="3"/><rect x="${110 + wb}" y="${y}" width="${wi}" height="22" fill="var(--amber)" rx="3"/><text class="tm" x="${116 + wb + wi}" y="${y + 15}">${fmt(r.cr)} cr · ${Math.round((1 - r.busyCr / (r.cr || 1)) * 100)}% idle</text>`; }).join('');
+  const sug = flSuggest(FL);
+  $('#flSug').innerHTML = sug.length ? sug.map((x, k) => `<div class="sugg"><div>${x.txt}</div><div class="row" style="flex-wrap:nowrap"><b class="sv">−${fmt(x.save)} cr · −${usd(x.save * pc)}</b><button class="btn" data-s="${k}">Apply</button></div></div>`).join('') : `<div class="sugg none">No suggestions left: every warehouse matches the simple rules in this model. Real right-sizing continues with query-level evidence.</div>`;
+  $$('#flSug button').forEach(b => b.onclick = () => { flApplyOne(FL, sug[+b.dataset.s]); flTable(); flCalc(); });
+  const worst = rows.map((r, i) => ({ i, idle: r.cr - r.busyCr })).sort((a, b) => b.idle - a.idle)[0];
+  $('#flIns').innerHTML = save > 0.5 ? `The fleet bills <b>${fmt(tot)} credits</b> (${usd(tot * pc)}). <b>${FL[worst.i].n}</b> wastes the most on idle time (${fmt(worst.idle)} credits). Applying every suggestion would save about <b>${fmt(save)} credits (${Math.round(save / tot * 100)}%)</b>, mostly by shortening idle tails, without changing what users see.` : `Optimized: ${fmt(tot)} credits/month (${usd(tot * pc)}). Remaining cost is mostly busy time, which you reduce by making queries cheaper (pruning, clustering, fewer re-runs), covered in Module 03.`;
+}
+$('#flTbl').addEventListener('input', e => {
+  const t = e.target, i = +t.dataset.i, k = t.dataset.k; if (!k) return;
+  FL[i][k] = k === 'wl' ? t.value : parseFloat(t.value) || (k === 'bu' ? 1 : 0);
+  flCalc();
+});
+$('#flPc').addEventListener('input', flCalc);
+$('#flReset').onclick = () => { FL = FL0.map(w => ({ ...w })); flTable(); flCalc(); };
+flTable(); flCalc();
+
+/* ===== 03 storage ===== */
+let stType = 'perm';
+function stCalc() {
+  const a = +$('#stAct').value, ch = +$('#stChurn').value / 100, cl = +$('#stCl').value, dv = +$('#stDiv').value / 100, sg = +$('#stStg').value;
+  let tt = +$('#stTT').value;
+  if (stType === 'trans' && tt > 1) { tt = 1; $('#stTT').value = 1; }
+  $('#stTT').max = stType === 'trans' ? 1 : 90;
+  const TT = a * ch * tt, FS = stType === 'perm' ? a * ch * 7 : 0, CL = cl * a * dv, tot = a + TT + FS + CL + sg;
+  $('#stActV').textContent = a + ' TB'; $('#stChurnV').textContent = Math.round(ch * 100) + '% / day'; $('#stTTV').textContent = tt + (tt === 1 ? ' day' : ' days');
+  $('#stClV').textContent = cl; $('#stDivV').textContent = Math.round(dv * 100) + '%'; $('#stStgV').textContent = sg + ' TB';
+  const parts = [[a, 'var(--ice)', 'active'], [TT, 'var(--amber)', 'Time Travel'], [FS, 'var(--red)', 'Fail-safe'], [CL, 'var(--teal)', 'clones'], [sg, 'var(--ink3)', 'stage']];
+  let x = 0, s = '';
+  parts.forEach(([v, c, l]) => { const w = v / tot * 680; if (w > 0) { s += `<rect x="${x}" y="10" width="${w}" height="34" fill="${c}"/>`; if (w > 60) s += `<text class="tm" x="${x + 6}" y="62">${l}</text><text class="tm" x="${x + 6}" y="78">${fmt(v, 1)} TB</text>`; } x += w; });
+  $('#stSvg').innerHTML = s;
+  $('#stTot').textContent = fmt(tot, 1) + ' TB'; $('#stTotS').textContent = 'for ' + a + ' TB of live data';
+  $('#stRatio').textContent = fmt((tot - a) / a, 1) + '×';
+  $('#stUsd').textContent = usd(tot * num('#stRate', 23));
+  const big = parts.slice(1).sort((p, q) => q[0] - p[0])[0];
+  let msg;
+  if (stType === 'trans') msg = `<b>Transient:</b> no Fail-safe and at most 1 day of Time Travel, so churn barely matters. The trade-off: if you lose this data, Snowflake Support can't recover it. Fine for staging that you can reload.`;
+  else if (big[0] < a * 0.2) msg = `Healthy: hidden bytes are small compared with the live table. Low churn or short retention keeps history cheap.`;
+  else if (big[2] === 'Time Travel') msg = `<b>Time Travel dominates</b>: ${Math.round(ch * 100)}% of the table is rewritten daily and kept for ${tt} days. Shorter retention on this table (or batching updates so fewer partitions are rewritten) cuts it directly.`;
+  else if (big[2] === 'Fail-safe') msg = `<b>Fail-safe dominates</b>: you can't shorten it on a permanent table. If this data is rebuildable, make it <b>transient</b>.`;
+  else if (big[2] === 'clones') msg = `<b>Clones have diverged</b>: each owns a large share of new partitions. Drop dev clones you no longer use, or re-clone from production instead of keeping old ones.`;
+  else msg = `<b>Stage files</b> are the biggest extra: loaded files left in internal stages. Use <code>PURGE = TRUE</code> on COPY or a periodic <code>REMOVE</code>.`;
+  $('#stIns').innerHTML = msg;
+}
+['#stAct', '#stChurn', '#stTT', '#stCl', '#stDiv', '#stStg', '#stRate'].forEach(id => $(id).addEventListener('input', stCalc));
+tabs('#stType', d => { stType = d.v; if (stType === 'perm') $('#stTT').max = 90; stCalc(); });
+stCalc();
+
+/* ===== 04 cloud services 10% ===== */
+const CS_SC = { etl: [200, 12], bi: [120, 30], tiny: [80, 45], srv: [0, 6] };
+const CS_TXT = {
+  etl: `<b>Normal day:</b> cloud services stays well below 10% of warehouse usage, so the whole amount is adjusted away. Most accounts look like this.`,
+  bi: `<b>Metadata-heavy BI tool:</b> constant SHOW commands, INFORMATION_SCHEMA queries and re-compiling complex SQL push cloud services above 10%. Fixes: cache metadata in the tool, avoid polling INFORMATION_SCHEMA, simplify generated SQL.`,
+  tiny: `<b>Millions of tiny queries:</b> each query needs compilation and metadata work even if execution is milliseconds. Single-row INSERTs in a loop are the classic culprit. Batch them (COPY or multi-row INSERT).`,
+  srv: `<b>No warehouse usage that day:</b> 10% of zero is zero, so every cloud services credit is billed. Small, but explains why a "quiet" weekend day can still show cloud services charges.`
+};
+function csCalc(note) {
+  const wh = +$('#csWh').value, cs = +$('#csCs').value, allow = wh * 0.1, adj = Math.min(cs, allow), bill = cs - adj;
+  $('#csWhV').textContent = wh + ' cr'; $('#csCsV').textContent = cs + ' cr';
+  $('#csAllow').textContent = fmt(allow, 1); $('#csBill').textContent = fmt(bill, 1);
+  const H = 120, mx = Math.max(cs, allow, 1) * 1.2, y = v => 140 - v / mx * H;
+  $('#csSvg').innerHTML = `<line x1="40" x2="380" y1="140" y2="140" stroke="var(--line2)"/>
+    <rect x="80" y="${y(adj)}" width="90" height="${140 - y(adj)}" fill="var(--teal)" rx="3"/>
+    <rect x="80" y="${y(cs)}" width="90" height="${y(adj) - y(cs)}" fill="var(--red)" rx="3"/>
+    <text class="tm" x="125" y="158" text-anchor="middle">cloud services</text>
+    <line x1="60" x2="360" y1="${y(allow)}" y2="${y(allow)}" stroke="var(--amber)" stroke-dasharray="6 4" stroke-width="2"/>
+    <text class="tm" x="360" y="${y(allow) - 6}" text-anchor="end" style="fill:var(--amber)">10% of warehouse = ${fmt(allow, 1)} cr</text>
+    <text class="tm" x="190" y="${y(adj / 2) + 4}" style="fill:var(--teal)">adjusted (free): ${fmt(adj, 1)}</text>
+    ${bill > 0 ? `<text class="tm" x="190" y="${y(cs - bill / 2) + 4}" style="fill:var(--red)">billed: ${fmt(bill, 1)}</text>` : ''}`;
+  $('#csIns').innerHTML = (note || '') + (note ? ' ' : '') + `Billed today: <b>${fmt(bill, 1)}</b> of ${cs} cloud services credits.`;
+}
+let csNote = CS_TXT.etl;
+tabs('#csScen', d => { const [a, b] = CS_SC[d.v]; $('#csWh').value = a; $('#csCs').value = b; csNote = CS_TXT[d.v]; csCalc(csNote); });
+['#csWh', '#csCs'].forEach(id => $(id).addEventListener('input', () => { csNote = ''; csCalc(''); }));
+csCalc(csNote);
+
+/* ===== 04 serverless explorer ===== */
+const SV = [
+  ['Snowpipe', `Continuous loading from stages as files arrive. Cost grows with <b>data volume and file count</b>. Snowflake has been moving Snowpipe to a simpler <b>per-GB-ingested</b> charge; older arrangements billed compute time plus a per-file overhead, so lots of tiny files were expensive. Check current pricing for your account.`, `<b>See:</b> <code>PIPE_USAGE_HISTORY</code>, <code>METERING_HISTORY</code> (SERVICE_TYPE = PIPE).<br><b>Control:</b> batch files to ~100–250 MB compressed, avoid trickling thousands of tiny files, pause unused pipes (<code>ALTER PIPE … SET PIPE_EXECUTION_PAUSED = TRUE</code>).`],
+  ['Automatic clustering', `Background reclustering of tables with a <b>clustering key</b>. Cost is driven by how much the table <b>changes</b>: every DML batch that disturbs the ordering creates more reclustering work. A high-cardinality key on a constantly updated table can burn credits around the clock.`, `<b>See:</b> <code>AUTOMATIC_CLUSTERING_HISTORY</code> (credits, bytes and rows reclustered per table).<br><b>Control:</b> pick low-cardinality keys (e.g. a date), batch DML, <code>ALTER TABLE … SUSPEND RECLUSTER</code> during heavy loads, or drop keys that don't pay back.`],
+  ['Materialized views', `Snowflake keeps MVs up to date in the background whenever the <b>base table changes</b>. They cost maintenance credits plus storage. Great for a table queried often but changed rarely; expensive on a churny base table. (Enterprise+.)`, `<b>See:</b> <code>MATERIALIZED_VIEW_REFRESH_HISTORY</code>.<br><b>Control:</b> compare refresh credits with the warehouse credits saved; <code>ALTER MATERIALIZED VIEW … SUSPEND</code>; consider a dynamic table or scheduled aggregate instead.`],
+  ['Search optimization', `Builds and maintains a <b>search access path</b> for selective point lookups. Costs <b>storage</b> for the structure plus <b>maintenance credits</b> as data changes. (Enterprise+.)`, `<b>See:</b> <code>SEARCH_OPTIMIZATION_HISTORY</code>; estimate first with <code>SYSTEM$ESTIMATE_SEARCH_OPTIMIZATION_COSTS</code>.<br><b>Control:</b> enable only on specific columns (<code>ADD SEARCH OPTIMIZATION ON EQUALITY(col)</code>), not the whole table.`],
+  ['Serverless tasks', `Tasks without a WAREHOUSE run on Snowflake-managed compute sized from history. You pay only for compute actually used, with no 60-second minimum or idle tail like a warehouse has, which makes short, frequent tasks cheaper. Very frequent schedules still add up.`, `<b>See:</b> <code>SERVERLESS_TASK_HISTORY</code>.<br><b>Control:</b> sensible schedules, <code>WHEN SYSTEM$STREAM_HAS_DATA(…)</code> to skip empty runs, <code>SUSPEND_TASK_AFTER_NUM_FAILURES</code> so a broken task doesn't loop forever.`],
+  ['Query Acceleration (QAS)', `Offloads parts of eligible large scans to serverless compute while the query runs on your warehouse. Billed per second of acceleration compute. <code>QUERY_ACCELERATION_MAX_SCALE_FACTOR</code> caps how much extra compute it can use relative to the warehouse size. (Enterprise+.)`, `<b>See:</b> <code>QUERY_ACCELERATION_HISTORY</code>; find candidates with <code>SYSTEM$ESTIMATE_QUERY_ACCELERATION</code> and <code>QUERY_ACCELERATION_ELIGIBLE</code>.<br><b>Control:</b> set a modest max scale factor; enable only on warehouses with outlier scan-heavy queries.`],
+  ['Replication', `Copying databases/accounts to another region or cloud for DR or sharing. Three costs: <b>compute</b> for each refresh, <b>data transfer</b> out of the source region, and <b>storage</b> in the target account.`, `<b>See:</b> <code>REPLICATION_USAGE_HISTORY</code> / <code>REPLICATION_GROUP_USAGE_HISTORY</code>, <code>DATA_TRANSFER_HISTORY</code>.<br><b>Control:</b> replicate only what DR needs, choose a refresh interval that matches your RPO, avoid replicating high-churn scratch data.`],
+  ['Cortex AI', `LLM and document AI functions (AI_COMPLETE, AI_PARSE_DOCUMENT, embeddings, Cortex Search). Billed by <b>tokens</b> or <b>pages</b> on Snowflake-managed AI compute, separately from the warehouse that runs the SQL. Model choice changes cost a lot.`, `<b>See:</b> the Cortex usage views in ACCOUNT_USAGE (e.g. <code>CORTEX_FUNCTIONS_USAGE_HISTORY</code>; names evolve, so check docs).<br><b>Control:</b> process each document once and store results, pick the smallest model that's good enough, keep the calling warehouse small. Covered in Module 11.`]
+];
+$('#svTabs').innerHTML = SV.map((s, i) => `<button data-i="${i}"${i ? '' : ' class="on"'}>${s[0]}</button>`).join('');
+const svShow = i => { $('#svA').innerHTML = `<b class="h">WHAT DRIVES THE COST · ${SV[i][0].toUpperCase()}</b>${SV[i][1]}`; $('#svB').innerHTML = `<b class="h">WHERE TO SEE IT · HOW TO CONTROL IT</b>${SV[i][2]}`; };
+tabs('#svTabs', d => svShow(+d.i));
+svShow(0);
+</script>
+<script>
+/* ===== 05 resource monitor ===== */
+const RMT = [
+  { p: 50, a: 'NOTIFY', on: false }, { p: 75, a: 'NOTIFY', on: true }, { p: 90, a: 'NOTIFY', on: true },
+  { p: 100, a: 'SUSPEND', on: true }, { p: 110, a: 'SUSPEND_IMMEDIATE', on: true }
+];
+let RM = { lvl: 'acct', inc: true, day: 0, timer: null };
+const rmDayAmt = d => {
+  const f = (d % 7 === 6 || d % 7 === 0) ? 0.3 : 1, b = +$('#rmB').value;
+  const etl = 0.6 * b * (RM.inc && d >= 12 ? 4 : 1), other = 0.4 * b;
+  return { tracked: f * (RM.lvl === 'acct' ? etl + other : etl), srv: 0.15 * b };
+};
+function rmSim(upTo) {
+  const q = +$('#rmQ').value, trig = RMT.filter(t => t.on).sort((a, b) => a.p - b.p), fired = new Set();
+  let cum = 0, raw = 0, srv = 0, susp = false;
+  const pts = [[0, 0, 0, 0]], ev = [];
+  for (let d = 1; d <= upTo; d++) {
+    const { tracked, srv: sv } = rmDayAmt(d);
+    raw += tracked; srv += sv;
+    let allowed = susp ? 0 : tracked;
+    for (const t of trig) {
+      if (fired.has(t.p)) continue;
+      const T = q * t.p / 100;
+      if (cum + allowed >= T) {
+        fired.add(t.p);
+        if (t.a === 'NOTIFY') ev.push({ d, cls: 'n', txt: `Day ${d} · ${t.p}% (${fmt(T)} cr) · NOTIFY → email to admins / NOTIFY_USERS` });
+        else if (t.a === 'SUSPEND') { const head = T - cum; allowed = Math.min(allowed, head + 0.25 * (allowed - head)); susp = true; ev.push({ d, cls: 's', txt: `Day ${d} · ${t.p}% · SUSPEND → ${RM.lvl === 'acct' ? 'ALL warehouses' : 'ETL_WH'} suspend once running queries finish` }); }
+        else { allowed = Math.min(allowed, T - cum); susp = true; ev.push({ d, cls: 's', txt: `Day ${d} · ${t.p}% · SUSPEND_IMMEDIATE → running queries cancelled` }); }
+      }
+    }
+    cum += allowed;
+    pts.push([d, cum, raw, srv]);
+  }
+  return { q, pts, ev, cum, raw, susp };
+}
+function rmDraw() {
+  const full = rmSim(30), cur = rmSim(RM.day), q = full.q;
+  const mx = Math.max(q * 1.4, full.cum * 1.1), X = d => 50 + d / 30 * 610, Y = v => 230 - Math.min(v, mx) / mx * 210;
+  let s = `<line x1="50" x2="660" y1="230" y2="230" stroke="var(--line2)"/><line x1="50" x2="50" y1="15" y2="230" stroke="var(--line2)"/>`;
+  [1, 8, 15, 22, 29].forEach(d => s += `<text class="tm" x="${X(d)}" y="246" text-anchor="middle">day ${d}</text>`);
+  s += `<text class="tm" x="44" y="${Y(0) + 4}" text-anchor="end">0</text>`;
+  RMT.filter(t => t.on).forEach((t, k) => { const y = Y(q * t.p / 100), c = t.a === 'NOTIFY' ? 'var(--amber)' : 'var(--red)', right = k % 2 === 1;
+    s += `<line x1="50" x2="660" y1="${y}" y2="${y}" stroke="${c}" stroke-dasharray="${t.p === 100 ? '0' : '5 4'}" stroke-width="${t.p === 100 ? 1.6 : 1}" opacity=".8"/><text class="tm" x="${right ? 654 : 56}" y="${y - 4}" text-anchor="${right ? 'end' : 'start'}" style="fill:${c}">${t.p}% ${t.a} · ${fmt(q * t.p / 100)} cr</text>`; });
+  if (full.raw > mx) s += `<text class="tm" x="654" y="222" text-anchor="end">no monitor: ${fmt(full.raw)} cr by day 30 (line clipped)</text>`;
+  if (RM.inc) s += `<line x1="${X(12)}" x2="${X(12)}" y1="15" y2="230" stroke="var(--ink3)" stroke-dasharray="2 4"/><text class="tm" x="${X(12) + 4}" y="26">resize to 2XL</text>`;
+  const line = (arr, k) => arr.map(p => `${X(p[0])},${Y(p[k])}`).join(' ');
+  s += `<polyline points="${line(full.pts, 2)}" fill="none" stroke="var(--ink3)" stroke-width="1.6" stroke-dasharray="6 5" opacity=".7"/>`;
+  s += `<polyline points="${line(cur.pts, 3)}" fill="none" stroke="var(--teal)" stroke-width="2"/>`;
+  s += `<polyline points="${line(cur.pts, 1)}" fill="none" stroke="var(--ice)" stroke-width="3"/>`;
+  cur.ev.forEach(e => { const p = cur.pts[e.d]; s += `<circle cx="${X(e.d)}" cy="${Y(p[1])}" r="5" fill="${e.cls === 'n' ? 'var(--amber)' : 'var(--red)'}" stroke="var(--card)" stroke-width="1.5"/>`; });
+  $('#rmSvg').innerHTML = s;
+  $('#rmLog').innerHTML = cur.ev.length ? cur.ev.map(e => `<div class="${e.cls}">${e.txt}</div>`).join('') : `<div class="k">No trigger fired yet.</div>`;
+  $('#rmDay').textContent = RM.day;
+  $('#rmUsed').textContent = Math.round(cur.cum / q * 100) + '%';
+  const rawNow = cur.pts[cur.pts.length - 1][2];
+  $('#rmSaved').textContent = fmt(Math.max(0, rawNow - cur.cum));
+  $('#rmQV').textContent = fmt(q) + ' cr'; $('#rmBV').textContent = fmt(+$('#rmB').value) + ' cr';
+  const trig = RMT.filter(t => t.on).sort((a, b) => a.p - b.p).map(t => `ON ${t.p} PERCENT DO ${t.a}`);
+  $('#rmSql').textContent = `CREATE OR REPLACE RESOURCE MONITOR ${RM.lvl === 'acct' ? 'rm_account' : 'rm_etl'}\n  WITH CREDIT_QUOTA = ${q}\n  FREQUENCY = MONTHLY\n  START_TIMESTAMP = IMMEDIATELY` + (trig.length ? `\n  TRIGGERS ${trig.join('\n           ')};` : ';') + `\n` + (RM.lvl === 'acct' ? `ALTER ACCOUNT SET RESOURCE_MONITOR = rm_account;` : `ALTER WAREHOUSE etl_wh SET RESOURCE_MONITOR = rm_etl;`);
+  let ins;
+  if (RM.day === 0) ins = `Press <b>Play month</b> and watch the triggers fire.`;
+  else if (RM.day < 30) ins = cur.susp ? (RM.lvl === 'acct' ? `<b>Every warehouse is suspended</b>, including production ETL and dashboards, until the quota is raised, the monitor is changed, or the month resets. The teal serverless line keeps climbing: the monitor can't stop it.` : `<b>Only ETL_WH is suspended.</b> BI and ad-hoc warehouses keep working. Smaller blast radius, but the ETL pipeline is now down until someone acts.`) : `Day ${RM.day}: ${Math.round(cur.cum / q * 100)}% of quota used.` + (RM.inc && RM.day >= 12 ? ` The 2XL resize has quadrupled ETL_WH's burn rate: see the curve steepen.` : '');
+  else ins = cur.susp ? `<b>Month over.</b> The monitor capped warehouse spend at about ${fmt(cur.cum)} credits instead of ${fmt(cur.raw)}, saving ${fmt(cur.raw - cur.cum)}. On day 1 of next month the counter resets and suspended warehouses can resume. The real fix is still to undo the resize.` : `<b>Month over without a suspension</b>: ${fmt(cur.cum)} of ${fmt(q)} credits used. ${RMT.some(t => t.on && t.a !== 'NOTIFY') ? '' : 'With NOTIFY-only triggers the monitor never stops anything: it only warns.'}`;
+  $('#rmIns').innerHTML = ins;
+}
+function rmStop() { clearInterval(RM.timer); RM.timer = null; $('#rmPlay').textContent = 'Play month ▶'; }
+function rmReset() { rmStop(); RM.day = 0; rmDraw(); }
+$('#rmTrig').innerHTML = RMT.map((t, i) => `<span class="chip" data-i="${i}">${t.p}% ${t.a}</span>`).join('');
+const rmChips = () => $$('#rmTrig .chip').forEach(c => c.classList.toggle('on', RMT[+c.dataset.i].on));
+$$('#rmTrig .chip').forEach(c => c.onclick = () => { const t = RMT[+c.dataset.i]; t.on = !t.on; rmChips(); rmDraw(); });
+rmChips();
+$('#rmPlay').onclick = () => {
+  if (RM.timer) { rmStop(); return; }
+  if (RM.day >= 30) RM.day = 0;
+  $('#rmPlay').textContent = '❚❚ Pause';
+  RM.timer = setInterval(() => { if (RM.day >= 30) { rmStop(); return; } RM.day++; rmDraw(); }, 260);
+};
+$('#rmStep').onclick = () => { if (RM.day < 30) { RM.day++; rmDraw(); } };
+$('#rmReset').onclick = rmReset;
+['#rmQ', '#rmB'].forEach(id => $(id).addEventListener('input', rmDraw));
+tabs('#rmLvl', d => { RM.lvl = d.v; rmDraw(); });
+tabs('#rmInc', d => { RM.inc = d.v === '1'; rmDraw(); });
+rmDraw();
+
+/* ===== 06 view picker ===== */
+const VW = [
+  ['Credits per warehouse per hour, last 6 months', 'SNOWFLAKE.ACCOUNT_USAGE.WAREHOUSE_METERING_HISTORY', 'Latency up to ~3 hours · retention 365 days', `For the last few hours with no latency, use the <code>INFORMATION_SCHEMA.WAREHOUSE_METERING_HISTORY()</code> table function (up to 6 months back, but only for the current database context's account and without dropped-warehouse history). Columns to know: <code>CREDITS_USED_COMPUTE</code>, <code>CREDITS_USED_CLOUD_SERVICES</code>, <code>CREDITS_USED</code>.`],
+  ['Which queries are running or just finished right now?', 'INFORMATION_SCHEMA.QUERY_HISTORY() / QUERY_HISTORY_BY_WAREHOUSE()', 'Near real-time · last 7 days', `ACCOUNT_USAGE.QUERY_HISTORY has a latency of up to ~45 minutes, so it's the wrong tool during an incident. The INFORMATION_SCHEMA table functions show the last 7 days immediately. Snowsight's Query History page is also real-time.`],
+  ['What did we actually get billed per day, including the cloud services adjustment?', 'SNOWFLAKE.ACCOUNT_USAGE.METERING_DAILY_HISTORY', 'Latency up to a few hours · retention 365 days', `One row per day per <code>SERVICE_TYPE</code> (WAREHOUSE_METERING, PIPE, AUTO_CLUSTERING, SERVERLESS_TASK…) with <code>CREDITS_USED</code>, <code>CREDITS_ADJUSTMENT_CLOUD_SERVICES</code> (negative) and <code>CREDITS_BILLED</code>. This is the view that reconciles with the invoice in credits.`],
+  ['Which queries cost the most on a shared warehouse?', 'SNOWFLAKE.ACCOUNT_USAGE.QUERY_ATTRIBUTION_HISTORY', 'Latency of several hours · retention 365 days', `Per-query <code>CREDITS_ATTRIBUTED_COMPUTE</code> (and QAS credits) with <code>QUERY_TAG</code>, <code>USER_NAME</code>, <code>QUERY_PARAMETERIZED_HASH</code>. Idle time and very short queries aren't attributed, and the rules are documented by Snowflake, so check the current docs before quoting details.`],
+  ['How much did every account in the company spend, in dollars?', 'SNOWFLAKE.ORGANIZATION_USAGE.USAGE_IN_CURRENCY_DAILY', 'Longer latency (can be up to ~a day) · org-wide', `ORGANIZATION_USAGE spans all accounts in the organization and includes currency views (plus rate sheet and remaining-balance views). Typically queried from the organization account or with ORGADMIN-level access. Exact availability depends on your contract and setup.`],
+  ['Which tables hold the most Time Travel and Fail-safe bytes?', 'SNOWFLAKE.ACCOUNT_USAGE.TABLE_STORAGE_METRICS', 'Latency up to a few hours · includes dropped tables still billed', `Columns <code>ACTIVE_BYTES</code>, <code>TIME_TRAVEL_BYTES</code>, <code>FAILSAFE_BYTES</code>, <code>RETAINED_FOR_CLONE_BYTES</code>, <code>IS_TRANSIENT</code>, <code>DELETED</code>. Also available as INFORMATION_SCHEMA.TABLE_STORAGE_METRICS per database. For account totals over time use <code>STORAGE_USAGE</code>.`],
+  ['How many credits did serverless features use, by feature?', 'SNOWFLAKE.ACCOUNT_USAGE.METERING_HISTORY (+ feature views)', 'Hourly by SERVICE_TYPE · retention 365 days', `Group by <code>SERVICE_TYPE</code>, then drill into the feature-specific views: <code>AUTOMATIC_CLUSTERING_HISTORY</code>, <code>PIPE_USAGE_HISTORY</code>, <code>SERVERLESS_TASK_HISTORY</code>, <code>MATERIALIZED_VIEW_REFRESH_HISTORY</code>, <code>SEARCH_OPTIMIZATION_HISTORY</code>, <code>QUERY_ACCELERATION_HISTORY</code>.`]
+];
+$('#vwTabs').innerHTML = VW.map((v, i) => `<button data-i="${i}"${i ? '' : ' class="on"'}>${['Hourly WH credits', 'Running now', 'Daily billed', 'Costly queries', 'All accounts $', 'TT / FS bytes', 'Serverless'][i]}</button>`).join('');
+const vwShow = i => { const [q, v, l, n] = VW[i]; $('#vwOut').innerHTML = `<b class="h">Q: ${esc(q).toUpperCase()}</b><div style="font-family:var(--f-mono);font-size:13px;color:var(--ice);margin:4px 0">${v}</div><span class="badge mid">${l}</span><p style="margin-top:8px">${n}</p>`; };
+tabs('#vwTabs', d => vwShow(+d.i));
+vwShow(0);
+
+/* ===== 06 chargeback ===== */
+const CB = {
+  wh: { rows: [['shared (BI_SHARED_WH tag)', 1000, 'var(--ink3)']], ins: `<b>Warehouse tag only:</b> the whole 1,000 credits land on "shared". Simple and exact, but useless for a warehouse used by several teams. That's why many companies give each big team its own warehouse.` },
+  q: { rows: [['finance', 380, 'var(--ice)'], ['marketing', 230, 'var(--teal)'], ['data_science', 90, 'var(--amber)'], ['idle (unattributed)', 300, 'var(--red)']], ins: `<b>By query:</b> QUERY_ATTRIBUTION_HISTORY (grouped by QUERY_TAG or user) splits 700 credits across teams. The remaining <b>300 credits are idle time</b>: metered by WAREHOUSE_METERING_HISTORY but not attributed to any query. Someone still has to pay for it.` },
+  qi: { rows: [['finance', 380 + 300 * 380 / 700, 'var(--ice)'], ['marketing', 230 + 300 * 230 / 700, 'var(--teal)'], ['data_science', 90 + 300 * 90 / 700, 'var(--amber)']], ins: `<b>By query + idle spread proportionally:</b> each team pays its query credits plus a share of idle time in proportion to its usage. Totals reconcile to the 1,000 metered credits. Publishing the idle share also motivates teams to fix auto-suspend.` }
+};
+function cbDraw(v) {
+  const c = CB[v], mx = 1000;
+  $('#cbSvg').innerHTML = c.rows.map(([n, val, col], i) => { const y = 14 + i * 44, w = val / mx * 300;
+    return `<text class="tm" x="0" y="${y + 16}">${n.length > 18 ? n.slice(0, 18) + '…' : n}</text><rect class="grow" x="140" y="${y}" width="${Math.max(2, w)}" height="26" rx="4" fill="${col}"/><text class="tm" x="${146 + w}" y="${y + 17}">${fmt(val)}</text>`; }).join('');
+  $('#cbTbl').innerHTML = `<tr><th>ALLOCATED TO</th><th>CREDITS</th><th>SHARE</th></tr>` + c.rows.map(([n, val]) => `<tr><td>${n}</td><td class="m">${fmt(val)}</td><td class="m">${Math.round(val / 10)}%</td></tr>`).join('') + `<tr><td><b>Total</b></td><td class="m"><b>1,000</b></td><td class="m">100%</td></tr>`;
+  $('#cbIns').innerHTML = c.ins;
+}
+tabs('#cbTabs', d => cbDraw(d.v));
+cbDraw('wh');
+
+/* ===== 07 investigation playbook ===== */
+const PBF = [
+  ['idle', 'NEVER-SUSPENDING WAREHOUSE', 'BI_WH AUTO_SUSPEND set to 0 → ~1,400 cr'],
+  ['size', 'OVERSIZED WAREHOUSE', 'ADHOC_WH M → XL → ~900 cr'],
+  ['sched', 'NEW FREQUENT SCHEDULE', 'orders_sync every minute → ~900 cr'],
+  ['run', 'RUNAWAY QUERY', '26-hour cartesian join → ~400 cr'],
+  ['clus', 'CLUSTERING ON CHURNY TABLE', 'EVENTS reclustering → ~410 cr']
+];
+const tbl = (h, rows) => `<table class="t" style="margin-top:8px"><tr>${h.map(x => `<th>${x}</th>`).join('')}</tr>${rows.map(r => `<tr>${r.map(c => `<td class="m">${c}</td>`).join('')}</tr>`).join('')}</table>`;
+const PB = [
+  { n: 1, t: 'Step 1 · Which bucket and service grew?', q: `SELECT service_type, DATE_TRUNC('month', usage_date) AS month, SUM(credits_billed)\nFROM SNOWFLAKE.ACCOUNT_USAGE.METERING_DAILY_HISTORY\nWHERE usage_date >= DATEADD('month', -2, DATE_TRUNC('month', CURRENT_DATE()))\nGROUP BY 1, 2 ORDER BY 1, 2;`,
+    r: tbl(['SERVICE_TYPE', 'LAST MONTH', 'THIS MONTH', 'Δ'], [['WAREHOUSE_METERING', '9,300', '12,900', '+3,600'], ['AUTO_CLUSTERING', '150', '560', '+410'], ['PIPE', '350', '340', '−10'], ['SERVERLESS_TASK', '200', '200', '0']]),
+    f: `Storage is flat (checked STORAGE_USAGE separately). <b>Warehouses explain +3,600</b> and <b>automatic clustering +410</b> of the +4,000. Two threads to pull.` },
+  { n: 2, t: 'Step 2 · Which warehouses?', q: `SELECT warehouse_name, DATE_TRUNC('month', start_time) AS month, SUM(credits_used_compute)\nFROM SNOWFLAKE.ACCOUNT_USAGE.WAREHOUSE_METERING_HISTORY\nWHERE start_time >= DATEADD('month', -2, DATE_TRUNC('month', CURRENT_DATE()))\nGROUP BY 1, 2 ORDER BY 1, 2;`,
+    r: tbl(['WAREHOUSE', 'LAST', 'THIS', 'Δ'], [['BI_WH', '2,100', '3,500', '+1,400'], ['ETL_WH', '5,800', '7,100', '+1,300'], ['ADHOC_WH', '900', '1,800', '+900'], ['DS_WH', '500', '500', '0']]),
+    f: `Three warehouses grew. Next question for each: was it <b>busier</b> (more or heavier queries) or just <b>running longer</b> (idle)?` },
+  { n: 3, t: 'Step 3 · Idle or busy? (BI_WH)', q: `SELECT warehouse_name, SUM(credits_used_compute) AS metered\nFROM SNOWFLAKE.ACCOUNT_USAGE.WAREHOUSE_METERING_HISTORY\nWHERE warehouse_name = 'BI_WH' AND start_time >= DATE_TRUNC('month', CURRENT_DATE())\nGROUP BY 1;\n-- compare with SUM(credits_attributed_compute) from QUERY_ATTRIBUTION_HISTORY\n-- (full idle-detection query in the SQL lab), then:\nSHOW WAREHOUSES LIKE 'BI_WH';`,
+    r: tbl(['WAREHOUSE', 'METERED', 'QUERY CREDITS', 'IDLE %', 'AUTO_SUSPEND'], [['BI_WH', '3,500', '1,050', '70%', '0 (never)'], ['BI_WH (last month)', '2,100', '1,580', '25%', '600']]),
+    f: `Query work actually went <i>down</i>; idle went from 25% to 70%. QUERY_HISTORY shows <code>ALTER WAREHOUSE bi_wh SET AUTO_SUSPEND = 0</code> on day 3 ("dashboards felt slow in the morning"). <b>Root cause: never-suspending warehouse.</b> Fix: AUTO_SUSPEND = 300 plus a warehouse resource monitor.`, hit: 'idle' },
+  { n: 4, t: 'Step 4 · Is it the right size? (ADHOC_WH)', q: `SELECT warehouse_size, COUNT(*) AS queries,\n       MEDIAN(total_elapsed_time)/1000 AS median_s,\n       SUM(bytes_spilled_to_remote_storage) AS remote_spill\nFROM SNOWFLAKE.ACCOUNT_USAGE.QUERY_HISTORY\nWHERE warehouse_name = 'ADHOC_WH' AND start_time >= DATEADD('day', -60, CURRENT_TIMESTAMP())\nGROUP BY 1;`,
+    r: tbl(['SIZE', 'QUERIES', 'MEDIAN S', 'REMOTE SPILL'], [['MEDIUM (last month)', '18,200', '5.1', '0'], ['X-LARGE (this month)', '18,900', '4.0', '0']]),
+    f: `Same workload, 4× the rate, barely faster: small queries can't use the extra nodes. Someone resized for one heavy query and never resized back. <b>Root cause: oversized warehouse.</b> Fix: back to MEDIUM; send the occasional heavy query to a separate, larger warehouse.`, hit: 'size' },
+  { n: 5, t: 'Step 5 · What changed in the workload? (ETL_WH)', q: `SELECT query_tag, COUNT(*) AS runs, SUM(credits_attributed_compute) AS credits\nFROM SNOWFLAKE.ACCOUNT_USAGE.QUERY_ATTRIBUTION_HISTORY\nWHERE warehouse_name = 'ETL_WH' AND start_time >= DATE_TRUNC('month', CURRENT_DATE())\nGROUP BY 1 ORDER BY credits DESC;`,
+    r: tbl(['QUERY_TAG', 'RUNS/DAY BEFORE', 'RUNS/DAY NOW', 'Δ CREDITS'], [['orders_sync', '24', '1,440', '+900'], ['daily_marts', '6', '6', '0']]),
+    f: `The orders_sync task's schedule changed from <code>'60 MINUTE'</code> to <code>'1 MINUTE'</code>. Most runs process zero rows, but each one keeps ETL_WH awake. <b>Root cause: new frequent schedule.</b> Fix: agree the real freshness SLA, add <code>WHEN SYSTEM$STREAM_HAS_DATA(…)</code>, or move it to a serverless task.`, hit: 'sched' },
+  { n: 6, t: 'Step 6 · Any single runaway query?', q: `SELECT query_id, user_name, credits_attributed_compute,\n       DATEDIFF('hour', start_time, end_time) AS hours\nFROM SNOWFLAKE.ACCOUNT_USAGE.QUERY_ATTRIBUTION_HISTORY\nWHERE start_time >= DATE_TRUNC('month', CURRENT_DATE())\nORDER BY credits_attributed_compute DESC LIMIT 10;`,
+    r: tbl(['QUERY_ID', 'USER', 'CREDITS', 'HOURS'], [['01b2…9f', 'ANALYST_K', '416', '26'], ['01b3…a1', 'SVC_DBT', '38', '2']]),
+    f: `A query with a missing join condition (cartesian join) ran 26 hours on ETL_WH (XL, 16 cr/h) before someone cancelled it. The default 2-day statement timeout never fired. <b>Root cause: runaway query.</b> Fix: <code>STATEMENT_TIMEOUT_IN_SECONDS = 7200</code> on the warehouse, and analysts off the ETL warehouse.`, hit: 'run' },
+  { n: 6, t: 'Step 7 · The serverless thread: automatic clustering', q: `SELECT table_name, SUM(credits_used) AS credits, SUM(num_rows_reclustered) AS rows\nFROM SNOWFLAKE.ACCOUNT_USAGE.AUTOMATIC_CLUSTERING_HISTORY\nWHERE start_time >= DATE_TRUNC('month', CURRENT_DATE())\nGROUP BY 1 ORDER BY credits DESC;`,
+    r: tbl(['TABLE', 'CREDITS', 'ROWS RECLUSTERED'], [['EVENTS', '425', '9.8 B'], ['ORDERS', '120', '410 M']]),
+    f: `A clustering key on <code>(event_id)</code>, a high-cardinality column, was added to EVENTS, which receives a MERGE every 5 minutes. Snowflake keeps re-sorting a table that never stays sorted. <b>Root cause: clustering on a churny table.</b> Fix: cluster by <code>(event_date)</code> or drop the key; batch the MERGEs.`, hit: 'clus' },
+  { n: 7, t: 'Step 8 · Fix, verify, prevent', q: `ALTER WAREHOUSE bi_wh SET AUTO_SUSPEND = 300;\nALTER WAREHOUSE adhoc_wh SET WAREHOUSE_SIZE = 'MEDIUM';\nALTER TASK orders_sync SUSPEND;  -- recreate with the agreed schedule + WHEN clause\nALTER WAREHOUSE etl_wh SET STATEMENT_TIMEOUT_IN_SECONDS = 7200;\nALTER TABLE events CLUSTER BY (event_date);`,
+    r: tbl(['ROOT CAUSE', 'FIX', 'CREDITS / MONTH'], [['Never-suspending WH', 'AUTO_SUSPEND = 300', '≈ 1,400'], ['Oversized WH', 'XL → M', '≈ 900'], ['Every-minute task', 'Hourly + WHEN', '≈ 900'], ['Runaway query', 'Statement timeout', '≈ 400'], ['Churny clustering', 'Date key / batch', '≈ 410']]),
+    f: `Together ≈ 4,000 credits: the whole increase is explained. <b>Verify</b> next week in WAREHOUSE_METERING_HISTORY. <b>Prevent:</b> warehouse-level resource monitors, timeouts on every warehouse, warehouse settings managed in code review, and a daily alert when credits exceed the 30-day average by 25%.` }
+];
+let pbI = -1;
+function pbDraw() {
+  const st = pbI >= 0 ? PB[pbI] : null;
+  $('#pbBar').innerHTML = PB.map((_, k) => `<span class="${k <= pbI ? 'on' : ''}" data-k="${k}"></span>`).join('');
+  $$('#pbBar span').forEach(s => s.onclick = () => { pbI = +s.dataset.k; pbDraw(); });
+  const fl = $('#pbFlow');
+  if (st) { fl.classList.add('playing'); $$('#pbFlow .fn').forEach(g => g.classList.toggle('on', +g.id.slice(2) <= st.n)); $$('#pbFlow .edge').forEach(e => e.classList.toggle('on', +e.id.slice(2) < st.n)); }
+  else { fl.classList.remove('playing'); $$('#pbFlow .fn, #pbFlow .edge').forEach(g => g.classList.remove('on')); }
+  $('#pbDesc').innerHTML = st ? `<h4>${st.t}</h4><div class="grid2" style="grid-template-columns:1fr 1fr;gap:14px"><div><div class="sqlbox">${esc(st.q)}</div></div><div><span class="note-s">Illustrative result</span>${st.r}</div></div><div class="insight">${st.f}</div>` : `<h4>The bill went from 10,000 to 14,000 credits</h4><div style="font-size:14.5px;color:var(--ink2)">Your manager asks: "Why, and how do we stop it?" Press <b>Start</b> to investigate top-down.</div>`;
+  const hits = new Set(PB.slice(0, pbI + 1).map(s => s.hit).filter(Boolean));
+  $('#pbFind').innerHTML = PBF.map(([id, h, d]) => `<div class="find ${hits.has(id) ? 'hot rise' : ''}"><b>${hits.has(id) ? 'FOUND · ' + h : 'ROOT CAUSE ?'}</b>${hits.has(id) ? d : '<span class="note-s">not found yet</span>'}</div>`).join('');
+  $('#pbPrev').disabled = pbI < 0;
+  $('#pbNext').disabled = pbI === PB.length - 1;
+  $('#pbNext').textContent = pbI < 0 ? 'Start' : 'Next';
+}
+$('#pbNext').onclick = () => { if (pbI < PB.length - 1) { pbI++; pbDraw(); } };
+$('#pbPrev').onclick = () => { if (pbI >= 0) { pbI--; pbDraw(); } };
+$('#pbReset').onclick = () => { pbI = -1; pbDraw(); };
+pbDraw();
+
+/* ===== 07 checklist ===== */
+const CK = [
+  ['AUTO_SUSPEND ~60 s on batch/ETL warehouses, a few minutes on BI', 'HIGH', 'ok'],
+  ['Separate warehouses per workload (ETL, BI, ad-hoc, DS)', 'MEDIUM', 'mid'],
+  ['Right-size from QUERY_HISTORY evidence (spill, runtime, queuing)', 'HIGH', 'ok'],
+  ['Multi-cluster with sensible MAX_CLUSTER_COUNT and ECONOMY where queuing is OK', 'MEDIUM', 'mid'],
+  ['STATEMENT_TIMEOUT_IN_SECONDS set on every warehouse', 'HIGH · risk', 'ok'],
+  ['Task schedules match real SLAs; WHEN SYSTEM$STREAM_HAS_DATA skips empty runs', 'MEDIUM', 'mid'],
+  ['Dashboards reuse the result cache (no needless "force refresh")', 'LOW–MED', 'off'],
+  ['Transient tables for staging and rebuildable layers', 'MEDIUM', 'mid'],
+  ['Time Travel retention set per layer, not 90 days everywhere', 'MEDIUM', 'mid'],
+  ['Internal stages purged after load (PURGE / REMOVE)', 'LOW', 'off'],
+  ['Clustering, MVs and search optimization reviewed: cost vs benefit', 'MEDIUM', 'mid'],
+  ['Resource monitors (account NOTIFY, warehouse SUSPEND) + budgets for serverless', 'HIGH · risk', 'ok'],
+  ['Query tags + object tags enforced for chargeback', 'MEDIUM · visibility', 'mid'],
+  ['Weekly cost review: top warehouses, top queries, idle %, trend alerts', 'MEDIUM', 'mid']
+];
+const ckOn = new Set();
+function ckDraw() {
+  const item = (c, i) => `<label class="${ckOn.has(i) ? 'on' : ''}"><input type="checkbox" data-i="${i}"${ckOn.has(i) ? ' checked' : ''}><span>${c[0]}</span><span class="im badge ${c[2]}">${c[1]}</span></label>`;
+  $('#ckA').innerHTML = CK.slice(0, 7).map((c, i) => item(c, i)).join('');
+  $('#ckB').innerHTML = CK.slice(7).map((c, i) => item(c, i + 7)).join('');
+  $$('.ckl input').forEach(x => x.onchange = () => { const i = +x.dataset.i; x.checked ? ckOn.add(i) : ckOn.delete(i); ckDraw(); });
+  const n = ckOn.size, hiMiss = CK.map((c, i) => [c, i]).filter(([c, i]) => c[1].startsWith('HIGH') && !ckOn.has(i));
+  $('#ckScore').textContent = `${n} / ${CK.length} in place`;
+  $('#ckIns').innerHTML = n === CK.length ? `<b>All 14 in place.</b> In an interview, describe how you'd <i>prove</i> each one works: the metric you watch and the alert that fires when it regresses.` : hiMiss.length ? `<b>Start with the HIGH items still missing:</b> ${hiMiss.map(([c]) => c[0].split(' (')[0].split(';')[0]).join(' · ')}. They usually recover the most credits or prevent the biggest surprises.` : `All the HIGH items are done. The rest are steady, compounding wins: ${CK.length - n} to go.`;
+}
+ckDraw();
+</script>
+<script>
+/* ===== 08 SQL lab ===== */
+const SQL = [
+  { t: 'Metering: where credits go', l: [
+    [`-- 1) Daily credits by service, with the cloud services adjustment`, `A comment. Start every cost investigation at the top: which service consumed the credits?`],
+    [`SELECT usage_date,`, `One row per day…`],
+    [`       service_type,`, `…per service: WAREHOUSE_METERING, PIPE, AUTO_CLUSTERING, SERVERLESS_TASK, MATERIALIZED_VIEW, and more.`],
+    [`       SUM(credits_used_compute)            AS compute_cr,`, `Credits for compute (warehouse or serverless) that day.`],
+    [`       SUM(credits_used_cloud_services)     AS cloud_services_cr,`, `Credits used by the cloud services layer, before the 10% adjustment.`],
+    [`       SUM(credits_adjustment_cloud_services) AS cs_adjustment,`, `A negative number: the free part of cloud services (up to 10% of daily warehouse usage).`],
+    [`       SUM(credits_billed)                  AS billed_cr`, `What you are actually charged in credits: compute + cloud services + adjustment.`],
+    [`FROM SNOWFLAKE.ACCOUNT_USAGE.METERING_DAILY_HISTORY`, `Account-wide daily metering. ACCOUNT_USAGE has latency (hours) but a year of history.`],
+    [`WHERE usage_date >= DATEADD('day', -60, CURRENT_DATE())`, `Two months, so you can compare this month with last month.`],
+    [`GROUP BY 1, 2`, `Group by day and service.`],
+    [`ORDER BY usage_date DESC, billed_cr DESC;`, `Newest first, biggest service first within each day.`],
+    [``, ``],
+    [`-- 2) Monthly credits per warehouse`, `Second level: which warehouse?`],
+    [`SELECT warehouse_name,`, `The warehouse.`],
+    [`       DATE_TRUNC('month', start_time) AS month,`, `Roll hourly rows up to months.`],
+    [`       SUM(credits_used_compute)       AS compute_cr,`, `Compute credits: the part driven by size × running time.`],
+    [`       SUM(credits_used)               AS total_cr`, `Compute + cloud services for that warehouse (before the account-level 10% adjustment).`],
+    [`FROM SNOWFLAKE.ACCOUNT_USAGE.WAREHOUSE_METERING_HISTORY`, `One row per warehouse per hour it was running.`],
+    [`WHERE start_time >= DATEADD('month', -3, DATE_TRUNC('month', CURRENT_DATE()))`, `The current month plus the three before it.`],
+    [`GROUP BY 1, 2`, `Per warehouse per month.`],
+    [`ORDER BY month DESC, compute_cr DESC;`, `Latest month first, most expensive warehouse first.`]
+  ] },
+  { t: 'Top expensive queries', l: [
+    [`SELECT qa.query_id,`, `The query's unique id: paste it into Snowsight to open its Query Profile.`],
+    [`       qa.warehouse_name,`, `Where it ran.`],
+    [`       qa.user_name,`, `Who ran it.`],
+    [`       qa.query_tag,`, `Pipeline or app label, if your tools set QUERY_TAG.`],
+    [`       qa.credits_attributed_compute,`, `Compute credits Snowflake attributed to this query (idle time is not included).`],
+    [`       qh.warehouse_size,`, `Size at the time: is a small query running on a 2XL?`],
+    [`       qh.total_elapsed_time / 1000 AS elapsed_s,`, `Elapsed time is in milliseconds in QUERY_HISTORY, so divide by 1000.`],
+    [`       qh.bytes_spilled_to_remote_storage AS remote_spill,`, `Non-zero remote spill means the warehouse was too small for this query's memory needs.`],
+    [`       LEFT(qh.query_text, 120) AS query_preview`, `First 120 characters of the SQL, enough to recognise it.`],
+    [`FROM SNOWFLAKE.ACCOUNT_USAGE.QUERY_ATTRIBUTION_HISTORY qa`, `Per-query credit attribution for warehouse queries.`],
+    [`JOIN SNOWFLAKE.ACCOUNT_USAGE.QUERY_HISTORY qh`, `Join query history for size, runtime, spill and text.`],
+    [`  ON qh.query_id = qa.query_id`, `Same query on both sides.`],
+    [`WHERE qa.start_time >= DATEADD('day', -30, CURRENT_TIMESTAMP())`, `Last 30 days.`],
+    [`ORDER BY qa.credits_attributed_compute DESC`, `Most expensive first.`],
+    [`LIMIT 20;`, `The top 20: usually a handful of queries dominate.`],
+    [``, ``],
+    [`-- recurring patterns: same query shape, run many times`, `One expensive query is easy to spot. A cheap query run 50,000 times is not, so group by shape.`],
+    [`SELECT query_parameterized_hash,`, `Hash of the query text with literals removed: the same "shape" with different values gets the same hash.`],
+    [`       COUNT(*) AS runs,`, `How often it ran.`],
+    [`       SUM(credits_attributed_compute) AS credits,`, `Total cost of that shape.`],
+    [`       ANY_VALUE(query_id) AS sample_query_id`, `One example to open in the profile.`],
+    [`FROM SNOWFLAKE.ACCOUNT_USAGE.QUERY_ATTRIBUTION_HISTORY`, `Same view.`],
+    [`WHERE start_time >= DATEADD('day', -30, CURRENT_TIMESTAMP())`, `Last 30 days.`],
+    [`GROUP BY 1 ORDER BY credits DESC LIMIT 20;`, `The 20 most expensive query shapes. Often a dashboard tile or a too-frequent task.`]
+  ] },
+  { t: 'Idle warehouse detection', l: [
+    [`WITH metered AS (`, `CTE 1: what each warehouse was billed for.`],
+    [`  SELECT warehouse_name, SUM(credits_used_compute) AS metered_cr`, `All compute credits, busy or idle.`],
+    [`  FROM SNOWFLAKE.ACCOUNT_USAGE.WAREHOUSE_METERING_HISTORY`, `The source of truth for warehouse billing.`],
+    [`  WHERE start_time >= DATEADD('day', -30, CURRENT_TIMESTAMP())`, `Last 30 days.`],
+    [`  GROUP BY 1`, `Per warehouse.`],
+    [`), attributed AS (`, `CTE 2: credits that can be traced to actual queries.`],
+    [`  SELECT warehouse_name, SUM(credits_attributed_compute) AS query_cr`, `Busy time, split per query.`],
+    [`  FROM SNOWFLAKE.ACCOUNT_USAGE.QUERY_ATTRIBUTION_HISTORY`, `Excludes idle time by design, which is exactly what makes this comparison work.`],
+    [`  WHERE start_time >= DATEADD('day', -30, CURRENT_TIMESTAMP())`, `Same window.`],
+    [`  GROUP BY 1`, `Per warehouse.`],
+    [`)`, `End of CTEs.`],
+    [`SELECT m.warehouse_name,`, `For each warehouse…`],
+    [`       m.metered_cr,`, `…billed credits…`],
+    [`       COALESCE(a.query_cr, 0) AS query_cr,`, `…credits used by queries (0 if no queries at all)…`],
+    [`       m.metered_cr - COALESCE(a.query_cr, 0) AS idle_cr,`, `…and the difference: approximately the idle cost (it also absorbs tiny unattributed queries).`],
+    [`       ROUND(100 * (1 - COALESCE(a.query_cr, 0) / NULLIF(m.metered_cr, 0)), 1) AS idle_pct`, `Idle as a percentage. NULLIF avoids division by zero.`],
+    [`FROM metered m`, `Start from billed warehouses…`],
+    [`LEFT JOIN attributed a ON a.warehouse_name = m.warehouse_name`, `…LEFT JOIN so a warehouse that ran with zero queries still shows up (100% idle).`],
+    [`ORDER BY idle_cr DESC;`, `Biggest idle cost first. Anything above roughly 40–50% deserves a look at AUTO_SUSPEND.`],
+    [``, ``],
+    [`SHOW WAREHOUSES;`, `Lists every warehouse with its current settings.`],
+    [`SELECT "name", "size", "auto_suspend", "auto_resume", "max_cluster_count", "scaling_policy"`, `SHOW output columns are lowercase, so they must be double-quoted.`],
+    [`FROM TABLE(RESULT_SCAN(LAST_QUERY_ID()))`, `Turn the SHOW output into a table you can filter.`],
+    [`WHERE "auto_suspend" IS NULL OR "auto_suspend" = 0 OR "auto_suspend" > 600;`, `Warehouses that never suspend, or wait more than 10 minutes: prime idle suspects.`]
+  ] },
+  { t: 'Warehouse settings & timeouts', l: [
+    [`CREATE WAREHOUSE IF NOT EXISTS bi_wh`, `A warehouse for dashboards, defined with cost in mind from day one.`],
+    [`  WAREHOUSE_SIZE = 'MEDIUM'`, `4 credits/hour per running cluster (Gen1 standard).`],
+    [`  AUTO_SUSPEND = 300`, `Suspend after 5 idle minutes: keeps a warm cache for dashboard users without paying for long idle tails.`],
+    [`  AUTO_RESUME = TRUE`, `The next query wakes it automatically.`],
+    [`  INITIALLY_SUSPENDED = TRUE`, `Don't start billing the moment it's created.`],
+    [`  MIN_CLUSTER_COUNT = 1`, `Multi-cluster (Enterprise+): normally one cluster…`],
+    [`  MAX_CLUSTER_COUNT = 3`, `…up to three at peak concurrency. Each running cluster bills separately.`],
+    [`  SCALING_POLICY = 'ECONOMY'`, `Add clusters only when there's enough queued work to keep them busy. Saves credits; accepts a bit more queuing.`],
+    [`  STATEMENT_TIMEOUT_IN_SECONDS = 1800`, `Cancel any query running longer than 30 minutes on this warehouse.`],
+    [`  STATEMENT_QUEUED_TIMEOUT_IN_SECONDS = 600`, `Cancel queries that wait in the queue more than 10 minutes.`],
+    [`  COMMENT = 'BI dashboards: finance and marketing';`, `Document the owner and purpose. Helps every future cost review.`],
+    [``, ``],
+    [`ALTER WAREHOUSE etl_wh SET AUTO_SUSPEND = 60;`, `Batch warehouse: suspend after 60 seconds of idle.`],
+    [`ALTER WAREHOUSE adhoc_wh SET WAREHOUSE_SIZE = 'MEDIUM';`, `Right-size down. Running queries finish on the old size; new queries use the new size.`],
+    [`ALTER WAREHOUSE adhoc_wh SUSPEND;`, `Stop billing right now (running queries are allowed to finish).`],
+    [``, ``],
+    [`ALTER USER analyst_k SET STATEMENT_TIMEOUT_IN_SECONDS = 3600;`, `A per-user limit: this analyst's queries stop after 1 hour.`],
+    [`ALTER ACCOUNT SET STATEMENT_TIMEOUT_IN_SECONDS = 14400;`, `Account-wide default of 4 hours instead of the 2-day default (172,800 s).`],
+    [`SHOW PARAMETERS LIKE 'STATEMENT%' IN WAREHOUSE bi_wh;`, `Check the effective timeout values and the level each one was set at.`]
+  ] },
+  { t: 'Resource monitors', l: [
+    [`USE ROLE ACCOUNTADMIN;`, `By default only ACCOUNTADMIN can create resource monitors.`],
+    [``, ``],
+    [`CREATE OR REPLACE RESOURCE MONITOR rm_account_monthly`, `An account-wide early-warning monitor.`],
+    [`  WITH CREDIT_QUOTA = 5000`, `The credit budget for each interval.`],
+    [`  FREQUENCY = MONTHLY`, `Usage resets every month. Options: DAILY, WEEKLY, MONTHLY, YEARLY, NEVER.`],
+    [`  START_TIMESTAMP = IMMEDIATELY`, `Start counting now.`],
+    [`  TRIGGERS ON 75 PERCENT DO NOTIFY`, `Email at 75% of the quota…`],
+    [`           ON 90 PERCENT DO NOTIFY`, `…again at 90%…`],
+    [`           ON 100 PERCENT DO NOTIFY;`, `…and at 100%. NOTIFY-only at account level: warn, but never stop production.`],
+    [`ALTER ACCOUNT SET RESOURCE_MONITOR = rm_account_monthly;`, `Attach it at account level (one account-level monitor per account).`],
+    [``, ``],
+    [`CREATE OR REPLACE RESOURCE MONITOR rm_adhoc`, `A hard limit for the ad-hoc warehouse.`],
+    [`  WITH CREDIT_QUOTA = 300`, `300 credits…`],
+    [`  FREQUENCY = WEEKLY`, `…per week.`],
+    [`  START_TIMESTAMP = IMMEDIATELY`, `Start now.`],
+    [`  NOTIFY_USERS = (SAURAV, FINOPS_LEAD)`, `Non-admin users who also get the alerts (they need a verified email address).`],
+    [`  TRIGGERS ON 80 PERCENT DO NOTIFY`, `Early warning.`],
+    [`           ON 100 PERCENT DO SUSPEND`, `Suspend after running queries finish.`],
+    [`           ON 110 PERCENT DO SUSPEND_IMMEDIATE;`, `If the overshoot reaches 110%, cancel running queries too.`],
+    [`ALTER WAREHOUSE adhoc_wh SET RESOURCE_MONITOR = rm_adhoc;`, `Assign it. A warehouse can have only one warehouse-level monitor.`],
+    [``, ``],
+    [`GRANT MONITOR, MODIFY ON RESOURCE MONITOR rm_adhoc TO ROLE finops_admin;`, `Let a FinOps role view (MONITOR) and adjust (MODIFY) this monitor without being ACCOUNTADMIN.`],
+    [`SHOW RESOURCE MONITORS;`, `Quota, used credits, remaining credits, level, frequency and next reset time.`]
+  ] },
+  { t: 'Query tags & chargeback', l: [
+    [`ALTER SESSION SET QUERY_TAG = '{"team":"finance","pipeline":"orders_daily"}';`, `Every query in this session carries this label. JSON makes it easy to parse later.`],
+    [`ALTER USER svc_dbt SET QUERY_TAG = 'dbt_prod';`, `A default tag for every session of a service user, so untagged queries can't slip through.`],
+    [``, ``],
+    [`SELECT TRY_PARSE_JSON(query_tag):team::STRING AS team,`, `Extract the team from the JSON tag. TRY_PARSE_JSON returns NULL instead of failing on non-JSON tags.`],
+    [`       SUM(credits_attributed_compute) AS credits`, `Query credits per team.`],
+    [`FROM SNOWFLAKE.ACCOUNT_USAGE.QUERY_ATTRIBUTION_HISTORY`, `Per-query attribution (idle time not included).`],
+    [`WHERE start_time >= DATEADD('day', -30, CURRENT_TIMESTAMP())`, `Last 30 days.`],
+    [`GROUP BY 1 ORDER BY credits DESC;`, `Teams ranked by spend. NULL = untagged: chase those owners.`],
+    [``, ``],
+    [`CREATE TAG IF NOT EXISTS governance.tags.cost_center`, `An object tag (a schema-level object) for chargeback.`],
+    [`  ALLOWED_VALUES 'finance', 'marketing', 'data_eng';`, `Restrict values so nobody types "Finance " with a trailing space.`],
+    [`ALTER WAREHOUSE etl_wh SET TAG governance.tags.cost_center = 'data_eng';`, `Tag the warehouse with its owning cost center.`],
+    [``, ``],
+    [`SELECT tr.tag_value AS cost_center,`, `Credits per cost center…`],
+    [`       SUM(wm.credits_used) AS credits`, `…including idle time, because this uses metered (billed) credits.`],
+    [`FROM SNOWFLAKE.ACCOUNT_USAGE.WAREHOUSE_METERING_HISTORY wm`, `Billed warehouse credits per hour.`],
+    [`JOIN SNOWFLAKE.ACCOUNT_USAGE.TAG_REFERENCES tr`, `Which objects carry which tags.`],
+    [`  ON tr.object_name = wm.warehouse_name`, `Match the warehouse.`],
+    [` AND tr.domain = 'WAREHOUSE'`, `Only tags applied to warehouses.`],
+    [` AND tr.tag_name = 'COST_CENTER'`, `Only our chargeback tag (names are stored uppercase).`],
+    [`WHERE wm.start_time >= DATE_TRUNC('month', CURRENT_DATE())`, `This month so far.`],
+    [`GROUP BY 1 ORDER BY credits DESC;`, `The chargeback report.`]
+  ] },
+  { t: 'Storage by table (TT & FS)', l: [
+    [`SELECT table_catalog, table_schema, table_name,`, `Fully qualified table name.`],
+    [`       is_transient, deleted,`, `Transient tables have no Fail-safe; deleted = dropped but still holding billed bytes.`],
+    [`       ROUND(active_bytes / POWER(1024, 4), 3)             AS active_tb,`, `Live data, in TB.`],
+    [`       ROUND(time_travel_bytes / POWER(1024, 4), 3)        AS time_travel_tb,`, `Old partition versions kept for Time Travel.`],
+    [`       ROUND(failsafe_bytes / POWER(1024, 4), 3)           AS failsafe_tb,`, `Bytes in the 7-day Fail-safe window (permanent tables only).`],
+    [`       ROUND(retained_for_clone_bytes / POWER(1024, 4), 3) AS clone_tb,`, `Bytes kept only because a clone still references them.`],
+    [`       ROUND((time_travel_bytes + failsafe_bytes) / NULLIF(active_bytes, 0), 1) AS hidden_ratio`, `How many times the live size is held in history: a high ratio = high churn or long retention.`],
+    [`FROM SNOWFLAKE.ACCOUNT_USAGE.TABLE_STORAGE_METRICS`, `Per-table storage, including dropped tables still in Time Travel or Fail-safe.`],
+    [`ORDER BY time_travel_bytes + failsafe_bytes DESC`, `Biggest hidden storage first.`],
+    [`LIMIT 25;`, `Top 25 tables.`],
+    [``, ``],
+    [`ALTER TABLE staging.orders_raw SET DATA_RETENTION_TIME_IN_DAYS = 0;`, `Staging data can be reloaded: no Time Travel needed (Fail-safe still applies while it's permanent).`],
+    [`CREATE OR REPLACE TRANSIENT TABLE staging.orders_raw_t LIKE staging.orders_raw;`, `Better: a transient table with the same columns. No Fail-safe at all. Switch the loads to it.`],
+    [``, ``],
+    [`SELECT usage_date,`, `Account storage trend…`],
+    [`       ROUND(storage_bytes / POWER(1024, 4), 2)  AS table_tb,`, `…table storage (including Time Travel)…`],
+    [`       ROUND(stage_bytes / POWER(1024, 4), 2)    AS stage_tb,`, `…internal stage files…`],
+    [`       ROUND(failsafe_bytes / POWER(1024, 4), 2) AS failsafe_tb`, `…and Fail-safe, per day.`],
+    [`FROM SNOWFLAKE.ACCOUNT_USAGE.STORAGE_USAGE`, `Daily account-level storage.`],
+    [`ORDER BY usage_date DESC LIMIT 30;`, `Last 30 days.`],
+    [`REMOVE @raw_stage PATTERN = '.*2023.*';`, `Delete old loaded files from an internal stage to stop paying for them.`]
+  ] },
+  { t: 'Serverless costs', l: [
+    [`SELECT service_type, SUM(credits_used) AS credits`, `Credits by service type…`],
+    [`FROM SNOWFLAKE.ACCOUNT_USAGE.METERING_HISTORY`, `…from hourly metering, which includes serverless features.`],
+    [`WHERE start_time >= DATEADD('day', -30, CURRENT_TIMESTAMP())`, `Last 30 days.`],
+    [`  AND service_type <> 'WAREHOUSE_METERING'`, `Exclude warehouses to see only the serverless (and other) services.`],
+    [`GROUP BY 1 ORDER BY credits DESC;`, `Which serverless feature costs the most?`],
+    [``, ``],
+    [`SELECT table_name,`, `Drill into automatic clustering…`],
+    [`       SUM(credits_used) AS credits,`, `…credits per table…`],
+    [`       SUM(num_rows_reclustered) AS rows_reclustered`, `…and how much work it did. Huge numbers on a table that changes constantly = a churn problem.`],
+    [`FROM SNOWFLAKE.ACCOUNT_USAGE.AUTOMATIC_CLUSTERING_HISTORY`, `Per-table clustering history.`],
+    [`WHERE start_time >= DATEADD('day', -30, CURRENT_TIMESTAMP())`, `Last 30 days.`],
+    [`GROUP BY 1 ORDER BY credits DESC LIMIT 10;`, `Top 10 tables.`],
+    [``, ``],
+    [`ALTER TABLE events SUSPEND RECLUSTER;`, `Pause automatic clustering on one table (RESUME RECLUSTER turns it back on).`],
+    [`SELECT SYSTEM$ESTIMATE_SEARCH_OPTIMIZATION_COSTS('sales_db.public.orders');`, `Estimate build and maintenance cost before enabling search optimization.`],
+    [``, ``],
+    [`SELECT pipe_name, SUM(credits_used) AS credits, SUM(bytes_inserted) AS bytes, SUM(files_inserted) AS files`, `Snowpipe cost alongside volume: credits per GB and per file show whether tiny files are hurting.`],
+    [`FROM SNOWFLAKE.ACCOUNT_USAGE.PIPE_USAGE_HISTORY`, `Per-pipe usage.`],
+    [`WHERE start_time >= DATEADD('day', -30, CURRENT_TIMESTAMP())`, `Last 30 days.`],
+    [`GROUP BY 1 ORDER BY credits DESC;`, `Most expensive pipes first.`]
+  ] }
+];
+const KW = /\b(CREATE|OR|REPLACE|IF|NOT|EXISTS|ALTER|SET|SELECT|FROM|WHERE|GROUP|BY|ORDER|DESC|AS|SUM|COUNT|SHOW|LIKE|INTO|WITH|AND|ON|JOIN|LEFT|LIMIT|ROUND|NULLIF|COALESCE|IS|NULL|TABLE|TRANSIENT|WAREHOUSE|WAREHOUSES|RESOURCE|MONITOR|MONITORS|TRIGGERS|PERCENT|DO|NOTIFY|SUSPEND|SUSPEND_IMMEDIATE|ACCOUNT|USER|SESSION|TAG|USE|ROLE|GRANT|TO|IN|PARAMETERS|REMOVE|PATTERN|RECLUSTER|DATEADD|DATE_TRUNC|CURRENT_DATE|CURRENT_TIMESTAMP|TRUE|FALSE|ANY_VALUE|LEFT|POWER|MODIFY|MONTHLY|WEEKLY|IMMEDIATELY|ALLOWED_VALUES)\b/g;
+const hl = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/('[^']*')/g, '\u0001$1\u0002').replace(KW, '<span class="kw">$1</span>').replace(/\b(\d+)\b/g, '<span class="num">$1</span>').replace(/\u0001([^\u0002]*)\u0002/g, (m, a) => '<span class="str">' + a.replace(/<[^>]+>/g, '') + '</span>');
+let sqlI = 0;
+function sqlShow(i) {
+  sqlI = i;
+  $$('#sqlTabs button').forEach((b, k) => b.classList.toggle('on', k === i));
+  $('#sqlCode').innerHTML = SQL[i].l.map(([l], k) => `<div data-k="${k}"><em>${k + 1}</em>${l.startsWith('--') ? `<span style="color:var(--ink3)">${esc(l)}</span>` : hl(l) || ' '}</div>`).join('');
+  $('#sqlExp').innerHTML = '<b class="h">CLICK A LINE</b>Each line is explained in plain English.';
+  $$('#sqlCode div').forEach(d => d.onclick = () => {
+    const e = SQL[sqlI].l[d.dataset.k][1]; if (!e) return;
+    $$('#sqlCode div').forEach(x => x.classList.remove('on')); d.classList.add('on');
+    $('#sqlExp').innerHTML = `<b class="h">LINE ${+d.dataset.k + 1}</b>${esc(e)}`;
+  });
+}
+$('#sqlTabs').innerHTML = SQL.map(s => `<button>${s.t}</button>`).join('');
+$$('#sqlTabs button').forEach((b, i) => b.onclick = () => sqlShow(i));
+sqlShow(0);
+
+/* ===== 09 Q&A ===== */
+const QA = [
+  ['Basics', 'b', `What are the main components of a Snowflake bill?`, `<p><b>Compute</b> (credits): virtual warehouses, serverless features (Snowpipe, auto-clustering, MV maintenance, search optimization, serverless tasks, QAS, replication compute), cloud services above the daily 10% allowance, and AI services. <b>Storage</b>: average compressed TB per month, including Time Travel, Fail-safe, clone-owned bytes and internal stages. <b>Data transfer</b>: bytes leaving a region or cloud. Compute is usually the biggest share.</p>`],
+  ['Basics', 't', `How much does a credit cost?`, `<p>There's no single price. It depends on the <b>edition</b> (Standard, Enterprise, Business Critical, VPS), the <b>cloud provider and region</b>, and the <b>contract</b>: on-demand vs pre-purchased capacity, which is usually discounted. Good answer: "I reason in credits and convert with our contract rate; ORGANIZATION_USAGE has currency views if we need dollars."</p>`],
+  ['Compute', 'b', `How is a virtual warehouse billed?`, `<p>Credits per hour by size (XS 1, S 2, M 4, L 8, XL 16… doubling each step for standard warehouses), billed <b>per second</b> while running, with a <b>60-second minimum</b> each time it starts or resumes. A suspended warehouse costs nothing. Multi-cluster warehouses bill each running cluster. Idle time before auto-suspend is billed at the full rate.</p>`],
+  ['Compute', 't', `Does doubling the warehouse size double the cost?`, `<p>Doubles the <b>rate</b>, not necessarily the <b>cost</b>. If a large, parallel query runs in half the time, cost stays the same and you get results faster. If queries are small (can't use the extra nodes), runtime barely changes and cost doubles. So: scale up for heavy, spilling queries; don't scale up for lots of small ones (use multi-cluster for concurrency instead).</p>`],
+  ['Compute', 't', `What AUTO_SUSPEND value would you choose, and why not always the minimum?`, `<p>Roughly 60 s for batch/ETL warehouses, a few minutes for BI warehouses. Not always the minimum because (1) every resume bills at least 60 seconds, so a chatty workload that suspends/resumes constantly can cost more, and (2) suspending drops the warehouse's local disk cache, so the next queries read from remote storage and run slower. Pick based on the gaps between queries in QUERY_HISTORY.</p>`],
+  ['Compute', 's', `Dashboards are slow at 9 a.m. when 200 users log in. Someone proposes going from M to 2XL. What do you say?`, `<p>Check <b>QUEUED_OVERLOAD_TIME</b> first. If queries are individually fast but waiting in the queue, it's a <b>concurrency</b> problem: use a multi-cluster warehouse (e.g. MIN 1, MAX 4, maybe ECONOMY), which only adds cost during the peak. A 2XL would bill 8× the rate all day and not fix queuing as efficiently. If individual queries are slow (spilling, big scans), then look at size, clustering, or the queries themselves.</p>`],
+  ['Storage', 'b', `What contributes to storage cost besides the table data itself?`, `<p>Time Travel bytes (changed or deleted partitions kept for the retention period), Fail-safe bytes (7 days after Time Travel, permanent tables only), bytes owned by clones that have diverged, files in internal stages, and the storage used by materialized views and search optimization. Dropped tables keep costing until they leave Time Travel and Fail-safe.</p>`],
+  ['Storage', 't', `Why can a 1 TB table cost as much as a 10 TB one?`, `<p><b>Churn × retention.</b> Micro-partitions are immutable, so updates and deletes rewrite whole partitions and the old versions are kept. A 1 TB table rewritten 20% daily with 30-day Time Travel holds about 6 TB in Time Travel plus ~1.4 TB in Fail-safe. Check TABLE_STORAGE_METRICS. Fixes: shorter retention, transient tables for rebuildable data, batching updates so fewer partitions are rewritten.</p>`],
+  ['Storage', 't', `When would you use transient tables, and what's the trade-off?`, `<p>For staging, intermediate ETL and anything you can rebuild from source. Transient tables have Time Travel of 0 or 1 day and <b>no Fail-safe</b>, so churn doesn't leave a 7-day tail of history. The trade-off is recoverability: after Time Travel, the data is gone and Snowflake Support can't recover it. Tables rebuilt nightly with CREATE OR REPLACE are the classic case.</p>`],
+  ['Serverless', 'b', `What is the cloud services 10% adjustment?`, `<p>Cloud services (authentication, metadata, compilation, optimization, result cache) consume credits, but each day (UTC) Snowflake waives cloud services usage up to <b>10% of that day's warehouse compute credits</b>. You're billed only for the excess. It shows in METERING_DAILY_HISTORY as CREDITS_ADJUSTMENT_CLOUD_SERVICES. Exceeding it usually means huge numbers of tiny queries, heavy metadata/SHOW traffic, or very complex compilation.</p>`],
+  ['Serverless', 't', `Which features consume serverless credits, and how do you keep them under control?`, `<p>Snowpipe, automatic clustering, materialized view maintenance, search optimization, serverless tasks, Query Acceleration, replication, and Cortex AI (billed by tokens/pages). Control: estimate first (SYSTEM$ESTIMATE_* functions), monitor the per-feature history views, avoid clustering and MVs on churny tables, cap QAS with a max scale factor, batch Snowpipe files, and use budgets, because resource monitors don't cover serverless.</p>`],
+  ['Serverless', 's', `Automatic clustering credits jumped from 150 to 600 a month. How do you investigate?`, `<p>AUTOMATIC_CLUSTERING_HISTORY grouped by table to find the culprit, then check: was a clustering key added or changed recently? Is it high-cardinality (e.g. an ID or timestamp)? Did DML frequency on that table increase (e.g. a MERGE every few minutes)? Fixes: cluster on a coarser expression like a date, batch the DML, suspend reclustering during heavy load windows, or drop the key if query pruning didn't improve enough to justify the cost.</p>`],
+  ['Guardrails', 'b', `What is a resource monitor and what actions can it take?`, `<p>An object that tracks <b>warehouse</b> credit usage against a quota per interval (DAILY/WEEKLY/MONTHLY/YEARLY/NEVER), at account level or for specific warehouses. Triggers at percentages of the quota: <b>NOTIFY</b> (alert), <b>SUSPEND</b> (suspend after running queries complete), <b>SUSPEND_IMMEDIATE</b> (suspend and cancel running queries). Created by ACCOUNTADMIN by default; MONITOR/MODIFY can be granted to other roles.</p>`],
+  ['Guardrails', 't', `What can't a resource monitor do?`, `<p>It doesn't track or stop <b>serverless features</b> or AI services, only warehouses. SUSPEND lets in-flight queries finish, and usage checks aren't continuous, so expect some overshoot. It can't limit a single query (use STATEMENT_TIMEOUT_IN_SECONDS for that). And an account-level SUSPEND stops production too, so it's often NOTIFY-only, with SUSPEND on non-critical warehouses. For serverless and group-level tracking, use budgets.</p>`],
+  ['Guardrails', 't', `A query has been running for 30 hours on a 2XL. How did that happen and how do you prevent it?`, `<p>The default STATEMENT_TIMEOUT_IN_SECONDS is 172,800 s (2 days), so nothing stopped it. That's ~960 credits on a 2XL so far. Cancel it (SYSTEM$CANCEL_QUERY or Snowsight), then set a sensible timeout on the warehouse (and/or users/account). The smallest non-zero value of warehouse and session settings applies. Add warehouse-level monitors with SUSPEND_IMMEDIATE and a "long-running query" alert.</p>`],
+  ['Visibility', 'b', `ACCOUNT_USAGE vs INFORMATION_SCHEMA: which do you use for cost analysis?`, `<p><b>ACCOUNT_USAGE</b> for trends and investigations: a year of history, account-wide, includes dropped objects, but with latency (typically minutes to a few hours). <b>INFORMATION_SCHEMA</b> for "right now": near real-time, but short retention (often 7 days up to 6 months by function) and scoped to a database. <b>ORGANIZATION_USAGE</b> for multi-account and currency views.</p>`],
+  ['Visibility', 't', `How do you attribute cost on a warehouse shared by several teams?`, `<p>Use QUERY_ATTRIBUTION_HISTORY (per-query compute credits) grouped by QUERY_TAG, user or role. Remember it excludes idle time, so the sum is less than WAREHOUSE_METERING_HISTORY. Decide how to allocate the gap (e.g. proportionally to usage). Enforce tags via default QUERY_TAG on service users and in dbt/Airflow. For simple, exact chargeback, give big teams their own warehouses with an object tag like cost_center.</p>`],
+  ['Visibility', 's', `Your Snowflake bill went up 40% month over month. Walk me through your investigation.`, `<p>Top-down: (1) METERING_DAILY_HISTORY by service type: warehouses, serverless, or cloud services? Storage separately. (2) WAREHOUSE_METERING_HISTORY by warehouse: which grew? (3) Metered vs attributed: is it <b>idle</b> (auto-suspend changed?) or <b>busy</b>? (4) QUERY_HISTORY: did the size change, did query counts or shapes change (new schedule, new dashboard), is there a runaway query? (5) Serverless history views for clustering, MVs, pipes. Then fix each root cause, verify next week, and prevent: monitors, timeouts, settings managed in code, trend alerts. Also check for legitimate growth before calling it waste.</p>`]
+];
+const LV = { b: 'FUNDAMENTAL', t: 'TRICKY', s: 'SCENARIO' };
+function qa(f) { $('#qaList').innerHTML = QA.filter(q => f === 'all' || q[0] === f).map(([tp, l, q, a]) => `<details class="qa"><summary><span class="lv ${l}">${LV[l]}</span><span class="tp">${tp.toUpperCase()}</span>${q}</summary><div class="ans">${a}</div></details>`).join(''); }
+tabs('#qaTabs', d => qa(d.f));
+qa('all');
+
+/* ===== 10 quiz ===== */
+const QZ = [
+  [`A suspended X-Small warehouse runs one 5-second query, then auto-suspends after 60 s of idle. Roughly how much compute is billed?`, [`5 seconds`, `60 seconds`, `About 65 seconds (5 s query + 60 s idle)`, `1 hour`], 2, `Billing is per second while running, with a 60-second minimum per resume. The warehouse ran ~5 s of work plus 60 s of idle before suspending, so ~65 s at 1 credit/hour.`],
+  [`A large, parallel query takes 40 minutes on a MEDIUM. On a LARGE it takes 20 minutes. What happens to its compute cost?`, [`It doubles`, `It stays about the same`, `It halves`, `It quadruples`], 1, `Double the rate (8 vs 4 credits/hour) for half the time: same credits, faster answer. That's why "bigger" isn't automatically "more expensive" for parallel work.`],
+  [`200 BI users queue at 9 a.m. but each query is fast. Best fix?`, [`Size up to 2XL`, `Multi-cluster warehouse (Enterprise+)`, `Lower AUTO_SUSPEND`, `Add a clustering key`], 1, `Queuing with fast individual queries is a concurrency problem. Extra clusters start only during the peak, so cost follows demand.`],
+  [`Which tables have no Fail-safe?`, [`Permanent tables`, `Transient and temporary tables`, `Only external tables`, `All tables after 90 days`], 1, `Transient and temporary tables have no Fail-safe and at most 1 day of Time Travel. Permanent tables get 7 days of Fail-safe after Time Travel.`],
+  [`You dropped a 20 TB permanent table, but storage didn't drop. Which is NOT a reason?`, [`It's still in Time Travel`, `It will spend 7 days in Fail-safe`, `A clone still references its partitions`, `Snowflake bills dropped tables for 90 days by default`], 3, `There's no fixed 90-day billing rule. Bytes stay billed while in Time Travel (its retention), then Fail-safe (7 days), and while clones reference them.`],
+  [`How is the cloud services charge calculated?`, [`Always billed in full`, `Billed only above 10% of daily warehouse compute credits`, `Free on Enterprise edition`, `Billed per query compiled`], 1, `The adjustment is computed daily (UTC): cloud services usage up to 10% of that day's warehouse credits is waived.`],
+  [`Which of these runs on YOUR warehouse rather than serverless compute?`, [`Snowpipe`, `Automatic clustering`, `Dynamic table refresh`, `Search optimization maintenance`], 2, `Dynamic tables refresh on the warehouse you specify. Snowpipe, auto-clustering and search optimization maintenance run on Snowflake-managed compute.`],
+  [`What does a resource monitor's SUSPEND action do?`, [`Cancels running queries immediately`, `Suspends assigned warehouses after running queries finish`, `Sends an email only`, `Suspends serverless features`], 1, `SUSPEND waits for in-flight queries; SUSPEND_IMMEDIATE cancels them. Neither affects serverless features.`],
+  [`Who can create a resource monitor by default?`, [`Any role with USAGE on a warehouse`, `SYSADMIN`, `ACCOUNTADMIN`, `SECURITYADMIN`], 2, `By default only ACCOUNTADMIN creates them. It can grant MONITOR and MODIFY on a monitor to other roles.`],
+  [`What is the default STATEMENT_TIMEOUT_IN_SECONDS?`, [`3,600 (1 hour)`, `86,400 (1 day)`, `172,800 (2 days)`, `No limit`], 2, `172,800 seconds = 2 days. Set lower values on warehouses so a runaway query can't burn credits for days.`],
+  [`You need to see a query that started 5 minutes ago. Which source?`, [`ACCOUNT_USAGE.QUERY_HISTORY`, `INFORMATION_SCHEMA.QUERY_HISTORY() table function`, `ORGANIZATION_USAGE`, `METERING_DAILY_HISTORY`], 1, `ACCOUNT_USAGE views have latency (QUERY_HISTORY up to ~45 minutes). INFORMATION_SCHEMA table functions are near real-time.`],
+  [`Sum of QUERY_ATTRIBUTION_HISTORY credits for a warehouse is 700; WAREHOUSE_METERING_HISTORY shows 1,000. The 300 gap is mostly…`, [`A bug`, `Storage`, `Idle time not attributed to any query`, `Data transfer`], 2, `Query attribution excludes idle time. Metered minus attributed is a practical idle-cost metric.`],
+  [`Best way to label every query from your dbt production runs for chargeback?`, [`Rename the warehouse daily`, `Set QUERY_TAG (e.g. default on the dbt service user or injected by dbt)`, `Put a comment in each model`, `Use a resource monitor`], 1, `QUERY_TAG appears in QUERY_HISTORY and QUERY_ATTRIBUTION_HISTORY, so you can group credits by pipeline or team.`],
+  [`Clustering credits spiked on a table that receives a MERGE every 5 minutes with a key on a high-cardinality ID. Best first fix?`, [`Make the warehouse bigger`, `Re-cluster on a coarser key like a date, or suspend/drop the key, and batch the MERGEs`, `Increase Time Travel`, `Add search optimization`], 1, `Constant small DML keeps destroying the ordering of a high-cardinality key, so reclustering never ends. A coarser key and batched DML cut the work.`]
+];
+let qi = 0; const qAns = Array(QZ.length).fill(null);
+QZ.forEach((_, i) => { const s = document.createElement('span'); s.onclick = () => qShow(i); $('#qzBar').appendChild(s); });
+function qShow(i) {
+  qi = i; const [q, opts, ok, ex] = QZ[i], a = qAns[i];
+  $('#qzN').textContent = i + 1;
+  [...$('#qzBar').children].forEach((s, k) => { s.classList.toggle('on', qAns[k] !== null); s.style.outline = k === i ? '2px solid var(--ice)' : ''; });
+  $('#qzBody').innerHTML = `<h3 style="margin-top:6px">${q}</h3>` + opts.map((o, k) => `<button class="opt ${a !== null ? (k === ok ? 'ok' : (k === a ? 'bad' : '')) : ''}" data-k="${k}">${String.fromCharCode(65 + k)}. ${o}</button>`).join('') + (a !== null ? `<div class="qexp"><b>${a === ok ? 'Correct.' : 'Not quite.'}</b> ${ex}</div>` : '');
+  $$('#qzBody .opt').forEach(b => b.onclick = () => { if (qAns[qi] !== null) return; qAns[qi] = +b.dataset.k; qShow(qi); $('#qzS').textContent = qAns.filter((x, j) => x === QZ[j][2]).length; });
+  $('#qzNext').textContent = i === QZ.length - 1 ? 'See result' : 'Next';
+}
+function qResult() {
+  const s = qAns.filter((x, j) => x === QZ[j][2]).length;
+  const msg = s >= QZ.length - 2 ? 'Interview-ready on Snowflake cost optimization.' : s >= Math.round(QZ.length * 0.6) ? 'Solid. Replay the fleet calculator and the resource monitor simulator, then retry.' : 'Walk through the billing rules, the storage simulator and the investigation playbook again, then retry.';
+  $('#qzBody').innerHTML = `<div class="score">${s} / ${QZ.length}</div><p style="margin-top:8px">${msg}</p><button class="btn pri" id="qzAgain" style="margin-top:10px">Retry quiz</button>`;
+  $('#qzAgain').onclick = () => { qAns.fill(null); $('#qzS').textContent = 0; qShow(0); };
+}
+$('#qzNext').onclick = () => qi === QZ.length - 1 ? qResult() : qShow(qi + 1);
+$('#qzPrev').onclick = () => qShow(Math.max(0, qi - 1));
+qShow(0);
+</script>
+<div class="toast" id="toast"></div>
+<script>
+(() => {
+  const t = document.getElementById('toast'); let h;
+  document.querySelectorAll('.road a.soon').forEach(a => a.addEventListener('click', e => {
+    e.preventDefault();
+    t.textContent = `Module ${a.dataset.m} isn't built yet. Ask for it in chat and it will be added here.`;
+    t.classList.add('on'); clearTimeout(h); h = setTimeout(() => t.classList.remove('on'), 2800);
+  }));
+})();
+</script>
+</body>
+</html>
