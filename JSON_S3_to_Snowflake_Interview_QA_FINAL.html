@@ -1,0 +1,1940 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>JSON from S3 into Snowflake: Interview Q&amp;A (ShopStream)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,200;12..96,400;12..96,600;12..96,700;12..96,800&family=JetBrains+Mono:wght@400;600;800&family=Source+Sans+3:ital,wght@0,300;0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#f3ecdf; --paper-2:#ebe2d0; --card:#fbf8f1; --ink:#15120f; --ink-2:#4a433b; --mute:#867c70;
+  --rule:#d8ccb6; --acc:#e0401b; --acc-soft:#fbe1d7; --teal:#0d7068; --teal-soft:#d5ebe7;
+  --gold:#b98a1e; --code-bg:#1b1916; --code-fg:#efe7d8;
+  --f-head:"Bricolage Grotesque","Space Grotesk",Georgia,serif;
+  --f-body:"Source Sans 3","IBM Plex Sans","Segoe UI Historic",Georgia,serif;
+  --f-mono:"JetBrains Mono","Fira Code",Consolas,"Courier New",monospace;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;color:var(--ink);font-family:var(--f-body);font-size:17px;line-height:1.55;
+  background:
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.3  0 0 0 0 0.22  0 0 0 0 0.12  0 0 0 .07 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>"),
+    repeating-linear-gradient(0deg, transparent 0 31px, rgba(120,95,60,.05) 31px 32px),
+    radial-gradient(1200px 600px at 8% -5%, rgba(224,64,27,.10), transparent 60%),
+    radial-gradient(900px 700px at 100% 20%, rgba(13,112,104,.10), transparent 60%),
+    linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
+  background-attachment:fixed;}
+.wrap{max-width:1080px;margin:0 auto;padding:0 24px}
+h1,h2,h3,h4{font-family:var(--f-head);margin:0}
+code,pre{font-family:var(--f-mono)}
+/* masthead */
+.mast{padding:56px 0 28px;border-bottom:3px solid var(--ink);position:relative}
+.kicker{font-family:var(--f-mono);font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--acc);font-weight:700}
+.mast h1{font-size:clamp(40px,6.4vw,78px);font-weight:800;line-height:.95;letter-spacing:-.03em;margin:14px 0 18px}
+.mast h1 em{font-style:normal;color:var(--acc)}
+.mast h1 .thin{font-weight:200;display:block;font-size:.42em;letter-spacing:-.01em;color:var(--ink-2);margin-top:10px}
+.mast .lede{max-width:720px;font-size:19px;color:var(--ink-2);font-weight:300}
+.meta{display:flex;gap:22px;flex-wrap:wrap;margin-top:22px;font-family:var(--f-mono);font-size:12.5px}
+.meta b{color:var(--acc);font-size:22px;font-family:var(--f-head);font-weight:800;display:block}
+/* reveal animations */
+@keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+@keyframes grow{from{width:0}to{width:var(--w)}}
+.mast > *{animation:rise .7s cubic-bezier(.2,.7,.2,1) both}
+.mast > *:nth-child(2){animation-delay:.08s}.mast > *:nth-child(3){animation-delay:.16s}.mast > *:nth-child(4){animation-delay:.24s}
+/* STAR */
+.star{margin:40px 0 10px}
+.sec-h{display:flex;align-items:baseline;gap:14px;border-bottom:1px solid var(--ink);padding-bottom:8px;margin-bottom:20px}
+.sec-h h2{font-size:30px;font-weight:800;letter-spacing:-.02em}
+.sec-h span{font-family:var(--f-mono);font-size:12px;color:var(--mute);text-transform:uppercase;letter-spacing:.12em}
+.timeline{list-style:none;margin:0;padding:0 0 0 8px;position:relative}
+.timeline:before{content:"";position:absolute;left:31px;top:8px;bottom:8px;width:2px;background:linear-gradient(var(--acc),var(--teal))}
+.st{display:grid;grid-template-columns:48px 1fr;gap:18px;align-items:start;margin:0 0 16px;animation:rise .6s both;animation-delay:calc(var(--i) * 90ms + .2s)}
+.st-k{width:48px;height:48px;border-radius:50%;background:var(--card);border:2px solid var(--ink);display:grid;place-items:center;font-family:var(--f-mono);font-weight:800;font-size:14px;position:relative;z-index:1}
+.st:first-child .st-k,.st:nth-child(2) .st-k{background:var(--ink);color:var(--paper)}
+.st:last-child .st-k{background:var(--acc);border-color:var(--acc);color:#fff}
+.st b{font-family:var(--f-head);font-size:19px;font-weight:700}
+.st p{margin:2px 0 0;color:var(--ink-2)}
+/* toolbar */
+.bar{position:sticky;top:0;z-index:20;margin:34px -24px 0;padding:14px 24px;background:rgba(243,236,223,.92);backdrop-filter:blur(8px);border-top:3px solid var(--ink);border-bottom:1px solid var(--rule)}
+.bar-row1{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.search{flex:1 1 260px;display:flex;align-items:center;gap:8px;background:var(--card);border:1.5px solid var(--ink);padding:0 12px;border-radius:3px}
+.search input{flex:1;border:0;background:transparent;font:inherit;padding:10px 0;outline:none;color:var(--ink)}
+.search kbd{font-family:var(--f-mono);font-size:11px;border:1px solid var(--rule);padding:1px 6px;border-radius:3px;color:var(--mute)}
+.btn{font-family:var(--f-mono);font-size:12.5px;font-weight:600;border:1.5px solid var(--ink);background:var(--card);color:var(--ink);padding:9px 12px;border-radius:3px;cursor:pointer;transition:transform .15s,background .15s}
+.btn:hover{transform:translateY(-1px);background:#fff}
+.btn.on{background:var(--ink);color:var(--paper)}
+.btn.quiz.on{background:var(--acc);border-color:var(--acc);color:#fff}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+.chip{font-family:var(--f-body);font-size:13.5px;border:1px solid var(--rule);background:transparent;padding:4px 11px;border-radius:999px;cursor:pointer;color:var(--ink-2)}
+.chip:hover{border-color:var(--ink)}
+.chip.on{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.chip.lv.on[data-level="Basic"]{background:var(--teal);border-color:var(--teal)}
+.chip.lv.on[data-level="Intermediate"]{background:var(--gold);border-color:var(--gold)}
+.chip.lv.on[data-level="Advanced"]{background:var(--acc);border-color:var(--acc)}
+.chip.lv.on[data-level="Scenario"]{background:var(--ink);border-color:var(--ink)}
+.chips .sep{width:1px;background:var(--rule);margin:0 6px}
+.count{font-family:var(--f-mono);font-size:12px;color:var(--mute);margin-left:auto}
+/* topics + cards */
+.topic{margin-top:46px}
+.topic-h{display:flex;align-items:baseline;justify-content:space-between;font-size:clamp(26px,3.4vw,38px);font-weight:800;letter-spacing:-.025em;border-bottom:3px double var(--ink);padding-bottom:6px;margin-bottom:18px}
+.topic-h small{font-family:var(--f-mono);font-size:12px;font-weight:400;color:var(--mute);letter-spacing:.1em;text-transform:uppercase}
+.card{background:var(--card);border:1px solid var(--rule);border-left:4px solid var(--ink);border-radius:3px;padding:22px 24px 16px;margin:0 0 18px;box-shadow:0 1px 0 rgba(0,0,0,.03),0 12px 24px -18px rgba(60,40,10,.35);animation:rise .55s cubic-bezier(.2,.7,.2,1) both;animation-delay:calc(var(--i) * 70ms)}
+.card[data-level="Advanced"]{border-left-color:var(--acc)}
+.card[data-level="Basic"]{border-left-color:var(--teal)}
+.card[data-level="Intermediate"]{border-left-color:var(--gold)}
+.card[data-topic="core"]{border:2px solid var(--ink);border-left:8px solid var(--acc);background:linear-gradient(135deg,#fffaf2,var(--card))}
+.card-h{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.qnum{font-family:var(--f-mono);font-weight:800;font-size:13px;color:var(--acc)}
+.badge{font-family:var(--f-mono);font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:3px 8px;border-radius:2px;color:#fff}
+.b-basic{background:var(--teal)}.b-intermediate{background:var(--gold)}.b-advanced{background:var(--acc)}.b-scenario{background:var(--ink)}
+.tlabel{font-size:13px;color:var(--mute);margin-left:auto}
+.qtext{font-size:clamp(20px,2.3vw,25px);font-weight:700;line-height:1.2;letter-spacing:-.015em;margin:10px 0 14px}
+.say{position:relative;background:linear-gradient(90deg,var(--teal-soft),rgba(213,235,231,.25));border-left:3px solid var(--teal);padding:12px 16px 12px;border-radius:2px;outline:none}
+.say-l{font-family:var(--f-mono);font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--teal)}
+.say p{margin:4px 0 0;font-size:17.5px}
+.reveal-hint{display:none}
+.red{margin-top:12px;border:1px dashed var(--acc);background:var(--acc-soft);padding:10px 16px;border-radius:2px}
+.red-h{font-family:var(--f-mono);font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--acc)}
+.red ul{margin:4px 0 0;padding-left:20px}.red li{margin:2px 0}
+.deep{margin-top:12px;border-top:1px solid var(--rule)}
+.deep summary{cursor:pointer;list-style:none;display:flex;align-items:center;gap:10px;padding:10px 0 4px;font-family:var(--f-head);font-weight:700}
+.deep summary::-webkit-details-marker{display:none}
+.deep summary:before{content:"+";font-family:var(--f-mono);width:22px;height:22px;display:grid;place-items:center;border:1.5px solid var(--ink);border-radius:50%;font-size:14px;transition:transform .25s}
+.deep[open] summary:before{content:"\2013";background:var(--ink);color:var(--paper)}
+.deep summary em{font-style:normal;font-family:var(--f-mono);font-size:11.5px;color:var(--mute);font-weight:400}
+.deep[open] .deep-b{animation:rise .35s both}
+.deep-b p{color:var(--ink-2)}
+.deep-b code{background:rgba(21,18,15,.06);padding:0 4px;border-radius:2px;font-size:.88em}
+.code{margin:14px 0 6px;border-radius:4px;overflow:hidden;border:1px solid #000}
+.code-h{display:flex;align-items:center;gap:10px;background:#2a2622;color:#cfc4b2;padding:6px 10px;font-family:var(--f-mono);font-size:11.5px}
+.lang{color:var(--acc);font-weight:800}
+.code-l{flex:1}
+.copy{font-family:var(--f-mono);font-size:11px;background:transparent;color:#efe7d8;border:1px solid #6d645a;border-radius:3px;padding:3px 10px;cursor:pointer}
+.copy:hover{border-color:var(--acc);color:#fff}
+.copy.done{background:var(--teal);border-color:var(--teal)}
+.code pre{margin:0;background:var(--code-bg);color:var(--code-fg);padding:14px 16px;overflow:auto;font-size:13px;line-height:1.55;tab-size:2}
+.code pre code{background:none;padding:0;font-size:inherit}
+/* visuals */
+.viz{margin:16px 0;padding:14px;background:repeating-linear-gradient(45deg,rgba(21,18,15,.018) 0 6px,transparent 6px 12px),#fffdf8;border:1px solid var(--rule);border-radius:3px}
+.viz-svg{width:100%;height:auto;display:block}
+.viz-svg .node rect{fill:#fff;stroke:var(--ink);stroke-width:1.6}
+.viz-svg .node.acc rect{fill:var(--acc-soft);stroke:var(--acc)}
+.viz-svg .node.teal rect{fill:var(--teal-soft);stroke:var(--teal)}
+.viz-svg text{text-anchor:middle;font-family:var(--f-body);fill:var(--ink)}
+.viz-svg .t1{font-family:var(--f-head);font-weight:700;font-size:15px}
+.viz-svg .t2{font-family:var(--f-mono);font-size:10.5px;fill:var(--ink-2)}
+.viz-svg .lbl{font-family:var(--f-mono);font-size:11px;fill:var(--ink-2)}
+.viz-svg .acc-t{fill:var(--acc);font-weight:700}
+.viz-svg .edge{stroke:var(--ink);stroke-width:1.6;fill:none;stroke-dasharray:5 4;animation:dash 1.4s linear infinite}
+@keyframes dash{to{stroke-dashoffset:-18}}
+.acc-t{color:var(--acc)}
+.tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.tile{border:1.5px solid var(--ink);padding:10px;background:#fff;border-radius:3px;display:flex;flex-direction:column;gap:3px}
+.tile b{font-family:var(--f-mono);font-size:12px;word-break:break-all}
+.tile span{font-family:var(--f-head);font-weight:700}
+.tile small{color:var(--ink-2);font-size:13px;line-height:1.35}
+.tile.hot{background:var(--acc-soft);border-color:var(--acc)}
+.split{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.pane{border:1.5px solid var(--ink);background:#fff;border-radius:3px;overflow:hidden}
+.pane-h{font-family:var(--f-mono);font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:6px 10px;background:var(--ink);color:var(--paper)}
+.pane-f{padding:8px 10px;font-size:14px;border-top:1px solid var(--rule)}
+pre.mini{margin:0;padding:10px;font-size:12px;background:#fffaf0}
+.bars{display:flex;flex-direction:column;gap:10px}
+.bar-row{display:grid;grid-template-columns:200px 1fr;gap:12px;align-items:center;font-size:14px}
+.bar-l{font-family:var(--f-head);font-weight:600}
+.bar .bar,.bars .bar{position:relative;height:28px;background:rgba(21,18,15,.06);border-radius:2px}
+.bars .bar i{position:absolute;inset:0 auto 0 0;width:var(--w);background:var(--acc);animation:grow 1.1s cubic-bezier(.2,.7,.2,1) both}
+.bars .bar.teal i{background:var(--teal)}.bars .bar.ink i{background:var(--ink)}
+.bars .bar em{position:relative;font-style:normal;font-family:var(--f-mono);font-size:11.5px;line-height:28px;padding-left:10px;color:var(--ink);mix-blend-mode:multiply;white-space:nowrap}
+.flat{display:grid;grid-template-columns:1fr auto 1fr;gap:12px;align-items:center}
+.flat-in,.flat-out{border:1.5px solid var(--ink);background:#fff;border-radius:3px;overflow:hidden;display:flex;flex-direction:column}
+.flat code{display:block;padding:7px 10px;font-size:12px;border-top:1px solid var(--rule);background:none}
+.flat-out code:nth-of-type(odd){background:var(--teal-soft)}
+.flat-arrow{font-family:var(--f-mono);font-size:11.5px;color:var(--acc);font-weight:700;text-align:center;max-width:170px}
+.lanes{display:flex;flex-direction:column;gap:6px}
+.lane-h{font-family:var(--f-head);font-weight:700;font-size:14px;margin-top:6px}
+.lane{height:14px;background:rgba(21,18,15,.07);border-radius:2px;overflow:hidden}
+.lane i{display:block;height:100%;width:var(--w);animation:grow 1.4s ease-out both}
+.lane i.busy{background:var(--acc)}.lane i.ok{background:var(--teal)}
+.lane-note{font-size:13.5px;color:var(--ink-2);margin:6px 0 0}
+.tbl{width:100%;border-collapse:collapse;font-size:14px;background:#fff}
+.tbl th,.tbl td{border:1px solid var(--rule);padding:6px 9px;text-align:left}
+.tbl th{background:var(--ink);color:var(--paper);font-family:var(--f-mono);font-size:11.5px;font-weight:600}
+.tbl th code{background:none;color:inherit}
+.scale{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.sc{border:1.5px solid var(--ink);padding:10px;background:#fff;border-radius:3px}
+.sc b{font-family:var(--f-mono);font-size:12px;display:block}
+.sc small{font-size:13px;color:var(--ink-2)}
+.sc.hot{border-color:var(--teal);background:var(--teal-soft)}
+.tree{margin:0;padding-left:0;list-style:none;counter-reset:t}
+.tree li{counter-increment:t;position:relative;padding:8px 10px 8px 44px;margin:0 0 6px;background:#fff;border:1px solid var(--rule);border-radius:3px;font-size:14.5px}
+.tree li:before{content:counter(t);position:absolute;left:10px;top:8px;width:24px;height:24px;border-radius:50%;background:var(--acc);color:#fff;font-family:var(--f-mono);font-size:12px;display:grid;place-items:center;font-weight:700}
+.layers{display:flex;flex-direction:column-reverse;gap:6px}
+.ly{display:grid;grid-template-columns:110px 1fr;border:1.5px solid var(--ink);background:#fff;border-radius:3px}
+.ly b{background:var(--ink);color:var(--paper);font-family:var(--f-mono);font-size:12px;display:grid;place-items:center}
+.ly span{padding:8px 12px;font-size:14px}
+.ly.mid b{background:var(--gold)}.ly.top b{background:var(--teal)}
+/* quiz mode */
+body.quiz .say{cursor:pointer;background:repeating-linear-gradient(-45deg,rgba(13,112,104,.10) 0 8px,rgba(13,112,104,.04) 8px 16px)}
+body.quiz .say p,body.quiz .say + .red{filter:blur(7px);user-select:none;transition:filter .3s}
+body.quiz .say .reveal-hint{display:block;position:absolute;inset:auto 0 50% 0;transform:translateY(50%);text-align:center;font-family:var(--f-mono);font-size:12px;font-weight:700;color:var(--teal);letter-spacing:.1em;text-transform:uppercase}
+body.quiz .card.revealed .say p,body.quiz .card.revealed .say + .red{filter:none;user-select:auto}
+body.quiz .card.revealed .say .reveal-hint{display:none}
+body.quiz .card:not(.revealed) .deep{opacity:.45;pointer-events:none}
+.hidden{display:none !important}
+.empty{text-align:center;padding:40px;font-family:var(--f-head);font-size:22px;color:var(--mute)}
+/* cheat card */
+.cheat{margin:60px 0 30px;border:3px solid var(--ink);background:#fffdf7;padding:26px 26px 18px;position:relative}
+.cheat:before{content:"CHEAT CARD";position:absolute;top:-13px;left:20px;background:var(--acc);color:#fff;font-family:var(--f-mono);font-size:12px;font-weight:800;letter-spacing:.2em;padding:3px 10px}
+.cheat h2{font-size:30px;font-weight:800;letter-spacing:-.02em}
+.cheat .sub{color:var(--ink-2);margin:2px 0 14px}
+.nums{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-bottom:14px}
+.num{border-top:3px solid var(--acc);padding-top:6px}
+.num b{font-family:var(--f-head);font-weight:800;font-size:22px;display:block;line-height:1}
+.num span{font-size:12.5px;color:var(--ink-2);line-height:1.25;display:block;margin-top:3px}
+.cgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.cc{border:1px solid var(--rule);background:#fff;border-radius:2px;overflow:hidden}
+.cc h4{font-family:var(--f-mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;background:var(--ink);color:var(--paper);padding:4px 8px}
+.cc pre{margin:0;padding:8px;font-size:10.8px;line-height:1.45;white-space:pre-wrap;word-break:break-word}
+footer{border-top:1px solid var(--ink);margin-top:30px;padding:18px 0 40px;font-size:13px;color:var(--mute);font-family:var(--f-mono)}
+@media (max-width:760px){
+  .tiles,.scale{grid-template-columns:1fr 1fr}.split,.cgrid{grid-template-columns:1fr}
+  .flat{grid-template-columns:1fr}.nums{grid-template-columns:repeat(3,1fr)}.bar-row{grid-template-columns:1fr}
+  .tlabel{margin-left:0;width:100%}
+}
+@media (prefers-reduced-motion:reduce){*,*:before{animation:none !important;transition:none !important}}
+@media print{
+  @page{margin:14mm 12mm}
+  body{background:#fff;font-size:11.5pt}
+  .bar,.copy,.reveal-hint,.no-print{display:none !important}
+  .wrap{max-width:none;padding:0}
+  .mast{padding-top:0}
+  .card,.st,.mast > *{animation:none !important;box-shadow:none}
+  .card{break-inside:avoid-page;page-break-inside:avoid;border-color:#bbb}
+  .hidden{display:block !important}
+  .topic.hidden,.card.hidden{display:block !important}
+  .deep-b{display:block}
+  details.deep::details-content{content-visibility:visible;display:block}
+  .say p,.say + .red{filter:none !important}
+  body.quiz .card .deep{opacity:1}
+  .code pre{background:#f6f3ec;color:#111;border:1px solid #ccc;white-space:pre-wrap;word-break:break-word;font-size:9pt}
+  .code-h{background:#e9e3d6;color:#333}
+  .viz-svg .edge{animation:none}
+  .bars .bar i,.lane i{animation:none}
+  .cheat{break-before:page;page-break-before:always;margin:0;border-width:2px;padding:14px}
+  .cheat .cc pre{font-size:7.6pt}
+  .num b{font-size:15pt}
+  *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
+</style>
+</head>
+<body>
+<style id="sf-home-style">
+#sf-home-btn{
+  position:fixed;bottom:22px;right:22px;z-index:9998;
+  display:inline-flex;align-items:center;gap:7px;
+  padding:8px 18px 8px 14px;border-radius:999px;
+  background:rgba(255,255,255,.13);
+  border:1px solid rgba(255,255,255,.26);
+  color:#e5edf5;
+  font-family:system-ui,-apple-system,"Segoe UI",sans-serif;
+  font-size:12px;font-weight:600;letter-spacing:.04em;
+  text-decoration:none;cursor:pointer;
+  backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+  box-shadow:0 2px 12px rgba(0,0,0,.25);
+  transition:background .18s,border-color .18s,transform .18s,box-shadow .18s,color .18s;
+  white-space:nowrap;
+}
+#sf-home-btn::before{
+  content:"⌂";
+  font-size:14px;line-height:1;
+}
+#sf-home-btn:hover{
+  background:rgba(255,255,255,.24);
+  border-color:rgba(255,255,255,.46);
+  color:#fff;
+  transform:translateY(-2px);
+  box-shadow:0 6px 22px rgba(0,0,0,.35);
+  text-decoration:none;
+}
+/* Light theme — fires for all files that use data-theme="light" toggle */
+[data-theme="light"] #sf-home-btn{
+  background:rgba(11,27,43,.08);
+  border-color:rgba(11,27,43,.20);
+  color:#0b1b2b;
+  box-shadow:0 2px 12px rgba(0,0,0,.10);
+}
+[data-theme="light"] #sf-home-btn:hover{
+  background:rgba(10,134,194,.13);
+  border-color:rgba(10,134,194,.38);
+  color:#0a86c2;
+  box-shadow:0 6px 22px rgba(10,134,194,.18);
+}
+/* Interview QA files start in light mode via :root (paper theme) */
+body[style*="--paper"] #sf-home-btn,
+.mast ~ #sf-home-btn{
+  background:rgba(11,27,43,.07);
+  border-color:rgba(11,27,43,.18);
+  color:#15120f;
+}
+</style>
+<a id="sf-home-btn" href="index.html" title="Back to Course Home">Course Home</a>
+
+<div class="wrap">
+  <header class="mast">
+    <div class="kicker">Data engineering interview &middot; Snowflake &middot; AWS S3</div>
+    <h1>Load <em>JSON</em> from S3<br>into Snowflake.<span class="thin">The main question, the follow-ups, and how to answer them well.</span></h1>
+    <p class="lede">A Q&amp;A sheet built around a fictional online store, <b>ShopStream</b>, whose order service drops JSON order events into an S3 landing bucket. Each card has a short answer to say out loud, red flags to avoid, and a deep dive with valid Snowflake SQL.</p>
+    <div class="meta">
+      <div><b>49</b>questions</div><div><b>10</b>topics</div><div><b>4</b>difficulty levels</div><div><b>1</b>printable cheat card</div>
+    </div>
+  </header>
+
+  <section class="star" id="star">
+    <div class="sec-h"><h2>Model answer: STAR timeline</h2><span>about 2 minutes, spoken</span></div>
+    <ol class="timeline"><li class="st" style="--i:0"><span class="st-k">S</span><div><b>Situation</b><p>ShopStream&#x27;s order service writes JSON order events to an S3 landing bucket. Analysts need them in Snowflake, typed, deduplicated, and fresh within minutes.</p></div></li><li class="st" style="--i:1"><span class="st-k">T</span><div><b>Task</b><p>Build a secure, repeatable S3-to-Snowflake load that survives bad records, schema drift, and reruns, then automate it.</p></div></li><li class="st" style="--i:2"><span class="st-k">A1</span><div><b>Connect</b><p>Storage integration S3_LANDING_INT, an IAM role with external ID trust and a least-privilege read policy, and allowed locations scoped to the landing prefix. No access keys.</p></div></li><li class="st" style="--i:3"><span class="st-k">A2</span><div><b>Describe</b><p>JSON file formats (NDJSON plus a STRIP_OUTER_ARRAY variant) and an external stage, STG_S3_LANDING. LIST to prove access.</p></div></li><li class="st" style="--i:4"><span class="st-k">A3</span><div><b>Land &amp; verify</b><p>VALIDATION_MODE dry run, then COPY INTO ORDERS_RAW (VARIANT + METADATA$FILENAME / ROW_NUMBER). ON_ERROR = CONTINUE on known-dirty feeds, with rejects captured through VALIDATE into ORDERS_LOAD_ERRORS.</p></div></li><li class="st" style="--i:5"><span class="st-k">A4</span><div><b>Model</b><p>LATERAL FLATTEN into CURATED.ORDERS and ORDER_ITEMS with TRY_ casts and a WHERE order_id IS NOT NULL rule.</p></div></li><li class="st" style="--i:6"><span class="st-k">A5</span><div><b>Automate</b><p>Snowpipe auto-ingest (S3 event to SQS) into RAW, an append-only stream, and a 5-minute task that MERGEs by key with dedupe.</p></div></li><li class="st" style="--i:7"><span class="st-k">R</span><div><b>Result</b><p>Loads verified by reconciliation: 60 orders and 111 items from the bulk files, 9 of 11 rows from the dirty file with 2 rejects quarantined, and the update applied as an upsert. Reruns are no-ops, and new fields like loyalty_tier flow through without code changes.</p></div></li></ol>
+  </section>
+
+  <div class="bar" role="search">
+    <div class="bar-row1">
+      <label class="search"><span aria-hidden="true">&#9906;</span><input id="q" type="search" placeholder="Search questions, answers, SQL (e.g. FLATTEN, 64 days, external ID)" aria-label="Search"><kbd>/</kbd></label>
+      <button class="btn" id="expand" type="button">Expand all</button>
+      <button class="btn" id="collapse" type="button">Collapse all</button>
+      <button class="btn quiz" id="quiz" type="button" aria-pressed="false">Quiz mode</button>
+      <button class="btn" id="print" type="button">Print</button>
+    </div>
+    <div class="chips" aria-label="Filter by topic"><button class="chip on" data-topic="all" type="button">All topics</button><button class="chip" data-topic="core" type="button">Main question</button><button class="chip" data-topic="fund" type="button">Fundamentals</button><button class="chip" data-topic="sec" type="button">Security</button><button class="chip" data-topic="load" type="button">Loading</button><button class="chip" data-topic="err" type="button">Errors &amp; data quality</button><button class="chip" data-topic="query" type="button">Querying JSON</button><button class="chip" data-topic="pipe" type="button">Continuous ingestion</button><button class="chip" data-topic="cdc" type="button">CDC &amp; modeling</button><button class="chip" data-topic="perf" type="button">Performance &amp; cost</button><button class="chip" data-topic="scen" type="button">Scenarios &amp; troubleshooting</button></div>
+    <div class="chips" aria-label="Filter by difficulty"><button class="chip lv on" data-level="Basic" type="button">Basic</button><button class="chip lv on" data-level="Intermediate" type="button">Intermediate</button><button class="chip lv on" data-level="Advanced" type="button">Advanced</button><button class="chip lv on" data-level="Scenario" type="button">Scenario</button><span class="count" id="count"></span></div>
+  </div>
+
+  <main>
+    <section class="topic" data-topic="core" id="t-core"><h2 class="topic-h"><span>Main question</span><small>1 question</small></h2>
+<article class="card" id="q01" data-topic="core" data-level="Intermediate" style="--i:0">
+  <header class="card-h">
+    <span class="qnum">Q01</span>
+    <span class="badge b-intermediate">Intermediate</span>
+    <span class="tlabel">Main question</span>
+  </header>
+  <h3 class="qtext">You have data in JSON format. Load it into Snowflake using S3.</h3>
+  <div class="say" tabindex="0" role="button" aria-label="Answer (click to reveal in quiz mode)">
+    <span class="say-l">Say this</span>
+    <p>I land the JSON in S3 and connect Snowflake through a storage integration, which is an IAM role with an external ID, so there are no keys. On top of that I put a JSON file format and an external stage, then COPY INTO a raw table with a VARIANT column and capture the file name and row number for lineage. I validate first, use ON_ERROR to control bad records, and flatten into typed curated tables. For ongoing files, Snowpipe auto-ingest plus a stream and a task keeps it incremental and idempotent.</p>
+    <span class="reveal-hint">Click to reveal answer</span>
+  </div>
+  <div class="red"><div class="red-h">Red flag answers to avoid</div><ul><li>&quot;I&#x27;d put the AWS access key and secret in the CREATE STAGE.&quot; That works, but it&#x27;s the legacy approach and the keys leak into DDL history.</li><li>&quot;I&#x27;d create a column for every JSON field up front.&quot; That&#x27;s brittle under schema drift. Land the raw data first.</li><li>Never mentioning validation, error handling, or what happens when someone runs it twice.</li></ul></div>
+  <details class="deep">
+    <summary><span>Deep dive</span><em>SQL + visual</em></summary>
+    <div class="deep-b"><p>Structure the answer as <b>connect &rarr; describe &rarr; land &rarr; verify &rarr; model &rarr; automate</b>. The STAR timeline at the top of the page is the spoken version. Here is the full happy path using the ShopStream objects.</p><figure class="viz">
+<svg class="viz-svg" viewBox="0 0 860 170" role="img" aria-label="Pipeline: S3 landing to Snowflake RAW to CURATED">
+  <defs><marker id="ah1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="var(--ink)"/></marker></defs>
+  <g class="node"><rect x="10" y="50" width="140" height="70" rx="6"/><text x="80" y="80" class="t1">S3 bucket</text><text x="80" y="100" class="t2">landing/orders/*.json</text></g>
+  <g class="node acc"><rect x="185" y="50" width="140" height="70" rx="6"/><text x="255" y="80" class="t1">Integration</text><text x="255" y="100" class="t2">S3_LANDING_INT</text></g>
+  <g class="node"><rect x="360" y="50" width="140" height="70" rx="6"/><text x="430" y="80" class="t1">Stage + format</text><text x="430" y="100" class="t2">STG_S3_LANDING</text></g>
+  <g class="node teal"><rect x="535" y="50" width="140" height="70" rx="6"/><text x="605" y="80" class="t1">RAW (VARIANT)</text><text x="605" y="100" class="t2">ORDERS_RAW</text></g>
+  <g class="node"><rect x="710" y="50" width="140" height="70" rx="6"/><text x="780" y="80" class="t1">CURATED</text><text x="780" y="100" class="t2">ORDERS / ITEMS</text></g>
+  <path d="M150 85 H183" class="edge" marker-end="url(#ah1)"/><path d="M325 85 H358" class="edge" marker-end="url(#ah1)"/>
+  <path d="M500 85 H533" class="edge" marker-end="url(#ah1)"/><path d="M675 85 H708" class="edge" marker-end="url(#ah1)"/>
+  <text x="517" y="40" class="lbl">COPY / Snowpipe</text><text x="692" y="150" class="lbl">FLATTEN + MERGE</text>
+</svg></figure><div class="code"><div class="code-h"><span class="lang">SQL</span><span class="code-l">End-to-end bulk load</span><button class="copy" type="button" data-copy="c1_0" aria-label="Copy code">Copy</button></div><pre id="c1_0"><code>-- 1) Connect: storage integration (ACCOUNTADMIN or a role with CREATE INTEGRATION)
+USE ROLE ACCOUNTADMIN;
+CREATE STORAGE INTEGRATION S3_LANDING_INT
+  TYPE = EXTERNAL_STAGE
+  STORAGE_PROVIDER = &#x27;S3&#x27;
+  ENABLED = TRUE
+  STORAGE_AWS_ROLE_ARN = &#x27;arn:aws:iam::111122223333:role/snowflake-s3-access-role&#x27;
+  STORAGE_ALLOWED_LOCATIONS = (&#x27;s3://shopstream-raw-landing/landing/&#x27;);
+DESC INTEGRATION S3_LANDING_INT;   -- copy STORAGE_AWS_IAM_USER_ARN + STORAGE_AWS_EXTERNAL_ID into the IAM trust policy
+GRANT USAGE ON INTEGRATION S3_LANDING_INT TO ROLE LAB_ENGINEER;
+
+-- 2) Describe: file format + external stage
+USE ROLE LAB_ENGINEER;
+USE WAREHOUSE LAB_WH;
+USE DATABASE SHOPSTREAM_LAB;
+CREATE FILE FORMAT RAW.FF_JSON_NDJSON
+  TYPE = JSON
+  STRIP_OUTER_ARRAY = FALSE
+  COMPRESSION = AUTO;
+CREATE STAGE RAW.STG_S3_LANDING
+  URL = &#x27;s3://shopstream-raw-landing/landing/&#x27;
+  STORAGE_INTEGRATION = S3_LANDING_INT
+  FILE_FORMAT = (FORMAT_NAME = &#x27;RAW.FF_JSON_NDJSON&#x27;);
+LIST @RAW.STG_S3_LANDING/orders/;
+
+-- 3) Land: raw VARIANT table + COPY with lineage columns
+CREATE TABLE RAW.ORDERS_RAW (
+  raw       VARIANT,
+  src_file  STRING,
+  src_row   NUMBER,
+  loaded_at TIMESTAMP_LTZ DEFAULT CURRENT_TIMESTAMP()
+);
+COPY INTO RAW.ORDERS_RAW (raw, src_file, src_row)
+FROM (
+  SELECT $1, METADATA$FILENAME, METADATA$FILE_ROW_NUMBER
+  FROM @RAW.STG_S3_LANDING/orders/
+)
+FILE_FORMAT = (FORMAT_NAME = &#x27;RAW.FF_JSON_NDJSON&#x27;)
+PATTERN = &#x27;.*orders_.*[.]json&#x27;
+ON_ERROR = ABORT_STATEMENT;
+
+-- 4) Verify: expect 50 rows from the two orders/ files
+SELECT src_file, COUNT(*) FROM RAW.ORDERS_RAW GROUP BY src_file;</code></pre></div></div>
+  </details>
+</article></section><section class="topic" data-topic="fund" id="t-fund"><h2 class="topic-h"><span>Fundamentals</span><small>6 questions</small></h2>
+<article class="card" id="q02" data-topic="fund" data-level="Basic" style="--i:0">
+  <header class="card-h">
+    <span class="qnum">Q02</span>
+    <span class="badge b-basic">Basic</span>
+    <span class="tlabel">Fundamentals</span>
+  </header>
+  <h3 class="qtext">What stage types does Snowflake have, and which one would you use here?</h3>
+  <div class="say" tabindex="0" role="button" aria-label="Answer (click to reveal in quiz mode)">
+    <span class="say-l">Say this</span>
+    <p>There are user stages (@~), table stages (@%table), named internal stages, and named external stages. Since the files already live in S3, I use a named external stage on the landing prefix, backed by a storage integration. That makes it grantable, reusable, and keeps the file format attached. A named internal stage plus PUT is the fallback when there&#x27;s no cloud bucket.</p>
+    <span class="reveal-hint">Click to reveal answer</span>
+  </div>
+  <div class="red"><div class="red-h">Red flag answers to avoid</div><ul><li>Confusing a stage with a table. A stage is only a pointer to files, plus some metadata.</li></ul></div>
+  <details class="deep">
+    <summary><span>Deep dive</span><em>SQL + visual</em></summary>
+    <div class="deep-b"><p>User and table stages can't be granted to other roles, and a table stage can't hold a file format object. Named stages can do both. External stages never copy data into Snowflake storage until you run COPY.</p><figure class="viz">
+<div class="tiles">
+  <div class="tile"><b>@~</b><span>User stage</span><small>Per user, cannot be shared or altered. Good for quick tests.</small></div>
+  <div class="tile"><b>@%ORDERS_RAW</b><span>Table stage</span><small>One per table, no file format object, any user with table privileges.</small></div>
+  <div class="tile"><b>@RAW.STG_INTERNAL_LANDING</b><span>Named internal</span><small>Snowflake-managed storage, PUT/GET, grantable, has its own format.</small></div>
+  <div class="tile hot"><b>@RAW.STG_S3_LANDING</b><span>Named external</span><small>Points at your S3 prefix through a storage integration. Use this one here.</small></div>
+</div></figure><div class="code"><div class="code-h"><span class="lang">SQL</span><span class="code-l">External vs internal fallback</span><button class="copy" type="button" data-copy="c2_0" aria-label="Copy code">Copy</button></div><pre id="c2_0"><code>-- External (preferred here)
+LIST @RAW.STG_S3_LANDING/orders/;
+
+-- Internal fallback: upload from SnowSQL, then load the same way
+CREATE STAGE RAW.STG_INTERNAL_LANDING
+  FILE_FORMAT = (FORMAT_NAME = &#x27;RAW.FF_JSON_NDJSON&#x27;);
+PUT file:///&lt;local_dir&gt;/orders_*.json @RAW.STG_INTERNAL_LANDING/orders/ AUTO_COMPRESS = TRUE;
+LIST @RAW.STG_INTERNAL_LANDING/orders/;</code></pre></div></div>
+  </details>
+</article>
+<article class="card" id="q03" data-topic="fund" data-level="Basic" style="--i:1">
+  <header class="card-h">
+    <span class="qnum">Q03</span>
+    <span class="badge b-basic">Basic</span>
+    <span class="tlabel">Fundamentals</span>
+  </header>
+  <h3 class="qtext">What is a file format object, and which JSON options actually matter?</h3>
+  <div class="say" tabindex="0" role="button" aria-label="Answer (click to reveal in quiz mode)">
+    <span class="say-l">Say this</span>
+    <p>A file format is a reusable named object that tells COPY, stages, and pipes how to parse files. For JSON the options that matter are STRIP_OUTER_ARRAY, STRIP_NULL_VALUES, COMPRESSION, IGNORE_UTF8_ERRORS or REPLACE_INVALID_CHARACTERS, and ALLOW_DUPLICATE. I keep two formats, one for NDJSON and one for array files, so the choice is explicit.</p>
+    <span class="reveal-hint">Click to reveal answer</span>
+  </div>
+  
+  <details class="deep">
+    <summary><span>Deep dive</span><em>SQL</em></summary>
+    <div class="deep-b"><p>Precedence: options set directly in the COPY statement override the stage's format, and the stage's format overrides the defaults. Named formats avoid copy-paste drift between COPY, pipes, and external tables.</p><div class="code"><div class="code-h"><span class="lang">SQL</span><span class="code-l">Two named formats</span><button class="copy" type="button" data-copy="c3_0" aria-label="Copy code">Copy</button></div><pre id="c3_0"><code>CREATE OR REPLACE FILE FORMAT RAW.FF_JSON_NDJSON
+  TYPE = JSON
+  STRIP_OUTER_ARRAY = FALSE
+  COMPRESSION = AUTO
+  IGNORE_UTF8_ERRORS = FALSE;
+
+CREATE OR REPLACE FILE FORMAT RAW.FF_JSON_ARRAY
+  TYPE = JSON
+  STRIP_OUTER_ARRAY = TRUE
+  COMPRESSION = AUTO;
+
+-- Peek at staged files without loading them
+SELECT $1:order_id::STRING, METADATA$FILENAME
+FROM @RAW.STG_S3_LANDING/orders_array/ (FILE_FORMAT =&gt; &#x27;RAW.FF_JSON_ARRAY&#x27;)
+LIMIT 5;</code></pre></div></div>
+  </details>
+</article>
+<article class="card" id="q04" data-topic="fund" data-level="Basic" style="--i:2">
+  <header class="card-h">
+    <span class="qnum">Q04</span>
+    <span class="badge b-basic">Basic</span>
+    <span class="tlabel">Fundamentals</span>
+  </header>
+  <h3 class="qtext">Why load JSON into a VARIANT column instead of typed columns straight away?</h3>
+  <div class="say" tabindex="0" role="button" aria-label="Answer (click to reveal in quiz mode)">
+    <span class="say-l">Say this</span>
+    <p>VARIANT stores any JSON value losslessly, and Snowflake still columnarizes common paths underneath, so queries on it are fast. Landing raw first separates ingestion from modeling. New fields don&#x27;t break the load, and I can re-derive curated tables without going back to S3. Then I project typed columns in a curated layer.</p>
+    <span class="reveal-hint">Click to reveal answer</span>
+  </div>
+  <div class="red"><div class="red-h">Red flag answers to avoid</div><ul><li>&quot;VARIANT is just a text blob, so it&#x27;s slow.&quot; It&#x27;s stored in an optimized columnar form for consistent paths.</li></ul></div>
+  <details class="deep">
+    <summary><span>Deep dive</span><em>SQL</em></summary>
+    <div class="deep-b"><p>Typed-on-load (MATCH_BY_COLUMN_NAME or INFER_SCHEMA) is fine for stable, flat feeds. For evolving event payloads, the raw VARIANT plus curated pattern is the safer default and gives you replay.</p><div class="code"><div class="code-h"><span class="lang">SQL</span><span class="code-l">Raw vs projected</span><button class="copy" type="button" data-copy="c4_0" aria-label="Copy code">Copy</button></div><pre id="c4_0"><code>SELECT raw:order_id::STRING             AS order_id,
+       raw:customer.address.city::STRING AS city,
+       raw:payment.amount::NUMBER(12,2)  AS amount
+FROM RAW.ORDERS_RAW
+LIMIT 10;</code></pre></div></div>
+  </details>
+</article>
+<article class="card" id="q05" data-topic="fund" data-level="Intermediate" style="--i:3">
+  <header class="card-h">
+    <span class="qnum">Q05</span>
+    <span class="badge b-intermediate">Intermediate</span>
+    <span class="tlabel">Fundamentals</span>
+  </header>
+  <h3 class="qtext">What is the VARIANT size limit, and what happens when a record exceeds it?</h3>
+  <div class="say" tabindex="0" role="button" aria-label="Answer (click to reveal in quiz mode)">
+    <span class="say-l">Say this</span>
+    <p>The classic limit is 16 MB uncompressed per VARIANT value, which means per JSON document or row. Newer Snowflake releases raised the maximum for VARIANT, ARRAY, and OBJECT to around 128 MB, but I confirm it on the account and still design for 16 MB. If one document is too big, the row errors out and COPY reports that the document is too large. The fix is to split the outer array or restructure the producer&#x27;s output.</p>
+    <span class="reveal-hint">Click to reveal answer</span>
+  </div>
+  <div class="red"><div class="red-h">Red flag answers to avoid</div><ul><li>Saying the limit is per file. It applies per value, which is why STRIP_OUTER_ARRAY rescues big array files.</li></ul></div>
+  <details class="deep">
+    <summary><span>Deep dive</span><em>SQL</em></summary>
+    <div class="deep-b"><p>A 500 MB NDJSON file is fine because each line is its own value. A 500 MB file that is one big array is a single value unless you strip the outer array. Sizes are measured on the parsed representation, so a document that's close to the limit on disk can still exceed it.</p><div class="code"><div class="code-h"><span class="lang">SQL</span><span class="code-l">Find the largest documents</span><button class="copy" type="button" data-copy="c5_0" aria-label="Copy code">Copy</button></div><pre id="c5_0"><code>SELECT src_file,
+       MAX(LENGTH(TO_JSON(raw))) AS max_doc_chars
+FROM RAW.ORDERS_RAW
+GROUP BY src_file
+ORDER BY max_doc_chars DESC;</code></pre></div></div>
+  </details>
+</article>
+<article class="card" id="q06" data-topic="fund" data-level="Basic" style="--i:4">
+  <header class="card-h">
+    <span class="qnum">Q06</span>
+    <span class="badge b-basic">Basic</span>
+    <span class="tlabel">Fundamentals</span>
+  </header>
+  <h3 class="qtext">NDJSON vs. a JSON array. What does STRIP_OUTER_ARRAY do?</h3>
+  <div class="say" tabindex="0" role="button" aria-label="Answer (click to reveal in quiz mode)">
+    <span class="say-l">Say this</span>
+    <p>NDJSON has one complete object per line, so every line becomes a row. An array file is one document wrapping many objects. Without STRIP_OUTER_ARRAY = TRUE, the whole array lands as one row, and it can blow the size limit. Stripping the array turns each element into its own row.</p>
+    <span class="reveal-hint">Click to reveal answer</span>
+  </div>
+  
+  <details class="deep">
+    <summary><span>Deep dive</span><em>SQL + visual</em></summary>
+    <div class="deep-b"><p>The ShopStream export file is a pretty-printed outer array with 10 orders. Loaded with the array format it gives 10 rows, which takes the raw total from 50 to 60. Pretty-printing doesn't matter, because JSON parsing ignores whitespace between tokens.</p><figure class="viz">
+<div class="split">
+  <div class="pane"><div class="pane-h">NDJSON: one object per line</div>
+<pre class="mini">{"order_id":"ORD-100001",...}
+{"order_id":"ORD-100002",...}
+{"order_id":"ORD-100003",...}</pre>
+  <div class="pane-f">3 lines &rarr; <b>3 rows</b>. STRIP_OUTER_ARRAY = FALSE</div></div>
+  <div class="pane"><div class="pane-h">One outer array</div>
+<pre class="mini">[
+  {"order_id":"ORD-100051",...},
+  {"order_id":"ORD-100052",...}
+]</pre>
+  <div class="pane-f">Without strip: <b>1 row</b> (whole array).<br>With STRIP_OUTER_ARRAY = TRUE: <b>1 row per element</b>.</div></div>
+</div></figure><div class="code"><div class="code-h"><span class="lang">SQL</span><span class="code-l">Load the array file</span><button class="copy" type="button" data-copy="c6_0" aria-label="Copy code">Copy</button></div><pre id="c6_0"><code>COPY INTO RAW.ORDERS_RAW (raw, src_file, src_row)
+FROM (
+  SELECT $1, METADATA$FILENAME, METADATA$FILE_ROW_NUMBER
+  FROM @RAW.STG_S3_LANDING/orders_array/
+)
+FILE_FORMAT = (FORMAT_NAME = &#x27;RAW.FF_JSON_ARRAY&#x27;);</code></pre></div></div>
+  </details>
+</article>
+<article class="card" id="q07" data-topic="fund" data-level="Basic" style="--i:5">
+  <header class="card-h">
+    <span class="qnum">Q07</span>
+    <span class="badge b-basic">Basic</span>
+    <span class="tlabel">Fundamentals</span>
+  </header>
+  <h3 class="qtext">How does compression work for JSON files from S3?</h3>
+  <div class="say" tabindex="0" role="button" aria-label="Answer (click to reveal in quiz mode)">
+    <span class="say-l">Say this</span>
+    <p>COMPRESSION = AUTO detects gzip, bzip2, zstd, and deflate from the file, so gzipped NDJSON loads with no extra settings. Brotli is the exception, and you have to declare it explicitly. Compressed files also mean less S3 transfer and faster loads, so I ask producers for gzip.</p>
+    <span class="reveal-hint">Click to reveal answer</span>
+  </div>
+  
+  <details class="deep">
+    <summary><span>Deep dive</span><em>SQL</em></summary>
+    <div class="deep-b"><p>Load sizing guidance (about 100 to 250 MB per file) refers to <i>compressed</i> size. PUT to an internal stage gzips by default (AUTO_COMPRESS = TRUE). Unloads to S3 default to gzip as well.</p><div class="code"><div class="code-h"><span class="lang">SQL</span><span class="code-l">Explicit compression</span><button class="copy" type="button" data-copy="c7_0" aria-label="Copy code">Copy</button></div><pre id="c7_0"><code>CREATE OR REPLACE FILE FORMAT RAW.FF_JSON_NDJSON_BR
+  TYPE = JSON
+  COMPRESSION = BROTLI;   -- AUTO cannot detect Brotli</code></pre></div></div>
+  </details>
+</article></section><section class="topic" data-topic="sec" id="t-sec"><h2 class="topic-h"><span>Security</span><small>6 questions</small></h2>
+<article class="card" id="q08" data-topic="sec" data-level="Intermediate" style="--i:0">
+  <header class="card-h">
+    <span class="qnum">Q08</span>
+    <span class="badge b-intermediate">Intermediate</span>
+    <span class="tlabel">Security</span>
+  </header>
+  <h3 class="qtext">Storage integration vs. access keys in CREATE STAGE. Which, and why?</h3>
+  <div class="say" tabindex="0" role="button" aria-label="Answer (click to reveal in quiz mode)">
+    <span class="say-l">Say this</span>
+    <p>A storage integration. Snowflake assumes an IAM role in my account through STS, so no long-lived secret is stored in Snowflake or written into DDL. Rotation is a non-issue, access is revocable on the AWS side, and admins can restrict which buckets stages may point at with STORAGE_ALLOWED_LOCATIONS. Keys in CREATE STAGE CREDENTIALS still work but are legacy, and many accounts block them by policy.</p>
+    <span class="reveal-hint">Click to reveal answer</span>
+  </div>
+  <div class="red"><div class="red-h">Red flag answers to avoid</div><ul><li>Hard-coding AWS_KEY_ID / AWS_SECRET_KEY &quot;just for now&quot;.</li><li>&quot;Make the bucket public so Snowflake can read it.&quot;</li></ul></div>
+  <details class="deep">
+    <summary><span>Deep dive</span><em>SQL</em></summary>
+    <div class="deep-b"><p>One integration can back many stages. Only the integration knows the role ARN, and stage creators only need USAGE on it. Account parameters such as REQUIRE_STORAGE_INTEGRATION_FOR_STAGE_CREATION let you enforce this.</p><div class="code"><div class="code-h"><span class="lang">SQL</span><span class="code-l">Enforce integrations</span><button class="copy" type="button" data-copy="c8_0" aria-label="Copy code">Copy</button></div><pre id="c8_0"><code>-- Legacy (avoid):
+-- CREATE STAGE s URL=&#x27;s3://...&#x27; CREDENTIALS = (AWS_KEY_ID=&#x27;...&#x27; AWS_SECRET_KEY=&#x27;...&#x27;);
+
+USE ROLE ACCOUNTADMIN;
+ALTER ACCOUNT SET REQUIRE_STORAGE_INTEGRATION_FOR_STAGE_CREATION = TRUE;
+ALTER ACCOUNT SET REQUIRE_STORAGE_INTEGRATION_FOR_STAGE_OPERATION = TRUE;</code></pre></div></div>
+  </details>
+</article>
+<article class="card" id="q09" data-topic="sec" data-level="Intermediate" style="--i:1">
+  <header class="card-h">
+    <span class="qnum">Q09</span>
+    <span class="badge b-intermediate">Intermediate</span>
+    <span class="tlabel">Security</span>
+  </header>
+  <h3 class="qtext">Walk me through the external ID and trust policy handshake.</h3>
+  <div class="say" tabindex="0" role="button" aria-label="Answer (click to reveal in quiz mode)">
+    <span class="say-l">Say this</span>
+    <p>I create the integration with my role ARN, then run DESC INTEGRATION to get STORAGE_AWS_IAM_USER_ARN and STORAGE_AWS_EXTERNAL_ID. In the role&#x27;s trust policy I allow that IAM user to call sts:AssumeRole, but only when the external ID matches. That external ID prevents the confused-deputy problem, where another Snowflake customer tries to point at my role.</p>
+    <span class="reveal-hint">Click to reveal answer</span>
+  </div>
+  <div class="red"><div class="red-h">Red flag answers to avoid</div><ul><li>Forgetting that CREATE OR REPLACE on the integration gives it a new external ID, which breaks the trust policy.</li></ul></div>
+  <details class="deep">
+    <summary><span>Deep dive</span><em>SQL + visual</em></summary>
+    <div class="deep-b"><p>Order of operations: create the role with a placeholder trust policy, create the integration, describe it, then update the trust policy. The Snowflake IAM user ARN is shared across your account, and the external ID is what makes the link unique to you.</p><figure class="viz">
+<svg class="viz-svg" viewBox="0 0 860 200" role="img" aria-label="Storage integration trust handshake">
+  <defs><marker id="ah2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="var(--ink)"/></marker></defs>
+  <g class="node acc"><rect x="10" y="60" width="180" height="80" rx="6"/><text x="100" y="92" class="t1">Snowflake IAM user</text><text x="100" y="114" class="t2">STORAGE_AWS_IAM_USER_ARN</text></g>
+  <g class="node"><rect x="340" y="60" width="180" height="80" rx="6"/><text x="430" y="92" class="t1">Your IAM role</text><text x="430" y="114" class="t2">snowflake-s3-access-role</text></g>
+  <g class="node teal"><rect x="670" y="60" width="180" height="80" rx="6"/><text x="760" y="92" class="t1">S3 bucket</text><text x="760" y="114" class="t2">shopstream-raw-landing</text></g>
+  <path d="M190 100 H338" class="edge" marker-end="url(#ah2)"/><path d="M520 100 H668" class="edge" marker-end="url(#ah2)"/>
+  <text x="264" y="86" class="lbl">sts:AssumeRole</text><text x="264" y="128" class="lbl acc-t">+ ExternalId</text>
+  <text x="594" y="86" class="lbl">temp creds</text><text x="594" y="128" class="lbl">Get / List</text>
+  <text x="430" y="175" class="lbl">Trust policy: Principal = IAM user ARN, Condition sts:ExternalId = STORAGE_AWS_EXTERNAL_ID</text>
+</svg></figure><div class="code"><div class="code-h"><span class="lang">SQL</span><span class="code-l">Get the values</span><button class="copy" type="button" data-copy="c9_0" aria-label="Copy code">Copy</button></div><pre id="c9_0"><code>DESC INTEGRATION S3_LANDING_INT;
+-- property STORAGE_AWS_IAM_USER_ARN -&gt; Principal
+-- property STORAGE_AWS_EXTERNAL_ID  -&gt; sts:ExternalId</code></pre></div><div class="code"><div class="code-h"><span class="lang">JSON</span><span class="code-l">IAM role trust policy</span><button class="copy" type="button" data-copy="c9_1" aria-label="Copy code">Copy</button></div><pre id="c9_1"><code>{
+  &quot;Version&quot;: &quot;2012-10-17&quot;,
+  &quot;Statement&quot;: [{
+    &quot;Effect&quot;: &quot;Allow&quot;,
+    &quot;Principal&quot;: { &quot;AWS&quot;: &quot;&lt;STORAGE_AWS_IAM_USER_ARN&gt;&quot; },
+    &quot;Action&quot;: &quot;sts:AssumeRole&quot;,
+    &quot;Condition&quot;: { &quot;StringEquals&quot;: { &quot;sts:ExternalId&quot;: &quot;&lt;STORAGE_AWS_EXTERNAL_ID&gt;&quot; } }
+  }]
+}</code></pre></div></div>
+  </details>
+</article>
+<article class="card" id="q10" data-topic="sec" data-level="Intermediate" style="--i:2">
+  <header class="card-h">
+    <span class="qnum">Q10</span>
+    <span class="badge b-intermediate">Intermediate</span>
+    <span class="tlabel">Security</span>
+  </header>
+  <h3 class="qtext">What does a least-privilege IAM policy for loading look like?</h3>
+  <div class="say" tabindex="0" role="button" aria-label="Answer (click to reveal in quiz mode)">
+    <span class="say-l">Say this</span>
+    <p>For read-only loading: s3:GetObject and s3:GetObjectVersion on the prefix objects, plus s3:ListBucket and s3:GetBucketLocation on the bucket. I scope ListBucket to the landing prefix with an s3:prefix condition. I add s3:DeleteObject only if we use PURGE, and s3:PutObject only if we unload.</p>
+    <span class="reveal-hint">Click to reveal answer</span>
+  </div>
+  <div class="red"><div class="red-h">Red flag answers to avoid</div><ul><li>Granting s3:* on * &quot;to get it working&quot;.</li></ul></div>
+  <details class="deep">
+    <summary><span>Deep dive</span><em>SQL</em></summary>
+    <div class="deep-b"><p>A common mistake is attaching ListBucket to <code>bucket/*</code>. ListBucket is a bucket-level action, so its Resource must be the bucket ARN itself. Object actions go on <code>bucket/prefix/*</code>.</p><div class="code"><div class="code-h"><span class="lang">JSON</span><span class="code-l">shopstream-snowflake-s3-read</span><button class="copy" type="button" data-copy="c10_0" aria-label="Copy code">Copy</button></div><pre id="c10_0"><code>{
+  &quot;Version&quot;: &quot;2012-10-17&quot;,
+  &quot;Statement&quot;: [
+    { &quot;Effect&quot;: &quot;Allow&quot;,
+      &quot;Action&quot;: [&quot;s3:GetObject&quot;, &quot;s3:GetObjectVersion&quot;],
+      &quot;Resource&quot;: &quot;arn:aws:s3:::shopstream-raw-landing/landing/*&quot; },
+    { &quot;Effect&quot;: &quot;Allow&quot;,
+      &quot;Action&quot;: &quot;s3:ListBucket&quot;,
+      &quot;Resource&quot;: &quot;arn:aws:s3:::shopstream-raw-landing&quot;,
+      &quot;Condition&quot;: { &quot;StringLike&quot;: { &quot;s3:prefix&quot;: [&quot;landing/*&quot;] } } },
+    { &quot;Effect&quot;: &quot;Allow&quot;,
+      &quot;Action&quot;: &quot;s3:GetBucketLocation&quot;,
+      &quot;Resource&quot;: &quot;arn:aws:s3:::shopstream-raw-landing&quot; }
+  ]
+}</code></pre></div></div>
+  </details>
+</article>
+<article class="card" id="q11" data-topic="sec" data-level="Intermediate" style="--i:3">
+  <header class="card-h">
+    <span class="qnum">Q11</span>
+    <span class="badge b-intermediate">Intermediate</span>
+    <span class="tlabel">Security</span>
+  </header>
+  <h3 class="qtext">What do STORAGE_ALLOWED_LOCATIONS and STORAGE_BLOCKED_LOCATIONS do?</h3>
+  <div class="say" tabindex="0" role="button" aria-label="Answer (click to reveal in quiz mode)">
+    <span class="say-l">Say this</span>
+    <p>They&#x27;re guardrails on the integration itself. A stage built on the integration can only point at URLs under an allowed location and never under a blocked one. So even with a broad IAM role, a stage creator can&#x27;t wander into other prefixes. Snowflake enforces this before any AWS call is made.</p>
+    <span class="reveal-hint">Click to reveal answer</span>
+  </div>
+  
+  <details class="deep">
+    <summary><span>Deep dive</span><em>SQL</em></summary>
+    <div class="deep-b"><p>Allowed locations can be <code>'*'</code> (every location the role can reach), which is fine in a sandbox and a smell in production. Blocked wins over allowed, which is useful for carving out a <code>pii/</code> prefix.</p><div class="code"><div class="code-h"><span class="lang">SQL</span><span class="code-l">Tighten the integration</span><button class="copy" type="button" data-copy="c11_0" aria-label="Copy code">Copy</button></div><pre id="c11_0"><code>ALTER STORAGE INTEGRATION S3_LANDING_INT SET
+  STORAGE_ALLOWED_LOCATIONS = (&#x27;s3://shopstream-raw-landing/landing/&#x27;)
+  STORAGE_BLOCKED_LOCATIONS = (&#x27;s3://shopstream-raw-landing/landing/pii/&#x27;);</code></pre></div></div>
+  </details>
+</article>
+<article class="card" id="q12" data-topic="sec" data-level="Basic" style="--i:4">
+  <header class="card-h">
+    <span class="qnum">Q12</span>
+    <span class="badge b-basic">Basic</span>
+    <span class="tlabel">Security</span>
+  </header>
+  <h3 class="qtext">Which role creates the integration, and how do engineers use it?</h3>
+  <div class="say" tabindex="0" role="button" aria-label="Answer (click to reveal in quiz mode)">
+    <span class="say-l">Say this</span>
+    <p>Creating an integration needs the account-level CREATE INTEGRATION privilege, which ACCOUNTADMIN has by default. I create it once as an admin, then grant USAGE on it to the engineering role. That role needs CREATE STAGE on the schema to build stages, and consumers get USAGE on the external stage.</p>
+    <span class="reveal-hint">Click to reveal answer</span>
+  </div>
+  <div class="red"><div class="red-h">Red flag answers to avoid</div><ul><li>Running the whole pipeline as ACCOUNTADMIN.</li></ul></div>
+  <details class="deep">
+    <summary><span>Deep dive</span><em>SQL</em></summary>
+    <div class="deep-b"><p>This is separation of duties. The cloud trust lives with admins, and stages and pipes live with the data team. Ownership of pipes and tasks belongs to a functional role, not a person.</p><div class="code"><div class="code-h"><span class="lang">SQL</span><span class="code-l">Grants</span><button class="copy" type="button" data-copy="c12_0" aria-label="Copy code">Copy</button></div><pre id="c12_0"><code>USE ROLE ACCOUNTADMIN;
+GRANT USAGE ON INTEGRATION S3_LANDING_INT TO ROLE LAB_ENGINEER;
+GRANT CREATE STAGE ON SCHEMA SHOPSTREAM_LAB.RAW TO ROLE LAB_ENGINEER;
+GRANT CREATE PIPE  ON SCHEMA SHOPSTREAM_LAB.RAW TO ROLE LAB_ENGINEER;
+-- optional: delegate integration creation without full ACCOUNTADMIN
+-- GRANT CREATE INTEGRATION ON ACCOUNT TO ROLE &lt;platform_admin_role&gt;;</code></pre></div></div>
+  </details>
+</article>
+<article class="card" id="q13" data-topic="sec" data-level="Advanced" style="--i:5">
+  <header class="card-h">
+    <span class="qnum">Q13</span>
+    <span class="badge b-advanced">Advanced</span>
+    <span class="tlabel">Security</span>
+  </header>
+  <h3 class="qtext">The bucket uses SSE-KMS, and security wants private connectivity. What changes?</h3>
+  <div class="say" tabindex="0" role="button" aria-label="Answer (click to reveal in quiz mode)">
+    <span class="say-l">Say this</span>
+    <p>For reading SSE-S3 objects nothing changes. For SSE-KMS the IAM role needs kms:Decrypt on the key, and the key policy has to allow that role, otherwise you get Access Denied even though the S3 permissions are correct. The stage ENCRYPTION setting mostly matters when Snowflake writes, as in an unload. For private networking on AWS, Business Critical accounts can route S3 traffic over PrivateLink, and the bucket policy can be restricted to a VPC endpoint.</p>
+    <span class="reveal-hint">Click to reveal answer</span>
+  </div>
+  <div class="red"><div class="red-h">Red flag answers to avoid</div><ul><li>Assuming PrivateLink is available on every edition. It&#x27;s a Business Critical feature, so check the current docs.</li></ul></div>
+  <details class="deep">
+    <summary><span>Deep dive</span><em>SQL</em></summary>
+    <div class="deep-b"><p>Snowflake's outbound private connectivity to S3 is enabled with <code>USE_PRIVATELINK_ENDPOINT = TRUE</code> on the integration, after provisioning an endpoint. Details evolve, so confirm against current docs before you commit to a design in the interview.</p><div class="code"><div class="code-h"><span class="lang">SQL</span><span class="code-l">KMS on the stage (writes/unloads)</span><button class="copy" type="button" data-copy="c13_0" aria-label="Copy code">Copy</button></div><pre id="c13_0"><code>CREATE OR REPLACE STAGE RAW.STG_S3_LANDING
+  URL = &#x27;s3://shopstream-raw-landing/landing/&#x27;
+  STORAGE_INTEGRATION = S3_LANDING_INT
+  FILE_FORMAT = (FORMAT_NAME = &#x27;RAW.FF_JSON_NDJSON&#x27;)
+  ENCRYPTION = (TYPE = &#x27;AWS_SSE_KMS&#x27; KMS_KEY_ID = &#x27;&lt;kms_key_arn_or_alias&gt;&#x27;);</code></pre></div><div class="code"><div class="code-h"><span class="lang">JSON</span><span class="code-l">Add to the IAM role policy</span><button class="copy" type="button" data-copy="c13_1" aria-label="Copy code">Copy</button></div><pre id="c13_1"><code>{ &quot;Effect&quot;: &quot;Allow&quot;,
+  &quot;Action&quot;: [&quot;kms:Decrypt&quot;],
+  &quot;Resource&quot;: &quot;&lt;kms_key_arn&gt;&quot; }</code></pre></div></div>
+  </details>
+</article></section><section class="topic" data-topic="load" id="t-load"><h2 class="topic-h"><span>Loading</span><small>6 questions</small></h2>
+<article class="card" id="q14" data-topic="load" data-level="Basic" style="--i:0">
+  <header class="card-h">
+    <span class="qnum">Q14</span>
+    <span class="badge b-basic">Basic</span>
+    <span class="tlabel">Loading</span>
+  </header>
+  <h3 class="qtext">Which COPY INTO options do you reach for most?</h3>
+  <div class="say" tabindex="0" role="button" aria-label="Answer (click to reveal in quiz mode)">
+    <span class="say-l">Say this</span>
+    <p>FILE_FORMAT, PATTERN or FILES to target files, ON_ERROR for error tolerance, and VALIDATION_MODE for dry runs. FORCE and PURGE control reloads and cleanup. MATCH_BY_COLUMN_NAME handles typed loads, and SIZE_LIMIT caps a run. I also check the COPY result columns, meaning status, rows parsed, rows loaded, and first error, on every run.</p>
+    <span class="reveal-hint">Click to reveal answer</span>
+  </div>
+  
+  <details class="deep">
+    <summary><span>Deep dive</span><em>SQL</em></summary>
+    <div class="deep-b"><p>RETURN_FAILED_ONLY = TRUE trims the output to problem files. TRUNCATECOLUMNS / ENFORCE_LENGTH apply to string targets. LOAD_UNCERTAIN_FILES deals with the 64-day edge case.</p><div class="code"><div class="code-h"><span class="lang">SQL</span><span class="code-l">A well-dressed COPY</span><button class="copy" type="button" data-copy="c14_0" aria-label="Copy code">Copy</button></div><pre id="c14_0"><code>COPY INTO RAW.ORDERS_RAW (raw, src_file, src_row)
+FROM (
+  SELECT $1, METADATA$FILENAME, METADATA$FILE_ROW_NUMBER
+  FROM @RAW.STG_S3_LANDING/orders/
+)
+FILE_FORMAT = (FORMAT_NAME = &#x27;RAW.FF_JSON_NDJSON&#x27;)
+PATTERN = &#x27;.*orders_2026-11-18_.*[.]json&#x27;
+ON_ERROR = &#x27;SKIP_FILE_5%&#x27;
+RETURN_FAILED_ONLY = TRUE;</code></pre></div></div>
+  </details>
+</article>
+<article class="card" id="q15" data-topic="load" data-level="Intermediate" style="--i:1">
+  <header class="card-h">
+    <span class="qnum">Q15</span>
+    <span class="badge b-intermediate">Intermediate</span>
+    <span class="tlabel">Loading</span>
+  </header>
+  <h3 class="qtext">What transformations can you do during COPY, and which METADATA$ columns are available?</h3>
+  <div class="say" tabindex="0" role="button" aria-label="Answer (click to reveal in quiz mode)">
+    <span class="say-l">Say this</span>
+    <p>COPY can run a simple SELECT over the staged files. That covers column reordering, casting, path extraction, and functions like CURRENT_TIMESTAMP. JOINs, GROUP BY, and filtering WHERE clauses aren&#x27;t allowed. The metadata columns are METADATA$FILENAME, METADATA$FILE_ROW_NUMBER, METADATA$FILE_CONTENT_KEY, METADATA$FILE_LAST_MODIFIED, and METADATA$START_SCAN_TIME. I always keep file name and row number for lineage and dedup.</p>
+    <span class="reveal-hint">Click to reveal answer</span>
+  </div>
+  <div class="red"><div class="red-h">Red flag answers to avoid</div><ul><li>Not knowing that VALIDATION_MODE and VALIDATE() don&#x27;t support transforming COPYs.</li></ul></div>
+  <details class="deep">
+    <summary><span>Deep dive</span><em>SQL</em></summary>
+    <div class="deep-b"><p>Keep transforms light at load time, like extracting a key or two for clustering, and do business logic downstream. Heavy transforms in COPY make reprocessing harder.</p><div class="code"><div class="code-h"><span class="lang">SQL</span><span class="code-l">Transform + metadata</span><button class="copy" type="button" data-copy="c15_0" aria-label="Copy code">Copy</button></div><pre id="c15_0"><code>COPY INTO RAW.ORDERS_RAW (raw, src_file, src_row, loaded_at)
+FROM (
+  SELECT $1,
+         METADATA$FILENAME,
+         METADATA$FILE_ROW_NUMBER,
+         METADATA$START_SCAN_TIME
+  FROM @RAW.STG_S3_LANDING/orders/
+)
+FILE_FORMAT = (FORMAT_NAME = &#x27;RAW.FF_JSON_NDJSON&#x27;);</code></pre></div></div>
+  </details>
+</article>
+<article class="card" id="q16" data-topic="load" data-level="Basic" style="--i:2">
+  <header class="card-h">
+    <span class="qnum">Q16</span>
+    <span class="badge b-basic">Basic</span>
+    <span class="tlabel">Loading</span>
+  </header>
+  <h3 class="qtext">PATTERN vs. FILES. When do you use each?</h3>
+  <div class="say" tabindex="0" role="button" aria-label="Answer (click to reveal in quiz mode)">
+    <span class="say-l">Say this</span>
+    <p>FILES is an explicit list of up to 1,000 file names, which is precise and good for reruns of known files. PATTERN is a regex that matches paths under the stage location, which is good for daily or hourly prefixes. Prefer a precise path in the FROM clause plus a narrow pattern, because listing a huge prefix is slow.</p>
+    <span class="reveal-hint">Click to reveal answer</span>
+  </div>
+  <div class="red"><div class="red-h">Red flag answers to avoid</div><ul><li>Writing glob syntax (*.json) instead of a regex (.*[.]json).</li></ul></div>
+  <details class="deep">
+    <summary><span>Deep dive</span><em>SQL</em></summary>
+    <div class="deep-b"><p>The regex is applied to the path below the location in FROM, plus the file name, so lead with <code>.*</code>. Escape a literal dot as <code>[.]</code> or <code>\.</code>.</p><div class="code"><div class="code-h"><span class="lang">SQL</span><span class="code-l">Both forms</span><button class="copy" type="button" data-copy="c16_0" aria-label="Copy code">Copy</button></div><pre id="c16_0"><code>-- explicit
+COPY INTO RAW.ORDERS_RAW (raw, src_file, src_row)
+FROM (SELECT $1, METADATA$FILENAME, METADATA$FILE_ROW_NUMBER FROM @RAW.STG_S3_LANDING/orders/)
+FILE_FORMAT = (FORMAT_NAME = &#x27;RAW.FF_JSON_NDJSON&#x27;)
+FILES = (&#x27;orders_2026-11-18_part1.json&#x27;, &#x27;orders_2026-11-18_part2.json&#x27;);
+
+-- regex
+LIST @RAW.STG_S3_LANDING/orders/ PATTERN = &#x27;.*part[0-9]+[.]json&#x27;;</code></pre></div></div>
+  </details>
+</article>
+<article class="card" id="q17" data-topic="load" data-level="Intermediate" style="--i:3">
+  <header class="card-h">
+    <span class="qnum">Q17</span>
+    <span class="badge b-intermediate">Intermediate</span>
+    <span class="tlabel">Loading</span>
+  </header>
+  <h3 class="qtext">How do load metadata, FORCE, and PURGE make COPY idempotent, or not?</h3>
+  <div class="say" tabindex="0" role="button" aria-label="Answer (click to reveal in quiz mode)">
+    <span class="say-l">Say this</span>
+    <p>Each table remembers which files it loaded for 64 days, tracked by path plus checksum or ETag, so rerunning the same COPY skips those files. That&#x27;s built-in idempotency. FORCE = TRUE ignores the metadata and reloads, which creates duplicates. PURGE = TRUE deletes successfully loaded files from the stage, needs s3:DeleteObject, and fails silently if it can&#x27;t delete.</p>
+    <span class="reveal-hint">Click to reveal answer</span>
+  </div>
+  <div class="red"><div class="red-h">Red flag answers to avoid</div><ul><li>&quot;Just rerun with FORCE = TRUE.&quot; That silently doubles rows.</li><li>Not knowing that CREATE OR REPLACE TABLE or TRUNCATE resets the load metadata.</li></ul></div>
+  <details class="deep">
+    <summary><span>Deep dive</span><em>SQL + visual</em></summary>
+    <div class="deep-b"><p>Changed content under the same name gets a new checksum, so COPY loads it again. That's correct for corrections but can duplicate data. After 64 days a file with an old LAST_MODIFIED has uncertain status and is skipped unless LOAD_UNCERTAIN_FILES = TRUE. For true idempotency, dedupe downstream on a business key too.</p><figure class="viz">
+<div class="bars">
+  <div class="bar-row"><span class="bar-l">Bulk COPY load metadata</span><div class="bar"><i style="--w:100%"></i><em>64 days, stored with the table</em></div></div>
+  <div class="bar-row"><span class="bar-l">Snowpipe load history</span><div class="bar teal"><i style="--w:21.9%"></i><em>14 days, stored with the pipe</em></div></div>
+  <div class="bar-row"><span class="bar-l">ALTER PIPE ... REFRESH reach</span><div class="bar ink"><i style="--w:10.9%"></i><em>files staged in the last 7 days</em></div></div>
+</div></figure><div class="code"><div class="code-h"><span class="lang">SQL</span><span class="code-l">Rerun safely</span><button class="copy" type="button" data-copy="c17_0" aria-label="Copy code">Copy</button></div><pre id="c17_0"><code>-- second run: 0 new rows, files reported as already loaded
+COPY INTO RAW.ORDERS_RAW (raw, src_file, src_row)
+FROM (SELECT $1, METADATA$FILENAME, METADATA$FILE_ROW_NUMBER FROM @RAW.STG_S3_LANDING/orders/)
+FILE_FORMAT = (FORMAT_NAME = &#x27;RAW.FF_JSON_NDJSON&#x27;);
+
+-- deliberate replay of one file (expect duplicates; dedupe downstream)
+COPY INTO RAW.ORDERS_RAW (raw, src_file, src_row)
+FROM (SELECT $1, METADATA$FILENAME, METADATA$FILE_ROW_NUMBER FROM @RAW.STG_S3_LANDING/orders/)
+FILE_FORMAT = (FORMAT_NAME = &#x27;RAW.FF_JSON_NDJSON&#x27;)
+FILES = (&#x27;orders_2026-11-18_part1.json&#x27;)
+FORCE = TRUE;</code></pre></div></div>
+  </details>
+</article>
+<article class="card" id="q18" data-topic="load" data-level="Advanced" style="--i:4">
+  <header class="card-h">
+    <span class="qnum">Q18</span>
+    <span class="badge b-advanced">Advanced</span>
+    <span class="tlabel">Loading</span>
+  </header>
+  <h3 class="qtext">How do MATCH_BY_COLUMN_NAME and INFER_SCHEMA / USING TEMPLATE fit in?</h3>
+  <div class="say" tabindex="0" role="button" aria-label="Answer (click to reveal in quiz mode)">
+    <span class="say-l">Say this</span>
+    <p>INFER_SCHEMA scans staged files and returns column names, types, and expressions. CREATE TABLE ... USING TEMPLATE builds a typed table from that output. MATCH_BY_COLUMN_NAME then maps top-level JSON keys to columns of the same name, with no SELECT needed, and INCLUDE_METADATA can add the file name. With schema evolution enabled, new keys can add columns automatically.</p>
+    <span class="reveal-hint">Click to reveal answer</span>
+  </div>
+  <div class="red"><div class="red-h">Red flag answers to avoid</div><ul><li>Forgetting that nested objects still arrive as VARIANT columns. This only flattens the top level.</li></ul></div>
+  <details class="deep">
+    <summary><span>Deep dive</span><em>SQL</em></summary>
+    <div class="deep-b"><p>Gotcha: inferred names keep the file's case and get created as quoted identifiers. Use <code>IGNORE_CASE =&gt; TRUE</code> to get uppercase names. MATCH_BY_COLUMN_NAME can't be combined with a transforming SELECT, which is why INCLUDE_METADATA exists.</p><div class="code"><div class="code-h"><span class="lang">SQL</span><span class="code-l">Typed table from the files</span><button class="copy" type="button" data-copy="c18_0" aria-label="Copy code">Copy</button></div><pre id="c18_0"><code>SELECT *
+FROM TABLE(INFER_SCHEMA(
+  LOCATION    =&gt; &#x27;@RAW.STG_S3_LANDING/orders/&#x27;,
+  FILE_FORMAT =&gt; &#x27;RAW.FF_JSON_NDJSON&#x27;,
+  IGNORE_CASE =&gt; TRUE));
+
+CREATE OR REPLACE TABLE RAW.ORDERS_TYPED
+  USING TEMPLATE (
+    SELECT ARRAY_AGG(OBJECT_CONSTRUCT(*)) WITHIN GROUP (ORDER BY order_id)  -- ORDER_ID = INFER_SCHEMA output column
+    FROM TABLE(INFER_SCHEMA(
+      LOCATION    =&gt; &#x27;@RAW.STG_S3_LANDING/orders/&#x27;,
+      FILE_FORMAT =&gt; &#x27;RAW.FF_JSON_NDJSON&#x27;,
+      IGNORE_CASE =&gt; TRUE)));
+
+ALTER TABLE RAW.ORDERS_TYPED ADD COLUMN src_file STRING;
+ALTER TABLE RAW.ORDERS_TYPED SET ENABLE_SCHEMA_EVOLUTION = TRUE;
+
+COPY INTO RAW.ORDERS_TYPED
+FROM @RAW.STG_S3_LANDING/orders/
+FILE_FORMAT = (FORMAT_NAME = &#x27;RAW.FF_JSON_NDJSON&#x27;)
+MATCH_BY_COLUMN_NAME = CASE_INSENSITIVE
+INCLUDE_METADATA = (src_file = METADATA$FILENAME);</code></pre></div></div>
+  </details>
+</article>
+<article class="card" id="q19" data-topic="load" data-level="Intermediate" style="--i:5">
+  <header class="card-h">
+    <span class="qnum">Q19</span>
+    <span class="badge b-intermediate">Intermediate</span>
+    <span class="tlabel">Loading</span>
+  </header>
+  <h3 class="qtext">External tables vs. loading. When would you not load at all?</h3>
+  <div class="say" tabindex="0" role="button" aria-label="Answer (click to reveal in quiz mode)">
+    <span class="say-l">Say this</span>
+    <p>An external table queries the files in place as a VALUE VARIANT column with metadata, so it&#x27;s good for rarely queried archives, exploration, or keeping S3 as the system of record. Loading wins on performance, caching, clustering, time travel, and streams for CDC. For ShopStream orders, which are queried constantly, I load. For a cold history bucket, an external table with partition columns is fine.</p>
+    <span class="reveal-hint">Click to reveal answer</span>
+  </div>
+  
+  <details class="deep">
+    <summary><span>Deep dive</span><em>SQL</em></summary>
+    <div class="deep-b"><p>External table partition columns must be derived from METADATA$FILENAME. AUTO_REFRESH uses the same S3 event to SQS plumbing as Snowpipe. Iceberg tables are the modern middle ground if open format is a requirement.</p><div class="code"><div class="code-h"><span class="lang">SQL</span><span class="code-l">Partitioned external table</span><button class="copy" type="button" data-copy="c19_0" aria-label="Copy code">Copy</button></div><pre id="c19_0"><code>CREATE OR REPLACE EXTERNAL TABLE RAW.ORDERS_EXT (
+  order_id  STRING AS (value:order_id::STRING),
+  file_date DATE   AS (TO_DATE(REGEXP_SUBSTR(METADATA$FILENAME, &#x27;[0-9]{4}-[0-9]{2}-[0-9]{2}&#x27;)))
+)
+PARTITION BY (file_date)
+LOCATION = @RAW.STG_S3_LANDING/orders/
+FILE_FORMAT = (FORMAT_NAME = &#x27;RAW.FF_JSON_NDJSON&#x27;)
+AUTO_REFRESH = TRUE;
+
+SELECT file_date, COUNT(*) FROM RAW.ORDERS_EXT GROUP BY file_date;</code></pre></div></div>
+  </details>
+</article></section><section class="topic" data-topic="err" id="t-err"><h2 class="topic-h"><span>Errors &amp; data quality</span><small>5 questions</small></h2>
+<article class="card" id="q20" data-topic="err" data-level="Intermediate" style="--i:0">
+  <header class="card-h">
+    <span class="qnum">Q20</span>
+    <span class="badge b-intermediate">Intermediate</span>
+    <span class="tlabel">Errors &amp; data quality</span>
+  </header>
+  <h3 class="qtext">How do you dry-run a load with VALIDATION_MODE?</h3>
+  <div class="say" tabindex="0" role="button" aria-label="Answer (click to reveal in quiz mode)">
+    <span class="say-l">Say this</span>
+    <p>VALIDATION_MODE = RETURN_ERRORS, RETURN_ALL_ERRORS, or RETURN_n_ROWS parses the files and returns problems or sample rows without loading anything. It doesn&#x27;t support transforming COPYs, so I point it at a plain COPY into a one-column VARIANT probe table. On the ShopStream bad file it surfaces the two malformed lines before anything touches RAW.</p>
+    <span class="reveal-hint">Click to reveal answer</span>
+  </div>
+  
+  <details class="deep">
+    <summary><span>Deep dive</span><em>SQL</em></summary>
+    <div class="deep-b"><p>RETURN_ERRORS reports errors across the files in the statement. RETURN_ALL_ERRORS also includes files that partially loaded earlier with ON_ERROR = CONTINUE. Use RETURN_10_ROWS to eyeball the parse.</p><div class="code"><div class="code-h"><span class="lang">SQL</span><span class="code-l">Probe-table dry run</span><button class="copy" type="button" data-copy="c20_0" aria-label="Copy code">Copy</button></div><pre id="c20_0"><code>CREATE TEMPORARY TABLE RAW.ORDERS_PROBE (raw VARIANT);
+
+COPY INTO RAW.ORDERS_PROBE
+FROM @RAW.STG_S3_LANDING/orders_bad/
+FILE_FORMAT = (FORMAT_NAME = &#x27;RAW.FF_JSON_NDJSON&#x27;)
+VALIDATION_MODE = RETURN_ERRORS;
+
+COPY INTO RAW.ORDERS_PROBE
+FROM @RAW.STG_S3_LANDING/orders/
+FILE_FORMAT = (FORMAT_NAME = &#x27;RAW.FF_JSON_NDJSON&#x27;)
+VALIDATION_MODE = RETURN_10_ROWS;</code></pre></div></div>
+  </details>
+</article>
+<article class="card" id="q21" data-topic="err" data-level="Intermediate" style="--i:1">
+  <header class="card-h">
+    <span class="qnum">Q21</span>
+    <span class="badge b-intermediate">Intermediate</span>
+    <span class="tlabel">Errors &amp; data quality</span>
+  </header>
+  <h3 class="qtext">Explain ON_ERROR and its defaults.</h3>
+  <div class="say" tabindex="0" role="button" aria-label="Answer (click to reveal in quiz mode)">
+    <span class="say-l">Say this</span>
+    <p>Bulk COPY defaults to ABORT_STATEMENT, so one bad record fails the whole statement. Snowpipe defaults to SKIP_FILE. The alternatives are CONTINUE, which loads good rows and skips bad ones, and SKIP_FILE_n or SKIP_FILE_n%, which use a threshold. For the ShopStream bad file, CONTINUE loads 9 rows and rejects the 2 malformed lines, and I capture those rejects rather than ignoring them.</p>
+    <span class="reveal-hint">Click to reveal answer</span>
+  </div>
+  <div class="red"><div class="red-h">Red flag answers to avoid</div><ul><li>&quot;I always use CONTINUE.&quot; That&#x27;s silent data loss unless you also capture and alert on errors.</li></ul></div>
+  <details class="deep">
+    <summary><span>Deep dive</span><em>SQL + visual</em></summary>
+    <div class="deep-b"><p>ON_ERROR only catches <i>parse and load</i> errors. A record that parses but is semantically wrong, like a missing order_id or the amount "forty-two", loads successfully into VARIANT. Those are caught by data-quality rules in the curated layer.</p><figure class="viz">
+<div class="scale">
+  <div class="sc"><b>ABORT_STATEMENT</b><small>Default for bulk COPY. One bad row fails the whole statement.</small></div>
+  <div class="sc"><b>SKIP_FILE</b><small>Default for Snowpipe. Skips any file with an error.</small></div>
+  <div class="sc"><b>SKIP_FILE_n / n%</b><small>Skips a file once errors reach a count or a percent.</small></div>
+  <div class="sc hot"><b>CONTINUE</b><small>Loads the good rows and skips bad ones. Pair it with error capture.</small></div>
+</div></figure><div class="code"><div class="code-h"><span class="lang">SQL</span><span class="code-l">Tolerant load</span><button class="copy" type="button" data-copy="c21_0" aria-label="Copy code">Copy</button></div><pre id="c21_0"><code>COPY INTO RAW.ORDERS_RAW (raw, src_file, src_row)
+FROM (SELECT $1, METADATA$FILENAME, METADATA$FILE_ROW_NUMBER FROM @RAW.STG_S3_LANDING/orders_bad/)
+FILE_FORMAT = (FORMAT_NAME = &#x27;RAW.FF_JSON_NDJSON&#x27;)
+ON_ERROR = CONTINUE;
+-- result: rows_parsed 11, rows_loaded 9, errors_seen 2</code></pre></div></div>
+  </details>
+</article>
+<article class="card" id="q22" data-topic="err" data-level="Advanced" style="--i:2">
+  <header class="card-h">
+    <span class="qnum">Q22</span>
+    <span class="badge b-advanced">Advanced</span>
+    <span class="tlabel">Errors &amp; data quality</span>
+  </header>
+  <h3 class="qtext">How do you capture the rejected records with VALIDATE()?</h3>
+  <div class="say" tabindex="0" role="button" aria-label="Answer (click to reveal in quiz mode)">
+    <span class="say-l">Say this</span>
+    <p>VALIDATE(table, JOB_ID =&gt; &#x27;_last&#x27; or a query ID) returns every error from a previous COPY, including the rejected record text, file, and line. Like VALIDATION_MODE it doesn&#x27;t work for transforming COPYs, so I run the CONTINUE load into the probe table and insert VALIDATE&#x27;s output into RAW.ORDERS_LOAD_ERRORS. It&#x27;s limited to recent jobs, so it belongs in the same orchestration step.</p>
+    <span class="reveal-hint">Click to reveal answer</span>
+  </div>
+  
+  <details class="deep">
+    <summary><span>Deep dive</span><em>SQL</em></summary>
+    <div class="deep-b"><p>The error table is the operational backbone: alert on new rows, replay after the producer fixes the data. VALIDATE output columns include ERROR, FILE, LINE, CHARACTER, CATEGORY, CODE, ROW_NUMBER and REJECTED_RECORD.</p><div class="code"><div class="code-h"><span class="lang">SQL</span><span class="code-l">Errors to a table</span><button class="copy" type="button" data-copy="c22_0" aria-label="Copy code">Copy</button></div><pre id="c22_0"><code>CREATE TABLE IF NOT EXISTS RAW.ORDERS_LOAD_ERRORS (
+  error STRING, file STRING, line NUMBER, category STRING,
+  rejected_record STRING, captured_at TIMESTAMP_LTZ
+);
+
+COPY INTO RAW.ORDERS_PROBE
+FROM @RAW.STG_S3_LANDING/orders_bad/
+FILE_FORMAT = (FORMAT_NAME = &#x27;RAW.FF_JSON_NDJSON&#x27;)
+ON_ERROR = CONTINUE;
+
+INSERT INTO RAW.ORDERS_LOAD_ERRORS (error, file, line, category, rejected_record, captured_at)
+SELECT error, file, line, category, rejected_record, CURRENT_TIMESTAMP()
+FROM TABLE(VALIDATE(RAW.ORDERS_PROBE, JOB_ID =&gt; &#x27;_last&#x27;));</code></pre></div></div>
+  </details>
+</article>
+<article class="card" id="q23" data-topic="err" data-level="Intermediate" style="--i:3">
+  <header class="card-h">
+    <span class="qnum">Q23</span>
+    <span class="badge b-intermediate">Intermediate</span>
+    <span class="tlabel">Errors &amp; data quality</span>
+  </header>
+  <h3 class="qtext">COPY_HISTORY vs. LOAD_HISTORY. What&#x27;s the difference?</h3>
+  <div class="say" tabindex="0" role="button" aria-label="Answer (click to reveal in quiz mode)">
+    <span class="say-l">Say this</span>
+    <p>COPY_HISTORY covers both bulk COPY and Snowpipe. It&#x27;s a table function in INFORMATION_SCHEMA with 14 days of history, and a view in ACCOUNT_USAGE with a year. LOAD_HISTORY covers bulk COPY only, excludes Snowpipe, and the INFORMATION_SCHEMA view is capped at 14 days and 10,000 rows. For pipelines that mix COPY and pipes, I use COPY_HISTORY.</p>
+    <span class="reveal-hint">Click to reveal answer</span>
+  </div>
+  <div class="red"><div class="red-h">Red flag answers to avoid</div><ul><li>Debugging a Snowpipe in LOAD_HISTORY and concluding &quot;nothing loaded&quot;.</li></ul></div>
+  <details class="deep">
+    <summary><span>Deep dive</span><em>SQL</em></summary>
+    <div class="deep-b"><p>ACCOUNT_USAGE views have ingestion latency (up to a couple of hours), so use INFORMATION_SCHEMA for 'right now' questions and ACCOUNT_USAGE for trends and audits.</p><div class="code"><div class="code-h"><span class="lang">SQL</span><span class="code-l">Last 24h by file</span><button class="copy" type="button" data-copy="c23_0" aria-label="Copy code">Copy</button></div><pre id="c23_0"><code>SELECT file_name, status, row_parsed, row_count,
+       error_count, first_error_message, pipe_name, last_load_time
+FROM TABLE(SHOPSTREAM_LAB.INFORMATION_SCHEMA.COPY_HISTORY(
+  TABLE_NAME =&gt; &#x27;RAW.ORDERS_RAW&#x27;,
+  START_TIME =&gt; DATEADD(HOUR, -24, CURRENT_TIMESTAMP())))
+ORDER BY last_load_time DESC;</code></pre></div></div>
+  </details>
+</article>
+<article class="card" id="q24" data-topic="err" data-level="Advanced" style="--i:4">
+  <header class="card-h">
+    <span class="qnum">Q24</span>
+    <span class="badge b-advanced">Advanced</span>
+    <span class="tlabel">Errors &amp; data quality</span>
+  </header>
+  <h3 class="qtext">Design a quarantine for malformed JSON, missing keys, and type mismatches.</h3>
+  <div class="say" tabindex="0" role="button" aria-label="Answer (click to reveal in quiz mode)">
+    <span class="say-l">Say this</span>
+    <p>I handle it in two tiers. Parse failures are caught at load with ON_ERROR plus VALIDATE, or by reading lines as text and testing them with TRY_PARSE_JSON. Semantic failures are caught in the curated build with explicit rules: order_id must be present, and amount must cast through TRY_TO_NUMBER. Failing rows go to a quarantine with a reason code instead of disappearing. That makes it measurable, alertable, and replayable.</p>
+    <span class="reveal-hint">Click to reveal answer</span>
+  </div>
+  <div class="red"><div class="red-h">Red flag answers to avoid</div><ul><li>Using a hard ::NUMBER cast in the curated build. One bad value like &quot;forty-two&quot; fails the whole job.</li></ul></div>
+  <details class="deep">
+    <summary><span>Deep dive</span><em>SQL</em></summary>
+    <div class="deep-b"><p>The ShopStream bad file shows each case. The two malformed lines are rejected at load. The record with no order_id is filtered by <code>WHERE raw:order_id IS NOT NULL</code>. For "forty-two", <code>TRY_TO_NUMBER</code> returns NULL, and that row is flagged.</p><div class="code"><div class="code-h"><span class="lang">SQL</span><span class="code-l">Text-line quarantine + rule checks</span><button class="copy" type="button" data-copy="c24_0" aria-label="Copy code">Copy</button></div><pre id="c24_0"><code>-- Read each line as raw text so nothing is lost, then test it
+CREATE OR REPLACE FILE FORMAT RAW.FF_JSON_AS_TEXT
+  TYPE = CSV FIELD_DELIMITER = NONE ESCAPE_UNENCLOSED_FIELD = NONE;
+
+SELECT METADATA$FILENAME AS file, METADATA$FILE_ROW_NUMBER AS line,
+       $1 AS raw_text, TRY_PARSE_JSON($1) AS parsed
+FROM @RAW.STG_S3_LANDING/orders_bad/ (FILE_FORMAT =&gt; &#x27;RAW.FF_JSON_AS_TEXT&#x27;)
+WHERE parsed IS NULL;   -- the 2 malformed lines
+
+-- Semantic rules on loaded rows
+SELECT src_file, src_row,
+       IFF(raw:order_id IS NULL, &#x27;MISSING_ORDER_ID&#x27;,
+       IFF(TRY_TO_NUMBER(raw:payment.amount::STRING, 12, 2) IS NULL, &#x27;BAD_AMOUNT&#x27;, NULL)) AS reason
+FROM RAW.ORDERS_RAW
+WHERE src_file ILIKE &#x27;%orders_bad/%&#x27;
+  AND (raw:order_id IS NULL
+       OR TRY_TO_NUMBER(raw:payment.amount::STRING, 12, 2) IS NULL);</code></pre></div></div>
+  </details>
+</article></section><section class="topic" data-topic="query" id="t-query"><h2 class="topic-h"><span>Querying JSON</span><small>5 questions</small></h2>
+<article class="card" id="q25" data-topic="query" data-level="Basic" style="--i:0">
+  <header class="card-h">
+    <span class="qnum">Q25</span>
+    <span class="badge b-basic">Basic</span>
+    <span class="tlabel">Querying JSON</span>
+  </header>
+  <h3 class="qtext">How do you navigate and cast JSON paths?</h3>
+  <div class="say" tabindex="0" role="button" aria-label="Answer (click to reveal in quiz mode)">
+    <span class="say-l">Say this</span>
+    <p>Colon for the first level, then dots or brackets: raw:customer.address.city or raw[&#x27;customer&#x27;][&#x27;address&#x27;][&#x27;city&#x27;]. Array elements use an index, as in raw:items[0].sku. Path results are VARIANT, so I cast with :: to get proper types and to drop the JSON quotes. For untrusted values I use TRY_TO_NUMBER or TRY_TO_TIMESTAMP on the string form.</p>
+    <span class="reveal-hint">Click to reveal answer</span>
+  </div>
+  <div class="red"><div class="red-h">Red flag answers to avoid</div><ul><li>Leaving values uncast and wondering why &quot;ORD-1&quot; shows with quotes, or why comparisons misbehave.</li></ul></div>
+  <details class="deep">
+    <summary><span>Deep dive</span><em>SQL</em></summary>
+    <div class="deep-b"><p>GET_PATH(raw, 'customer.address.city') is the functional form. Keys containing spaces, dots, or dashes need double quotes: <code>raw:"promo-code"</code>. Historically TRY_CAST only accepted string input, so go through ::STRING first.</p><div class="code"><div class="code-h"><span class="lang">SQL</span><span class="code-l">Paths and casts</span><button class="copy" type="button" data-copy="c25_0" aria-label="Copy code">Copy</button></div><pre id="c25_0"><code>SELECT raw:order_id::STRING                        AS order_id,
+       raw:order_ts::TIMESTAMP_TZ                   AS order_ts,
+       raw[&#x27;customer&#x27;][&#x27;address&#x27;][&#x27;city&#x27;]::STRING   AS city,
+       raw:items[0].sku::STRING                     AS first_sku,
+       ARRAY_SIZE(raw:items)                        AS item_count,
+       TRY_TO_NUMBER(raw:payment.amount::STRING, 12, 2) AS amount_safe
+FROM RAW.ORDERS_RAW;</code></pre></div></div>
+  </details>
+</article>
+<article class="card" id="q26" data-topic="query" data-level="Basic" style="--i:1">
+  <header class="card-h">
+    <span class="qnum">Q26</span>
+    <span class="badge b-basic">Basic</span>
+    <span class="tlabel">Querying JSON</span>
+  </header>
+  <h3 class="qtext">Are JSON keys case-sensitive in Snowflake?</h3>
+  <div class="say" tabindex="0" role="button" aria-label="Answer (click to reveal in quiz mode)">
+    <span class="say-l">Say this</span>
+    <p>Yes. Column names follow normal identifier rules, so raw and RAW are the same column, but JSON keys inside a VARIANT are case-sensitive. raw:Order_ID returns NULL when the key is order_id. It&#x27;s one of the most common reasons a field comes back NULL.</p>
+    <span class="reveal-hint">Click to reveal answer</span>
+  </div>
+  <div class="red"><div class="red-h">Red flag answers to avoid</div><ul><li>&quot;Snowflake uppercases everything, so case doesn&#x27;t matter.&quot; That&#x27;s true for unquoted identifiers, not for JSON keys.</li></ul></div>
+  <details class="deep">
+    <summary><span>Deep dive</span><em>SQL</em></summary>
+    <div class="deep-b"><p>If producers are inconsistent, normalize in the curated layer, for example COALESCE(raw:orderId, raw:order_id). You can also find variants with FLATTEN on OBJECT_KEYS.</p><div class="code"><div class="code-h"><span class="lang">SQL</span><span class="code-l">Case trap</span><button class="copy" type="button" data-copy="c26_0" aria-label="Copy code">Copy</button></div><pre id="c26_0"><code>SELECT raw:order_id::STRING AS ok,       -- ORD-100001
+       raw:Order_ID::STRING AS null_val, -- NULL
+       RAW:order_id::STRING AS also_ok   -- column name is case-insensitive
+FROM RAW.ORDERS_RAW
+LIMIT 1;</code></pre></div></div>
+  </details>
+</article>
+<article class="card" id="q27" data-topic="query" data-level="Intermediate" style="--i:2">
+  <header class="card-h">
+    <span class="qnum">Q27</span>
+    <span class="badge b-intermediate">Intermediate</span>
+    <span class="tlabel">Querying JSON</span>
+  </header>
+  <h3 class="qtext">Explain FLATTEN: LATERAL, OUTER, and RECURSIVE.</h3>
+  <div class="say" tabindex="0" role="button" aria-label="Answer (click to reveal in quiz mode)">
+    <span class="say-l">Say this</span>
+    <p>FLATTEN turns an array or object into rows, with INDEX, KEY, VALUE, and PATH columns. LATERAL lets each row&#x27;s array be flattened against that row. OUTER =&gt; TRUE keeps parents whose array is empty or missing, like a left join. RECURSIVE =&gt; TRUE walks every nested level, which is great for schema discovery and too noisy for production models.</p>
+    <span class="reveal-hint">Click to reveal answer</span>
+  </div>
+  <div class="red"><div class="red-h">Red flag answers to avoid</div><ul><li>Forgetting OUTER and silently dropping orders with no tags or items.</li></ul></div>
+  <details class="deep">
+    <summary><span>Deep dive</span><em>SQL + visual</em></summary>
+    <div class="deep-b"><p>CURATED.ORDER_ITEMS is ORDERS_RAW &times; LATERAL FLATTEN(raw:items). The expected counts are 91 item rows from the two NDJSON files, and 111 after the array file. Use <code>f.index + 1</code> as a stable line number for merge keys.</p><figure class="viz">
+<div class="flat">
+  <div class="flat-in"><div class="pane-h">1 row in ORDERS_RAW</div><code>ORD-100001 &middot; items: [ A, B, C ]</code></div>
+  <div class="flat-arrow">LATERAL FLATTEN(raw:items) &rarr;</div>
+  <div class="flat-out"><div class="pane-h">3 rows in ORDER_ITEMS</div><code>ORD-100001 &middot; index 0 &middot; A</code><code>ORD-100001 &middot; index 1 &middot; B</code><code>ORD-100001 &middot; index 2 &middot; C</code></div>
+</div></figure><div class="code"><div class="code-h"><span class="lang">SQL</span><span class="code-l">Three flavors</span><button class="copy" type="button" data-copy="c27_0" aria-label="Copy code">Copy</button></div><pre id="c27_0"><code>-- items -&gt; rows
+SELECT o.raw:order_id::STRING AS order_id, i.index + 1 AS line_no,
+       i.value:sku::STRING AS sku, i.value:qty::NUMBER AS qty
+FROM RAW.ORDERS_RAW o, LATERAL FLATTEN(input =&gt; o.raw:items) i;
+
+-- optional tags, keep orders without tags
+SELECT o.raw:order_id::STRING AS order_id, t.value::STRING AS tag
+FROM RAW.ORDERS_RAW o, LATERAL FLATTEN(input =&gt; o.raw:tags, OUTER =&gt; TRUE) t;
+
+-- discover every path and its type
+SELECT DISTINCT f.path, TYPEOF(f.value) AS json_type
+FROM RAW.ORDERS_RAW o, LATERAL FLATTEN(input =&gt; o.raw, RECURSIVE =&gt; TRUE) f
+ORDER BY 1;</code></pre></div></div>
+  </details>
+</article>
+<article class="card" id="q28" data-topic="query" data-level="Advanced" style="--i:3">
+  <header class="card-h">
+    <span class="qnum">Q28</span>
+    <span class="badge b-advanced">Advanced</span>
+    <span class="tlabel">Querying JSON</span>
+  </header>
+  <h3 class="qtext">SQL NULL vs. JSON null. How does STRIP_NULL_VALUES help?</h3>
+  <div class="say" tabindex="0" role="button" aria-label="Answer (click to reveal in quiz mode)">
+    <span class="say-l">Say this</span>
+    <p>A missing key returns SQL NULL. An explicit &quot;key&quot;: null is stored as a VARIANT null, which is a value, so IS NULL is false. IS_NULL_VALUE() detects it, and casting it with ::STRING gives SQL NULL. STRIP_NULL_VALUES = TRUE in the file format drops null-valued keys at load, so both cases behave the same and storage shrinks.</p>
+    <span class="reveal-hint">Click to reveal answer</span>
+  </div>
+  
+  <details class="deep">
+    <summary><span>Deep dive</span><em>SQL + visual</em></summary>
+    <div class="deep-b"><p>Choose deliberately. Stripping loses the difference between "explicitly cleared" and "not sent", which some CDC feeds rely on. TYPEOF() returns NULL_VALUE for JSON null.</p><figure class="viz">
+<table class="tbl">
+  <thead><tr><th>JSON input</th><th><code>raw:shipping</code></th><th><code>IS NULL</code></th><th><code>IS_NULL_VALUE()</code></th><th><code>::STRING</code></th></tr></thead>
+  <tbody>
+    <tr><td>key missing</td><td>SQL NULL</td><td>TRUE</td><td>NULL</td><td>NULL</td></tr>
+    <tr><td><code>"shipping": null</code></td><td>VARIANT <code>null</code></td><td><b class="acc-t">FALSE</b></td><td>TRUE</td><td>NULL</td></tr>
+    <tr><td><code>"shipping": {...}</code></td><td>OBJECT</td><td>FALSE</td><td>FALSE</td><td>JSON text</td></tr>
+  </tbody>
+</table></figure><div class="code"><div class="code-h"><span class="lang">SQL</span><span class="code-l">Detect both</span><button class="copy" type="button" data-copy="c28_0" aria-label="Copy code">Copy</button></div><pre id="c28_0"><code>SELECT raw:order_id::STRING AS order_id,
+       raw:shipping IS NULL          AS sql_null,
+       IS_NULL_VALUE(raw:shipping)   AS json_null,
+       TYPEOF(raw:shipping)          AS t
+FROM RAW.ORDERS_RAW;
+
+CREATE OR REPLACE FILE FORMAT RAW.FF_JSON_NDJSON
+  TYPE = JSON STRIP_OUTER_ARRAY = FALSE STRIP_NULL_VALUES = TRUE;</code></pre></div></div>
+  </details>
+</article>
+<article class="card" id="q29" data-topic="query" data-level="Intermediate" style="--i:4">
+  <header class="card-h">
+    <span class="qnum">Q29</span>
+    <span class="badge b-intermediate">Intermediate</span>
+    <span class="tlabel">Querying JSON</span>
+  </header>
+  <h3 class="qtext">A new field appears in the feed. How do you handle schema drift?</h3>
+  <div class="say" tabindex="0" role="button" aria-label="Answer (click to reveal in quiz mode)">
+    <span class="say-l">Say this</span>
+    <p>The raw VARIANT layer absorbs it automatically. The 10:00 incremental file adds customer.loyalty_tier, and the load doesn&#x27;t change at all. I detect new paths by comparing a RECURSIVE FLATTEN against the known set, then add the column to the curated model on purpose. For typed tables, ENABLE_SCHEMA_EVOLUTION can add columns automatically, but I gate that in production.</p>
+    <span class="reveal-hint">Click to reveal answer</span>
+  </div>
+  <div class="red"><div class="red-h">Red flag answers to avoid</div><ul><li>&quot;The load would fail, so we&#x27;d ALTER the table first.&quot; Not with VARIANT.</li></ul></div>
+  <details class="deep">
+    <summary><span>Deep dive</span><em>SQL</em></summary>
+    <div class="deep-b"><p>Removed or renamed fields are the dangerous kind of drift, because they show up as NULLs rather than errors. Monitor the NULL rate per curated column.</p><div class="code"><div class="code-h"><span class="lang">SQL</span><span class="code-l">Find new paths since yesterday</span><button class="copy" type="button" data-copy="c29_0" aria-label="Copy code">Copy</button></div><pre id="c29_0"><code>SELECT DISTINCT f.path
+FROM RAW.ORDERS_RAW o, LATERAL FLATTEN(input =&gt; o.raw, RECURSIVE =&gt; TRUE) f
+WHERE o.loaded_at &gt;= DATEADD(DAY, -1, CURRENT_TIMESTAMP())
+MINUS
+SELECT DISTINCT f.path
+FROM RAW.ORDERS_RAW o, LATERAL FLATTEN(input =&gt; o.raw, RECURSIVE =&gt; TRUE) f
+WHERE o.loaded_at &lt;  DATEADD(DAY, -1, CURRENT_TIMESTAMP());
+-- -&gt; customer.loyalty_tier</code></pre></div></div>
+  </details>
+</article></section><section class="topic" data-topic="pipe" id="t-pipe"><h2 class="topic-h"><span>Continuous ingestion</span><small>5 questions</small></h2>
+<article class="card" id="q30" data-topic="pipe" data-level="Intermediate" style="--i:0">
+  <header class="card-h">
+    <span class="qnum">Q30</span>
+    <span class="badge b-intermediate">Intermediate</span>
+    <span class="tlabel">Continuous ingestion</span>
+  </header>
+  <h3 class="qtext">How does Snowpipe auto-ingest work end to end?</h3>
+  <div class="say" tabindex="0" role="button" aria-label="Answer (click to reveal in quiz mode)">
+    <span class="say-l">Say this</span>
+    <p>A pipe wraps a COPY statement. With AUTO_INGEST = TRUE, Snowflake gives it an SQS queue ARN, shown as notification_channel in SHOW PIPES. I add an S3 event notification for ObjectCreated on the prefix that targets that queue. Each new file triggers a serverless COPY with no warehouse. Downstream, a stream on the raw table plus a task moves new rows into curated tables.</p>
+    <span class="reveal-hint">Click to reveal answer</span>
+  </div>
+  <div class="red"><div class="red-h">Red flag answers to avoid</div><ul><li>&quot;Snowpipe polls the bucket every few minutes.&quot; It&#x27;s event-driven.</li></ul></div>
+  <details class="deep">
+    <summary><span>Deep dive</span><em>SQL + visual</em></summary>
+    <div class="deep-b"><p>If the bucket already sends events to SNS, subscribe the queue to the topic, or use AWS_SNS_TOPIC on the pipe, because S3 doesn't allow overlapping event rules on the same prefix. The pipe's owner needs USAGE on the stage and INSERT/SELECT on the table.</p><figure class="viz">
+<svg class="viz-svg" viewBox="0 0 860 220" role="img" aria-label="Snowpipe auto-ingest flow">
+  <defs><marker id="ah3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="var(--ink)"/></marker></defs>
+  <g class="node"><rect x="10" y="30" width="150" height="64" rx="6"/><text x="85" y="58" class="t1">PUT object</text><text x="85" y="78" class="t2">orders_incremental/</text></g>
+  <g class="node"><rect x="230" y="30" width="150" height="64" rx="6"/><text x="305" y="58" class="t1">S3 event</text><text x="305" y="78" class="t2">ObjectCreated</text></g>
+  <g class="node acc"><rect x="450" y="30" width="150" height="64" rx="6"/><text x="525" y="58" class="t1">SQS queue</text><text x="525" y="78" class="t2">notification_channel</text></g>
+  <g class="node acc"><rect x="680" y="30" width="170" height="64" rx="6"/><text x="765" y="58" class="t1">Snowpipe</text><text x="765" y="78" class="t2">serverless COPY</text></g>
+  <g class="node teal"><rect x="680" y="140" width="170" height="64" rx="6"/><text x="765" y="168" class="t1">ORDERS_RAW</text><text x="765" y="188" class="t2">+ 14-day load history</text></g>
+  <g class="node"><rect x="450" y="140" width="150" height="64" rx="6"/><text x="525" y="168" class="t1">Stream</text><text x="525" y="188" class="t2">STRM_ORDERS_RAW</text></g>
+  <g class="node"><rect x="230" y="140" width="150" height="64" rx="6"/><text x="305" y="168" class="t1">Task MERGE</text><text x="305" y="188" class="t2">every 5 min</text></g>
+  <g class="node teal"><rect x="10" y="140" width="150" height="64" rx="6"/><text x="85" y="168" class="t1">CURATED</text><text x="85" y="188" class="t2">ORDERS, ITEMS</text></g>
+  <path d="M160 62 H228" class="edge" marker-end="url(#ah3)"/><path d="M380 62 H448" class="edge" marker-end="url(#ah3)"/>
+  <path d="M600 62 H678" class="edge" marker-end="url(#ah3)"/><path d="M765 94 V138" class="edge" marker-end="url(#ah3)"/>
+  <path d="M680 172 H602" class="edge" marker-end="url(#ah3)"/><path d="M450 172 H382" class="edge" marker-end="url(#ah3)"/><path d="M230 172 H162" class="edge" marker-end="url(#ah3)"/>
+</svg></figure><div class="code"><div class="code-h"><span class="lang">SQL</span><span class="code-l">Create the pipe</span><button class="copy" type="button" data-copy="c30_0" aria-label="Copy code">Copy</button></div><pre id="c30_0"><code>CREATE OR REPLACE PIPE RAW.PIPE_ORDERS_INCREMENTAL
+  AUTO_INGEST = TRUE
+AS
+COPY INTO RAW.ORDERS_RAW (raw, src_file, src_row)
+FROM (
+  SELECT $1, METADATA$FILENAME, METADATA$FILE_ROW_NUMBER
+  FROM @RAW.STG_S3_LANDING/orders_incremental/
+)
+FILE_FORMAT = (FORMAT_NAME = &#x27;RAW.FF_JSON_NDJSON&#x27;);
+
+SHOW PIPES LIKE &#x27;PIPE_ORDERS_INCREMENTAL&#x27; IN SCHEMA SHOPSTREAM_LAB.RAW;
+-- notification_channel -&gt; S3 event notification (ObjectCreated, prefix landing/orders_incremental/)</code></pre></div></div>
+  </details>
+</article>
+<article class="card" id="q31" data-topic="pipe" data-level="Advanced" style="--i:1">
+  <header class="card-h">
+    <span class="qnum">Q31</span>
+    <span class="badge b-advanced">Advanced</span>
+    <span class="tlabel">Continuous ingestion</span>
+  </header>
+  <h3 class="qtext">How does Snowpipe deduplicate, and how does that differ from bulk COPY?</h3>
+  <div class="say" tabindex="0" role="button" aria-label="Answer (click to reveal in quiz mode)">
+    <span class="say-l">Say this</span>
+    <p>Snowpipe keeps load history on the pipe for 14 days and skips a file path it has already loaded in that window. Bulk COPY keeps its metadata on the table for 64 days. The two histories are separate, so loading the same file with a manual COPY and with the pipe produces duplicates. Recreating the pipe wipes its history, so a later REFRESH can replay files.</p>
+    <span class="reveal-hint">Click to reveal answer</span>
+  </div>
+  <div class="red"><div class="red-h">Red flag answers to avoid</div><ul><li>&quot;Snowpipe guarantees exactly-once.&quot; It dedupes files within a window. Rows still need a key-based MERGE downstream.</li></ul></div>
+  <details class="deep">
+    <summary><span>Deep dive</span><em>SQL + visual</em></summary>
+    <div class="deep-b"><p>Snowpipe identifies files by path, so re-uploading changed content under the same name in that window is generally <i>not</i> reloaded. Use new, immutable file names such as timestamped or UUID names. Events can also arrive more than once, and the history is what absorbs that.</p><figure class="viz">
+<div class="bars">
+  <div class="bar-row"><span class="bar-l">Bulk COPY load metadata</span><div class="bar"><i style="--w:100%"></i><em>64 days, stored with the table</em></div></div>
+  <div class="bar-row"><span class="bar-l">Snowpipe load history</span><div class="bar teal"><i style="--w:21.9%"></i><em>14 days, stored with the pipe</em></div></div>
+  <div class="bar-row"><span class="bar-l">ALTER PIPE ... REFRESH reach</span><div class="bar ink"><i style="--w:10.9%"></i><em>files staged in the last 7 days</em></div></div>
+</div></figure><div class="code"><div class="code-h"><span class="lang">SQL</span><span class="code-l">Inspect what the pipe has done</span><button class="copy" type="button" data-copy="c31_0" aria-label="Copy code">Copy</button></div><pre id="c31_0"><code>SELECT file_name, status, row_count, first_error_message, last_load_time
+FROM TABLE(SHOPSTREAM_LAB.INFORMATION_SCHEMA.COPY_HISTORY(
+  TABLE_NAME =&gt; &#x27;RAW.ORDERS_RAW&#x27;,
+  START_TIME =&gt; DATEADD(DAY, -1, CURRENT_TIMESTAMP())))
+WHERE pipe_name = &#x27;PIPE_ORDERS_INCREMENTAL&#x27;;</code></pre></div></div>
+  </details>
+</article>
+<article class="card" id="q32" data-topic="pipe" data-level="Intermediate" style="--i:2">
+  <header class="card-h">
+    <span class="qnum">Q32</span>
+    <span class="badge b-intermediate">Intermediate</span>
+    <span class="tlabel">Continuous ingestion</span>
+  </header>
+  <h3 class="qtext">What latency and cost should you expect from Snowpipe?</h3>
+  <div class="say" tabindex="0" role="button" aria-label="Answer (click to reveal in quiz mode)">
+    <span class="say-l">Say this</span>
+    <p>Latency is typically under a minute or two after the event, but there&#x27;s no SLA, so I don&#x27;t promise seconds. Cost is serverless and doesn&#x27;t use a warehouse. It has historically been compute plus a small per-file overhead, so many tiny files cost more than fewer medium files. Snowflake has been moving Snowpipe to simpler volume-based pricing, so I quote the current pricing guide rather than a number.</p>
+    <span class="reveal-hint">Click to reveal answer</span>
+  </div>
+  <div class="red"><div class="red-h">Red flag answers to avoid</div><ul><li>Running a warehouse on a 1-minute task to emulate Snowpipe. It costs more and is clunkier.</li></ul></div>
+  <details class="deep">
+    <summary><span>Deep dive</span><em>SQL</em></summary>
+    <div class="deep-b"><p>The guidance is to stage roughly one file per minute per stream, at about 100 to 250 MB compressed. Track spend with PIPE_USAGE_HISTORY. For sub-second needs, look at Snowpipe Streaming.</p><div class="code"><div class="code-h"><span class="lang">SQL</span><span class="code-l">Weekly pipe spend</span><button class="copy" type="button" data-copy="c32_0" aria-label="Copy code">Copy</button></div><pre id="c32_0"><code>SELECT pipe_name,
+       SUM(credits_used)                AS credits,
+       SUM(files_inserted)              AS files,
+       SUM(bytes_inserted) / POWER(1024, 3) AS gb
+FROM SNOWFLAKE.ACCOUNT_USAGE.PIPE_USAGE_HISTORY
+WHERE start_time &gt;= DATEADD(DAY, -7, CURRENT_TIMESTAMP())
+GROUP BY pipe_name
+ORDER BY credits DESC;</code></pre></div></div>
+  </details>
+</article>
+<article class="card" id="q33" data-topic="pipe" data-level="Intermediate" style="--i:3">
+  <header class="card-h">
+    <span class="qnum">Q33</span>
+    <span class="badge b-intermediate">Intermediate</span>
+    <span class="tlabel">Continuous ingestion</span>
+  </header>
+  <h3 class="qtext">When and how do you use ALTER PIPE ... REFRESH?</h3>
+  <div class="say" tabindex="0" role="button" aria-label="Answer (click to reveal in quiz mode)">
+    <span class="say-l">Say this</span>
+    <p>REFRESH queues files that are already in the stage path but were never notified. That covers backfills, files that landed before the event rule existed, or a missed event. It only considers files staged within the last 7 days and still respects the pipe&#x27;s 14-day history. For anything older, use a bulk COPY.</p>
+    <span class="reveal-hint">Click to reveal answer</span>
+  </div>
+  <div class="red"><div class="red-h">Red flag answers to avoid</div><ul><li>Using REFRESH as the main ingestion mechanism on a schedule.</li></ul></div>
+  <details class="deep">
+    <summary><span>Deep dive</span><em>SQL</em></summary>
+    <div class="deep-b"><p>PREFIX is appended to the pipe's stage path, and MODIFIED_AFTER narrows the scan. You can pause and resume with PIPE_EXECUTION_PAUSED during maintenance.</p><div class="code"><div class="code-h"><span class="lang">SQL</span><span class="code-l">Backfill + pause</span><button class="copy" type="button" data-copy="c33_0" aria-label="Copy code">Copy</button></div><pre id="c33_0"><code>ALTER PIPE RAW.PIPE_ORDERS_INCREMENTAL REFRESH
+  PREFIX = &#x27;orders_2026-11-20&#x27;
+  MODIFIED_AFTER = &#x27;2026-11-20T00:00:00Z&#x27;;
+
+ALTER PIPE RAW.PIPE_ORDERS_INCREMENTAL SET PIPE_EXECUTION_PAUSED = TRUE;
+ALTER PIPE RAW.PIPE_ORDERS_INCREMENTAL SET PIPE_EXECUTION_PAUSED = FALSE;</code></pre></div></div>
+  </details>
+</article>
+<article class="card" id="q34" data-topic="pipe" data-level="Advanced" style="--i:4">
+  <header class="card-h">
+    <span class="qnum">Q34</span>
+    <span class="badge b-advanced">Advanced</span>
+    <span class="tlabel">Continuous ingestion</span>
+  </header>
+  <h3 class="qtext">Snowpipe vs. Snowpipe Streaming. When would you pick each?</h3>
+  <div class="say" tabindex="0" role="button" aria-label="Answer (click to reveal in quiz mode)">
+    <span class="say-l">Say this</span>
+    <p>Snowpipe is file-based: something writes files to S3 and events trigger loads, which fits our S3 JSON drop. Snowpipe Streaming skips files entirely. A client SDK or the Kafka connector writes rows straight into tables with latency in seconds. If the source were an event bus rather than S3, I&#x27;d consider Streaming.</p>
+    <span class="reveal-hint">Click to reveal answer</span>
+  </div>
+  
+  <details class="deep">
+    <summary><span>Deep dive</span><em>SQL</em></summary>
+    <div class="deep-b"><p>Snowflake has introduced a newer high-performance Streaming architecture with its own pricing. Name it, but confirm current details rather than reciting numbers. For this question, the answer is S3 plus Snowpipe.</p><div class="code"><div class="code-h"><span class="lang">SQL</span><span class="code-l">Same downstream either way</span><button class="copy" type="button" data-copy="c34_0" aria-label="Copy code">Copy</button></div><pre id="c34_0"><code>-- whichever ingests, CDC downstream is identical
+CREATE OR REPLACE STREAM RAW.STRM_ORDERS_RAW
+  ON TABLE RAW.ORDERS_RAW
+  APPEND_ONLY = TRUE;</code></pre></div></div>
+  </details>
+</article></section><section class="topic" data-topic="cdc" id="t-cdc"><h2 class="topic-h"><span>CDC &amp; modeling</span><small>4 questions</small></h2>
+<article class="card" id="q35" data-topic="cdc" data-level="Intermediate" style="--i:0">
+  <header class="card-h">
+    <span class="qnum">Q35</span>
+    <span class="badge b-intermediate">Intermediate</span>
+    <span class="tlabel">CDC &amp; modeling</span>
+  </header>
+  <h3 class="qtext">Standard vs. append-only streams. Which fits the raw table?</h3>
+  <div class="say" tabindex="0" role="button" aria-label="Answer (click to reveal in quiz mode)">
+    <span class="say-l">Say this</span>
+    <p>A standard stream tracks inserts, updates, and deletes as net changes. An append-only stream tracks inserts only and is cheaper to compute. ORDERS_RAW is insert-only, because corrections arrive as new events, so STRM_ORDERS_RAW is append-only. The stream offset advances only when a DML statement that reads it commits.</p>
+    <span class="reveal-hint">Click to reveal answer</span>
+  </div>
+  <div class="red"><div class="red-h">Red flag answers to avoid</div><ul><li>Thinking a SELECT from the stream consumes it. Only a committed DML statement does.</li></ul></div>
+  <details class="deep">
+    <summary><span>Deep dive</span><em>SQL + visual</em></summary>
+    <div class="deep-b"><p>Streams can go stale if they aren't consumed within the table's retention, extended up to MAX_DATA_EXTENSION_TIME_IN_DAYS (default 14). Insert-only streams exist for external tables. Wrap multiple consumers in one explicit transaction so they see the same rows.</p><figure class="viz">
+<div class="layers">
+  <div class="ly"><b>RAW</b><span>ORDERS_RAW holds raw VARIANT plus lineage. Append-only. Never edited.</span></div>
+  <div class="ly mid"><b>STREAM</b><span>STRM_ORDERS_RAW tracks the new rows since the last MERGE.</span></div>
+  <div class="ly top"><b>CURATED</b><span>ORDERS / ORDER_ITEMS are typed, deduped and upserted by key.</span></div>
+</div></figure><div class="code"><div class="code-h"><span class="lang">SQL</span><span class="code-l">Stream + peek</span><button class="copy" type="button" data-copy="c35_0" aria-label="Copy code">Copy</button></div><pre id="c35_0"><code>CREATE OR REPLACE STREAM RAW.STRM_ORDERS_RAW
+  ON TABLE RAW.ORDERS_RAW APPEND_ONLY = TRUE;
+
+SELECT SYSTEM$STREAM_HAS_DATA(&#x27;RAW.STRM_ORDERS_RAW&#x27;);
+SELECT METADATA$ACTION, METADATA$ISUPDATE, raw:order_id::STRING
+FROM RAW.STRM_ORDERS_RAW;</code></pre></div></div>
+  </details>
+</article>
+<article class="card" id="q36" data-topic="cdc" data-level="Advanced" style="--i:1">
+  <header class="card-h">
+    <span class="qnum">Q36</span>
+    <span class="badge b-advanced">Advanced</span>
+    <span class="tlabel">CDC &amp; modeling</span>
+  </header>
+  <h3 class="qtext">Show the task that MERGEs new raw rows into curated tables.</h3>
+  <div class="say" tabindex="0" role="button" aria-label="Answer (click to reveal in quiz mode)">
+    <span class="say-l">Say this</span>
+    <p>A task runs every 5 minutes, but only when SYSTEM$STREAM_HAS_DATA is true, so idle runs cost nothing. Inside one transaction it MERGEs orders and then order items from the same stream snapshot. The source is deduped with QUALIFY ROW_NUMBER() so each key appears once. ORD-100003 moves from SHIPPED to DELIVERED as an update, not a duplicate.</p>
+    <span class="reveal-hint">Click to reveal answer</span>
+  </div>
+  <div class="red"><div class="red-h">Red flag answers to avoid</div><ul><li>MERGE without deduping the source. You get nondeterministic-merge errors or flip-flopping rows.</li></ul></div>
+  <details class="deep">
+    <summary><span>Deep dive</span><em>SQL</em></summary>
+    <div class="deep-b"><p>Without the explicit transaction, the first MERGE would commit and advance the offset, and the second MERGE would see an empty stream. Resume the task after creating it, because tasks start suspended.</p><div class="code"><div class="code-h"><span class="lang">SQL</span><span class="code-l">CURATED.TSK_MERGE_ORDERS</span><button class="copy" type="button" data-copy="c36_0" aria-label="Copy code">Copy</button></div><pre id="c36_0"><code>CREATE OR REPLACE TASK CURATED.TSK_MERGE_ORDERS
+  WAREHOUSE = LAB_WH
+  SCHEDULE = &#x27;5 MINUTE&#x27;
+  WHEN SYSTEM$STREAM_HAS_DATA(&#x27;RAW.STRM_ORDERS_RAW&#x27;)
+AS
+EXECUTE IMMEDIATE
+$$
+BEGIN
+  BEGIN TRANSACTION;
+
+  MERGE INTO CURATED.ORDERS t
+  USING (
+    SELECT raw:order_id::STRING                              AS order_id,
+           raw:order_ts::TIMESTAMP_TZ                        AS order_ts,
+           raw:status::STRING                                AS status,
+           raw:channel::STRING                               AS channel,
+           raw:customer.customer_id::STRING                  AS customer_id,
+           raw:customer.loyalty_tier::STRING                 AS loyalty_tier,
+           TRY_TO_NUMBER(raw:payment.amount::STRING, 12, 2)  AS amount,
+           raw:payment.currency::STRING                      AS currency,
+           COALESCE(raw:delivered_ts, raw:shipping.shipped_ts, raw:order_ts)::TIMESTAMP_TZ AS event_ts,
+           src_file
+    FROM RAW.STRM_ORDERS_RAW
+    WHERE raw:order_id IS NOT NULL
+    QUALIFY ROW_NUMBER() OVER (PARTITION BY order_id ORDER BY event_ts DESC, src_file DESC) = 1
+  ) s
+  ON t.order_id = s.order_id
+  WHEN MATCHED AND s.event_ts &gt;= t.event_ts THEN UPDATE SET
+    status = s.status, loyalty_tier = s.loyalty_tier, amount = s.amount,
+    event_ts = s.event_ts, src_file = s.src_file, updated_at = CURRENT_TIMESTAMP()
+  WHEN NOT MATCHED THEN INSERT
+    (order_id, order_ts, status, channel, customer_id, loyalty_tier, amount, currency, event_ts, src_file, updated_at)
+  VALUES
+    (s.order_id, s.order_ts, s.status, s.channel, s.customer_id, s.loyalty_tier, s.amount, s.currency, s.event_ts, s.src_file, CURRENT_TIMESTAMP());
+
+  MERGE INTO CURATED.ORDER_ITEMS t
+  USING (
+    SELECT o.raw:order_id::STRING             AS order_id,
+           i.index + 1                        AS line_no,
+           i.value:sku::STRING                AS sku,
+           i.value:product_name::STRING       AS product_name,
+           i.value:category::STRING           AS category,
+           i.value:qty::NUMBER                AS qty,
+           i.value:unit_price::NUMBER(12,2)   AS unit_price,
+           i.value:discount::NUMBER(5,4)      AS discount
+    FROM RAW.STRM_ORDERS_RAW o,
+         LATERAL FLATTEN(input =&gt; o.raw:items) i
+    WHERE o.raw:order_id IS NOT NULL
+    QUALIFY ROW_NUMBER() OVER (PARTITION BY order_id, line_no ORDER BY o.loaded_at DESC) = 1
+  ) s
+  ON t.order_id = s.order_id AND t.line_no = s.line_no
+  WHEN MATCHED THEN UPDATE SET
+    sku = s.sku, qty = s.qty, unit_price = s.unit_price, discount = s.discount
+  WHEN NOT MATCHED THEN INSERT
+    (order_id, line_no, sku, product_name, category, qty, unit_price, discount)
+  VALUES
+    (s.order_id, s.line_no, s.sku, s.product_name, s.category, s.qty, s.unit_price, s.discount);
+
+  COMMIT;
+END;
+$$;
+
+ALTER TASK CURATED.TSK_MERGE_ORDERS RESUME;
+EXECUTE TASK CURATED.TSK_MERGE_ORDERS;   -- manual test run</code></pre></div></div>
+  </details>
+</article>
+<article class="card" id="q37" data-topic="cdc" data-level="Advanced" style="--i:2">
+  <header class="card-h">
+    <span class="qnum">Q37</span>
+    <span class="badge b-advanced">Advanced</span>
+    <span class="tlabel">CDC &amp; modeling</span>
+  </header>
+  <h3 class="qtext">How do you make the pipeline idempotent and handle late-arriving data?</h3>
+  <div class="say" tabindex="0" role="button" aria-label="Answer (click to reveal in quiz mode)">
+    <span class="say-l">Say this</span>
+    <p>I use defense in depth. Load metadata stops file-level replays, file names are immutable, and the curated layer MERGEs on the business key. Each order carries an event timestamp, and an update applies only when the incoming event is newer, so a late or replayed older event can&#x27;t overwrite a newer state. Rerunning any step yields the same result.</p>
+    <span class="reveal-hint">Click to reveal answer</span>
+  </div>
+  <div class="red"><div class="red-h">Red flag answers to avoid</div><ul><li>&quot;Snowpipe handles duplicates, so we&#x27;re fine.&quot; It only handles duplicate files in a window.</li><li>Ordering by loaded_at alone. That&#x27;s arrival order, not event order.</li></ul></div>
+  <details class="deep">
+    <summary><span>Deep dive</span><em>SQL</em></summary>
+    <div class="deep-b"><p>For ShopStream the event time is <code>COALESCE(delivered_ts, shipping.shipped_ts, order_ts)</code>. Late item lines MERGE on (order_id, line_no). If producers can resend a whole order with fewer lines, use delete-then-insert per order inside the transaction.</p><div class="code"><div class="code-h"><span class="lang">SQL</span><span class="code-l">Idempotency check</span><button class="copy" type="button" data-copy="c37_0" aria-label="Copy code">Copy</button></div><pre id="c37_0"><code>-- After any rerun, this must return zero rows
+SELECT order_id, COUNT(*)
+FROM CURATED.ORDERS
+GROUP BY order_id
+HAVING COUNT(*) &gt; 1;</code></pre></div></div>
+  </details>
+</article>
+<article class="card" id="q38" data-topic="cdc" data-level="Intermediate" style="--i:3">
+  <header class="card-h">
+    <span class="qnum">Q38</span>
+    <span class="badge b-intermediate">Intermediate</span>
+    <span class="tlabel">CDC &amp; modeling</span>
+  </header>
+  <h3 class="qtext">Would you use dynamic tables instead of streams and tasks?</h3>
+  <div class="say" tabindex="0" role="button" aria-label="Answer (click to reveal in quiz mode)">
+    <span class="say-l">Say this</span>
+    <p>Often, yes. A dynamic table is declared as a query plus a TARGET_LAG, and Snowflake handles incremental refresh and dependencies, so there&#x27;s no stream or task plumbing. I keep streams and tasks when I need procedural control, such as multi-table transactions, custom error routing, or calling external services. For a straightforward &quot;latest state per order&quot; model, a dynamic table is less code.</p>
+    <span class="reveal-hint">Click to reveal answer</span>
+  </div>
+  
+  <details class="deep">
+    <summary><span>Deep dive</span><em>SQL</em></summary>
+    <div class="deep-b"><p>Check the refresh mode. Some constructs force a full refresh, which costs more on big tables. SHOW DYNAMIC TABLES shows refresh_mode and the reason.</p><div class="code"><div class="code-h"><span class="lang">SQL</span><span class="code-l">Latest state per order</span><button class="copy" type="button" data-copy="c38_0" aria-label="Copy code">Copy</button></div><pre id="c38_0"><code>CREATE OR REPLACE DYNAMIC TABLE CURATED.ORDERS_DT
+  TARGET_LAG = &#x27;5 minutes&#x27;
+  WAREHOUSE = LAB_WH
+AS
+SELECT raw:order_id::STRING                             AS order_id,
+       raw:status::STRING                               AS status,
+       TRY_TO_NUMBER(raw:payment.amount::STRING, 12, 2) AS amount,
+       COALESCE(raw:delivered_ts, raw:shipping.shipped_ts, raw:order_ts)::TIMESTAMP_TZ AS event_ts
+FROM RAW.ORDERS_RAW
+WHERE raw:order_id IS NOT NULL
+QUALIFY ROW_NUMBER() OVER (
+  PARTITION BY raw:order_id::STRING
+  ORDER BY COALESCE(raw:delivered_ts, raw:shipping.shipped_ts, raw:order_ts)::TIMESTAMP_TZ DESC, loaded_at DESC) = 1;</code></pre></div></div>
+  </details>
+</article></section><section class="topic" data-topic="perf" id="t-perf"><h2 class="topic-h"><span>Performance &amp; cost</span><small>4 questions</small></h2>
+<article class="card" id="q39" data-topic="perf" data-level="Intermediate" style="--i:0">
+  <header class="card-h">
+    <span class="qnum">Q39</span>
+    <span class="badge b-intermediate">Intermediate</span>
+    <span class="tlabel">Performance &amp; cost</span>
+  </header>
+  <h3 class="qtext">How do file size and file count interact with warehouse size?</h3>
+  <div class="say" tabindex="0" role="button" aria-label="Answer (click to reveal in quiz mode)">
+    <span class="say-l">Say this</span>
+    <p>COPY parallelizes across files, one file per thread, so parallelism is capped by the number of files. Aim for about 100 to 250 MB compressed per file. A bigger warehouse only helps when there are enough files to keep its threads busy. For two small ShopStream files an XS is plenty, and an XL would just cost more.</p>
+    <span class="reveal-hint">Click to reveal answer</span>
+  </div>
+  <div class="red"><div class="red-h">Red flag answers to avoid</div><ul><li>&quot;Load is slow, so scale up to 2XL&quot; with a single huge file. Nothing gets faster.</li></ul></div>
+  <details class="deep">
+    <summary><span>Deep dive</span><em>SQL + visual</em></summary>
+    <div class="deep-b"><p>As a rule of thumb, an XS node handles on the order of 8 files concurrently, and each size step doubles that. Thousands of tiny files add per-file overhead and, in Snowpipe, per-file cost. Batch upstream.</p><figure class="viz">
+<div class="lanes">
+  <div class="lane-h">One 2 GB file on an XS warehouse</div>
+  <div class="lane"><i class="busy" style="--w:100%"></i></div><div class="lane"><i style="--w:0%"></i></div><div class="lane"><i style="--w:0%"></i></div><div class="lane"><i style="--w:0%"></i></div>
+  <div class="lane-h">Same data as 16 files of about 125 MB</div>
+  <div class="lane"><i class="ok" style="--w:24%"></i></div><div class="lane"><i class="ok" style="--w:24%"></i></div><div class="lane"><i class="ok" style="--w:24%"></i></div><div class="lane"><i class="ok" style="--w:24%"></i></div>
+  <p class="lane-note">Each file is read by one thread, so a single huge file can't spread across the warehouse.</p>
+</div></figure><div class="code"><div class="code-h"><span class="lang">SQL</span><span class="code-l">Check the stage</span><button class="copy" type="button" data-copy="c39_0" aria-label="Copy code">Copy</button></div><pre id="c39_0"><code>LIST @RAW.STG_S3_LANDING/orders/;
+SELECT COUNT(*) AS files, ROUND(AVG(&quot;size&quot;) / POWER(1024, 2), 1) AS avg_mb
+FROM TABLE(RESULT_SCAN(LAST_QUERY_ID()));</code></pre></div></div>
+  </details>
+</article>
+<article class="card" id="q40" data-topic="perf" data-level="Intermediate" style="--i:1">
+  <header class="card-h">
+    <span class="qnum">Q40</span>
+    <span class="badge b-intermediate">Intermediate</span>
+    <span class="tlabel">Performance &amp; cost</span>
+  </header>
+  <h3 class="qtext">When do you materialize JSON paths into columns?</h3>
+  <div class="say" tabindex="0" role="button" aria-label="Answer (click to reveal in quiz mode)">
+    <span class="say-l">Say this</span>
+    <p>Snowflake already sub-columnarizes consistent VARIANT paths, so ad-hoc path queries prune reasonably well. I materialize hot paths into typed columns in curated tables when they&#x27;re filtered or joined on heavily, have mixed types, or sit inside arrays. Columnarization doesn&#x27;t help there, and typed columns give better pruning, simpler SQL, and enforceable types.</p>
+    <span class="reveal-hint">Click to reveal answer</span>
+  </div>
+  
+  <details class="deep">
+    <summary><span>Deep dive</span><em>SQL</em></summary>
+    <div class="deep-b"><p>Columnarization has limits. Paths with mixed types, JSON nulls, or very many distinct keys may not get extracted. Curated tables or views are where you pay that cost once.</p><div class="code"><div class="code-h"><span class="lang">SQL</span><span class="code-l">Typed curated table</span><button class="copy" type="button" data-copy="c40_0" aria-label="Copy code">Copy</button></div><pre id="c40_0"><code>CREATE OR REPLACE TABLE CURATED.ORDERS_SNAPSHOT AS
+SELECT raw:order_id::STRING        AS order_id,
+       raw:order_ts::TIMESTAMP_TZ  AS order_ts,
+       raw:status::STRING          AS status,
+       raw:customer.address.state::STRING AS state
+FROM RAW.ORDERS_RAW
+WHERE raw:order_id IS NOT NULL;</code></pre></div></div>
+  </details>
+</article>
+<article class="card" id="q41" data-topic="perf" data-level="Advanced" style="--i:2">
+  <header class="card-h">
+    <span class="qnum">Q41</span>
+    <span class="badge b-advanced">Advanced</span>
+    <span class="tlabel">Performance &amp; cost</span>
+  </header>
+  <h3 class="qtext">Search optimization vs. clustering for JSON-heavy tables?</h3>
+  <div class="say" tabindex="0" role="button" aria-label="Answer (click to reveal in quiz mode)">
+    <span class="say-l">Say this</span>
+    <p>Clustering co-locates rows by a key such as order date, so range filters prune micro-partitions. It&#x27;s worth it on large tables with stable filter patterns. Search optimization builds a lookup structure for selective point lookups, including equality on VARIANT paths like raw:order_id. Both add background maintenance cost, so I justify them with query history.</p>
+    <span class="reveal-hint">Click to reveal answer</span>
+  </div>
+  <div class="red"><div class="red-h">Red flag answers to avoid</div><ul><li>Clustering a small table, or clustering by a high-cardinality ID like order_id.</li></ul></div>
+  <details class="deep">
+    <summary><span>Deep dive</span><em>SQL</em></summary>
+    <div class="deep-b"><p>Search optimization is an Enterprise-edition feature. Check SYSTEM$CLUSTERING_INFORMATION before and after. Curated tables are usually the right place for clustering keys.</p><div class="code"><div class="code-h"><span class="lang">SQL</span><span class="code-l">Both</span><button class="copy" type="button" data-copy="c41_0" aria-label="Copy code">Copy</button></div><pre id="c41_0"><code>ALTER TABLE CURATED.ORDERS CLUSTER BY (TO_DATE(order_ts));
+SELECT SYSTEM$CLUSTERING_INFORMATION(&#x27;CURATED.ORDERS&#x27;);
+
+ALTER TABLE RAW.ORDERS_RAW ADD SEARCH OPTIMIZATION ON EQUALITY(raw:order_id);</code></pre></div></div>
+  </details>
+</article>
+<article class="card" id="q42" data-topic="perf" data-level="Intermediate" style="--i:3">
+  <header class="card-h">
+    <span class="qnum">Q42</span>
+    <span class="badge b-intermediate">Intermediate</span>
+    <span class="tlabel">Performance &amp; cost</span>
+  </header>
+  <h3 class="qtext">How do you monitor load health and cost?</h3>
+  <div class="say" tabindex="0" role="button" aria-label="Answer (click to reveal in quiz mode)">
+    <span class="say-l">Say this</span>
+    <p>For health: COPY_HISTORY error counts and statuses, SYSTEM$PIPE_STATUS for pipes, TASK_HISTORY for the MERGE, and row-count reconciliation between files and tables. For cost: WAREHOUSE_METERING_HISTORY for LAB_WH, PIPE_USAGE_HISTORY for Snowpipe, and resource monitors with alerts. I wire the failure checks into alerts rather than dashboards nobody looks at.</p>
+    <span class="reveal-hint">Click to reveal answer</span>
+  </div>
+  
+  <details class="deep">
+    <summary><span>Deep dive</span><em>SQL</em></summary>
+    <div class="deep-b"><p>A cheap reconciliation: rows_parsed in COPY_HISTORY should equal rows in ORDERS_RAW plus captured errors, per file.</p><div class="code"><div class="code-h"><span class="lang">SQL</span><span class="code-l">Task failures</span><button class="copy" type="button" data-copy="c42_0" aria-label="Copy code">Copy</button></div><pre id="c42_0"><code>SELECT name, state, error_message, scheduled_time, completed_time
+FROM TABLE(SHOPSTREAM_LAB.INFORMATION_SCHEMA.TASK_HISTORY(
+  TASK_NAME =&gt; &#x27;TSK_MERGE_ORDERS&#x27;,
+  SCHEDULED_TIME_RANGE_START =&gt; DATEADD(DAY, -1, CURRENT_TIMESTAMP())))
+WHERE state = &#x27;FAILED&#x27;
+ORDER BY scheduled_time DESC;</code></pre></div></div>
+  </details>
+</article></section><section class="topic" data-topic="scen" id="t-scen"><h2 class="topic-h"><span>Scenarios &amp; troubleshooting</span><small>7 questions</small></h2>
+<article class="card" id="q43" data-topic="scen" data-level="Scenario" style="--i:0">
+  <header class="card-h">
+    <span class="qnum">Q43</span>
+    <span class="badge b-scenario">Scenario</span>
+    <span class="tlabel">Scenarios &amp; troubleshooting</span>
+  </header>
+  <h3 class="qtext">COPY returns &quot;0 files processed&quot;. What do you check?</h3>
+  <div class="say" tabindex="0" role="button" aria-label="Answer (click to reveal in quiz mode)">
+    <span class="say-l">Say this</span>
+    <p>First I LIST the exact path and pattern. If nothing shows up, the prefix, regex, or case is wrong. If files do show up, they were probably already loaded, and COPY_HISTORY will say LOADED, which is load metadata doing its job. Rarely, files older than 64 days have uncertain status and need LOAD_UNCERTAIN_FILES. I never reach for FORCE until I know which case it is.</p>
+    <span class="reveal-hint">Click to reveal answer</span>
+  </div>
+  <div class="red"><div class="red-h">Red flag answers to avoid</div><ul><li>&quot;Add FORCE = TRUE.&quot; That&#x27;s how you get duplicates.</li></ul></div>
+  <details class="deep">
+    <summary><span>Deep dive</span><em>SQL + visual</em></summary>
+    <div class="deep-b"><p>S3 keys are case-sensitive, and regexes in PATTERN are anchored to the whole relative path, which is a classic miss when the pattern lacks a leading <code>.*</code>.</p><figure class="viz">
+<ol class="tree">
+  <li><b>LIST</b> the exact path and pattern. Nothing listed? The path, prefix, regex or case is wrong.</li>
+  <li><b>COPY_HISTORY</b> for the table. Status is LOADED? The files were already loaded (load metadata).</li>
+  <li><b>LAST_MODIFIED</b> older than 64 days? Status is uncertain, so try LOAD_UNCERTAIN_FILES = TRUE.</li>
+  <li>Did someone re-upload <b>identical</b> bytes? Same checksum, so they're skipped by design.</li>
+</ol></figure><div class="code"><div class="code-h"><span class="lang">SQL</span><span class="code-l">Diagnose</span><button class="copy" type="button" data-copy="c43_0" aria-label="Copy code">Copy</button></div><pre id="c43_0"><code>LIST @RAW.STG_S3_LANDING/orders/ PATTERN = &#x27;.*orders_.*[.]json&#x27;;
+
+SELECT file_name, status, last_load_time
+FROM TABLE(SHOPSTREAM_LAB.INFORMATION_SCHEMA.COPY_HISTORY(
+  TABLE_NAME =&gt; &#x27;RAW.ORDERS_RAW&#x27;,
+  START_TIME =&gt; DATEADD(DAY, -14, CURRENT_TIMESTAMP())));</code></pre></div></div>
+  </details>
+</article>
+<article class="card" id="q44" data-topic="scen" data-level="Scenario" style="--i:1">
+  <header class="card-h">
+    <span class="qnum">Q44</span>
+    <span class="badge b-scenario">Scenario</span>
+    <span class="tlabel">Scenarios &amp; troubleshooting</span>
+  </header>
+  <h3 class="qtext">LIST on the stage fails with Access Denied. Walk through it.</h3>
+  <div class="say" tabindex="0" role="button" aria-label="Answer (click to reveal in quiz mode)">
+    <span class="say-l">Say this</span>
+    <p>I trace it hop by hop. Is the trust policy using the current external ID and IAM user ARN? Recreating the integration changes the external ID. Does the role policy have s3:ListBucket on the bucket ARN with a prefix condition that matches? Then I check the stage URL against STORAGE_ALLOWED_LOCATIONS, any bucket policy explicit deny, KMS decrypt for SSE-KMS, and the bucket region.</p>
+    <span class="reveal-hint">Click to reveal answer</span>
+  </div>
+  <div class="red"><div class="red-h">Red flag answers to avoid</div><ul><li>&quot;Use access keys instead.&quot; That works around the problem instead of fixing it.</li></ul></div>
+  <details class="deep">
+    <summary><span>Deep dive</span><em>SQL + visual</em></summary>
+    <div class="deep-b"><p>Error wording helps. A Snowflake-side 'location not allowed' error points at the integration. An AWS 403 points at IAM, the bucket policy, or KMS. Read DESC INTEGRATION side by side with the IAM trust policy.</p><figure class="viz">
+<svg class="viz-svg" viewBox="0 0 860 200" role="img" aria-label="Storage integration trust handshake">
+  <defs><marker id="ah2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="var(--ink)"/></marker></defs>
+  <g class="node acc"><rect x="10" y="60" width="180" height="80" rx="6"/><text x="100" y="92" class="t1">Snowflake IAM user</text><text x="100" y="114" class="t2">STORAGE_AWS_IAM_USER_ARN</text></g>
+  <g class="node"><rect x="340" y="60" width="180" height="80" rx="6"/><text x="430" y="92" class="t1">Your IAM role</text><text x="430" y="114" class="t2">snowflake-s3-access-role</text></g>
+  <g class="node teal"><rect x="670" y="60" width="180" height="80" rx="6"/><text x="760" y="92" class="t1">S3 bucket</text><text x="760" y="114" class="t2">shopstream-raw-landing</text></g>
+  <path d="M190 100 H338" class="edge" marker-end="url(#ah2)"/><path d="M520 100 H668" class="edge" marker-end="url(#ah2)"/>
+  <text x="264" y="86" class="lbl">sts:AssumeRole</text><text x="264" y="128" class="lbl acc-t">+ ExternalId</text>
+  <text x="594" y="86" class="lbl">temp creds</text><text x="594" y="128" class="lbl">Get / List</text>
+  <text x="430" y="175" class="lbl">Trust policy: Principal = IAM user ARN, Condition sts:ExternalId = STORAGE_AWS_EXTERNAL_ID</text>
+</svg></figure><div class="code"><div class="code-h"><span class="lang">SQL</span><span class="code-l">Checks</span><button class="copy" type="button" data-copy="c44_0" aria-label="Copy code">Copy</button></div><pre id="c44_0"><code>DESC INTEGRATION S3_LANDING_INT;   -- ARN + external ID vs trust policy
+DESC STAGE RAW.STG_S3_LANDING;     -- URL within allowed locations?
+SHOW GRANTS ON INTEGRATION S3_LANDING_INT;
+LIST @RAW.STG_S3_LANDING/orders/;</code></pre></div></div>
+  </details>
+</article>
+<article class="card" id="q45" data-topic="scen" data-level="Scenario" style="--i:2">
+  <header class="card-h">
+    <span class="qnum">Q45</span>
+    <span class="badge b-scenario">Scenario</span>
+    <span class="tlabel">Scenarios &amp; troubleshooting</span>
+  </header>
+  <h3 class="qtext">A field comes back NULL even though it&#x27;s in the JSON. Why?</h3>
+  <div class="say" tabindex="0" role="button" aria-label="Answer (click to reveal in quiz mode)">
+    <span class="say-l">Say this</span>
+    <p>The usual causes, in order: key case (raw:Order_ID vs order_id). Wrong nesting, where it&#x27;s really raw:customer.address.city. The value is inside an array and needs an index or FLATTEN. The file was loaded without STRIP_OUTER_ARRAY, so raw is the whole array and every top-level path is NULL. A TRY_ cast is failing quietly. Or the key has special characters and needs quotes.</p>
+    <span class="reveal-hint">Click to reveal answer</span>
+  </div>
+  
+  <details class="deep">
+    <summary><span>Deep dive</span><em>SQL</em></summary>
+    <div class="deep-b"><p>Debug by checking <code>TYPEOF(raw)</code> first. ARRAY means the outer array wasn't stripped. Then check <code>OBJECT_KEYS(raw)</code> to see the real key names and case.</p><div class="code"><div class="code-h"><span class="lang">SQL</span><span class="code-l">Two-query diagnosis</span><button class="copy" type="button" data-copy="c45_0" aria-label="Copy code">Copy</button></div><pre id="c45_0"><code>SELECT TYPEOF(raw) AS t, OBJECT_KEYS(raw) AS keys
+FROM RAW.ORDERS_RAW
+LIMIT 5;
+
+SELECT raw:payment.amount           AS as_variant,
+       TYPEOF(raw:payment.amount)   AS json_type,
+       TRY_TO_NUMBER(raw:payment.amount::STRING, 12, 2) AS as_number
+FROM RAW.ORDERS_RAW
+WHERE src_file ILIKE &#x27;%orders_bad/%&#x27;;</code></pre></div></div>
+  </details>
+</article>
+<article class="card" id="q46" data-topic="scen" data-level="Scenario" style="--i:3">
+  <header class="card-h">
+    <span class="qnum">Q46</span>
+    <span class="badge b-scenario">Scenario</span>
+    <span class="tlabel">Scenarios &amp; troubleshooting</span>
+  </header>
+  <h3 class="qtext">You receive a single 2 GB JSON file that is one big array. What now?</h3>
+  <div class="say" tabindex="0" role="button" aria-label="Answer (click to reveal in quiz mode)">
+    <span class="say-l">Say this</span>
+    <p>Without STRIP_OUTER_ARRAY it fails, because the whole array is one value far over the size limit. With STRIP_OUTER_ARRAY = TRUE it can load as long as each element fits, but one file is still one thread, so it&#x27;s slow and fragile. The real fix is upstream: have the producer write gzipped NDJSON split into files of about 100 to 250 MB, or pre-split with a small job before staging.</p>
+    <span class="reveal-hint">Click to reveal answer</span>
+  </div>
+  <div class="red"><div class="red-h">Red flag answers to avoid</div><ul><li>&quot;Scale the warehouse to 4XL.&quot; One file can&#x27;t use the extra threads.</li></ul></div>
+  <details class="deep">
+    <summary><span>Deep dive</span><em>SQL + visual</em></summary>
+    <div class="deep-b"><p>A typical pre-split is a stream-parsing job, such as jq in compact mode or a Lambda, that emits one object per line into chunked gzip files under a new prefix. Then load those normally or let Snowpipe pick them up.</p><figure class="viz">
+<div class="lanes">
+  <div class="lane-h">One 2 GB file on an XS warehouse</div>
+  <div class="lane"><i class="busy" style="--w:100%"></i></div><div class="lane"><i style="--w:0%"></i></div><div class="lane"><i style="--w:0%"></i></div><div class="lane"><i style="--w:0%"></i></div>
+  <div class="lane-h">Same data as 16 files of about 125 MB</div>
+  <div class="lane"><i class="ok" style="--w:24%"></i></div><div class="lane"><i class="ok" style="--w:24%"></i></div><div class="lane"><i class="ok" style="--w:24%"></i></div><div class="lane"><i class="ok" style="--w:24%"></i></div>
+  <p class="lane-note">Each file is read by one thread, so a single huge file can't spread across the warehouse.</p>
+</div></figure><div class="code"><div class="code-h"><span class="lang">SQL</span><span class="code-l">Stopgap load</span><button class="copy" type="button" data-copy="c46_0" aria-label="Copy code">Copy</button></div><pre id="c46_0"><code>COPY INTO RAW.ORDERS_RAW (raw, src_file, src_row)
+FROM (
+  SELECT $1, METADATA$FILENAME, METADATA$FILE_ROW_NUMBER
+  FROM @RAW.STG_S3_LANDING/orders_array/
+)
+FILE_FORMAT = (FORMAT_NAME = &#x27;RAW.FF_JSON_ARRAY&#x27;)
+ON_ERROR = ABORT_STATEMENT;</code></pre></div></div>
+  </details>
+</article>
+<article class="card" id="q47" data-topic="scen" data-level="Scenario" style="--i:4">
+  <header class="card-h">
+    <span class="qnum">Q47</span>
+    <span class="badge b-scenario">Scenario</span>
+    <span class="tlabel">Scenarios &amp; troubleshooting</span>
+  </header>
+  <h3 class="qtext">After a rerun, the curated table has duplicates. How did that happen and how do you fix it?</h3>
+  <div class="say" tabindex="0" role="button" aria-label="Answer (click to reveal in quiz mode)">
+    <span class="say-l">Say this</span>
+    <p>Common causes: someone used FORCE, or the table was recreated or truncated, which wipes load metadata. A producer may have re-uploaded changed files under the same names, or the same file went in through both a manual COPY and the pipe. To fix it, dedupe on order_id keeping the latest event, then make the curated load a key-based MERGE so the problem can&#x27;t recur.</p>
+    <span class="reveal-hint">Click to reveal answer</span>
+  </div>
+  <div class="red"><div class="red-h">Red flag answers to avoid</div><ul><li>&quot;DELETE the duplicates and move on&quot; without fixing the cause.</li></ul></div>
+  <details class="deep">
+    <summary><span>Deep dive</span><em>SQL</em></summary>
+    <div class="deep-b"><p>Use src_file and src_row to see which load introduced the duplicates. Rebuilding curated from RAW with QUALIFY is safe, because RAW is the replayable record.</p><div class="code"><div class="code-h"><span class="lang">SQL</span><span class="code-l">Find &amp; fix</span><button class="copy" type="button" data-copy="c47_0" aria-label="Copy code">Copy</button></div><pre id="c47_0"><code>-- where did they come from?
+SELECT raw:order_id::STRING AS order_id, src_file, src_row, loaded_at
+FROM RAW.ORDERS_RAW
+QUALIFY COUNT(*) OVER (PARTITION BY raw:order_id::STRING) &gt; 1
+ORDER BY order_id, loaded_at;
+
+-- rebuild latest-state curated table
+CREATE OR REPLACE TABLE CURATED.ORDERS_DEDUP AS
+SELECT *
+FROM CURATED.ORDERS
+QUALIFY ROW_NUMBER() OVER (PARTITION BY order_id ORDER BY event_ts DESC, updated_at DESC) = 1;</code></pre></div></div>
+  </details>
+</article>
+<article class="card" id="q48" data-topic="scen" data-level="Scenario" style="--i:5">
+  <header class="card-h">
+    <span class="qnum">Q48</span>
+    <span class="badge b-scenario">Scenario</span>
+    <span class="tlabel">Scenarios &amp; troubleshooting</span>
+  </header>
+  <h3 class="qtext">There&#x27;s a nested array inside an array. How do you flatten it?</h3>
+  <div class="say" tabindex="0" role="button" aria-label="Answer (click to reveal in quiz mode)">
+    <span class="say-l">Say this</span>
+    <p>Chain LATERAL FLATTENs. Flatten the outer array, then flatten each element&#x27;s inner array using the first flatten&#x27;s VALUE as input. I use OUTER =&gt; TRUE on the inner flatten so items without children aren&#x27;t dropped, and I state the resulting grain explicitly. For an array of arrays, the inner input is just the element value itself.</p>
+    <span class="reveal-hint">Click to reveal answer</span>
+  </div>
+  <div class="red"><div class="red-h">Red flag answers to avoid</div><ul><li>Using RECURSIVE in production models. The grain becomes unpredictable.</li></ul></div>
+  <details class="deep">
+    <summary><span>Deep dive</span><em>SQL + visual</em></summary>
+    <div class="deep-b"><p>Keep both indexes, outer and inner, in the output. Together with order_id they form the natural key for MERGE.</p><figure class="viz">
+<div class="flat">
+  <div class="flat-in"><div class="pane-h">order</div><code>items[ {sku, components[ c1, c2 ]}, {sku, components[ ]} ]</code></div>
+  <div class="flat-arrow">FLATTEN items &rarr; FLATTEN components (OUTER)</div>
+  <div class="flat-out"><div class="pane-h">grain = order &times; item &times; component</div><code>item 0 &middot; c1</code><code>item 0 &middot; c2</code><code>item 1 &middot; NULL (kept by OUTER)</code></div>
+</div></figure><div class="code"><div class="code-h"><span class="lang">SQL</span><span class="code-l">Two-level flatten</span><button class="copy" type="button" data-copy="c48_0" aria-label="Copy code">Copy</button></div><pre id="c48_0"><code>SELECT o.raw:order_id::STRING   AS order_id,
+       i.index                  AS item_idx,
+       i.value:sku::STRING      AS sku,
+       c.index                  AS component_idx,
+       c.value:sku::STRING      AS component_sku
+FROM RAW.ORDERS_RAW o,
+     LATERAL FLATTEN(input =&gt; o.raw:items) i,
+     LATERAL FLATTEN(input =&gt; i.value:components, OUTER =&gt; TRUE) c;
+
+-- array of arrays, e.g. &quot;matrix&quot;: [[1,2],[3]]
+SELECT a.index AS row_idx, b.index AS col_idx, b.value::NUMBER AS v
+FROM RAW.ORDERS_RAW o,
+     LATERAL FLATTEN(input =&gt; o.raw:matrix) a,
+     LATERAL FLATTEN(input =&gt; a.value) b;</code></pre></div></div>
+  </details>
+</article>
+<article class="card" id="q49" data-topic="scen" data-level="Scenario" style="--i:6">
+  <header class="card-h">
+    <span class="qnum">Q49</span>
+    <span class="badge b-scenario">Scenario</span>
+    <span class="tlabel">Scenarios &amp; troubleshooting</span>
+  </header>
+  <h3 class="qtext">The pipe exists, but new files aren&#x27;t loading. Troubleshoot it.</h3>
+  <div class="say" tabindex="0" role="button" aria-label="Answer (click to reveal in quiz mode)">
+    <span class="say-l">Say this</span>
+    <p>I start with SYSTEM$PIPE_STATUS. Is it RUNNING or paused, and is lastReceivedMessageTimestamp moving? If no messages arrive, the S3 event notification is missing, points at the wrong queue or prefix, or conflicts with another rule. If messages arrive but nothing loads, I check COPY_HISTORY and VALIDATE_PIPE_LOAD for errors, then file format mismatches, ownership or privileges, and whether the files are duplicates the pipe already saw.</p>
+    <span class="reveal-hint">Click to reveal answer</span>
+  </div>
+  <div class="red"><div class="red-h">Red flag answers to avoid</div><ul><li>Recreating the pipe as a first step. It changes nothing about the S3 event and wipes the 14-day history.</li></ul></div>
+  <details class="deep">
+    <summary><span>Deep dive</span><em>SQL + visual</em></summary>
+    <div class="deep-b"><p>Once the cause is fixed, use ALTER PIPE ... REFRESH to pick up files from the last 7 days that were missed. If the pipe was recreated, the notification channel usually stays the same, but always re-check SHOW PIPES.</p><figure class="viz">
+<svg class="viz-svg" viewBox="0 0 860 220" role="img" aria-label="Snowpipe auto-ingest flow">
+  <defs><marker id="ah3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="var(--ink)"/></marker></defs>
+  <g class="node"><rect x="10" y="30" width="150" height="64" rx="6"/><text x="85" y="58" class="t1">PUT object</text><text x="85" y="78" class="t2">orders_incremental/</text></g>
+  <g class="node"><rect x="230" y="30" width="150" height="64" rx="6"/><text x="305" y="58" class="t1">S3 event</text><text x="305" y="78" class="t2">ObjectCreated</text></g>
+  <g class="node acc"><rect x="450" y="30" width="150" height="64" rx="6"/><text x="525" y="58" class="t1">SQS queue</text><text x="525" y="78" class="t2">notification_channel</text></g>
+  <g class="node acc"><rect x="680" y="30" width="170" height="64" rx="6"/><text x="765" y="58" class="t1">Snowpipe</text><text x="765" y="78" class="t2">serverless COPY</text></g>
+  <g class="node teal"><rect x="680" y="140" width="170" height="64" rx="6"/><text x="765" y="168" class="t1">ORDERS_RAW</text><text x="765" y="188" class="t2">+ 14-day load history</text></g>
+  <g class="node"><rect x="450" y="140" width="150" height="64" rx="6"/><text x="525" y="168" class="t1">Stream</text><text x="525" y="188" class="t2">STRM_ORDERS_RAW</text></g>
+  <g class="node"><rect x="230" y="140" width="150" height="64" rx="6"/><text x="305" y="168" class="t1">Task MERGE</text><text x="305" y="188" class="t2">every 5 min</text></g>
+  <g class="node teal"><rect x="10" y="140" width="150" height="64" rx="6"/><text x="85" y="168" class="t1">CURATED</text><text x="85" y="188" class="t2">ORDERS, ITEMS</text></g>
+  <path d="M160 62 H228" class="edge" marker-end="url(#ah3)"/><path d="M380 62 H448" class="edge" marker-end="url(#ah3)"/>
+  <path d="M600 62 H678" class="edge" marker-end="url(#ah3)"/><path d="M765 94 V138" class="edge" marker-end="url(#ah3)"/>
+  <path d="M680 172 H602" class="edge" marker-end="url(#ah3)"/><path d="M450 172 H382" class="edge" marker-end="url(#ah3)"/><path d="M230 172 H162" class="edge" marker-end="url(#ah3)"/>
+</svg></figure><div class="code"><div class="code-h"><span class="lang">SQL</span><span class="code-l">Pipe triage</span><button class="copy" type="button" data-copy="c49_0" aria-label="Copy code">Copy</button></div><pre id="c49_0"><code>SELECT SYSTEM$PIPE_STATUS(&#x27;RAW.PIPE_ORDERS_INCREMENTAL&#x27;);
+
+SELECT *
+FROM TABLE(SHOPSTREAM_LAB.INFORMATION_SCHEMA.VALIDATE_PIPE_LOAD(
+  PIPE_NAME  =&gt; &#x27;SHOPSTREAM_LAB.RAW.PIPE_ORDERS_INCREMENTAL&#x27;,
+  START_TIME =&gt; DATEADD(HOUR, -2, CURRENT_TIMESTAMP())));
+
+ALTER PIPE RAW.PIPE_ORDERS_INCREMENTAL REFRESH;</code></pre></div></div>
+  </details>
+</article></section>
+    <div class="empty hidden" id="empty">No questions match. Clear the search or turn a filter back on.</div>
+  </main>
+
+  <section class="cheat" id="cheat">
+    <h2>Key commands on one page</h2>
+    <p class="sub">ShopStream objects: SHOPSTREAM_LAB.RAW / CURATED &middot; LAB_ENGINEER &middot; LAB_WH &middot; S3_LANDING_INT &middot; STG_S3_LANDING</p>
+    <div class="nums"><div class="num"><b>64 days</b><span>COPY load metadata (per table)</span></div><div class="num"><b>14 days</b><span>Snowpipe load history (per pipe)</span></div><div class="num"><b>7 days</b><span>ALTER PIPE REFRESH reach</span></div><div class="num"><b>16 MB</b><span>classic VARIANT value limit (newer: higher, verify)</span></div><div class="num"><b>100-250 MB</b><span>compressed file sweet spot</span></div><div class="num"><b>1,000</b><span>max names in FILES = (...)</span></div></div>
+    <div class="cgrid"><div class="cc"><h4>Integration</h4><pre>CREATE STORAGE INTEGRATION S3_LANDING_INT TYPE=EXTERNAL_STAGE STORAGE_PROVIDER=&#x27;S3&#x27; ENABLED=TRUE
+  STORAGE_AWS_ROLE_ARN=&#x27;arn:aws:iam::111122223333:role/snowflake-s3-access-role&#x27;
+  STORAGE_ALLOWED_LOCATIONS=(&#x27;s3://shopstream-raw-landing/landing/&#x27;);
+DESC INTEGRATION S3_LANDING_INT;  -- IAM user ARN + external ID</pre></div><div class="cc"><h4>Format + stage</h4><pre>CREATE FILE FORMAT RAW.FF_JSON_NDJSON TYPE=JSON STRIP_OUTER_ARRAY=FALSE;
+CREATE STAGE RAW.STG_S3_LANDING URL=&#x27;s3://shopstream-raw-landing/landing/&#x27;
+  STORAGE_INTEGRATION=S3_LANDING_INT FILE_FORMAT=(FORMAT_NAME=&#x27;RAW.FF_JSON_NDJSON&#x27;);
+LIST @RAW.STG_S3_LANDING/orders/;</pre></div><div class="cc"><h4>Peek before load</h4><pre>SELECT $1:order_id::STRING, METADATA$FILENAME
+FROM @RAW.STG_S3_LANDING/orders/ (FILE_FORMAT=&gt;&#x27;RAW.FF_JSON_NDJSON&#x27;) LIMIT 5;</pre></div><div class="cc"><h4>COPY with lineage</h4><pre>COPY INTO RAW.ORDERS_RAW (raw, src_file, src_row)
+FROM (SELECT $1, METADATA$FILENAME, METADATA$FILE_ROW_NUMBER
+      FROM @RAW.STG_S3_LANDING/orders/)
+PATTERN=&#x27;.*[.]json&#x27; ON_ERROR=ABORT_STATEMENT;</pre></div><div class="cc"><h4>Dry run / errors</h4><pre>COPY INTO RAW.ORDERS_PROBE FROM @RAW.STG_S3_LANDING/orders_bad/
+  VALIDATION_MODE=RETURN_ERRORS;
+SELECT * FROM TABLE(VALIDATE(RAW.ORDERS_PROBE, JOB_ID=&gt;&#x27;_last&#x27;));</pre></div><div class="cc"><h4>History</h4><pre>SELECT * FROM TABLE(INFORMATION_SCHEMA.COPY_HISTORY(
+  TABLE_NAME=&gt;&#x27;RAW.ORDERS_RAW&#x27;, START_TIME=&gt;DATEADD(HOUR,-24,CURRENT_TIMESTAMP())));</pre></div><div class="cc"><h4>Query + flatten</h4><pre>SELECT o.raw:order_id::STRING, i.index+1 line_no, i.value:sku::STRING
+FROM RAW.ORDERS_RAW o, LATERAL FLATTEN(input=&gt;o.raw:items, OUTER=&gt;TRUE) i;</pre></div><div class="cc"><h4>Nulls / types</h4><pre>IS_NULL_VALUE(raw:shipping)  TYPEOF(raw)  OBJECT_KEYS(raw)
+TRY_TO_NUMBER(raw:payment.amount::STRING,12,2)</pre></div><div class="cc"><h4>Snowpipe</h4><pre>CREATE PIPE RAW.PIPE_ORDERS_INCREMENTAL AUTO_INGEST=TRUE AS COPY INTO ...;
+SHOW PIPES;  -- notification_channel = SQS ARN
+SELECT SYSTEM$PIPE_STATUS(&#x27;RAW.PIPE_ORDERS_INCREMENTAL&#x27;);
+ALTER PIPE RAW.PIPE_ORDERS_INCREMENTAL REFRESH;  -- last 7 days</pre></div><div class="cc"><h4>Stream + task</h4><pre>CREATE STREAM RAW.STRM_ORDERS_RAW ON TABLE RAW.ORDERS_RAW APPEND_ONLY=TRUE;
+CREATE TASK CURATED.TSK_MERGE_ORDERS WAREHOUSE=LAB_WH SCHEDULE=&#x27;5 MINUTE&#x27;
+  WHEN SYSTEM$STREAM_HAS_DATA(&#x27;RAW.STRM_ORDERS_RAW&#x27;) AS MERGE ...;
+ALTER TASK CURATED.TSK_MERGE_ORDERS RESUME;</pre></div></div>
+  </section>
+
+  <footer>Generic, fictional scenario (ShopStream) for interview practice. Snowflake features and pricing change, so check current documentation for limits marked as version-dependent.</footer>
+</div>
+<script>
+(function(){
+  'use strict';
+  var body = document.body;
+  var cards = Array.prototype.slice.call(document.querySelectorAll('.card'));
+  var topics = Array.prototype.slice.call(document.querySelectorAll('.topic'));
+  var search = document.getElementById('q');
+  var countEl = document.getElementById('count');
+  var emptyEl = document.getElementById('empty');
+  var activeTopic = 'all';
+  var activeLevels = {Basic:true, Intermediate:true, Advanced:true, Scenario:true};
+  var texts = cards.map(function(c){ return c.textContent.toLowerCase(); });
+
+  function apply(){
+    var term = (search.value || '').trim().toLowerCase();
+    var words = term ? term.split(/\s+/) : [];
+    var shown = 0;
+    cards.forEach(function(c, i){
+      var okT = activeTopic === 'all' || c.getAttribute('data-topic') === activeTopic;
+      var okL = !!activeLevels[c.getAttribute('data-level')];
+      var okS = words.every(function(w){ return texts[i].indexOf(w) !== -1; });
+      var vis = okT && okL && okS;
+      c.classList.toggle('hidden', !vis);
+      if (vis) { shown++; }
+    });
+    topics.forEach(function(t){
+      t.classList.toggle('hidden', !t.querySelector('.card:not(.hidden)'));
+    });
+    countEl.textContent = 'Showing ' + shown + ' of ' + cards.length;
+    emptyEl.classList.toggle('hidden', shown !== 0);
+  }
+
+  search.addEventListener('input', apply);
+  document.addEventListener('keydown', function(e){
+    var tag = (document.activeElement && document.activeElement.tagName) || '';
+    if (e.key === '/' && tag !== 'INPUT' && tag !== 'TEXTAREA') { e.preventDefault(); search.focus(); }
+    if (e.key === 'Escape' && document.activeElement === search) { search.value = ''; apply(); search.blur(); }
+  });
+
+  document.querySelectorAll('.chip[data-topic]').forEach(function(ch){
+    ch.addEventListener('click', function(){
+      document.querySelectorAll('.chip[data-topic]').forEach(function(x){ x.classList.remove('on'); });
+      ch.classList.add('on');
+      activeTopic = ch.getAttribute('data-topic');
+      apply();
+    });
+  });
+  document.querySelectorAll('.chip[data-level]').forEach(function(ch){
+    ch.addEventListener('click', function(){
+      var l = ch.getAttribute('data-level');
+      activeLevels[l] = !activeLevels[l];
+      ch.classList.toggle('on', activeLevels[l]);
+      apply();
+    });
+  });
+
+  var details = Array.prototype.slice.call(document.querySelectorAll('details.deep'));
+  document.getElementById('expand').addEventListener('click', function(){
+    details.forEach(function(d){ if (!d.closest('.card').classList.contains('hidden')) { d.open = true; } });
+  });
+  document.getElementById('collapse').addEventListener('click', function(){
+    details.forEach(function(d){ d.open = false; });
+  });
+
+  var quizBtn = document.getElementById('quiz');
+  quizBtn.addEventListener('click', function(){
+    var on = !body.classList.contains('quiz');
+    body.classList.toggle('quiz', on);
+    quizBtn.classList.toggle('on', on);
+    quizBtn.setAttribute('aria-pressed', on ? 'true' : 'false');
+    quizBtn.textContent = on ? 'Quiz mode: ON' : 'Quiz mode';
+    cards.forEach(function(c){ c.classList.remove('revealed'); });
+    if (on) { details.forEach(function(d){ d.open = false; }); }
+  });
+  function reveal(el){
+    if (!body.classList.contains('quiz')) { return; }
+    el.closest('.card').classList.add('revealed');
+  }
+  document.querySelectorAll('.say').forEach(function(s){
+    s.addEventListener('click', function(){ reveal(s); });
+    s.addEventListener('keydown', function(e){
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); reveal(s); }
+    });
+  });
+
+  function fallbackCopy(text){
+    var ta = document.createElement('textarea');
+    ta.value = text; ta.setAttribute('readonly', '');
+    ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select();
+    var ok = false;
+    try { ok = document.execCommand('copy'); } catch (err) { ok = false; }
+    document.body.removeChild(ta);
+    return ok;
+  }
+  function flash(btn, ok){
+    btn.textContent = ok ? 'Copied' : 'Press Ctrl+C';
+    btn.classList.toggle('done', ok);
+    setTimeout(function(){ btn.textContent = 'Copy'; btn.classList.remove('done'); }, 1400);
+  }
+  document.querySelectorAll('.copy').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var pre = document.getElementById(btn.getAttribute('data-copy'));
+      var text = pre ? pre.textContent : '';
+      if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(text).then(function(){ flash(btn, true); }, function(){ flash(btn, fallbackCopy(text)); });
+      } else {
+        flash(btn, fallbackCopy(text));
+      }
+    });
+  });
+
+  var saved = null;
+  window.addEventListener('beforeprint', function(){
+    saved = details.map(function(d){ return d.open; });
+    details.forEach(function(d){ d.open = true; });
+  });
+  window.addEventListener('afterprint', function(){
+    if (saved) { details.forEach(function(d, i){ d.open = saved[i]; }); saved = null; }
+  });
+  document.getElementById('print').addEventListener('click', function(){ window.print(); });
+
+  apply();
+})();
+</script>
+</body>
+</html>

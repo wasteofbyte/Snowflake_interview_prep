@@ -1,0 +1,1690 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SnowSQL, Streams &amp; Tasks: Interview Q&amp;A (RetailPulse)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,200;12..96,400;12..96,600;12..96,700;12..96,800&family=JetBrains+Mono:wght@400;600;800&family=Source+Sans+3:ital,wght@0,300;0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#f3ecdf; --paper-2:#ebe2d0; --card:#fbf8f1; --ink:#15120f; --ink-2:#4a433b; --mute:#867c70;
+  --rule:#d8ccb6; --acc:#e0401b; --acc-soft:#fbe1d7; --teal:#0d7068; --teal-soft:#d5ebe7;
+  --gold:#b98a1e; --code-bg:#1b1916; --code-fg:#efe7d8;
+  --f-head:"Bricolage Grotesque","Space Grotesk",Georgia,serif;
+  --f-body:"Source Sans 3","IBM Plex Sans","Segoe UI Historic",Georgia,serif;
+  --f-mono:"JetBrains Mono","Fira Code",Consolas,"Courier New",monospace;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;color:var(--ink);font-family:var(--f-body);font-size:17px;line-height:1.55;
+  background:
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.3  0 0 0 0 0.22  0 0 0 0 0.12  0 0 0 .07 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>"),
+    repeating-linear-gradient(0deg, transparent 0 31px, rgba(120,95,60,.05) 31px 32px),
+    radial-gradient(1200px 600px at 8% -5%, rgba(224,64,27,.10), transparent 60%),
+    radial-gradient(900px 700px at 100% 20%, rgba(13,112,104,.10), transparent 60%),
+    linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
+  background-attachment:fixed;}
+.wrap{max-width:1080px;margin:0 auto;padding:0 24px}
+h1,h2,h3,h4{font-family:var(--f-head);margin:0}
+code,pre{font-family:var(--f-mono)}
+/* masthead */
+.mast{padding:56px 0 28px;border-bottom:3px solid var(--ink);position:relative}
+.kicker{font-family:var(--f-mono);font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--acc);font-weight:700}
+.mast h1{font-size:clamp(40px,6.4vw,78px);font-weight:800;line-height:.95;letter-spacing:-.03em;margin:14px 0 18px}
+.mast h1 em{font-style:normal;color:var(--acc)}
+.mast h1 .thin{font-weight:200;display:block;font-size:.42em;letter-spacing:-.01em;color:var(--ink-2);margin-top:10px}
+.mast .lede{max-width:720px;font-size:19px;color:var(--ink-2);font-weight:300}
+.meta{display:flex;gap:22px;flex-wrap:wrap;margin-top:22px;font-family:var(--f-mono);font-size:12.5px}
+.meta b{color:var(--acc);font-size:22px;font-family:var(--f-head);font-weight:800;display:block}
+/* reveal animations */
+@keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+@keyframes grow{from{width:0}to{width:var(--w)}}
+.mast > *{animation:rise .7s cubic-bezier(.2,.7,.2,1) both}
+.mast > *:nth-child(2){animation-delay:.08s}.mast > *:nth-child(3){animation-delay:.16s}.mast > *:nth-child(4){animation-delay:.24s}
+/* STAR */
+.star{margin:40px 0 10px}
+.sec-h{display:flex;align-items:baseline;gap:14px;border-bottom:1px solid var(--ink);padding-bottom:8px;margin-bottom:20px}
+.sec-h h2{font-size:30px;font-weight:800;letter-spacing:-.02em}
+.sec-h span{font-family:var(--f-mono);font-size:12px;color:var(--mute);text-transform:uppercase;letter-spacing:.12em}
+.timeline{list-style:none;margin:0;padding:0 0 0 8px;position:relative}
+.timeline:before{content:"";position:absolute;left:31px;top:8px;bottom:8px;width:2px;background:linear-gradient(var(--acc),var(--teal))}
+.st{display:grid;grid-template-columns:48px 1fr;gap:18px;align-items:start;margin:0 0 16px;animation:rise .6s both;animation-delay:calc(var(--i) * 90ms + .2s)}
+.st-k{width:48px;height:48px;border-radius:50%;background:var(--card);border:2px solid var(--ink);display:grid;place-items:center;font-family:var(--f-mono);font-weight:800;font-size:14px;position:relative;z-index:1}
+.st:first-child .st-k,.st:nth-child(2) .st-k{background:var(--ink);color:var(--paper)}
+.st:last-child .st-k{background:var(--acc);border-color:var(--acc);color:#fff}
+.st b{font-family:var(--f-head);font-size:19px;font-weight:700}
+.st p{margin:2px 0 0;color:var(--ink-2)}
+/* toolbar */
+.bar{position:sticky;top:0;z-index:20;margin:34px -24px 0;padding:14px 24px;background:rgba(243,236,223,.92);backdrop-filter:blur(8px);border-top:3px solid var(--ink);border-bottom:1px solid var(--rule)}
+.bar-row1{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.search{flex:1 1 260px;display:flex;align-items:center;gap:8px;background:var(--card);border:1.5px solid var(--ink);padding:0 12px;border-radius:3px}
+.search input{flex:1;border:0;background:transparent;font:inherit;padding:10px 0;outline:none;color:var(--ink)}
+.search kbd{font-family:var(--f-mono);font-size:11px;border:1px solid var(--rule);padding:1px 6px;border-radius:3px;color:var(--mute)}
+.btn{font-family:var(--f-mono);font-size:12.5px;font-weight:600;border:1.5px solid var(--ink);background:var(--card);color:var(--ink);padding:9px 12px;border-radius:3px;cursor:pointer;transition:transform .15s,background .15s}
+.btn:hover{transform:translateY(-1px);background:#fff}
+.btn.on{background:var(--ink);color:var(--paper)}
+.btn.quiz.on{background:var(--acc);border-color:var(--acc);color:#fff}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+.chip{font-family:var(--f-body);font-size:13.5px;border:1px solid var(--rule);background:transparent;padding:4px 11px;border-radius:999px;cursor:pointer;color:var(--ink-2)}
+.chip:hover{border-color:var(--ink)}
+.chip.on{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.chip.lv.on[data-level="Basic"]{background:var(--teal);border-color:var(--teal)}
+.chip.lv.on[data-level="Intermediate"]{background:var(--gold);border-color:var(--gold)}
+.chip.lv.on[data-level="Advanced"]{background:var(--acc);border-color:var(--acc)}
+.chip.lv.on[data-level="Scenario"]{background:var(--ink);border-color:var(--ink)}
+.chips .sep{width:1px;background:var(--rule);margin:0 6px}
+.count{font-family:var(--f-mono);font-size:12px;color:var(--mute);margin-left:auto}
+/* topics + cards */
+.topic{margin-top:46px}
+.topic-h{display:flex;align-items:baseline;justify-content:space-between;font-size:clamp(26px,3.4vw,38px);font-weight:800;letter-spacing:-.025em;border-bottom:3px double var(--ink);padding-bottom:6px;margin-bottom:18px}
+.topic-h small{font-family:var(--f-mono);font-size:12px;font-weight:400;color:var(--mute);letter-spacing:.1em;text-transform:uppercase}
+.card{background:var(--card);border:1px solid var(--rule);border-left:4px solid var(--ink);border-radius:3px;padding:22px 24px 16px;margin:0 0 18px;box-shadow:0 1px 0 rgba(0,0,0,.03),0 12px 24px -18px rgba(60,40,10,.35);animation:rise .55s cubic-bezier(.2,.7,.2,1) both;animation-delay:calc(var(--i) * 70ms)}
+.card[data-level="Advanced"]{border-left-color:var(--acc)}
+.card[data-level="Basic"]{border-left-color:var(--teal)}
+.card[data-level="Intermediate"]{border-left-color:var(--gold)}
+.card[data-topic="core"]{border:2px solid var(--ink);border-left:8px solid var(--acc);background:linear-gradient(135deg,#fffaf2,var(--card))}
+.card-h{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.qnum{font-family:var(--f-mono);font-weight:800;font-size:13px;color:var(--acc)}
+.badge{font-family:var(--f-mono);font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:3px 8px;border-radius:2px;color:#fff}
+.b-basic{background:var(--teal)}.b-intermediate{background:var(--gold)}.b-advanced{background:var(--acc)}.b-scenario{background:var(--ink)}
+.tlabel{font-size:13px;color:var(--mute);margin-left:auto}
+.qtext{font-size:clamp(20px,2.3vw,25px);font-weight:700;line-height:1.2;letter-spacing:-.015em;margin:10px 0 14px}
+.say{position:relative;background:linear-gradient(90deg,var(--teal-soft),rgba(213,235,231,.25));border-left:3px solid var(--teal);padding:12px 16px 12px;border-radius:2px;outline:none}
+.say-l{font-family:var(--f-mono);font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--teal)}
+.say p{margin:4px 0 0;font-size:17.5px}
+.reveal-hint{display:none}
+.red{margin-top:12px;border:1px dashed var(--acc);background:var(--acc-soft);padding:10px 16px;border-radius:2px}
+.red-h{font-family:var(--f-mono);font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--acc)}
+.red ul{margin:4px 0 0;padding-left:20px}.red li{margin:2px 0}
+.deep{margin-top:12px;border-top:1px solid var(--rule)}
+.deep summary{cursor:pointer;list-style:none;display:flex;align-items:center;gap:10px;padding:10px 0 4px;font-family:var(--f-head);font-weight:700}
+.deep summary::-webkit-details-marker{display:none}
+.deep summary:before{content:"+";font-family:var(--f-mono);width:22px;height:22px;display:grid;place-items:center;border:1.5px solid var(--ink);border-radius:50%;font-size:14px;transition:transform .25s}
+.deep[open] summary:before{content:"\2013";background:var(--ink);color:var(--paper)}
+.deep summary em{font-style:normal;font-family:var(--f-mono);font-size:11.5px;color:var(--mute);font-weight:400}
+.deep[open] .deep-b{animation:rise .35s both}
+.deep-b p{color:var(--ink-2)}
+.deep-b code{background:rgba(21,18,15,.06);padding:0 4px;border-radius:2px;font-size:.88em}
+.code{margin:14px 0 6px;border-radius:4px;overflow:hidden;border:1px solid #000}
+.code-h{display:flex;align-items:center;gap:10px;background:#2a2622;color:#cfc4b2;padding:6px 10px;font-family:var(--f-mono);font-size:11.5px}
+.lang{color:var(--acc);font-weight:800}
+.code-l{flex:1}
+.copy{font-family:var(--f-mono);font-size:11px;background:transparent;color:#efe7d8;border:1px solid #6d645a;border-radius:3px;padding:3px 10px;cursor:pointer}
+.copy:hover{border-color:var(--acc);color:#fff}
+.copy.done{background:var(--teal);border-color:var(--teal)}
+.code pre{margin:0;background:var(--code-bg);color:var(--code-fg);padding:14px 16px;overflow:auto;font-size:13px;line-height:1.55;tab-size:2}
+.code pre code{background:none;padding:0;font-size:inherit}
+/* visuals */
+.viz{margin:16px 0;padding:14px;background:repeating-linear-gradient(45deg,rgba(21,18,15,.018) 0 6px,transparent 6px 12px),#fffdf8;border:1px solid var(--rule);border-radius:3px}
+.viz-svg{width:100%;height:auto;display:block}
+.viz-svg .node rect{fill:#fff;stroke:var(--ink);stroke-width:1.6}
+.viz-svg .node.acc rect{fill:var(--acc-soft);stroke:var(--acc)}
+.viz-svg .node.teal rect{fill:var(--teal-soft);stroke:var(--teal)}
+.viz-svg text{text-anchor:middle;font-family:var(--f-body);fill:var(--ink)}
+.viz-svg .t1{font-family:var(--f-head);font-weight:700;font-size:15px}
+.viz-svg .t2{font-family:var(--f-mono);font-size:10.5px;fill:var(--ink-2)}
+.viz-svg .lbl{font-family:var(--f-mono);font-size:11px;fill:var(--ink-2)}
+.viz-svg .acc-t{fill:var(--acc);font-weight:700}
+.viz-svg .edge{stroke:var(--ink);stroke-width:1.6;fill:none;stroke-dasharray:5 4;animation:dash 1.4s linear infinite}
+@keyframes dash{to{stroke-dashoffset:-18}}
+.acc-t{color:var(--acc)}
+.tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.tile{border:1.5px solid var(--ink);padding:10px;background:#fff;border-radius:3px;display:flex;flex-direction:column;gap:3px}
+.tile b{font-family:var(--f-mono);font-size:12px;word-break:break-all}
+.tile span{font-family:var(--f-head);font-weight:700}
+.tile small{color:var(--ink-2);font-size:13px;line-height:1.35}
+.tile.hot{background:var(--acc-soft);border-color:var(--acc)}
+.split{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.pane{border:1.5px solid var(--ink);background:#fff;border-radius:3px;overflow:hidden}
+.pane-h{font-family:var(--f-mono);font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:6px 10px;background:var(--ink);color:var(--paper)}
+.pane-f{padding:8px 10px;font-size:14px;border-top:1px solid var(--rule)}
+pre.mini{margin:0;padding:10px;font-size:12px;background:#fffaf0}
+.bars{display:flex;flex-direction:column;gap:10px}
+.bar-row{display:grid;grid-template-columns:200px 1fr;gap:12px;align-items:center;font-size:14px}
+.bar-l{font-family:var(--f-head);font-weight:600}
+.bar .bar,.bars .bar{position:relative;height:28px;background:rgba(21,18,15,.06);border-radius:2px}
+.bars .bar i{position:absolute;inset:0 auto 0 0;width:var(--w);background:var(--acc);animation:grow 1.1s cubic-bezier(.2,.7,.2,1) both}
+.bars .bar.teal i{background:var(--teal)}.bars .bar.ink i{background:var(--ink)}
+.bars .bar em{position:relative;font-style:normal;font-family:var(--f-mono);font-size:11.5px;line-height:28px;padding-left:10px;color:var(--ink);mix-blend-mode:multiply;white-space:nowrap}
+.flat{display:grid;grid-template-columns:1fr auto 1fr;gap:12px;align-items:center}
+.flat-in,.flat-out{border:1.5px solid var(--ink);background:#fff;border-radius:3px;overflow:hidden;display:flex;flex-direction:column}
+.flat code{display:block;padding:7px 10px;font-size:12px;border-top:1px solid var(--rule);background:none}
+.flat-out code:nth-of-type(odd){background:var(--teal-soft)}
+.flat-arrow{font-family:var(--f-mono);font-size:11.5px;color:var(--acc);font-weight:700;text-align:center;max-width:170px}
+.lanes{display:flex;flex-direction:column;gap:6px}
+.lane-h{font-family:var(--f-head);font-weight:700;font-size:14px;margin-top:6px}
+.lane{height:14px;background:rgba(21,18,15,.07);border-radius:2px;overflow:hidden}
+.lane i{display:block;height:100%;width:var(--w);animation:grow 1.4s ease-out both}
+.lane i.busy{background:var(--acc)}.lane i.ok{background:var(--teal)}
+.lane-note{font-size:13.5px;color:var(--ink-2);margin:6px 0 0}
+.tbl{width:100%;border-collapse:collapse;font-size:14px;background:#fff}
+.tbl th,.tbl td{border:1px solid var(--rule);padding:6px 9px;text-align:left}
+.tbl th{background:var(--ink);color:var(--paper);font-family:var(--f-mono);font-size:11.5px;font-weight:600}
+.tbl th code{background:none;color:inherit}
+.scale{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.sc{border:1.5px solid var(--ink);padding:10px;background:#fff;border-radius:3px}
+.sc b{font-family:var(--f-mono);font-size:12px;display:block}
+.sc small{font-size:13px;color:var(--ink-2)}
+.sc.hot{border-color:var(--teal);background:var(--teal-soft)}
+.tree{margin:0;padding-left:0;list-style:none;counter-reset:t}
+.tree li{counter-increment:t;position:relative;padding:8px 10px 8px 44px;margin:0 0 6px;background:#fff;border:1px solid var(--rule);border-radius:3px;font-size:14.5px}
+.tree li:before{content:counter(t);position:absolute;left:10px;top:8px;width:24px;height:24px;border-radius:50%;background:var(--acc);color:#fff;font-family:var(--f-mono);font-size:12px;display:grid;place-items:center;font-weight:700}
+.layers{display:flex;flex-direction:column-reverse;gap:6px}
+.ly{display:grid;grid-template-columns:110px 1fr;border:1.5px solid var(--ink);background:#fff;border-radius:3px}
+.ly b{background:var(--ink);color:var(--paper);font-family:var(--f-mono);font-size:12px;display:grid;place-items:center}
+.ly span{padding:8px 12px;font-size:14px}
+.ly.mid b{background:var(--gold)}.ly.top b{background:var(--teal)}
+/* quiz mode */
+body.quiz .say{cursor:pointer;background:repeating-linear-gradient(-45deg,rgba(13,112,104,.10) 0 8px,rgba(13,112,104,.04) 8px 16px)}
+body.quiz .say p,body.quiz .say + .red{filter:blur(7px);user-select:none;transition:filter .3s}
+body.quiz .say .reveal-hint{display:block;position:absolute;inset:auto 0 50% 0;transform:translateY(50%);text-align:center;font-family:var(--f-mono);font-size:12px;font-weight:700;color:var(--teal);letter-spacing:.1em;text-transform:uppercase}
+body.quiz .card.revealed .say p,body.quiz .card.revealed .say + .red{filter:none;user-select:auto}
+body.quiz .card.revealed .say .reveal-hint{display:none}
+body.quiz .card:not(.revealed) .deep{opacity:.45;pointer-events:none}
+.hidden{display:none !important}
+.empty{text-align:center;padding:40px;font-family:var(--f-head);font-size:22px;color:var(--mute)}
+/* cheat card */
+.cheat{margin:60px 0 30px;border:3px solid var(--ink);background:#fffdf7;padding:26px 26px 18px;position:relative}
+.cheat:before{content:"CHEAT CARD";position:absolute;top:-13px;left:20px;background:var(--acc);color:#fff;font-family:var(--f-mono);font-size:12px;font-weight:800;letter-spacing:.2em;padding:3px 10px}
+.cheat h2{font-size:30px;font-weight:800;letter-spacing:-.02em}
+.cheat .sub{color:var(--ink-2);margin:2px 0 14px}
+.nums{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-bottom:14px}
+.num{border-top:3px solid var(--acc);padding-top:6px}
+.num b{font-family:var(--f-head);font-weight:800;font-size:22px;display:block;line-height:1}
+.num span{font-size:12.5px;color:var(--ink-2);line-height:1.25;display:block;margin-top:3px}
+.cgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.cc{border:1px solid var(--rule);background:#fff;border-radius:2px;overflow:hidden}
+.cc h4{font-family:var(--f-mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;background:var(--ink);color:var(--paper);padding:4px 8px}
+.cc pre{margin:0;padding:8px;font-size:10.8px;line-height:1.45;white-space:pre-wrap;word-break:break-word}
+footer{border-top:1px solid var(--ink);margin-top:30px;padding:18px 0 40px;font-size:13px;color:var(--mute);font-family:var(--f-mono)}
+@media (max-width:760px){
+  .tiles,.scale{grid-template-columns:1fr 1fr}.split,.cgrid{grid-template-columns:1fr}
+  .flat{grid-template-columns:1fr}.nums{grid-template-columns:repeat(3,1fr)}.bar-row{grid-template-columns:1fr}
+  .tlabel{margin-left:0;width:100%}
+}
+@media (prefers-reduced-motion:reduce){*,*:before{animation:none !important;transition:none !important}}
+@media print{
+  @page{margin:14mm 12mm}
+  body{background:#fff;font-size:11.5pt}
+  .bar,.copy,.reveal-hint,.no-print{display:none !important}
+  .wrap{max-width:none;padding:0}
+  .mast{padding-top:0}
+  .card,.st,.mast > *{animation:none !important;box-shadow:none}
+  .card{break-inside:avoid-page;page-break-inside:avoid;border-color:#bbb}
+  .hidden{display:block !important}
+  .topic.hidden,.card.hidden{display:block !important}
+  .deep-b{display:block}
+  details.deep::details-content{content-visibility:visible;display:block}
+  .say p,.say + .red{filter:none !important}
+  body.quiz .card .deep{opacity:1}
+  .code pre{background:#f6f3ec;color:#111;border:1px solid #ccc;white-space:pre-wrap;word-break:break-word;font-size:9pt}
+  .code-h{background:#e9e3d6;color:#333}
+  .viz-svg .edge{animation:none}
+  .bars .bar i,.lane i{animation:none}
+  .cheat{break-before:page;page-break-before:always;margin:0;border-width:2px;padding:14px}
+  .cheat .cc pre{font-size:7.6pt}
+  .num b{font-size:15pt}
+  *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
+
+.lab{margin:14px 0 4px;border-left:3px solid var(--gold);background:#f6edd2;padding:8px 14px;border-radius:2px;font-size:15.5px;color:var(--ink-2)}
+.lab .lab-l{font-family:var(--f-mono);font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);display:block;margin-bottom:2px}
+.lab code{background:rgba(21,18,15,.06);padding:0 4px;border-radius:2px;font-size:.88em}
+.say code,.red code{background:rgba(21,18,15,.07);padding:0 4px;border-radius:2px;font-size:.86em}
+.viz .tbl code{background:none}
+@media print{.lab{break-inside:avoid;background:#fff}}
+</style>
+</head>
+<body>
+<style id="sf-home-style">
+#sf-home-btn{
+  position:fixed;bottom:22px;right:22px;z-index:9998;
+  display:inline-flex;align-items:center;gap:7px;
+  padding:8px 18px 8px 14px;border-radius:999px;
+  background:rgba(255,255,255,.13);
+  border:1px solid rgba(255,255,255,.26);
+  color:#e5edf5;
+  font-family:system-ui,-apple-system,"Segoe UI",sans-serif;
+  font-size:12px;font-weight:600;letter-spacing:.04em;
+  text-decoration:none;cursor:pointer;
+  backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+  box-shadow:0 2px 12px rgba(0,0,0,.25);
+  transition:background .18s,border-color .18s,transform .18s,box-shadow .18s,color .18s;
+  white-space:nowrap;
+}
+#sf-home-btn::before{
+  content:"⌂";
+  font-size:14px;line-height:1;
+}
+#sf-home-btn:hover{
+  background:rgba(255,255,255,.24);
+  border-color:rgba(255,255,255,.46);
+  color:#fff;
+  transform:translateY(-2px);
+  box-shadow:0 6px 22px rgba(0,0,0,.35);
+  text-decoration:none;
+}
+/* Light theme — fires for all files that use data-theme="light" toggle */
+[data-theme="light"] #sf-home-btn{
+  background:rgba(11,27,43,.08);
+  border-color:rgba(11,27,43,.20);
+  color:#0b1b2b;
+  box-shadow:0 2px 12px rgba(0,0,0,.10);
+}
+[data-theme="light"] #sf-home-btn:hover{
+  background:rgba(10,134,194,.13);
+  border-color:rgba(10,134,194,.38);
+  color:#0a86c2;
+  box-shadow:0 6px 22px rgba(10,134,194,.18);
+}
+/* Interview QA files start in light mode via :root (paper theme) */
+body[style*="--paper"] #sf-home-btn,
+.mast ~ #sf-home-btn{
+  background:rgba(11,27,43,.07);
+  border-color:rgba(11,27,43,.18);
+  color:#15120f;
+}
+</style>
+<a id="sf-home-btn" href="index.html" title="Back to Course Home">Course Home</a>
+
+<div class="wrap">
+  <header class="mast">
+    <div class="kicker">Data engineering interview &middot; Snowflake &middot; SnowSQL CLI</div>
+    <h1>Streams, tasks<br>and <em>SnowSQL</em>.<span class="thin">From a local CSV to a self-maintaining clean table, and how to explain it.</span></h1>
+    <p class="lede">A Q&amp;A sheet built around a fictional retailer, <b>RetailPulse</b>, whose daily inventory CSVs are uploaded with SnowSQL PUT, loaded with COPY, tracked by standard and append-only streams, and merged by a two-task DAG. It is the companion to the lab simulator: each card has a short answer to say out loud, red flags, and a deep dive with SQL. Where the lab simplifies real Snowflake, the card says so.</p>
+    <div class="meta">
+      <div><b>50</b>questions</div><div><b>10</b>topics</div><div><b>4</b>difficulty levels</div><div><b>1</b>printable cheat card</div>
+    </div>
+  </header>
+
+  <section class="star" id="star">
+    <div class="sec-h"><h2>Model answer: STAR timeline</h2><span>about 2 minutes, spoken</span></div>
+    <ol class="timeline"><li class="st" style="--i:0"><span class="st-k">S</span><div><b>Situation</b><p>RetailPulse exports daily inventory CSVs (30, 30 and 20 rows across three batches) from a local drop. Analysts need one current row per product and a price-change audit trail.</p></div></li><li class="st" style="--i:1"><span class="st-k">T</span><div><b>Task</b><p>Build a repeatable, rerun-safe pipeline using only SnowSQL and Snowflake objects: stage, load, capture changes, merge, audit, schedule, monitor.</p></div></li><li class="st" style="--i:2"><span class="st-k">A1</span><div><b>Connect &amp; stage</b><p>SnowSQL with a named connection, role LAB_ANALYST, warehouse LAB_WH. PUT each batch to the internal stage STG_INVENTORY (PUT only works from SnowSQL, never the web UI) and LIST to verify.</p></div></li><li class="st" style="--i:3"><span class="st-k">A2</span><div><b>Load</b><p>CSV file format with SKIP_HEADER and quote enclosure. COPY INTO STAGING.INVENTORY_RAW with METADATA$FILENAME / ROW_NUMBER lineage. Batch 3 has an extra column, handled by name matching and an ALTER, not by silencing the error.</p></div></li><li class="st" style="--i:4"><span class="st-k">A3</span><div><b>Capture</b><p>A standard stream for the MERGE and an append-only stream for the audit insert, one stream per consumer. Update pairs, ISUPDATE and ROW_ID inspected with plain SELECTs, which never consume.</p></div></li><li class="st" style="--i:5"><span class="st-k">A4</span><div><b>Merge &amp; chain</b><p>Deduped, keyed MERGE into ANALYTICS.INVENTORY. Root task with SCHEDULE and WHEN SYSTEM$STREAM_HAS_DATA, child task AFTER the root writes PRICE_HISTORY. Root suspended to change the DAG, children resumed before the root.</p></div></li><li class="st" style="--i:6"><span class="st-k">A5</span><div><b>Operate</b><p>TASK_HISTORY for SUCCEEDED / SKIPPED / FAILED, SHOW STREAMS for stale, nightly snapshot via snowsql -f with variables and exit_on_error.</p></div></li><li class="st" style="--i:7"><span class="st-k">R</span><div><b>Result</b><p>85 raw rows, 37 clean products, 9 audit rows, standard stream 52 vs append-only 50, reruns are no-ops and an empty stream produces a SKIPPED run.</p></div></li></ol>
+  </section>
+
+  <div class="bar" role="search">
+    <div class="bar-row1">
+      <label class="search"><span aria-hidden="true">&#9906;</span><input id="q" type="search" placeholder="Search questions, answers, SQL (e.g. stale, WHEN, SKIPPED, MERGE)" aria-label="Search"><kbd>/</kbd></label>
+      <button class="btn" id="expand" type="button">Expand all</button>
+      <button class="btn" id="collapse" type="button">Collapse all</button>
+      <button class="btn quiz" id="quiz" type="button" aria-pressed="false">Quiz mode</button>
+      <button class="btn" id="print" type="button">Print</button>
+    </div>
+    <div class="chips" aria-label="Filter by topic"><button class="chip on" data-topic="all" type="button">All topics</button><button class="chip" data-topic="core" type="button">Main question</button><button class="chip" data-topic="cli" type="button">SnowSQL, PUT &amp; GET</button><button class="chip" data-topic="copy" type="button">COPY INTO CSV &amp; schema drift</button><button class="chip" data-topic="strm" type="button">Streams</button><button class="chip" data-topic="meta" type="button">METADATA$, offsets &amp; staleness</button><button class="chip" data-topic="task" type="button">Tasks</button><button class="chip" data-topic="dag" type="button">DAGs</button><button class="chip" data-topic="merge" type="button">MERGE &amp; idempotency</button><button class="chip" data-topic="scen" type="button">Scenarios &amp; troubleshooting</button><button class="chip" data-topic="lab" type="button">Lab vs real Snowflake</button></div>
+    <div class="chips" aria-label="Filter by difficulty"><button class="chip lv on" data-level="Basic" type="button">Basic</button><button class="chip lv on" data-level="Intermediate" type="button">Intermediate</button><button class="chip lv on" data-level="Advanced" type="button">Advanced</button><button class="chip lv on" data-level="Scenario" type="button">Scenario</button><span class="count" id="count"></span></div>
+  </div>
+
+  <main>
+    <section class="topic" data-topic="core" id="t-core"><h2 class="topic-h"><span>Main question</span><small>1 question</small></h2>
+<article class="card" id="q01" data-topic="core" data-level="Intermediate" style="--i:0">
+  <header class="card-h">
+    <span class="qnum">Q01</span>
+    <span class="badge b-intermediate">Intermediate</span>
+    <span class="tlabel">Main question</span>
+  </header>
+  <h3 class="qtext">Load daily inventory CSV files into Snowflake with SnowSQL, then keep a clean table in sync using streams and tasks. Walk me through it.</h3>
+  <div class="say" tabindex="0" role="button" aria-label="Answer (click to reveal in quiz mode)">
+    <span class="say-l">Say this</span>
+    <p>I stage CSV files using SnowSQL PUT to an internal stage, then COPY them into a raw VARIANT or typed raw table with lineage columns. A standard stream on that table does CDC — it captures every INSERT, UPDATE (as DELETE+INSERT) and DELETE, exposing the change type through METADATA$ACTION and METADATA$ISUPDATE. For append-only sources I use APPEND_ONLY = TRUE to skip the overhead. A parent task on a 5-minute schedule runs a MERGE into the clean table, gated by SYSTEM$STREAM_HAS_DATA so it spends compute only when there is work. A child task (AFTER the parent) writes price changes to an audit table. The stream offset advances on COMMIT, so the DAG is naturally idempotent. I monitor with TASK_HISTORY and check the STALE flag in SHOW STREAMS to catch streams that fell behind the 14-day retention window.</p>
+    <span class="reveal-hint">Click to reveal answer</span>
+  </div>
+  <div class="red"><div class="red-h">Red flag answers to avoid</div><ul><li>"I would upload the file in the Snowsight worksheet with PUT." PUT is not supported in the web interface; it needs SnowSQL, a driver, or Snowflake CLI.</li><li>"I would SELECT from the stream to check it, and that consumes the changes." A plain SELECT never advances the offset; a DML that reads the stream does.</li><li>Never mentioning what happens on a rerun, a failed task, or a stream that went stale.</li></ul></div>
+  <details class="deep">
+    <summary><span>Deep dive</span><em>SQL</em></summary>
+    <div class="deep-b"><p>Structure it as <b>connect &rarr; stage &rarr; load &rarr; capture changes &rarr; merge &rarr; chain &rarr; monitor</b>. The scenario is <b>RetailPulse</b>: three daily inventory CSV batches (30 + 30 + 20 rows) for products P001-P037, with 7 price changes across them. The lab simulator ends on exactly this answer, and the numbers it reports (85 raw rows, 37 clean products, 50 vs 52 stream rows) show up in the cards below.</p><figure class="viz">
+<svg class="viz-svg" viewBox="0 0 860 190" role="img" aria-label="RetailPulse pipeline: local CSV to stage to raw to stream to task to clean table">
+  <defs><marker id="ah1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="var(--ink)"/></marker></defs>
+  <g class="node"><rect x="8" y="55" width="120" height="70" rx="6"/><text x="68" y="85" class="t1">Local CSV</text><text x="68" y="105" class="t2">batch1..3.csv</text></g>
+  <g class="node acc"><rect x="150" y="55" width="130" height="70" rx="6"/><text x="215" y="85" class="t1">Internal stage</text><text x="215" y="105" class="t2">STG_INVENTORY</text></g>
+  <g class="node teal"><rect x="302" y="55" width="130" height="70" rx="6"/><text x="367" y="85" class="t1">INVENTORY_RAW</text><text x="367" y="105" class="t2">STAGING</text></g>
+  <g class="node"><rect x="454" y="20" width="130" height="60" rx="6"/><text x="519" y="46" class="t1">Standard stream</text><text x="519" y="64" class="t2">STRM_INVENTORY_RAW</text></g>
+  <g class="node"><rect x="454" y="105" width="130" height="60" rx="6"/><text x="519" y="131" class="t1">Append-only</text><text x="519" y="149" class="t2">STRM_INVENTORY_APPEND</text></g>
+  <g class="node acc"><rect x="606" y="20" width="110" height="60" rx="6"/><text x="661" y="46" class="t1">Root task</text><text x="661" y="64" class="t2">MERGE (WHEN data)</text></g>
+  <g class="node acc"><rect x="606" y="105" width="110" height="60" rx="6"/><text x="661" y="131" class="t1">Child task</text><text x="661" y="149" class="t2">AFTER root</text></g>
+  <g class="node teal"><rect x="738" y="20" width="114" height="60" rx="6"/><text x="795" y="46" class="t1">INVENTORY</text><text x="795" y="64" class="t2">ANALYTICS</text></g>
+  <g class="node teal"><rect x="738" y="105" width="114" height="60" rx="6"/><text x="795" y="131" class="t1">PRICE_HISTORY</text><text x="795" y="149" class="t2">ANALYTICS</text></g>
+  <path d="M128 90 H148" class="edge" marker-end="url(#ah1)"/><path d="M280 90 H300" class="edge" marker-end="url(#ah1)"/>
+  <path d="M432 75 L452 55" class="edge" marker-end="url(#ah1)"/><path d="M432 105 L452 125" class="edge" marker-end="url(#ah1)"/>
+  <path d="M584 50 H604" class="edge" marker-end="url(#ah1)"/><path d="M584 135 H604" class="edge" marker-end="url(#ah1)"/>
+  <path d="M716 50 H736" class="edge" marker-end="url(#ah1)"/><path d="M716 135 H736" class="edge" marker-end="url(#ah1)"/>
+  <path d="M661 80 V103" class="edge" marker-end="url(#ah1)"/>
+  <text x="138" y="45" class="lbl">PUT</text><text x="290" y="45" class="lbl">COPY</text>
+</svg></figure><p>The one design point worth saying out loud: the standard stream feeds the MERGE and a second, append-only stream feeds the audit insert. A stream has one offset, so two independent consumers need two streams.</p><div class="code"><div class="code-h"><span class="lang">SQL</span><span class="code-l">The whole pipeline in one screen</span><button class="copy" type="button" data-copy="c1_0" aria-label="Copy code">Copy</button></div><pre id="c1_0"><code>-- terminal (SnowSQL): upload
+PUT file:///Users/me/exports/inventory_2026-11-20_batch1.csv @STAGING.STG_INVENTORY;
+
+-- load with lineage
+COPY INTO STAGING.INVENTORY_RAW (product_id, sku, name, category, quantity_on_hand,
+  unit_cost, unit_price, warehouse_id, last_updated, status, _src_file, _src_row)
+FROM (SELECT $1,$2,$3,$4,$5,$6,$7,$8,$9,$10, METADATA$FILENAME, METADATA$FILE_ROW_NUMBER
+      FROM @STAGING.STG_INVENTORY/inventory_2026-11-20_batch1.csv.gz)
+FILE_FORMAT = (FORMAT_NAME = &#x27;STAGING.FF_CSV_INVENTORY&#x27;);
+
+-- capture changes
+CREATE STREAM STAGING.STRM_INVENTORY_RAW    ON TABLE STAGING.INVENTORY_RAW;
+CREATE STREAM STAGING.STRM_INVENTORY_APPEND ON TABLE STAGING.INVENTORY_RAW APPEND_ONLY = TRUE;
+
+-- root task: merge only when there is work
+CREATE OR REPLACE TASK ANALYTICS.TSK_MERGE_INVENTORY
+  WAREHOUSE = LAB_WH SCHEDULE = &#x27;5 MINUTE&#x27;
+  WHEN SYSTEM$STREAM_HAS_DATA(&#x27;STAGING.STRM_INVENTORY_RAW&#x27;)
+AS MERGE INTO ANALYTICS.INVENTORY t USING (...) s ON t.product_id = s.product_id ...;
+
+-- child task: runs after the root succeeds
+CREATE OR REPLACE TASK ANALYTICS.TSK_LOAD_PRICE_HISTORY
+  WAREHOUSE = LAB_WH AFTER ANALYTICS.TSK_MERGE_INVENTORY
+AS INSERT INTO ANALYTICS.PRICE_HISTORY SELECT ... FROM STAGING.STRM_INVENTORY_APPEND ...;
+
+ALTER TASK ANALYTICS.TSK_LOAD_PRICE_HISTORY RESUME;   -- children first
+ALTER TASK ANALYTICS.TSK_MERGE_INVENTORY    RESUME;   -- root last</code></pre></div><div class="lab"><span class="lab-l">In the lab simulator</span>The answer above is the verbatim 60-second answer from the lab completion screen. The lab engine models all of these objects but has no real clock; it drives tasks with EXECUTE TASK and a simulated scheduler.</div></div>
+  </details>
+</article></section><section class="topic" data-topic="cli" id="t-cli"><h2 class="topic-h"><span>SnowSQL, PUT &amp; GET</span><small>8 questions</small></h2>
+<article class="card" id="q02" data-topic="cli" data-level="Basic" style="--i:0">
+  <header class="card-h">
+    <span class="qnum">Q02</span>
+    <span class="badge b-basic">Basic</span>
+    <span class="tlabel">SnowSQL, PUT &amp; GET</span>
+  </header>
+  <h3 class="qtext">What is SnowSQL and when would you use it instead of the Snowsight web interface?</h3>
+  <div class="say" tabindex="0" role="button" aria-label="Answer (click to reveal in quiz mode)">
+    <span class="say-l">Say this</span>
+    <p>SnowSQL is Snowflake's command-line client. I use it for anything that must run unattended or touch local files: scripted deployments, scheduled jobs with <code>-f</code>, and PUT/GET to move files between my machine and an internal stage. The web worksheet cannot do PUT or GET at all.</p>
+    <span class="reveal-hint">Click to reveal answer</span>
+  </div>
+  <div class="red"><div class="red-h">Red flag answers to avoid</div><ul><li>Treating SnowSQL as a different SQL dialect. It sends normal Snowflake SQL; the <code>!</code> commands and <code>&amp;var</code> substitution are client-side features.</li></ul></div>
+  <details class="deep">
+    <summary><span>Deep dive</span><em>SQL</em></summary>
+    <div class="deep-b"><p>SnowSQL commands starting with <code>!</code> (for example <code>!define</code>, <code>!set</code>, <code>!source</code>, <code>!exit</code>) are handled by the client and never reach Snowflake. Snowflake also ships the newer <b>Snowflake CLI</b> (<code>snow</code>); the concepts here (stages, PUT, scripts, variables) carry over, only the flags differ.</p><div class="code"><div class="code-h"><span class="lang">SQL</span><span class="code-l">Connect and sanity-check</span><button class="copy" type="button" data-copy="c2_0" aria-label="Copy code">Copy</button></div><pre id="c2_0"><code>snowsql -a myorg-myaccount -u lab_user -r LAB_ANALYST -w LAB_WH -d RETAILPULSE_LAB -s STAGING
+-- or by named connection from ~/.snowsql/config
+snowsql -c retail
+
+SELECT CURRENT_VERSION(), CURRENT_ROLE(), CURRENT_WAREHOUSE();</code></pre></div><div class="lab"><span class="lab-l">In the lab simulator</span>The lab terminal accepts <code>snowsql -c ...</code>-style connection and sets an internal "connected" flag. That flag is what unlocks PUT; there is no real network or authentication.</div></div>
+  </details>
+</article>
+<article class="card" id="q03" data-topic="cli" data-level="Basic" style="--i:1">
+  <header class="card-h">
+    <span class="qnum">Q03</span>
+    <span class="badge b-basic">Basic</span>
+    <span class="tlabel">SnowSQL, PUT &amp; GET</span>
+  </header>
+  <h3 class="qtext">What does PUT do, and why does it fail in a Snowsight worksheet?</h3>
+  <div class="say" tabindex="0" role="button" aria-label="Answer (click to reveal in quiz mode)">
+    <span class="say-l">Say this</span>
+    <p>PUT uploads a file from the machine where the client runs to an <b>internal</b> stage. The upload happens client side (the client compresses and encrypts the file, then sends it), so it needs a client that has access to your local file system: SnowSQL, a connector/driver, or Snowflake CLI. The web interface cannot read your disk, so PUT and GET are not supported there.</p>
+    <span class="reveal-hint">Click to reveal answer</span>
+  </div>
+  <div class="red"><div class="red-h">Red flag answers to avoid</div><ul><li>"PUT works on external S3 stages." PUT and GET only work with internal stages.</li><li>"I will just run PUT in a worksheet." It errors; use SnowSQL.</li></ul></div>
+  <details class="deep">
+    <summary><span>Deep dive</span><em>SQL</em></summary>
+    <div class="deep-b"><p>Gotcha to state clearly in an interview: <b>PUT only via a client, never the web UI</b>. Also note that PUT does not load data into a table. It only lands a file in the stage; COPY INTO does the load.</p><div class="code"><div class="code-h"><span class="lang">SQL</span><span class="code-l">PUT then confirm with LIST</span><button class="copy" type="button" data-copy="c3_0" aria-label="Copy code">Copy</button></div><pre id="c3_0"><code>-- macOS/Linux path; on Windows use file://C:\temp\file.csv
+PUT file:///Users/me/exports/inventory_2026-11-20_batch1.csv @STAGING.STG_INVENTORY;
+LIST @STAGING.STG_INVENTORY;</code></pre></div><div class="lab"><span class="lab-l">In the lab simulator</span>The lab reproduces the failure: running PUT from the worksheet returns an error saying PUT is not supported in the Snowflake web interface, and the same statement works in the terminal panel. The exact wording of real error text can differ by version.</div></div>
+  </details>
+</article>
+<article class="card" id="q04" data-topic="cli" data-level="Basic" style="--i:2">
+  <header class="card-h">
+    <span class="qnum">Q04</span>
+    <span class="badge b-basic">Basic</span>
+    <span class="tlabel">SnowSQL, PUT &amp; GET</span>
+  </header>
+  <h3 class="qtext">Which stage types exist, and which ones can PUT and GET use?</h3>
+  <div class="say" tabindex="0" role="button" aria-label="Answer (click to reveal in quiz mode)">
+    <span class="say-l">Say this</span>
+    <p>User stage <code>@~</code>, table stage <code>@%table</code>, and named internal stages live inside Snowflake, so PUT and GET work with them. Named external stages point at S3, Azure or GCS and are loaded by whatever drops files there, not by PUT. For RetailPulse I use a named internal stage, <code>STG_INVENTORY</code>, because the CSVs come from a local export.</p>
+    <span class="reveal-hint">Click to reveal answer</span>
+  </div>
+  <div class="red"><div class="red-h">Red flag answers to avoid</div><ul><li>Mixing up a stage with a table. A stage is a pointer to files plus metadata, nothing queryable until you COPY or query it with <code>$1</code>.</li></ul></div>
+  <details class="deep">
+    <summary><span>Deep dive</span><em>visual + SQL</em></summary>
+    <div class="deep-b"><p>Named stages are the production choice because privileges (<code>USAGE</code>/<code>READ</code>/<code>WRITE</code>) and the file format can be attached to them.</p><figure class="viz"><div class="tiles">
+<div class="tile"><b>@~</b><span>User stage</span><small>One per user. Not grantable. Quick tests.</small></div>
+<div class="tile"><b>@%INVENTORY_RAW</b><span>Table stage</span><small>One per table. No separate file format object.</small></div>
+<div class="tile hot"><b>@STAGING.STG_INVENTORY</b><span>Named internal</span><small>Grantable, owns a file format, PUT/GET work. Lab choice.</small></div>
+<div class="tile"><b>@S3_STG</b><span>Named external</span><small>Cloud bucket. Files arrive from elsewhere. No PUT.</small></div></div></figure><div class="code"><div class="code-h"><span class="lang">SQL</span><span class="code-l">Create the internal stage</span><button class="copy" type="button" data-copy="c4_0" aria-label="Copy code">Copy</button></div><pre id="c4_0"><code>CREATE STAGE STAGING.STG_INVENTORY
+  FILE_FORMAT = (FORMAT_NAME = &#x27;STAGING.FF_CSV_INVENTORY&#x27;);
+DESC STAGE STAGING.STG_INVENTORY;</code></pre></div></div>
+  </details>
+</article>
+<article class="card" id="q05" data-topic="cli" data-level="Intermediate" style="--i:3">
+  <header class="card-h">
+    <span class="qnum">Q05</span>
+    <span class="badge b-intermediate">Intermediate</span>
+    <span class="tlabel">SnowSQL, PUT &amp; GET</span>
+  </header>
+  <h3 class="qtext">What do AUTO_COMPRESS and OVERWRITE do on PUT, and what happens if you PUT the same file twice?</h3>
+  <div class="say" tabindex="0" role="button" aria-label="Answer (click to reveal in quiz mode)">
+    <span class="say-l">Say this</span>
+    <p>By default PUT gzips the file (<code>AUTO_COMPRESS=TRUE</code>), so <code>batch1.csv</code> is staged as <code>batch1.csv.gz</code>, and encrypts it on the client. If you PUT a file whose name already exists in the stage, the row comes back as <b>SKIPPED</b> unless you pass <code>OVERWRITE=TRUE</code>. That is why a rerun of the upload step does not duplicate files.</p>
+    <span class="reveal-hint">Click to reveal answer</span>
+  </div>
+  <div class="red"><div class="red-h">Red flag answers to avoid</div><ul><li>Forgetting the staged name ends in <code>.gz</code> and then writing a COPY with the original name. The COPY finds no files.</li></ul></div>
+  <details class="deep">
+    <summary><span>Deep dive</span><em>SQL</em></summary>
+    <div class="deep-b"><p>PUT also has <code>PARALLEL</code> (number of upload threads, default 4) and <code>SOURCE_COMPRESSION</code> for files you already compressed. The PUT result set tells you per file: source, target, sizes, compression, <b>status</b> (UPLOADED or SKIPPED), encryption and message.</p><div class="code"><div class="code-h"><span class="lang">SQL</span><span class="code-l">Variants</span><button class="copy" type="button" data-copy="c5_0" aria-label="Copy code">Copy</button></div><pre id="c5_0"><code>PUT file:///Users/me/exports/inventory_2026-11-20_batch*.csv @STAGING.STG_INVENTORY;            -- wildcards ok
+PUT file:///Users/me/exports/inventory_2026-11-20_batch1.csv @STAGING.STG_INVENTORY;            -- 2nd time: SKIPPED
+PUT file:///Users/me/exports/inventory_2026-11-20_batch1.csv @STAGING.STG_INVENTORY OVERWRITE = TRUE;
+PUT file:///Users/me/exports/big.csv @STAGING.STG_INVENTORY AUTO_COMPRESS = FALSE PARALLEL = 8;
+LIST @STAGING.STG_INVENTORY PATTERN = &#x27;.*batch[12].*&#x27;;</code></pre></div><div class="lab"><span class="lab-l">In the lab simulator</span>The lab models gzip naming (<code>.gz</code> target) and the UPLOADED / SKIPPED status. It does not do real compression, encryption or parallel transfer, and file sizes shown are plausible, not byte-accurate.</div></div>
+  </details>
+</article>
+<article class="card" id="q06" data-topic="cli" data-level="Intermediate" style="--i:4">
+  <header class="card-h">
+    <span class="qnum">Q06</span>
+    <span class="badge b-intermediate">Intermediate</span>
+    <span class="tlabel">SnowSQL, PUT &amp; GET</span>
+  </header>
+  <h3 class="qtext">How do variables work in SnowSQL (!define, &amp;var, -D), and what is the substitution gotcha?</h3>
+  <div class="say" tabindex="0" role="button" aria-label="Answer (click to reveal in quiz mode)">
+    <span class="say-l">Say this</span>
+    <p>Define a variable with <code>!define name=value</code> or pass <code>-D name=value</code> on the command line, then reference it as <code>&amp;name</code> or <code>&amp;{name}</code>. SnowSQL replaces it as plain text before sending the SQL, so string values need quotes in the SQL itself: <code>'&amp;run_date'</code>. The gotcha is that any literal ampersand in your SQL, for example in a string like <code>'A&amp;B'</code>, gets treated as a variable unless you turn substitution off.</p>
+    <span class="reveal-hint">Click to reveal answer</span>
+  </div>
+  <div class="red"><div class="red-h">Red flag answers to avoid</div><ul><li>Expecting bind-variable behavior. Substitution is text replacement, so it can also inject SQL; never feed it untrusted input.</li><li>Using <code>&amp;run_date</code> unquoted in a date comparison and getting a parse error.</li></ul></div>
+  <details class="deep">
+    <summary><span>Deep dive</span><em>SQL</em></summary>
+    <div class="deep-b"><p>Substitution is on by default in SnowSQL (<code>variable_substitution=True</code>). Undefined variables raise an error. Do not confuse this with Snowflake session variables (<code>SET x = 1; SELECT $x</code>), which are server-side and have a different syntax.</p><div class="code"><div class="code-h"><span class="lang">SQL</span><span class="code-l">Variables in a session</span><button class="copy" type="button" data-copy="c6_0" aria-label="Copy code">Copy</button></div><pre id="c6_0"><code>!define run_date=2026-11-21
+!define wh=LAB_WH
+USE WAREHOUSE &amp;wh;
+SELECT COUNT(*) FROM ANALYTICS.INVENTORY WHERE last_updated &lt;= &#x27;&amp;run_date&#x27;;
+SELECT COUNT(*) FROM ANALYTICS.INVENTORY WHERE name LIKE &#x27;%&amp;{wh}%&#x27;;   -- {} form next to text
+
+!set variable_substitution=false
+SELECT &#x27;AT&amp;T&#x27; AS vendor;     -- ampersand now left alone
+!set variable_substitution=true
+
+-- or from the command line:
+-- snowsql -c retail -D run_date=2026-11-21 -f nightly_rollup.sql</code></pre></div><div class="lab"><span class="lab-l">In the lab simulator</span>The lab implements <code>!define</code>, <code>&amp;var</code> / <code>&amp;{var}</code> substitution and an undefined-variable error, via <code>engine.substitute()</code>. Error text is modelled on real SnowSQL, not guaranteed identical.</div></div>
+  </details>
+</article>
+<article class="card" id="q07" data-topic="cli" data-level="Intermediate" style="--i:5">
+  <header class="card-h">
+    <span class="qnum">Q07</span>
+    <span class="badge b-intermediate">Intermediate</span>
+    <span class="tlabel">SnowSQL, PUT &amp; GET</span>
+  </header>
+  <h3 class="qtext">How do you run a SQL script non-interactively with SnowSQL -f, and make a scheduler notice failures?</h3>
+  <div class="say" tabindex="0" role="button" aria-label="Answer (click to reveal in quiz mode)">
+    <span class="say-l">Say this</span>
+    <p>I use <code>snowsql -c retail -f nightly_rollup.sql</code> with <code>-D</code> for parameters, <code>-o exit_on_error=true</code> so the first failing statement stops the script with a non-zero exit code, and <code>-o friendly=false -o quiet=true</code> plus an output format like CSV to keep logs clean. Without exit_on_error the script keeps going after an error and the scheduler sees success.</p>
+    <span class="reveal-hint">Click to reveal answer</span>
+  </div>
+  <div class="red"><div class="red-h">Red flag answers to avoid</div><ul><li>Running a multi-statement script and assuming a failure in statement 3 stops the rest. It does not by default.</li></ul></div>
+  <details class="deep">
+    <summary><span>Deep dive</span><em>SQL</em></summary>
+    <div class="deep-b"><p>Other useful <code>-o</code> options: <code>output_format</code> (<code>psql</code>, <code>csv</code>, <code>tsv</code>, <code>json</code>, <code>expanded</code>), <code>header</code> (true/false), <code>timing</code>, <code>variable_substitution</code>. The same options can live in the <code>[options]</code> section of the config file, and command-line <code>-o</code> overrides them.</p><div class="code"><div class="code-h"><span class="lang">SQL</span><span class="code-l">nightly_rollup.sql and the call</span><button class="copy" type="button" data-copy="c7_0" aria-label="Copy code">Copy</button></div><pre id="c7_0"><code>-- nightly_rollup.sql
+USE ROLE LAB_ANALYST;
+USE WAREHOUSE LAB_WH;
+USE SCHEMA RETAILPULSE_LAB.ANALYTICS;
+CREATE TABLE IF NOT EXISTS INVENTORY_SNAPSHOT AS SELECT CURRENT_DATE() AS snapshot_date, * FROM INVENTORY WHERE 1 = 0;
+INSERT INTO INVENTORY_SNAPSHOT SELECT &#x27;&amp;run_date&#x27;::DATE, * FROM INVENTORY;
+
+-- shell
+snowsql -c retail -D run_date=2026-11-21 -f nightly_rollup.sql \
+  -o exit_on_error=true -o friendly=false -o quiet=true -o timing=false -o output_format=csv
+echo &quot;exit code: $?&quot;</code></pre></div><div class="lab"><span class="lab-l">In the lab simulator</span>The lab has a <code>nightly_rollup.sql</code> file in its Files tab and runs it with <code>snowsql -f</code>. Exit codes and output-format flags are modelled lightly; the point is the flow.</div></div>
+  </details>
+</article>
+<article class="card" id="q08" data-topic="cli" data-level="Intermediate" style="--i:6">
+  <header class="card-h">
+    <span class="qnum">Q08</span>
+    <span class="badge b-intermediate">Intermediate</span>
+    <span class="tlabel">SnowSQL, PUT &amp; GET</span>
+  </header>
+  <h3 class="qtext">Where does SnowSQL keep connection settings, and how do you avoid storing a password in plain text?</h3>
+  <div class="say" tabindex="0" role="button" aria-label="Answer (click to reveal in quiz mode)">
+    <span class="say-l">Say this</span>
+    <p>In <code>~/.snowsql/config</code>, with a <code>[connections.&lt;name&gt;]</code> section per environment and an <code>[options]</code> section for defaults. I avoid a password in that file: use key-pair auth (<code>private_key_path</code>), SSO with <code>authenticator = externalbrowser</code>, or the <code>SNOWSQL_PWD</code> environment variable injected by the scheduler, and restrict file permissions to the owner.</p>
+    <span class="reveal-hint">Click to reveal answer</span>
+  </div>
+  <div class="red"><div class="red-h">Red flag answers to avoid</div><ul><li>Committing the config file to git with a password in it.</li></ul></div>
+  <details class="deep">
+    <summary><span>Deep dive</span><em>SQL</em></summary>
+    <div class="deep-b"><p>Select a section with <code>snowsql -c retail</code>. Anything not in the config can be given as a flag, and flags win.</p><div class="code"><div class="code-h"><span class="lang">SQL</span><span class="code-l">~/.snowsql/config</span><button class="copy" type="button" data-copy="c8_0" aria-label="Copy code">Copy</button></div><pre id="c8_0"><code>[connections.retail]
+accountname = myorg-myaccount
+username = lab_user
+rolename = LAB_ANALYST
+warehousename = LAB_WH
+dbname = RETAILPULSE_LAB
+schemaname = STAGING
+authenticator = externalbrowser
+# or: private_key_path = ~/.ssh/snowflake_rsa_key.p8
+
+[options]
+exit_on_error = true
+output_format = psql
+variable_substitution = true</code></pre></div><div class="lab"><span class="lab-l">In the lab simulator</span>The lab has a Config tab showing a file like this and lets you toggle options such as output format and header. It never authenticates anything.</div></div>
+  </details>
+</article>
+<article class="card" id="q09" data-topic="cli" data-level="Advanced" style="--i:7">
+  <header class="card-h">
+    <span class="qnum">Q09</span>
+    <span class="badge b-advanced">Advanced</span>
+    <span class="tlabel">SnowSQL, PUT &amp; GET</span>
+  </header>
+  <h3 class="qtext">Design a rerunnable upload-and-load script for daily files. What makes it safe to run twice?</h3>
+  <div class="say" tabindex="0" role="button" aria-label="Answer (click to reveal in quiz mode)">
+    <span class="say-l">Say this</span>
+    <p>Three layers of idempotency. PUT skips a staged file with the same name unless I pass OVERWRITE. COPY INTO remembers which staged files it has loaded (load metadata, 64 days) and skips them unless FORCE=TRUE. And the downstream stream plus MERGE is an upsert keyed on product_id, so even a replay converges to the same state. The script uses <code>exit_on_error=true</code> so failures are loud.</p>
+    <span class="reveal-hint">Click to reveal answer</span>
+  </div>
+  <div class="red"><div class="red-h">Red flag answers to avoid</div><ul><li>Adding <code>FORCE = TRUE</code> to "make COPY work". It reloads the file and duplicates the rows in raw.</li><li>Relying only on file names for dedupe when the same name can be re-exported with different content (use OVERWRITE deliberately and know it changes the file the COPY sees).</li></ul></div>
+  <details class="deep">
+    <summary><span>Deep dive</span><em>SQL</em></summary>
+    <div class="deep-b"><p>One subtlety: if you <code>PUT ... OVERWRITE=TRUE</code> a modified file with the same name, COPY's load metadata may still consider that name already loaded and skip it (the lab reproduces the "already loaded, skipped" behavior). Prefer date-stamped unique names such as <code>inventory_2026-11-20_batch1.csv</code>, which RetailPulse uses.</p><div class="code"><div class="code-h"><span class="lang">SQL</span><span class="code-l">Driver script</span><button class="copy" type="button" data-copy="c9_0" aria-label="Copy code">Copy</button></div><pre id="c9_0"><code>-- load_inventory.sql  (run: snowsql -c retail -f load_inventory.sql -D batch=1 -o exit_on_error=true)
+PUT file:///data/exports/inventory_2026-11-20_batch&amp;{batch}.csv @STAGING.STG_INVENTORY;
+COPY INTO STAGING.INVENTORY_RAW (product_id, sku, name, category, quantity_on_hand,
+  unit_cost, unit_price, warehouse_id, last_updated, status, _src_file, _src_row)
+FROM (SELECT $1,$2,$3,$4,$5,$6,$7,$8,$9,$10, METADATA$FILENAME, METADATA$FILE_ROW_NUMBER
+      FROM @STAGING.STG_INVENTORY/inventory_2026-11-20_batch&amp;{batch}.csv.gz)
+FILE_FORMAT = (FORMAT_NAME = &#x27;STAGING.FF_CSV_INVENTORY&#x27;);
+-- 2nd run: &quot;Copy executed with 0 files processed.&quot; (load metadata)</code></pre></div><div class="lab"><span class="lab-l">In the lab simulator</span>The lab models both the PUT SKIPPED status and the COPY "0 files processed" result on a reload (it tracks a <code>reloadSkipped</code> flag). Load-metadata expiry (64 days) is not simulated.</div></div>
+  </details>
+</article></section><section class="topic" data-topic="copy" id="t-copy"><h2 class="topic-h"><span>COPY INTO CSV &amp; schema drift</span><small>6 questions</small></h2>
+<article class="card" id="q10" data-topic="copy" data-level="Basic" style="--i:0">
+  <header class="card-h">
+    <span class="qnum">Q10</span>
+    <span class="badge b-basic">Basic</span>
+    <span class="tlabel">COPY INTO CSV &amp; schema drift</span>
+  </header>
+  <h3 class="qtext">Which CSV file format options matter for the RetailPulse files?</h3>
+  <div class="say" tabindex="0" role="button" aria-label="Answer (click to reveal in quiz mode)">
+    <span class="say-l">Say this</span>
+    <p>The files have a header row, comma delimiters, and product names with embedded commas and quotes like <code>"Wireless Earbuds, Noise Cancelling"</code>. So: <code>SKIP_HEADER = 1</code> and <code>FIELD_OPTIONALLY_ENCLOSED_BY = '"'</code>. I also set <code>NULL_IF</code> for blank markers and leave <code>ERROR_ON_COLUMN_COUNT_MISMATCH</code> at its default of TRUE so structural problems fail loudly.</p>
+    <span class="reveal-hint">Click to reveal answer</span>
+  </div>
+  <div class="red"><div class="red-h">Red flag answers to avoid</div><ul><li>Forgetting the enclosure option. A name with a comma shifts every later column and you get a column count error or data in the wrong columns.</li></ul></div>
+  <details class="deep">
+    <summary><span>Deep dive</span><em>SQL</em></summary>
+    <div class="deep-b"><p>Other options you can name: <code>FIELD_DELIMITER</code>, <code>RECORD_DELIMITER</code>, <code>ESCAPE</code>, <code>TRIM_SPACE</code>, <code>DATE_FORMAT</code>/<code>TIMESTAMP_FORMAT</code>, <code>ENCODING</code>, <code>EMPTY_FIELD_AS_NULL</code> (default TRUE), <code>COMPRESSION</code> (AUTO detects gzip).</p><div class="code"><div class="code-h"><span class="lang">SQL</span><span class="code-l">File format</span><button class="copy" type="button" data-copy="c10_0" aria-label="Copy code">Copy</button></div><pre id="c10_0"><code>CREATE OR REPLACE FILE FORMAT STAGING.FF_CSV_INVENTORY
+  TYPE = CSV
+  FIELD_DELIMITER = &#x27;,&#x27;
+  SKIP_HEADER = 1
+  FIELD_OPTIONALLY_ENCLOSED_BY = &#x27;&quot;&#x27;
+  NULL_IF = (&#x27;NULL&#x27;)
+  ERROR_ON_COLUMN_COUNT_MISMATCH = TRUE;</code></pre></div><div class="lab"><span class="lab-l">In the lab simulator</span>Nine of the 37 products in the lab data have a quoted name containing a comma or a double quote, so the enclosure option is exercised for real.</div></div>
+  </details>
+</article>
+<article class="card" id="q11" data-topic="copy" data-level="Intermediate" style="--i:1">
+  <header class="card-h">
+    <span class="qnum">Q11</span>
+    <span class="badge b-intermediate">Intermediate</span>
+    <span class="tlabel">COPY INTO CSV &amp; schema drift</span>
+  </header>
+  <h3 class="qtext">How do you capture which file and row each record came from, and how does COPY avoid loading the same file twice?</h3>
+  <div class="say" tabindex="0" role="button" aria-label="Answer (click to reveal in quiz mode)">
+    <span class="say-l">Say this</span>
+    <p>Use a COPY transformation and select the metadata pseudo-columns <code>METADATA$FILENAME</code> and <code>METADATA$FILE_ROW_NUMBER</code> alongside <code>$1..$n</code>. For repeats, Snowflake keeps per-table load metadata for 64 days and skips staged files it already loaded; you override that only with <code>FORCE = TRUE</code>, which can duplicate data.</p>
+    <span class="reveal-hint">Click to reveal answer</span>
+  </div>
+  <div class="red"><div class="red-h">Red flag answers to avoid</div><ul><li>Confusing these with the stream columns. <code>METADATA$FILENAME</code> and friends describe <b>staged files</b>; <code>METADATA$ACTION</code>/<code>ISUPDATE</code>/<code>ROW_ID</code> describe <b>stream rows</b>.</li></ul></div>
+  <details class="deep">
+    <summary><span>Deep dive</span><em>SQL</em></summary>
+    <div class="deep-b"><p>After 64 days the metadata expires, and a file older than that can be reloaded by mistake, so old files should be purged or archived (<code>PURGE = TRUE</code> on COPY deletes them after a successful load; for internal stages you can also <code>REMOVE</code> them).</p><div class="code"><div class="code-h"><span class="lang">SQL</span><span class="code-l">Lineage columns</span><button class="copy" type="button" data-copy="c11_0" aria-label="Copy code">Copy</button></div><pre id="c11_0"><code>COPY INTO STAGING.INVENTORY_RAW (product_id, sku, name, category, quantity_on_hand,
+  unit_cost, unit_price, warehouse_id, last_updated, status, _src_file, _src_row)
+FROM (SELECT $1,$2,$3,$4,$5,$6,$7,$8,$9,$10, METADATA$FILENAME, METADATA$FILE_ROW_NUMBER
+      FROM @STAGING.STG_INVENTORY/inventory_2026-11-20_batch1.csv.gz)
+FILE_FORMAT = (FORMAT_NAME = &#x27;STAGING.FF_CSV_INVENTORY&#x27;);
+
+SELECT _src_file, COUNT(*) FROM STAGING.INVENTORY_RAW GROUP BY 1;
+SELECT * FROM TABLE(INFORMATION_SCHEMA.COPY_HISTORY(
+  TABLE_NAME =&gt; &#x27;STAGING.INVENTORY_RAW&#x27;, START_TIME =&gt; DATEADD(HOUR, -24, CURRENT_TIMESTAMP())));</code></pre></div><div class="lab"><span class="lab-l">In the lab simulator</span>The lab records a copy history per file and skips already-loaded names. It does not expire load metadata after 64 days.</div></div>
+  </details>
+</article>
+<article class="card" id="q12" data-topic="copy" data-level="Intermediate" style="--i:2">
+  <header class="card-h">
+    <span class="qnum">Q12</span>
+    <span class="badge b-intermediate">Intermediate</span>
+    <span class="tlabel">COPY INTO CSV &amp; schema drift</span>
+  </header>
+  <h3 class="qtext">How do ON_ERROR, VALIDATION_MODE and VALIDATE differ?</h3>
+  <div class="say" tabindex="0" role="button" aria-label="Answer (click to reveal in quiz mode)">
+    <span class="say-l">Say this</span>
+    <p><code>ON_ERROR</code> decides what a real load does with bad rows: <code>ABORT_STATEMENT</code> (default for COPY from a stage), <code>CONTINUE</code>, or <code>SKIP_FILE</code> variants. <code>VALIDATION_MODE</code> is a dry run: it checks the files and returns errors or sample rows without loading anything. <code>VALIDATE</code> is a table function that returns the errors from a previous load after the fact.</p>
+    <span class="reveal-hint">Click to reveal answer</span>
+  </div>
+  <div class="red"><div class="red-h">Red flag answers to avoid</div><ul><li>Using <code>ON_ERROR = CONTINUE</code> by default and never looking at the rejects.</li></ul></div>
+  <details class="deep">
+    <summary><span>Deep dive</span><em>SQL</em></summary>
+    <div class="deep-b"><p>With CONTINUE, bad rows are silently skipped, so check the load result (<code>rows_parsed</code> vs <code>rows_loaded</code>, <code>errors_seen</code>) and query <code>VALIDATE(table, JOB_ID=&gt;'_last')</code>. <code>VALIDATION_MODE</code> does not support COPY statements that transform data during the load, so for transformation loads validate by pointing a plain COPY at a probe table.</p><div class="code"><div class="code-h"><span class="lang">SQL</span><span class="code-l">Dry run then inspect</span><button class="copy" type="button" data-copy="c12_0" aria-label="Copy code">Copy</button></div><pre id="c12_0"><code>COPY INTO STAGING.INVENTORY_RAW FROM @STAGING.STG_INVENTORY/inventory_2026-11-20_batch2.csv.gz
+  FILE_FORMAT = (FORMAT_NAME = &#x27;STAGING.FF_CSV_INVENTORY&#x27;) VALIDATION_MODE = RETURN_ERRORS;
+
+COPY INTO STAGING.INVENTORY_RAW FROM @STAGING.STG_INVENTORY/inventory_2026-11-20_batch2.csv.gz
+  FILE_FORMAT = (FORMAT_NAME = &#x27;STAGING.FF_CSV_INVENTORY&#x27;) ON_ERROR = CONTINUE;
+
+SELECT * FROM TABLE(VALIDATE(STAGING.INVENTORY_RAW, JOB_ID =&gt; &#x27;_last&#x27;));</code></pre></div></div>
+  </details>
+</article>
+<article class="card" id="q13" data-topic="copy" data-level="Intermediate" style="--i:3">
+  <header class="card-h">
+    <span class="qnum">Q13</span>
+    <span class="badge b-intermediate">Intermediate</span>
+    <span class="tlabel">COPY INTO CSV &amp; schema drift</span>
+  </header>
+  <h3 class="qtext">Batch 3 has an extra trailing column, reorder_point. What does ERROR_ON_COLUMN_COUNT_MISMATCH do?</h3>
+  <div class="say" tabindex="0" role="button" aria-label="Answer (click to reveal in quiz mode)">
+    <span class="say-l">Say this</span>
+    <p>With the default TRUE, a file whose column count differs from the target (or from the SELECT list) fails with a "number of columns in file does not match" error, which is what I want, because it exposes schema drift. Set to FALSE, Snowflake loads anyway: extra file columns are dropped, and missing ones are NULL. That is quiet data loss for <code>reorder_point</code>, so FALSE is a conscious decision, not a fix.</p>
+    <span class="reveal-hint">Click to reveal answer</span>
+  </div>
+  <div class="red"><div class="red-h">Red flag answers to avoid</div><ul><li>Flipping it to FALSE just to get the load green, and not noticing the new column was never loaded.</li></ul></div>
+  <details class="deep">
+    <summary><span>Deep dive</span><em>SQL</em></summary>
+    <div class="deep-b"><p>Right fix for drift: either extend the target (<code>ALTER TABLE ... ADD COLUMN reorder_point NUMBER</code>) and load by name, or use schema evolution (next card). The lab walks you through exactly this: batch 3 loads with the extra column ignored via name matching, then the column is added afterwards.</p><div class="code"><div class="code-h"><span class="lang">SQL</span><span class="code-l">The three behaviours</span><button class="copy" type="button" data-copy="c13_0" aria-label="Copy code">Copy</button></div><pre id="c13_0"><code>-- 1) Default: fails when the file has 11 columns and the table has 10
+COPY INTO STAGING.INVENTORY_RAW FROM @STAGING.STG_INVENTORY/inventory_2026-11-20_batch3.csv.gz
+  FILE_FORMAT = (TYPE = CSV SKIP_HEADER = 1 FIELD_OPTIONALLY_ENCLOSED_BY = &#x27;&quot;&#x27;);
+
+-- 2) Tolerate: loads, silently drops reorder_point
+COPY INTO STAGING.INVENTORY_RAW FROM @STAGING.STG_INVENTORY/inventory_2026-11-20_batch3.csv.gz
+  FILE_FORMAT = (TYPE = CSV SKIP_HEADER = 1 FIELD_OPTIONALLY_ENCLOSED_BY = &#x27;&quot;&#x27;
+                 ERROR_ON_COLUMN_COUNT_MISMATCH = FALSE);
+
+-- 3) Evolve the table, then load by position/name
+ALTER TABLE STAGING.INVENTORY_RAW ADD COLUMN reorder_point NUMBER;</code></pre></div><div class="lab"><span class="lab-l">In the lab simulator</span>The lab engine produces a column-count error on a mismatch and honours the FALSE option and <code>MATCH_BY_COLUMN_NAME</code>. Its message text approximates the real one.</div></div>
+  </details>
+</article>
+<article class="card" id="q14" data-topic="copy" data-level="Advanced" style="--i:4">
+  <header class="card-h">
+    <span class="qnum">Q14</span>
+    <span class="badge b-advanced">Advanced</span>
+    <span class="tlabel">COPY INTO CSV &amp; schema drift</span>
+  </header>
+  <h3 class="qtext">What are your options for handling CSV schema drift, and which would you pick?</h3>
+  <div class="say" tabindex="0" role="button" aria-label="Answer (click to reveal in quiz mode)">
+    <span class="say-l">Say this</span>
+    <p>Four, in increasing automation. Fail loudly on a count mismatch and fix by hand. Tolerate with <code>ERROR_ON_COLUMN_COUNT_MISMATCH=FALSE</code> and accept that extra columns are dropped. Load by header name with <code>PARSE_HEADER=TRUE</code> plus <code>MATCH_BY_COLUMN_NAME</code>, so column order stops mattering. Or turn on table schema evolution (<code>ENABLE_SCHEMA_EVOLUTION=TRUE</code>) so new columns are added automatically. For a raw landing table I use name matching with evolution, and I still alert on every evolution event, because downstream models need to know.</p>
+    <span class="reveal-hint">Click to reveal answer</span>
+  </div>
+  <div class="red"><div class="red-h">Red flag answers to avoid</div><ul><li>Letting a raw table evolve silently and never telling the downstream owners.</li><li>Mixing <code>SKIP_HEADER</code> with <code>PARSE_HEADER</code>; they are mutually exclusive.</li></ul></div>
+  <details class="deep">
+    <summary><span>Deep dive</span><em>SQL</em></summary>
+    <div class="deep-b"><p>Constraints worth knowing: <code>MATCH_BY_COLUMN_NAME</code> cannot be combined with a COPY transformation (a <code>FROM (SELECT ...)</code> load), so you lose the <code>METADATA$FILENAME</code> lineage column in that same statement (the lab hits this: batch 3 uses plain name matching, so its lineage columns are NULL). Schema evolution needs a role with the right privilege on the table (ownership or EVOLVE SCHEMA) and a file format with <code>PARSE_HEADER=TRUE</code> for CSV. <code>INFER_SCHEMA</code> can preview what Snowflake would create. Verify the exact option combinations on your account; they have changed across releases.</p><div class="code"><div class="code-h"><span class="lang">SQL</span><span class="code-l">Header-based load with evolution</span><button class="copy" type="button" data-copy="c14_0" aria-label="Copy code">Copy</button></div><pre id="c14_0"><code>CREATE OR REPLACE FILE FORMAT STAGING.FF_CSV_HDR
+  TYPE = CSV PARSE_HEADER = TRUE FIELD_OPTIONALLY_ENCLOSED_BY = &#x27;&quot;&#x27;
+  ERROR_ON_COLUMN_COUNT_MISMATCH = FALSE;
+
+-- preview what Snowflake infers from the staged file
+SELECT * FROM TABLE(INFER_SCHEMA(
+  LOCATION =&gt; &#x27;@STAGING.STG_INVENTORY/inventory_2026-11-20_batch3.csv.gz&#x27;,
+  FILE_FORMAT =&gt; &#x27;STAGING.FF_CSV_HDR&#x27;));
+
+ALTER TABLE STAGING.INVENTORY_RAW SET ENABLE_SCHEMA_EVOLUTION = TRUE;
+
+COPY INTO STAGING.INVENTORY_RAW
+FROM @STAGING.STG_INVENTORY/inventory_2026-11-20_batch3.csv.gz
+FILE_FORMAT = (FORMAT_NAME = &#x27;STAGING.FF_CSV_HDR&#x27;)
+MATCH_BY_COLUMN_NAME = CASE_INSENSITIVE;</code></pre></div><div class="lab"><span class="lab-l">In the lab simulator</span>Simplification: the lab implements name matching (<code>MATCH_BY_COLUMN_NAME=CASE_INSENSITIVE</code>) and a manual <code>ALTER TABLE ADD COLUMN</code>. Automatic schema evolution and <code>INFER_SCHEMA</code> are not modelled.</div></div>
+  </details>
+</article>
+<article class="card" id="q15" data-topic="copy" data-level="Scenario" style="--i:5">
+  <header class="card-h">
+    <span class="qnum">Q15</span>
+    <span class="badge b-scenario">Scenario</span>
+    <span class="tlabel">COPY INTO CSV &amp; schema drift</span>
+  </header>
+  <h3 class="qtext">A load fails with a column-count error, but the file looks fine in Excel. What is the usual cause?</h3>
+  <div class="say" tabindex="0" role="button" aria-label="Answer (click to reveal in quiz mode)">
+    <span class="say-l">Say this</span>
+    <p>An unquoted or un-enclosed embedded comma, or the file format missing <code>FIELD_OPTIONALLY_ENCLOSED_BY</code>. A value like <code>Cotton Crew Socks, 6-Pack</code> splits into two fields and the row has 11 fields instead of 10. I run a <code>VALIDATION_MODE=RETURN_ERRORS</code> dry run to see the offending line and column, fix the format, and reload.</p>
+    <span class="reveal-hint">Click to reveal answer</span>
+  </div>
+  <div class="red"><div class="red-h">Red flag answers to avoid</div><ul><li>Setting <code>ERROR_ON_COLUMN_COUNT_MISMATCH=FALSE</code> to push it through. That silently shifts values into the wrong columns.</li></ul></div>
+  <details class="deep">
+    <summary><span>Deep dive</span><em>SQL</em></summary>
+    <div class="deep-b"><p>Other causes: a different <code>RECORD_DELIMITER</code> (Windows CRLF is normally handled), a header row not skipped, stray quote characters inside an enclosed field (needs <code>ESCAPE</code> or doubling the quote), or a file that really has a new column (see schema drift).</p><div class="code"><div class="code-h"><span class="lang">SQL</span><span class="code-l">Diagnose</span><button class="copy" type="button" data-copy="c15_0" aria-label="Copy code">Copy</button></div><pre id="c15_0"><code>COPY INTO STAGING.INVENTORY_RAW FROM @STAGING.STG_INVENTORY/inventory_2026-11-20_batch1.csv.gz
+  FILE_FORMAT = (TYPE = CSV SKIP_HEADER = 1) VALIDATION_MODE = RETURN_ERRORS;   -- no enclosure: errors on quoted names
+
+-- fix: FIELD_OPTIONALLY_ENCLOSED_BY = &#x27;&quot;&#x27;</code></pre></div></div>
+  </details>
+</article></section><section class="topic" data-topic="strm" id="t-strm"><h2 class="topic-h"><span>Streams</span><small>7 questions</small></h2>
+<article class="card" id="q16" data-topic="strm" data-level="Basic" style="--i:0">
+  <header class="card-h">
+    <span class="qnum">Q16</span>
+    <span class="badge b-basic">Basic</span>
+    <span class="tlabel">Streams</span>
+  </header>
+  <h3 class="qtext">What is a stream, and does it store a copy of the data?</h3>
+  <div class="say" tabindex="0" role="button" aria-label="Answer (click to reveal in quiz mode)">
+    <span class="say-l">Say this</span>
+    <p>A stream is a change-tracking object on a table. It does <b>not</b> copy data; it stores an <b>offset</b>, a point in the table's version history, and when you query it Snowflake works out what changed since that offset. Querying it returns the changed rows plus three metadata columns that say what kind of change each one is.</p>
+    <span class="reveal-hint">Click to reveal answer</span>
+  </div>
+  <div class="red"><div class="red-h">Red flag answers to avoid</div><ul><li>"A stream is a table that holds the changed rows." It holds nothing; it is a bookmark plus a view of the delta.</li></ul></div>
+  <details class="deep">
+    <summary><span>Deep dive</span><em>SQL</em></summary>
+    <div class="deep-b"><p>Creating a stream turns on change tracking for the source table. Because the delta is computed from table versions, a stream depends on the table's retention (see staleness cards).</p><div class="code"><div class="code-h"><span class="lang">SQL</span><span class="code-l">Create and look</span><button class="copy" type="button" data-copy="c16_0" aria-label="Copy code">Copy</button></div><pre id="c16_0"><code>CREATE STREAM STAGING.STRM_INVENTORY_RAW ON TABLE STAGING.INVENTORY_RAW;
+SHOW STREAMS IN SCHEMA STAGING;                         -- name, table_name, mode, stale, stale_after
+SELECT * FROM STAGING.STRM_INVENTORY_RAW;               -- the table&#x27;s columns + METADATA$ACTION/ISUPDATE/ROW_ID
+SELECT SYSTEM$STREAM_HAS_DATA(&#x27;STAGING.STRM_INVENTORY_RAW&#x27;);</code></pre></div><div class="lab"><span class="lab-l">In the lab simulator</span>The lab computes "pending" stream rows from table state and an offset counter. It does not use real table versioning or Time Travel.</div></div>
+  </details>
+</article>
+<article class="card" id="q17" data-topic="strm" data-level="Basic" style="--i:1">
+  <header class="card-h">
+    <span class="qnum">Q17</span>
+    <span class="badge b-basic">Basic</span>
+    <span class="tlabel">Streams</span>
+  </header>
+  <h3 class="qtext">Standard stream versus append-only stream: what is the difference?</h3>
+  <div class="say" tabindex="0" role="button" aria-label="Answer (click to reveal in quiz mode)">
+    <span class="say-l">Say this</span>
+    <p>A <b>standard</b> stream tracks inserts, updates and deletes and reports the net change since the offset. An <b>append-only</b> stream (<code>APPEND_ONLY = TRUE</code>) tracks inserts only and ignores updates and deletes entirely. Append-only is cheaper and fits tables that are only ever loaded, like a COPY-fed raw table; standard is needed when you must see modifications and removals.</p>
+    <span class="reveal-hint">Click to reveal answer</span>
+  </div>
+  <div class="red"><div class="red-h">Red flag answers to avoid</div><ul><li>Using append-only on a table where you also need deletes to propagate. They will never show up.</li></ul></div>
+  <details class="deep">
+    <summary><span>Deep dive</span><em>visual + SQL</em></summary>
+    <div class="deep-b"><p>There is also an <b>insert-only</b> stream type for external tables and some other sources (stream mode INSERT_ONLY). Do not confuse it with append-only, which applies to standard tables, views and similar sources.</p><figure class="viz"><div class="split">
+<div class="pane"><div class="pane-h">Standard (default)</div><div class="pane-f"><b>INSERT</b> yes &middot; <b>UPDATE</b> yes (as DELETE + INSERT, ISUPDATE=TRUE) &middot; <b>DELETE</b> yes<br>Net change within the offset window.</div></div>
+<div class="pane"><div class="pane-h">APPEND_ONLY = TRUE</div><div class="pane-f"><b>INSERT</b> yes &middot; <b>UPDATE</b> ignored &middot; <b>DELETE</b> ignored<br>Lighter to compute. Mode shows as APPEND_ONLY in SHOW STREAMS.</div></div></div></figure><div class="code"><div class="code-h"><span class="lang">SQL</span><span class="code-l">Two streams on one table</span><button class="copy" type="button" data-copy="c17_0" aria-label="Copy code">Copy</button></div><pre id="c17_0"><code>CREATE STREAM STAGING.STRM_INVENTORY_RAW    ON TABLE STAGING.INVENTORY_RAW;                      -- standard
+CREATE STREAM STAGING.STRM_INVENTORY_APPEND ON TABLE STAGING.INVENTORY_RAW APPEND_ONLY = TRUE;   -- inserts only</code></pre></div><div class="lab"><span class="lab-l">In the lab simulator</span>In the lab, after loading batches 2 and 3 (50 rows) and updating one batch-1 row, the standard stream shows 52 rows (50 inserts + a DELETE/INSERT pair) while the append-only stream shows 50.</div></div>
+  </details>
+</article>
+<article class="card" id="q18" data-topic="strm" data-level="Intermediate" style="--i:2">
+  <header class="card-h">
+    <span class="qnum">Q18</span>
+    <span class="badge b-intermediate">Intermediate</span>
+    <span class="tlabel">Streams</span>
+  </header>
+  <h3 class="qtext">How does an UPDATE show up in a standard stream, and what does &quot;net change&quot; mean?</h3>
+  <div class="say" tabindex="0" role="button" aria-label="Answer (click to reveal in quiz mode)">
+    <span class="say-l">Say this</span>
+    <p>An UPDATE of a pre-existing row appears as <b>two rows</b> with the same key: a <code>DELETE</code> row carrying the old values and an <code>INSERT</code> row carrying the new values, both with <code>METADATA$ISUPDATE = TRUE</code>. Net change means rows are collapsed over the whole offset window: an insert followed by a delete before you consume it shows nothing, and an insert followed by an update shows one INSERT with the latest values and ISUPDATE FALSE.</p>
+    <span class="reveal-hint">Click to reveal answer</span>
+  </div>
+  <div class="red"><div class="red-h">Red flag answers to avoid</div><ul><li>Joining the stream to the target and counting rows, then double-counting every update because it has two rows.</li></ul></div>
+  <details class="deep">
+    <summary><span>Deep dive</span><em>visual + SQL</em></summary>
+    <div class="deep-b"><p>This is why the lab updates a <b>batch-1</b> row (present before the stream's offset) to demonstrate the pair; updating a row inserted inside the window would just collapse into a single INSERT.</p><figure class="viz"><table class="tbl"><thead><tr><th>Change since offset</th><th>Rows in a standard stream</th><th>ISUPDATE</th></tr></thead><tbody>
+<tr><td>INSERT new row</td><td>1 x INSERT</td><td>FALSE</td></tr>
+<tr><td>UPDATE a row that existed at the offset</td><td>1 x DELETE (old) + 1 x INSERT (new)</td><td>TRUE on both</td></tr>
+<tr><td>DELETE a row that existed at the offset</td><td>1 x DELETE</td><td>FALSE</td></tr>
+<tr><td>INSERT then DELETE inside the window</td><td>nothing</td><td>-</td></tr>
+<tr><td>INSERT then UPDATE inside the window</td><td>1 x INSERT (latest values)</td><td>FALSE</td></tr></tbody></table></figure><div class="code"><div class="code-h"><span class="lang">SQL</span><span class="code-l">See it</span><button class="copy" type="button" data-copy="c18_0" aria-label="Copy code">Copy</button></div><pre id="c18_0"><code>UPDATE STAGING.INVENTORY_RAW SET quantity_on_hand = 99 WHERE product_id = &#x27;P001&#x27;;
+SELECT product_id, quantity_on_hand, METADATA$ACTION, METADATA$ISUPDATE
+FROM STAGING.STRM_INVENTORY_RAW WHERE product_id = &#x27;P001&#x27; ORDER BY METADATA$ACTION;
+-- DELETE | old qty | TRUE
+-- INSERT | 99      | TRUE</code></pre></div></div>
+  </details>
+</article>
+<article class="card" id="q19" data-topic="strm" data-level="Intermediate" style="--i:3">
+  <header class="card-h">
+    <span class="qnum">Q19</span>
+    <span class="badge b-intermediate">Intermediate</span>
+    <span class="tlabel">Streams</span>
+  </header>
+  <h3 class="qtext">Gotcha: what exactly advances a stream&#x27;s offset?</h3>
+  <div class="say" tabindex="0" role="button" aria-label="Answer (click to reveal in quiz mode)">
+    <span class="say-l">Say this</span>
+    <p>The offset advances only when a <b>DML statement that reads the stream commits</b>: <code>INSERT ... SELECT</code>, <code>MERGE</code>, <code>CREATE TABLE AS SELECT</code>, <code>COPY INTO &lt;location&gt;</code> from it, and so on. A plain <code>SELECT</code> never advances it. It does not matter whether the DML actually inserted anything; reading the stream in a DML consumes the window. In an explicit transaction the offset moves at COMMIT, and a ROLLBACK leaves it where it was.</p>
+    <span class="reveal-hint">Click to reveal answer</span>
+  </div>
+  <div class="red"><div class="red-h">Red flag answers to avoid</div><ul><li>"I will SELECT from the stream to peek, and that is fine." Correct, peeking is safe.</li><li>But also: "Anyone running <code>CREATE TABLE x AS SELECT * FROM stream</code> to look at the data is harmless." It consumes the changes and your task sees an empty stream.</li><li>"Filtering the stream with WHERE 1=0 in my DML does not consume it." It does.</li></ul></div>
+  <details class="deep">
+    <summary><span>Deep dive</span><em>SQL</em></summary>
+    <div class="deep-b"><p>Two statements in the same transaction that read the same stream see the same data (repeatable read); the offset moves once, at commit. The consumed window is fixed at the transaction's start, so changes arriving while the DML runs are picked up next time, not lost.</p><div class="code"><div class="code-h"><span class="lang">SQL</span><span class="code-l">Peek vs consume</span><button class="copy" type="button" data-copy="c19_0" aria-label="Copy code">Copy</button></div><pre id="c19_0"><code>SELECT SYSTEM$STREAM_HAS_DATA(&#x27;STAGING.STRM_INVENTORY_RAW&#x27;);   -- TRUE
+SELECT COUNT(*) FROM STAGING.STRM_INVENTORY_RAW;              -- 5, offset unchanged
+SELECT COUNT(*) FROM STAGING.STRM_INVENTORY_RAW;              -- still 5
+
+BEGIN;
+INSERT INTO ANALYTICS.SCRATCH SELECT * FROM STAGING.STRM_INVENTORY_RAW;
+ROLLBACK;                                                      -- offset NOT advanced
+SELECT SYSTEM$STREAM_HAS_DATA(&#x27;STAGING.STRM_INVENTORY_RAW&#x27;);   -- still TRUE
+
+INSERT INTO ANALYTICS.SCRATCH SELECT * FROM STAGING.STRM_INVENTORY_RAW;   -- autocommit: consumed
+SELECT SYSTEM$STREAM_HAS_DATA(&#x27;STAGING.STRM_INVENTORY_RAW&#x27;);   -- FALSE</code></pre></div><div class="lab"><span class="lab-l">In the lab simulator</span>The lab models all of this: plain SELECT does not advance, autocommit DML advances at end of statement, BEGIN...COMMIT advances at COMMIT, ROLLBACK does not.</div></div>
+  </details>
+</article>
+<article class="card" id="q20" data-topic="strm" data-level="Intermediate" style="--i:4">
+  <header class="card-h">
+    <span class="qnum">Q20</span>
+    <span class="badge b-intermediate">Intermediate</span>
+    <span class="tlabel">Streams</span>
+  </header>
+  <h3 class="qtext">Gotcha: an append-only stream and an UPDATE or DELETE. What shows up?</h3>
+  <div class="say" tabindex="0" role="button" aria-label="Answer (click to reveal in quiz mode)">
+    <span class="say-l">Say this</span>
+    <p>Nothing. An append-only stream ignores UPDATE and DELETE statements on the source table, so the changed or removed rows produce no stream rows. That is why, in the lab, the append-only stream shows 50 pending rows while the standard stream shows 52 after the same set of changes. If you need to propagate modifications you must use a standard stream.</p>
+    <span class="reveal-hint">Click to reveal answer</span>
+  </div>
+  <div class="red"><div class="red-h">Red flag answers to avoid</div><ul><li>Using an append-only stream to drive a MERGE that is supposed to delete or update rows downstream.</li></ul></div>
+  <details class="deep">
+    <summary><span>Deep dive</span><em>SQL</em></summary>
+    <div class="deep-b"><p>Use cases that fit append-only: loading a raw/landing table, event logs, and audit trails that only ever get new rows. Use standard when the table is a mutable dimension. RetailPulse uses both on the same raw table with different jobs: the standard one feeds the MERGE, the append-only one feeds the price-history insert.</p><div class="code"><div class="code-h"><span class="lang">SQL</span><span class="code-l">Compare the two</span><button class="copy" type="button" data-copy="c20_0" aria-label="Copy code">Copy</button></div><pre id="c20_0"><code>UPDATE STAGING.INVENTORY_RAW SET quantity_on_hand = 7 WHERE product_id = &#x27;P002&#x27;;
+SELECT &#x27;standard&#x27; AS stream, COUNT(*) FROM STAGING.STRM_INVENTORY_RAW
+UNION ALL
+SELECT &#x27;append&#x27;,   COUNT(*) FROM STAGING.STRM_INVENTORY_APPEND;
+-- standard includes the DELETE/INSERT pair for P002, append does not</code></pre></div><div class="lab"><span class="lab-l">In the lab simulator</span>Lab data: standard 52 vs append-only 50 at step 9.</div></div>
+  </details>
+</article>
+<article class="card" id="q21" data-topic="strm" data-level="Advanced" style="--i:5">
+  <header class="card-h">
+    <span class="qnum">Q21</span>
+    <span class="badge b-advanced">Advanced</span>
+    <span class="tlabel">Streams</span>
+  </header>
+  <h3 class="qtext">Two jobs need the changes from the same table. Do they share one stream?</h3>
+  <div class="say" tabindex="0" role="button" aria-label="Answer (click to reveal in quiz mode)">
+    <span class="say-l">Say this</span>
+    <p>No. A stream has a single offset, and the first job whose DML commits moves it for everyone. So I create <b>one stream per consumer</b>. In RetailPulse the MERGE task reads a standard stream and the price-history task reads an append-only stream, and each advances independently. The alternative is to chain: one job reads the stream and writes a changes table, and others read that table.</p>
+    <span class="reveal-hint">Click to reveal answer</span>
+  </div>
+  <div class="red"><div class="red-h">Red flag answers to avoid</div><ul><li>Having two tasks read the same stream and wondering why the second one always sees nothing.</li></ul></div>
+  <details class="deep">
+    <summary><span>Deep dive</span><em>SQL</em></summary>
+    <div class="deep-b"><p>Streams on the same table are cheap (just metadata), so per-consumer streams are the normal pattern. Within a single transaction, multiple statements can read the same stream and all see the same rows, which is how you can fan out one stream into several targets safely: wrap them in one transaction or one task body.</p><div class="code"><div class="code-h"><span class="lang">SQL</span><span class="code-l">Fan-out in one transaction</span><button class="copy" type="button" data-copy="c21_0" aria-label="Copy code">Copy</button></div><pre id="c21_0"><code>BEGIN;
+INSERT INTO ANALYTICS.PRICE_HISTORY SELECT ... FROM STAGING.STRM_INVENTORY_RAW WHERE METADATA$ACTION = &#x27;INSERT&#x27;;
+MERGE INTO ANALYTICS.INVENTORY t USING (SELECT ... FROM STAGING.STRM_INVENTORY_RAW WHERE METADATA$ACTION = &#x27;INSERT&#x27;) s ON ...;
+COMMIT;   -- both saw the same changes; offset moves once</code></pre></div></div>
+  </details>
+</article>
+<article class="card" id="q22" data-topic="strm" data-level="Advanced" style="--i:6">
+  <header class="card-h">
+    <span class="qnum">Q22</span>
+    <span class="badge b-advanced">Advanced</span>
+    <span class="tlabel">Streams</span>
+  </header>
+  <h3 class="qtext">What do SHOW_INITIAL_ROWS, change tracking and replacing the source table mean for a stream?</h3>
+  <div class="say" tabindex="0" role="button" aria-label="Answer (click to reveal in quiz mode)">
+    <span class="say-l">Say this</span>
+    <p>A stream only reports changes after its creation point. <code>SHOW_INITIAL_ROWS = TRUE</code> makes the first read also return the existing rows as inserts, which is how you backfill. Streams need change tracking on the table, which creating the stream turns on. And <code>CREATE OR REPLACE TABLE</code> on the source (or dropping it) breaks the stream, and it must be recreated, because it is tied to that table's history.</p>
+    <span class="reveal-hint">Click to reveal answer</span>
+  </div>
+  <div class="red"><div class="red-h">Red flag answers to avoid</div><ul><li>Rebuilding a source table with CREATE OR REPLACE in the pipeline and expecting the stream to keep working.</li></ul></div>
+  <details class="deep">
+    <summary><span>Deep dive</span><em>SQL</em></summary>
+    <div class="deep-b"><p>Prefer <code>TRUNCATE</code>/<code>DELETE</code>+<code>INSERT</code> or <code>ALTER TABLE</code> to keep the stream valid. After a replace, recreate the stream and do a one-off reconciliation of anything the old offset had not consumed.</p><div class="code"><div class="code-h"><span class="lang">SQL</span><span class="code-l">Backfill-aware stream</span><button class="copy" type="button" data-copy="c22_0" aria-label="Copy code">Copy</button></div><pre id="c22_0"><code>CREATE STREAM STAGING.STRM_INVENTORY_BF ON TABLE STAGING.INVENTORY_RAW SHOW_INITIAL_ROWS = TRUE;
+-- first consume returns every current row as INSERT, later ones only deltas</code></pre></div><div class="lab"><span class="lab-l">In the lab simulator</span>The lab marks a stream stale when its source table is dropped or replaced, and a SELECT on it then errors. It models only that cause; real streams also go stale on retention (next cards).</div></div>
+  </details>
+</article></section><section class="topic" data-topic="meta" id="t-meta"><h2 class="topic-h"><span>METADATA$, offsets &amp; staleness</span><small>5 questions</small></h2>
+<article class="card" id="q23" data-topic="meta" data-level="Basic" style="--i:0">
+  <header class="card-h">
+    <span class="qnum">Q23</span>
+    <span class="badge b-basic">Basic</span>
+    <span class="tlabel">METADATA$, offsets &amp; staleness</span>
+  </header>
+  <h3 class="qtext">What are METADATA$ACTION, METADATA$ISUPDATE and METADATA$ROW_ID?</h3>
+  <div class="say" tabindex="0" role="button" aria-label="Answer (click to reveal in quiz mode)">
+    <span class="say-l">Say this</span>
+    <p>They are the three stream metadata columns. <code>METADATA$ACTION</code> is <code>'INSERT'</code> or <code>'DELETE'</code>. <code>METADATA$ISUPDATE</code> is TRUE when the row is half of an update pair. <code>METADATA$ROW_ID</code> is a unique, immutable identifier for the row, which lets you track a row across changes.</p>
+    <span class="reveal-hint">Click to reveal answer</span>
+  </div>
+  <div class="red"><div class="red-h">Red flag answers to avoid</div><ul><li>Mixing them with <code>METADATA$FILENAME</code> and <code>METADATA$FILE_ROW_NUMBER</code>. Those are staged-file columns usable only when querying or COPYing from a stage.</li></ul></div>
+  <details class="deep">
+    <summary><span>Deep dive</span><em>visual + SQL</em></summary>
+    <div class="deep-b"><p>You cannot rely on the format of ROW_ID; treat it as opaque.</p><figure class="viz"><div class="split">
+<div class="pane"><div class="pane-h">Stream columns</div><div class="pane-f"><code>METADATA$ACTION</code>, <code>METADATA$ISUPDATE</code>, <code>METADATA$ROW_ID</code><br>Available when selecting from a stream.</div></div>
+<div class="pane"><div class="pane-h">Staged-file columns</div><div class="pane-f"><code>METADATA$FILENAME</code>, <code>METADATA$FILE_ROW_NUMBER</code> (+ others such as <code>METADATA$FILE_LAST_MODIFIED</code>)<br>Available when selecting from a stage.</div></div></div></figure><div class="code"><div class="code-h"><span class="lang">SQL</span><span class="code-l">Use them</span><button class="copy" type="button" data-copy="c23_0" aria-label="Copy code">Copy</button></div><pre id="c23_0"><code>SELECT product_id, unit_price, METADATA$ACTION, METADATA$ISUPDATE, METADATA$ROW_ID
+FROM STAGING.STRM_INVENTORY_RAW;</code></pre></div><div class="lab"><span class="lab-l">In the lab simulator</span>Simplification: lab ROW_IDs are deterministic 40-character hex strings generated by the engine so screenshots stay stable. Real ones are opaque and differ.</div></div>
+  </details>
+</article>
+<article class="card" id="q24" data-topic="meta" data-level="Intermediate" style="--i:1">
+  <header class="card-h">
+    <span class="qnum">Q24</span>
+    <span class="badge b-intermediate">Intermediate</span>
+    <span class="tlabel">METADATA$, offsets &amp; staleness</span>
+  </header>
+  <h3 class="qtext">How do you correctly write a MERGE source over a standard stream that contains update pairs?</h3>
+  <div class="say" tabindex="0" role="button" aria-label="Answer (click to reveal in quiz mode)">
+    <span class="say-l">Say this</span>
+    <p>Exclude the DELETE half of every update pair, otherwise the same key appears twice in the source and the MERGE fails or misbehaves: <code>WHERE NOT (METADATA$ACTION = 'DELETE' AND METADATA$ISUPDATE)</code>. Then true deletes (ACTION='DELETE', ISUPDATE FALSE) can be handled with a separate <code>WHEN MATCHED ... THEN DELETE</code> branch, and everything else is an upsert on the INSERT rows.</p>
+    <span class="reveal-hint">Click to reveal answer</span>
+  </div>
+  <div class="red"><div class="red-h">Red flag answers to avoid</div><ul><li>Treating every stream row as an upsert and ignoring deletes entirely, so removed rows live forever downstream.</li></ul></div>
+  <details class="deep">
+    <summary><span>Deep dive</span><em>SQL</em></summary>
+    <div class="deep-b"><p>The lab's raw table is insert-only (COPY-loaded), so its MERGE keeps only <code>METADATA$ACTION = 'INSERT'</code> rows and dedupes per product with <code>QUALIFY ROW_NUMBER() ... = 1</code>. A mutable source needs the full pattern below.</p><div class="code"><div class="code-h"><span class="lang">SQL</span><span class="code-l">CDC-correct MERGE</span><button class="copy" type="button" data-copy="c24_0" aria-label="Copy code">Copy</button></div><pre id="c24_0"><code>MERGE INTO ANALYTICS.INVENTORY t
+USING (
+  SELECT * FROM STAGING.STRM_INVENTORY_RAW
+  WHERE NOT (METADATA$ACTION = &#x27;DELETE&#x27; AND METADATA$ISUPDATE)
+) s
+ON t.product_id = s.product_id
+WHEN MATCHED AND s.METADATA$ACTION = &#x27;DELETE&#x27; THEN DELETE
+WHEN MATCHED AND s.METADATA$ACTION = &#x27;INSERT&#x27; THEN UPDATE SET t.unit_price = s.unit_price, t.quantity_on_hand = s.quantity_on_hand
+WHEN NOT MATCHED AND s.METADATA$ACTION = &#x27;INSERT&#x27; THEN INSERT (product_id, unit_price, quantity_on_hand)
+  VALUES (s.product_id, s.unit_price, s.quantity_on_hand);</code></pre></div><div class="lab"><span class="lab-l">In the lab simulator</span>Simplification: the lab MERGE only handles INSERT rows (plus dedupe); it does not model a delete branch because raw is append-style.</div></div>
+  </details>
+</article>
+<article class="card" id="q25" data-topic="meta" data-level="Intermediate" style="--i:2">
+  <header class="card-h">
+    <span class="qnum">Q25</span>
+    <span class="badge b-intermediate">Intermediate</span>
+    <span class="tlabel">METADATA$, offsets &amp; staleness</span>
+  </header>
+  <h3 class="qtext">Explain offset, data retention and staleness for streams. Where does 14 days come from?</h3>
+  <div class="say" tabindex="0" role="button" aria-label="Answer (click to reveal in quiz mode)">
+    <span class="say-l">Say this</span>
+    <p>The offset is the stream's position in the table's change history. To compute the delta, Snowflake needs that history, which lives in Time Travel retention. If the offset falls outside what is retained, the stream is <b>STALE</b>: unreadable, and its unconsumed changes are gone. To help, Snowflake automatically extends the table's retention for streams, up to <code>MAX_DATA_EXTENSION_TIME_IN_DAYS</code>, which defaults to <b>14 days</b>. So practically: consume the stream at least once inside the window, and watch <code>stale_after</code>.</p>
+    <span class="reveal-hint">Click to reveal answer</span>
+  </div>
+  <div class="red"><div class="red-h">Red flag answers to avoid</div><ul><li>"Streams never expire." They do, and a paused task is the classic way to hit it.</li><li>"14 days is a fixed Snowflake limit." It is the default of a parameter; the table's own retention can be longer and the maximum extension can be raised (up to 90 days).</li></ul></div>
+  <details class="deep">
+    <summary><span>Deep dive</span><em>SQL</em></summary>
+    <div class="deep-b"><p>The extension can add storage cost because old table versions are kept longer. Consuming the stream (even into a scratch table) resets the clock. Staleness is also caused by dropping or replacing the source table (previous section).</p><div class="code"><div class="code-h"><span class="lang">SQL</span><span class="code-l">Inspect and tune</span><button class="copy" type="button" data-copy="c25_0" aria-label="Copy code">Copy</button></div><pre id="c25_0"><code>SHOW STREAMS IN SCHEMA STAGING;     -- look at &quot;stale&quot; and &quot;stale_after&quot;
+SELECT SYSTEM$STREAM_GET_TABLE_TIMESTAMP(&#x27;STAGING.STRM_INVENTORY_RAW&#x27;);
+ALTER TABLE STAGING.INVENTORY_RAW SET DATA_RETENTION_TIME_IN_DAYS = 7, MAX_DATA_EXTENSION_TIME_IN_DAYS = 14;</code></pre></div><div class="lab"><span class="lab-l">In the lab simulator</span>Simplification: the lab has no wall-clock retention. Staleness is triggered only when the source table is replaced or dropped, though the SHOW STREAMS <code>stale</code> column is shown as a string like real Snowflake. Treat 14 days as a talking point, not something you can reproduce in the lab.</div></div>
+  </details>
+</article>
+<article class="card" id="q26" data-topic="meta" data-level="Advanced" style="--i:3">
+  <header class="card-h">
+    <span class="qnum">Q26</span>
+    <span class="badge b-advanced">Advanced</span>
+    <span class="tlabel">METADATA$, offsets &amp; staleness</span>
+  </header>
+  <h3 class="qtext">A stream is STALE. What are your options, and how do you stop it happening?</h3>
+  <div class="say" tabindex="0" role="button" aria-label="Answer (click to reveal in quiz mode)">
+    <span class="say-l">Say this</span>
+    <p>There is no "un-stale". Recreate the stream (<code>CREATE OR REPLACE STREAM</code>), which starts from the current table state, and reconcile what was missed, for example by diffing the target against the source or reloading from a snapshot. To prevent it: alert on <code>stale_after</code> in SHOW STREAMS, never leave a consuming task suspended for long, and keep <code>MAX_DATA_EXTENSION_TIME_IN_DAYS</code> comfortably above your worst-case outage.</p>
+    <span class="reveal-hint">Click to reveal answer</span>
+  </div>
+  <div class="red"><div class="red-h">Red flag answers to avoid</div><ul><li>Recreating the stream and carrying on, with no reconciliation of the lost window. Targets silently drift from the source.</li></ul></div>
+  <details class="deep">
+    <summary><span>Deep dive</span><em>SQL</em></summary>
+    <div class="deep-b"><p>Reconciliation pattern: after recreating, run a full-table MERGE from the source into the target once (or <code>SHOW_INITIAL_ROWS=TRUE</code> on the new stream), then resume the incremental task.</p><div class="code"><div class="code-h"><span class="lang">SQL</span><span class="code-l">Recover</span><button class="copy" type="button" data-copy="c26_0" aria-label="Copy code">Copy</button></div><pre id="c26_0"><code>CREATE OR REPLACE STREAM STAGING.STRM_INVENTORY_RAW ON TABLE STAGING.INVENTORY_RAW SHOW_INITIAL_ROWS = TRUE;
+-- the first task run will re-merge the full table, which is safe because the MERGE is an idempotent upsert</code></pre></div></div>
+  </details>
+</article>
+<article class="card" id="q27" data-topic="meta" data-level="Intermediate" style="--i:4">
+  <header class="card-h">
+    <span class="qnum">Q27</span>
+    <span class="badge b-intermediate">Intermediate</span>
+    <span class="tlabel">METADATA$, offsets &amp; staleness</span>
+  </header>
+  <h3 class="qtext">What does SYSTEM$STREAM_HAS_DATA do, and why use it in a task WHEN clause?</h3>
+  <div class="say" tabindex="0" role="button" aria-label="Answer (click to reveal in quiz mode)">
+    <span class="say-l">Say this</span>
+    <p>It returns TRUE if the stream has unconsumed changes. In a task's <code>WHEN</code> clause it is evaluated before the run without starting the warehouse, so a quiet stream means the run is <b>SKIPPED</b> and no compute is spent. It is cheap, it does not advance the offset, and it is the standard guard for stream-driven tasks.</p>
+    <span class="reveal-hint">Click to reveal answer</span>
+  </div>
+  <div class="red"><div class="red-h">Red flag answers to avoid</div><ul><li>Putting the check inside the task body (a SELECT COUNT from the stream), which resumes the warehouse every time.</li></ul></div>
+  <details class="deep">
+    <summary><span>Deep dive</span><em>SQL</em></summary>
+    <div class="deep-b"><p>The function accepts the stream name as a string; a stale stream makes it error. The lab shows it flipping from TRUE to FALSE after the MERGE commits.</p><div class="code"><div class="code-h"><span class="lang">SQL</span><span class="code-l">Guard</span><button class="copy" type="button" data-copy="c27_0" aria-label="Copy code">Copy</button></div><pre id="c27_0"><code>CREATE OR REPLACE TASK ANALYTICS.TSK_MERGE_INVENTORY
+  WAREHOUSE = LAB_WH SCHEDULE = &#x27;5 MINUTE&#x27;
+  WHEN SYSTEM$STREAM_HAS_DATA(&#x27;STAGING.STRM_INVENTORY_RAW&#x27;)
+AS MERGE ...;</code></pre></div></div>
+  </details>
+</article></section><section class="topic" data-topic="task" id="t-task"><h2 class="topic-h"><span>Tasks</span><small>6 questions</small></h2>
+<article class="card" id="q28" data-topic="task" data-level="Basic" style="--i:0">
+  <header class="card-h">
+    <span class="qnum">Q28</span>
+    <span class="badge b-basic">Basic</span>
+    <span class="tlabel">Tasks</span>
+  </header>
+  <h3 class="qtext">What is a Snowflake task, and how is it scheduled?</h3>
+  <div class="say" tabindex="0" role="button" aria-label="Answer (click to reveal in quiz mode)">
+    <span class="say-l">Say this</span>
+    <p>A task runs one SQL statement (or a stored-procedure call, or a Snowflake Scripting block) on a schedule or after another task. <code>SCHEDULE</code> is either an interval such as <code>'5 MINUTE'</code> or a cron expression <code>'USING CRON 0 6 * * * UTC'</code>. It runs on a warehouse you name, or serverless compute if you omit one. A new task is created <b>suspended</b> and does nothing until <code>ALTER TASK ... RESUME</code>.</p>
+    <span class="reveal-hint">Click to reveal answer</span>
+  </div>
+  <div class="red"><div class="red-h">Red flag answers to avoid</div><ul><li>Creating a task and expecting it to run. It starts SUSPENDED.</li><li>Forgetting the role needs <code>EXECUTE TASK</code> on the account and usage on the warehouse.</li></ul></div>
+  <details class="deep">
+    <summary><span>Deep dive</span><em>SQL</em></summary>
+    <div class="deep-b"><p>Tasks run with the privileges of their <b>owner role</b>, not the user who resumed them. Cron schedules are anchored to clock time and a timezone; interval schedules are relative to when the task was resumed or its last run.</p><div class="code"><div class="code-h"><span class="lang">SQL</span><span class="code-l">Create, resume, check</span><button class="copy" type="button" data-copy="c28_0" aria-label="Copy code">Copy</button></div><pre id="c28_0"><code>USE ROLE ACCOUNTADMIN;
+GRANT EXECUTE TASK ON ACCOUNT TO ROLE LAB_ANALYST;
+USE ROLE LAB_ANALYST;
+
+CREATE OR REPLACE TASK ANALYTICS.TSK_NIGHTLY
+  WAREHOUSE = LAB_WH
+  SCHEDULE = &#x27;USING CRON 0 2 * * * America/Los_Angeles&#x27;
+AS CALL ANALYTICS.NIGHTLY_ROLLUP();
+
+ALTER TASK ANALYTICS.TSK_NIGHTLY RESUME;
+SHOW TASKS IN SCHEMA ANALYTICS;     -- state: started | suspended</code></pre></div><div class="lab"><span class="lab-l">In the lab simulator</span>The lab has no true clock. <code>EXECUTE TASK</code> and an internal "advance time" simulator run the tasks. Serverless tasks and timezone/DST behaviour are not modelled.</div></div>
+  </details>
+</article>
+<article class="card" id="q29" data-topic="task" data-level="Intermediate" style="--i:1">
+  <header class="card-h">
+    <span class="qnum">Q29</span>
+    <span class="badge b-intermediate">Intermediate</span>
+    <span class="tlabel">Tasks</span>
+  </header>
+  <h3 class="qtext">Gotcha: a task&#x27;s WHEN condition is false. What happens?</h3>
+  <div class="say" tabindex="0" role="button" aria-label="Answer (click to reveal in quiz mode)">
+    <span class="say-l">Say this</span>
+    <p>The run is recorded in task history with state <b>SKIPPED</b>. The body does not execute and, importantly, no warehouse is used. It is not an error, and for a scheduled graph the next evaluation happens on the next scheduled tick. If every run in the history is SKIPPED, the condition is simply never true (often a stream that something else consumed).</p>
+    <span class="reveal-hint">Click to reveal answer</span>
+  </div>
+  <div class="red"><div class="red-h">Red flag answers to avoid</div><ul><li>Reading SKIPPED as a failure and "fixing" it by removing the WHEN clause.</li><li>Alerting only on FAILED and missing that a pipeline has been SKIPPED for three days.</li></ul></div>
+  <details class="deep">
+    <summary><span>Deep dive</span><em>SQL</em></summary>
+    <div class="deep-b"><p>With a DAG, if the root's WHEN is false the graph does not run, so child tasks do not execute. For a manual <code>EXECUTE TASK</code> on a task with a WHEN clause, behaviour is thinly documented; the lab records a SKIPPED row, and you should verify manual-run semantics on your own account before depending on them.</p><div class="code"><div class="code-h"><span class="lang">SQL</span><span class="code-l">See SKIPPED</span><button class="copy" type="button" data-copy="c29_0" aria-label="Copy code">Copy</button></div><pre id="c29_0"><code>SELECT SYSTEM$STREAM_HAS_DATA(&#x27;STAGING.STRM_INVENTORY_RAW&#x27;);   -- FALSE
+EXECUTE TASK ANALYTICS.TSK_MERGE_INVENTORY;
+SELECT name, state, scheduled_time, error_message
+FROM TABLE(INFORMATION_SCHEMA.TASK_HISTORY(TASK_NAME =&gt; &#x27;TSK_MERGE_INVENTORY&#x27;, RESULT_LIMIT =&gt; 5))
+ORDER BY scheduled_time DESC;     -- SKIPPED</code></pre></div><div class="lab"><span class="lab-l">In the lab simulator</span>Lab step 14 does exactly this. The lab also marks a child task SKIPPED when its predecessor was SKIPPED; in real Snowflake the child simply never runs, so check your own TASK_HISTORY rather than assuming a child row exists.</div></div>
+  </details>
+</article>
+<article class="card" id="q30" data-topic="task" data-level="Intermediate" style="--i:2">
+  <header class="card-h">
+    <span class="qnum">Q30</span>
+    <span class="badge b-intermediate">Intermediate</span>
+    <span class="tlabel">Tasks</span>
+  </header>
+  <h3 class="qtext">When do you use EXECUTE TASK, and what are its limits?</h3>
+  <div class="say" tabindex="0" role="button" aria-label="Answer (click to reveal in quiz mode)">
+    <span class="say-l">Say this</span>
+    <p><code>EXECUTE TASK</code> triggers one run immediately, ignoring the schedule. I use it to test a new task, to backfill or force a run after fixing something, and in demos. It works on a standalone task or the <b>root</b> of a DAG (the children then follow); you cannot execute a child task on its own. Privileges are the owner's, so a role without OPERATE or ownership cannot run it.</p>
+    <span class="reveal-hint">Click to reveal answer</span>
+  </div>
+  <div class="red"><div class="red-h">Red flag answers to avoid</div><ul><li>Trying to <code>EXECUTE TASK</code> a child and expecting only that node to run. Run the root, or call the child's body SQL yourself.</li></ul></div>
+  <details class="deep">
+    <summary><span>Deep dive</span><em>SQL</em></summary>
+    <div class="deep-b"><p>A manual run still appears in <code>TASK_HISTORY</code>, with a scheduled-from value showing it was not scheduled. Suspended children are skipped when a graph is triggered manually, so remember to resume them.</p><div class="code"><div class="code-h"><span class="lang">SQL</span><span class="code-l">Manual run</span><button class="copy" type="button" data-copy="c30_0" aria-label="Copy code">Copy</button></div><pre id="c30_0"><code>EXECUTE TASK ANALYTICS.TSK_MERGE_INVENTORY;
+EXECUTE TASK ANALYTICS.TSK_LOAD_PRICE_HISTORY;   -- error: only root / standalone tasks can be executed manually</code></pre></div><div class="lab"><span class="lab-l">In the lab simulator</span>The lab implements the root-only rule and skips suspended children, naming them in a note.</div></div>
+  </details>
+</article>
+<article class="card" id="q31" data-topic="task" data-level="Intermediate" style="--i:3">
+  <header class="card-h">
+    <span class="qnum">Q31</span>
+    <span class="badge b-intermediate">Intermediate</span>
+    <span class="tlabel">Tasks</span>
+  </header>
+  <h3 class="qtext">How do you monitor tasks with TASK_HISTORY?</h3>
+  <div class="say" tabindex="0" role="button" aria-label="Answer (click to reveal in quiz mode)">
+    <span class="say-l">Say this</span>
+    <p>The <code>INFORMATION_SCHEMA.TASK_HISTORY</code> table function gives recent runs (about the last 7 days) with name, state (SCHEDULED, EXECUTING, SUCCEEDED, FAILED, SKIPPED, CANCELLED), scheduled and completed times, error code and message. For longer history I use <code>SNOWFLAKE.ACCOUNT_USAGE.TASK_HISTORY</code>, which keeps about a year but lags by up to a few hours. I alert on FAILED, and on a long run of SKIPPED.</p>
+    <span class="reveal-hint">Click to reveal answer</span>
+  </div>
+  <div class="red"><div class="red-h">Red flag answers to avoid</div><ul><li>Only checking <code>SHOW TASKS</code>, which shows state and definition but not run results.</li></ul></div>
+  <details class="deep">
+    <summary><span>Deep dive</span><em>SQL</em></summary>
+    <div class="deep-b"><p>Useful filters: <code>TASK_NAME</code>, <code>SCHEDULED_TIME_RANGE_START/END</code>, <code>RESULT_LIMIT</code>, <code>ERROR_ONLY</code>. For graphs, <code>CURRENT_TASK_GRAPHS()</code> and <code>COMPLETE_TASK_GRAPHS()</code> show runs as a unit. Latency and retention numbers are version-dependent; check current docs.</p><div class="code"><div class="code-h"><span class="lang">SQL</span><span class="code-l">Recent runs</span><button class="copy" type="button" data-copy="c31_0" aria-label="Copy code">Copy</button></div><pre id="c31_0"><code>SELECT name, state, scheduled_time, query_start_time, completed_time, error_code, error_message
+FROM TABLE(RETAILPULSE_LAB.INFORMATION_SCHEMA.TASK_HISTORY(
+  SCHEDULED_TIME_RANGE_START =&gt; DATEADD(&#x27;hour&#x27;, -24, CURRENT_TIMESTAMP()),
+  RESULT_LIMIT =&gt; 100))
+ORDER BY scheduled_time DESC;
+
+-- failures only, account-wide, longer history
+SELECT name, state, error_message, scheduled_time
+FROM SNOWFLAKE.ACCOUNT_USAGE.TASK_HISTORY
+WHERE state = &#x27;FAILED&#x27; AND scheduled_time &gt; DATEADD(&#x27;day&#x27;, -7, CURRENT_TIMESTAMP());</code></pre></div><div class="lab"><span class="lab-l">In the lab simulator</span>The lab keeps a task history array with SUCCEEDED, FAILED, SKIPPED, CANCELLED and SCHEDULED states and offers the table function; ACCOUNT_USAGE is not simulated.</div></div>
+  </details>
+</article>
+<article class="card" id="q32" data-topic="task" data-level="Advanced" style="--i:4">
+  <header class="card-h">
+    <span class="qnum">Q32</span>
+    <span class="badge b-advanced">Advanced</span>
+    <span class="tlabel">Tasks</span>
+  </header>
+  <h3 class="qtext">What happens when a task fails or overruns? How does that interact with the stream?</h3>
+  <div class="say" tabindex="0" role="button" aria-label="Answer (click to reveal in quiz mode)">
+    <span class="say-l">Say this</span>
+    <p>If the body fails, its transaction rolls back, so the stream offset does not move and the changes are retried on the next run. That is why a stream plus task is naturally idempotent. A root task will not start a new run while the previous one is still running (overlap is not allowed by default), and I can set <code>SUSPEND_TASK_AFTER_NUM_FAILURES</code> to auto-suspend a repeatedly failing task and root-level auto-retry for transient errors. A failed predecessor means its children do not run.</p>
+    <span class="reveal-hint">Click to reveal answer</span>
+  </div>
+  <div class="red"><div class="red-h">Red flag answers to avoid</div><ul><li>Assuming a failed MERGE loses the batch. The stream still holds it, until staleness.</li><li>Auto-suspend by failures plus no alerting: the pipeline silently stops, and the stream drifts toward STALE.</li></ul></div>
+  <details class="deep">
+    <summary><span>Deep dive</span><em>SQL</em></summary>
+    <div class="deep-b"><p>Make the task body one atomic statement or wrap multiple statements in a single transaction in a procedure, so a partial success cannot advance the offset without completing the whole job.</p><div class="code"><div class="code-h"><span class="lang">SQL</span><span class="code-l">Guard rails</span><button class="copy" type="button" data-copy="c32_0" aria-label="Copy code">Copy</button></div><pre id="c32_0"><code>ALTER TASK ANALYTICS.TSK_MERGE_INVENTORY SUSPEND;
+ALTER TASK ANALYTICS.TSK_MERGE_INVENTORY SET SUSPEND_TASK_AFTER_NUM_FAILURES = 3;
+ALTER TASK ANALYTICS.TSK_MERGE_INVENTORY SET USER_TASK_TIMEOUT_MS = 600000;
+ALTER TASK ANALYTICS.TSK_MERGE_INVENTORY RESUME;</code></pre></div><div class="lab"><span class="lab-l">In the lab simulator</span>The lab models FAILED tasks and CANCELLED children. Retry, overlap prevention and auto-suspend parameters are not simulated.</div></div>
+  </details>
+</article>
+<article class="card" id="q33" data-topic="task" data-level="Advanced" style="--i:5">
+  <header class="card-h">
+    <span class="qnum">Q33</span>
+    <span class="badge b-advanced">Advanced</span>
+    <span class="tlabel">Tasks</span>
+  </header>
+  <h3 class="qtext">Scheduled task with WHEN versus a triggered task. What is the difference?</h3>
+  <div class="say" tabindex="0" role="button" aria-label="Answer (click to reveal in quiz mode)">
+    <span class="say-l">Say this</span>
+    <p>Classic pattern: a root task wakes on an interval and the <code>WHEN SYSTEM$STREAM_HAS_DATA</code> check decides whether to run, so you pay nothing on a quiet tick but you still have up to one interval of latency. Newer Snowflake releases also offer <b>triggered tasks</b>, which have no SCHEDULE and run when the stream gets data. I would mention it as an alternative and say I would confirm availability and limits in the current docs, because it is newer than the classic pattern.</p>
+    <span class="reveal-hint">Click to reveal answer</span>
+  </div>
+  <div class="red"><div class="red-h">Red flag answers to avoid</div><ul><li>Presenting triggered tasks as universally available without caveats.</li></ul></div>
+  <details class="deep">
+    <summary><span>Deep dive</span><em>SQL</em></summary>
+    <div class="deep-b"><p>The lab and this guide use the classic scheduled + WHEN pattern, which works on every edition and is what most existing pipelines use.</p><div class="code"><div class="code-h"><span class="lang">SQL</span><span class="code-l">Classic pattern</span><button class="copy" type="button" data-copy="c33_0" aria-label="Copy code">Copy</button></div><pre id="c33_0"><code>CREATE OR REPLACE TASK ANALYTICS.TSK_MERGE_INVENTORY
+  WAREHOUSE = LAB_WH
+  SCHEDULE = &#x27;5 MINUTE&#x27;
+  WHEN SYSTEM$STREAM_HAS_DATA(&#x27;STAGING.STRM_INVENTORY_RAW&#x27;)
+AS MERGE ...;</code></pre></div><div class="lab"><span class="lab-l">In the lab simulator</span>Triggered tasks are not modelled.</div></div>
+  </details>
+</article></section><section class="topic" data-topic="dag" id="t-dag"><h2 class="topic-h"><span>DAGs</span><small>4 questions</small></h2>
+<article class="card" id="q34" data-topic="dag" data-level="Basic" style="--i:0">
+  <header class="card-h">
+    <span class="qnum">Q34</span>
+    <span class="badge b-basic">Basic</span>
+    <span class="tlabel">DAGs</span>
+  </header>
+  <h3 class="qtext">What is a task DAG and how do you build one?</h3>
+  <div class="say" tabindex="0" role="button" aria-label="Answer (click to reveal in quiz mode)">
+    <span class="say-l">Say this</span>
+    <p>A DAG, called a task graph, is a root task with a schedule and child tasks created with <code>AFTER &lt;parent&gt;</code>. Only the root has a schedule; children run when all their predecessors succeed. A task can have several predecessors (a join) and several children (a fan-out), and cycles are not allowed. RetailPulse has two nodes: <code>TSK_MERGE_INVENTORY</code> then <code>TSK_LOAD_PRICE_HISTORY</code>.</p>
+    <span class="reveal-hint">Click to reveal answer</span>
+  </div>
+  <div class="red"><div class="red-h">Red flag answers to avoid</div><ul><li>Giving a child task its own SCHEDULE as well as AFTER. A task is either scheduled or after something.</li></ul></div>
+  <details class="deep">
+    <summary><span>Deep dive</span><em>visual + SQL</em></summary>
+    <div class="deep-b"><p>Limits worth quoting (version-dependent): up to 1,000 tasks in a graph, and each task can have up to 100 predecessors and 100 children. Tasks can pass a small return value to successors with <code>SYSTEM$SET_RETURN_VALUE</code> and <code>SYSTEM$GET_PREDECESSOR_RETURN_VALUE</code>.</p><figure class="viz"><svg class="viz-svg" viewBox="0 0 700 120" role="img" aria-label="Two-task DAG">
+<defs><marker id="ah2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="var(--ink)"/></marker></defs>
+<g class="node acc"><rect x="40" y="25" width="250" height="70" rx="6"/><text x="165" y="55" class="t1">TSK_MERGE_INVENTORY</text><text x="165" y="76" class="t2">root, SCHEDULE 5 MINUTE, WHEN has data</text></g>
+<g class="node teal"><rect x="410" y="25" width="250" height="70" rx="6"/><text x="535" y="55" class="t1">TSK_LOAD_PRICE_HISTORY</text><text x="535" y="76" class="t2">child, AFTER root</text></g>
+<path d="M290 60 H408" class="edge" marker-end="url(#ah2)"/></svg></figure><div class="code"><div class="code-h"><span class="lang">SQL</span><span class="code-l">Build it</span><button class="copy" type="button" data-copy="c34_0" aria-label="Copy code">Copy</button></div><pre id="c34_0"><code>CREATE OR REPLACE TASK ANALYTICS.TSK_LOAD_PRICE_HISTORY
+  WAREHOUSE = LAB_WH
+  AFTER ANALYTICS.TSK_MERGE_INVENTORY
+AS INSERT INTO ANALYTICS.PRICE_HISTORY (product_id, sku, old_price, new_price, changed_at, change_source)
+   SELECT ... FROM STAGING.STRM_INVENTORY_APPEND ...;
+
+SELECT * FROM TABLE(INFORMATION_SCHEMA.TASK_DEPENDENTS(TASK_NAME =&gt; &#x27;ANALYTICS.TSK_MERGE_INVENTORY&#x27;, RECURSIVE =&gt; TRUE));</code></pre></div><div class="lab"><span class="lab-l">In the lab simulator</span>The lab computes predecessors and walks children in topological order when the root runs.</div></div>
+  </details>
+</article>
+<article class="card" id="q35" data-topic="dag" data-level="Intermediate" style="--i:1">
+  <header class="card-h">
+    <span class="qnum">Q35</span>
+    <span class="badge b-intermediate">Intermediate</span>
+    <span class="tlabel">DAGs</span>
+  </header>
+  <h3 class="qtext">Gotcha: you try to change a task in a running DAG and get an error. Why, and what is the right order?</h3>
+  <div class="say" tabindex="0" role="button" aria-label="Answer (click to reveal in quiz mode)">
+    <span class="say-l">Say this</span>
+    <p>You cannot add or modify tasks while the DAG's root is running (state started). The error says it is unable to update the graph with the root task because that task is not suspended. The order is: <b>suspend the root</b>, make the changes, <b>resume the children first</b>, and <b>resume the root last</b>. If you resume the root before its children, the first run executes without them. <code>SYSTEM$TASK_DEPENDENTS_ENABLE('root')</code> resumes the whole graph in a safe order.</p>
+    <span class="reveal-hint">Click to reveal answer</span>
+  </div>
+  <div class="red"><div class="red-h">Red flag answers to avoid</div><ul><li>Editing the child and resuming only the child, leaving the root suspended. Nothing is scheduled.</li><li><code>CREATE OR REPLACE TASK</code> on a child while the root is started. It fails.</li></ul></div>
+  <details class="deep">
+    <summary><span>Deep dive</span><em>SQL</em></summary>
+    <div class="deep-b"><p>Task state is part of the definition: <code>CREATE OR REPLACE</code> produces a new task that comes back <b>suspended</b>, so even when it works you must resume it again.</p><div class="code"><div class="code-h"><span class="lang">SQL</span><span class="code-l">Safe change procedure</span><button class="copy" type="button" data-copy="c35_0" aria-label="Copy code">Copy</button></div><pre id="c35_0"><code>ALTER TASK ANALYTICS.TSK_MERGE_INVENTORY SUSPEND;           -- root first
+
+CREATE OR REPLACE TASK ANALYTICS.TSK_LOAD_PRICE_HISTORY
+  WAREHOUSE = LAB_WH AFTER ANALYTICS.TSK_MERGE_INVENTORY
+AS INSERT INTO ANALYTICS.PRICE_HISTORY SELECT ...;
+
+ALTER TASK ANALYTICS.TSK_LOAD_PRICE_HISTORY RESUME;         -- children before root
+ALTER TASK ANALYTICS.TSK_MERGE_INVENTORY    RESUME;         -- root last
+-- or: SELECT SYSTEM$TASK_DEPENDENTS_ENABLE(&#x27;ANALYTICS.TSK_MERGE_INVENTORY&#x27;);</code></pre></div><div class="lab"><span class="lab-l">In the lab simulator</span>Lab step 12 shows this on purpose: it runs <code>CREATE OR REPLACE TASK ... AFTER ...</code> while the root is started, and the engine returns "Unable to update graph with root task ... since that task is not suspended". Treat the exact text and error code as modelled; real wording may vary by release.</div></div>
+  </details>
+</article>
+<article class="card" id="q36" data-topic="dag" data-level="Advanced" style="--i:2">
+  <header class="card-h">
+    <span class="qnum">Q36</span>
+    <span class="badge b-advanced">Advanced</span>
+    <span class="tlabel">DAGs</span>
+  </header>
+  <h3 class="qtext">What happens to children when a predecessor fails or is skipped, and what is a finalizer?</h3>
+  <div class="say" tabindex="0" role="button" aria-label="Answer (click to reveal in quiz mode)">
+    <span class="say-l">Say this</span>
+    <p>If a predecessor fails, its dependents do not run for that graph run; the real history shows them as CANCELLED. A skipped root means the graph run does not execute. A <b>finalizer</b> task (<code>FINALIZE = &lt;root&gt;</code>) is a special task that runs after the whole graph finishes, whatever the outcome, which is the right place for cleanup, notifications and status writes.</p>
+    <span class="reveal-hint">Click to reveal answer</span>
+  </div>
+  <div class="red"><div class="red-h">Red flag answers to avoid</div><ul><li>Putting the failure alert in a normal child. It never runs when the thing before it fails.</li></ul></div>
+  <details class="deep">
+    <summary><span>Deep dive</span><em>SQL</em></summary>
+    <div class="deep-b"><p>Mention it as a modern pattern, with the caveat to check the current docs for syntax. The lab does not implement finalizers.</p><div class="code"><div class="code-h"><span class="lang">SQL</span><span class="code-l">Finalizer</span><button class="copy" type="button" data-copy="c36_0" aria-label="Copy code">Copy</button></div><pre id="c36_0"><code>CREATE OR REPLACE TASK ANALYTICS.TSK_NOTIFY
+  WAREHOUSE = LAB_WH
+  FINALIZE = ANALYTICS.TSK_MERGE_INVENTORY
+AS CALL ANALYTICS.WRITE_RUN_STATUS();</code></pre></div><div class="lab"><span class="lab-l">In the lab simulator</span>Lab: a failed predecessor leaves its child CANCELLED, matching real behaviour; finalizers are not modelled.</div></div>
+  </details>
+</article>
+<article class="card" id="q37" data-topic="dag" data-level="Advanced" style="--i:3">
+  <header class="card-h">
+    <span class="qnum">Q37</span>
+    <span class="badge b-advanced">Advanced</span>
+    <span class="tlabel">DAGs</span>
+  </header>
+  <h3 class="qtext">Why does the child task that writes price history compare to the previous raw version instead of the clean table?</h3>
+  <div class="say" tabindex="0" role="button" aria-label="Answer (click to reveal in quiz mode)">
+    <span class="say-l">Say this</span>
+    <p>Because the root runs first. By the time the child starts, the root's MERGE has already put the new price into <code>ANALYTICS.INVENTORY</code>, so comparing new versus the current clean price finds nothing. The child needs the old price from before the merge, which is the previous version of the same product in the raw history. That is a good example of an ordering dependency inside a DAG.</p>
+    <span class="reveal-hint">Click to reveal answer</span>
+  </div>
+  <div class="red"><div class="red-h">Red flag answers to avoid</div><ul><li>Writing the child as <code>new_price &lt;&gt; inventory.unit_price</code> and getting an empty audit table.</li></ul></div>
+  <details class="deep">
+    <summary><span>Deep dive</span><em>SQL</em></summary>
+    <div class="deep-b"><p>The lab's final query finds the earlier raw row per product with a self join, and the append-only stream (not the standard one) is the source, so the child never competes with the MERGE for the same offset.</p><div class="code"><div class="code-h"><span class="lang">SQL</span><span class="code-l">Old price from raw history</span><button class="copy" type="button" data-copy="c37_0" aria-label="Copy code">Copy</button></div><pre id="c37_0"><code>INSERT INTO ANALYTICS.PRICE_HISTORY (product_id, sku, old_price, new_price, changed_at, change_source)
+SELECT s.product_id, s.sku, p.unit_price, s.unit_price, s.last_updated, &#x27;TASK_DAG&#x27;
+FROM STAGING.STRM_INVENTORY_APPEND s
+JOIN STAGING.INVENTORY_RAW p
+  ON p.product_id = s.product_id AND p.last_updated &lt; s.last_updated
+QUALIFY ROW_NUMBER() OVER (PARTITION BY s.product_id, s.last_updated ORDER BY p.last_updated DESC) = 1
+   AND p.unit_price &lt;&gt; s.unit_price;   -- simplified; see lab step 12 for the full version</code></pre></div><div class="lab"><span class="lab-l">In the lab simulator</span>Lab detail: this is deviation 7 in the lab flow notes. The snippet is a simplified shape of the lab's query.</div></div>
+  </details>
+</article></section><section class="topic" data-topic="merge" id="t-merge"><h2 class="topic-h"><span>MERGE &amp; idempotency</span><small>5 questions</small></h2>
+<article class="card" id="q38" data-topic="merge" data-level="Basic" style="--i:0">
+  <header class="card-h">
+    <span class="qnum">Q38</span>
+    <span class="badge b-basic">Basic</span>
+    <span class="tlabel">MERGE &amp; idempotency</span>
+  </header>
+  <h3 class="qtext">Why use MERGE instead of INSERT for the clean table?</h3>
+  <div class="say" tabindex="0" role="button" aria-label="Answer (click to reveal in quiz mode)">
+    <span class="say-l">Say this</span>
+    <p>The clean table must hold <b>one current row per product</b>. MERGE does an upsert in one atomic statement: when the key matches I update, when it does not I insert. A plain INSERT would add a new row on every batch and produce duplicates.</p>
+    <span class="reveal-hint">Click to reveal answer</span>
+  </div>
+  <div class="red"><div class="red-h">Red flag answers to avoid</div><ul><li>Doing a DELETE then INSERT as two statements in a task. Not atomic, and it breaks if the second fails.</li></ul></div>
+  <details class="deep">
+    <summary><span>Deep dive</span><em>SQL</em></summary>
+    <div class="deep-b"><p>MERGE also supports a DELETE branch and conditional branches (<code>WHEN MATCHED AND ...</code>), which is how you make it skip no-op updates.</p><div class="code"><div class="code-h"><span class="lang">SQL</span><span class="code-l">Upsert</span><button class="copy" type="button" data-copy="c38_0" aria-label="Copy code">Copy</button></div><pre id="c38_0"><code>MERGE INTO ANALYTICS.INVENTORY t
+USING (
+  SELECT product_id, sku, name, category, quantity_on_hand, unit_cost, unit_price, warehouse_id, last_updated, status
+  FROM STAGING.STRM_INVENTORY_RAW
+  WHERE METADATA$ACTION = &#x27;INSERT&#x27;
+  QUALIFY ROW_NUMBER() OVER (PARTITION BY product_id ORDER BY last_updated DESC) = 1
+) s
+ON t.product_id = s.product_id
+WHEN MATCHED THEN UPDATE SET t.sku = s.sku, t.name = s.name, t.category = s.category,
+  t.quantity_on_hand = s.quantity_on_hand, t.unit_cost = s.unit_cost, t.unit_price = s.unit_price,
+  t.warehouse_id = s.warehouse_id, t.last_updated = s.last_updated, t.status = s.status
+WHEN NOT MATCHED THEN INSERT (product_id, sku, name, category, quantity_on_hand, unit_cost, unit_price, warehouse_id, last_updated, status)
+  VALUES (s.product_id, s.sku, s.name, s.category, s.quantity_on_hand, s.unit_cost, s.unit_price, s.warehouse_id, s.last_updated, s.status);</code></pre></div><div class="lab"><span class="lab-l">In the lab simulator</span>This is the MERGE the lab uses. After all three batches it yields 37 clean products from 85 raw rows.</div></div>
+  </details>
+</article>
+<article class="card" id="q39" data-topic="merge" data-level="Intermediate" style="--i:1">
+  <header class="card-h">
+    <span class="qnum">Q39</span>
+    <span class="badge b-intermediate">Intermediate</span>
+    <span class="tlabel">MERGE &amp; idempotency</span>
+  </header>
+  <h3 class="qtext">Gotcha: MERGE fails with &quot;duplicate row detected&quot;. Why?</h3>
+  <div class="say" tabindex="0" role="button" aria-label="Answer (click to reveal in quiz mode)">
+    <span class="say-l">Say this</span>
+    <p>Several source rows matched the same target row, and Snowflake cannot decide which to apply. The session parameter <code>ERROR_ON_NONDETERMINISTIC_MERGE</code> is TRUE by default, so it errors. In RetailPulse a product appears in batches 1, 2 and 3, so the stream holds several rows per <code>product_id</code>. The fix is to <b>dedupe the source to one row per key</b>, latest by <code>last_updated</code>, with <code>QUALIFY ROW_NUMBER() OVER (PARTITION BY product_id ORDER BY last_updated DESC) = 1</code>.</p>
+    <span class="reveal-hint">Click to reveal answer</span>
+  </div>
+  <div class="red"><div class="red-h">Red flag answers to avoid</div><ul><li>Setting <code>ERROR_ON_NONDETERMINISTIC_MERGE = FALSE</code>. The statement then succeeds but picks an arbitrary row, which is a correctness bug.</li></ul></div>
+  <details class="deep">
+    <summary><span>Deep dive</span><em>SQL</em></summary>
+    <div class="deep-b"><p>The spec for the lab did not include the QUALIFY, and the lab's flow notes call that out as a deliberate correction, because the unfiltered MERGE errors on real Snowflake.</p><div class="code"><div class="code-h"><span class="lang">SQL</span><span class="code-l">Dedupe and verify</span><button class="copy" type="button" data-copy="c39_0" aria-label="Copy code">Copy</button></div><pre id="c39_0"><code>SELECT product_id, COUNT(*) FROM STAGING.STRM_INVENTORY_RAW
+WHERE METADATA$ACTION = &#x27;INSERT&#x27; GROUP BY 1 HAVING COUNT(*) &gt; 1;   -- the offenders</code></pre></div><div class="lab"><span class="lab-l">In the lab simulator</span>The lab engine raises a duplicate-row error for a multi-match MERGE, like real Snowflake.</div></div>
+  </details>
+</article>
+<article class="card" id="q40" data-topic="merge" data-level="Intermediate" style="--i:2">
+  <header class="card-h">
+    <span class="qnum">Q40</span>
+    <span class="badge b-intermediate">Intermediate</span>
+    <span class="tlabel">MERGE &amp; idempotency</span>
+  </header>
+  <h3 class="qtext">How do you stop MERGE from rewriting rows that did not change?</h3>
+  <div class="say" tabindex="0" role="button" aria-label="Answer (click to reveal in quiz mode)">
+    <span class="say-l">Say this</span>
+    <p>Add a condition to the matched branch: <code>WHEN MATCHED AND (t.unit_price IS DISTINCT FROM s.unit_price OR t.quantity_on_hand IS DISTINCT FROM s.quantity_on_hand ...)</code>. <code>IS DISTINCT FROM</code> handles NULLs correctly. This avoids pointless writes and, if you have a <code>modified_at</code> column, avoids false "changes".</p>
+    <span class="reveal-hint">Click to reveal answer</span>
+  </div>
+  <div class="red"><div class="red-h">Red flag answers to avoid</div><ul><li>Using <code>&lt;&gt;</code> with nullable columns. A NULL comparison is NULL, so changes to or from NULL are missed.</li></ul></div>
+  <details class="deep">
+    <summary><span>Deep dive</span><em>SQL</em></summary>
+    <div class="deep-b"><div class="code"><div class="code-h"><span class="lang">SQL</span><span class="code-l">Conditional update</span><button class="copy" type="button" data-copy="c40_0" aria-label="Copy code">Copy</button></div><pre id="c40_0"><code>WHEN MATCHED AND (t.unit_price IS DISTINCT FROM s.unit_price
+               OR t.quantity_on_hand IS DISTINCT FROM s.quantity_on_hand
+               OR t.status IS DISTINCT FROM s.status)
+  THEN UPDATE SET t.unit_price = s.unit_price, t.quantity_on_hand = s.quantity_on_hand, t.status = s.status</code></pre></div></div>
+  </details>
+</article>
+<article class="card" id="q41" data-topic="merge" data-level="Advanced" style="--i:3">
+  <header class="card-h">
+    <span class="qnum">Q41</span>
+    <span class="badge b-advanced">Advanced</span>
+    <span class="tlabel">MERGE &amp; idempotency</span>
+  </header>
+  <h3 class="qtext">Where does idempotency come from in this pipeline?</h3>
+  <div class="say" tabindex="0" role="button" aria-label="Answer (click to reveal in quiz mode)">
+    <span class="say-l">Say this</span>
+    <p>From four layers working together. PUT skips an already staged file name. COPY skips files in its load metadata. The stream offset only advances on commit, so a failed run is retried and a successful run is not repeated. And the MERGE is an upsert keyed on product_id, so even if the same data arrived twice the end state is identical. The one non-idempotent step is a plain INSERT into the audit table, which I protect with a <code>NOT EXISTS</code> on (product_id, changed_at, new_price).</p>
+    <span class="reveal-hint">Click to reveal answer</span>
+  </div>
+  <div class="red"><div class="red-h">Red flag answers to avoid</div><ul><li>Claiming "the DAG is idempotent" without naming the mechanism, or forgetting that INSERT-only audit tables duplicate on replay.</li></ul></div>
+  <details class="deep">
+    <summary><span>Deep dive</span><em>visual + SQL</em></summary>
+    <div class="deep-b"><p>Test it: run the load twice, resume and run the task twice, and assert counts are unchanged. The lab's final checks do essentially this (clean table = 37 after repeated EXECUTE TASK runs; the second run is SKIPPED).</p><figure class="viz"><ol class="tree">
+<li><b>PUT</b>: same name staged twice returns SKIPPED unless OVERWRITE=TRUE.</li>
+<li><b>COPY</b>: load metadata (64 days) skips loaded files unless FORCE=TRUE.</li>
+<li><b>Stream</b>: offset moves only at commit; failure means retry, success means consumed once.</li>
+<li><b>MERGE</b>: keyed upsert, deduped source; same input gives same end state.</li>
+<li><b>Audit insert</b>: guard with NOT EXISTS or MERGE on a natural key.</li></ol></figure><div class="code"><div class="code-h"><span class="lang">SQL</span><span class="code-l">Idempotent audit insert</span><button class="copy" type="button" data-copy="c41_0" aria-label="Copy code">Copy</button></div><pre id="c41_0"><code>INSERT INTO ANALYTICS.PRICE_HISTORY (product_id, sku, old_price, new_price, changed_at, change_source)
+SELECT c.product_id, c.sku, c.old_price, c.new_price, c.changed_at, c.change_source
+FROM changes c
+WHERE NOT EXISTS (SELECT 1 FROM ANALYTICS.PRICE_HISTORY h
+                  WHERE h.product_id = c.product_id AND h.changed_at = c.changed_at AND h.new_price = c.new_price);</code></pre></div></div>
+  </details>
+</article>
+<article class="card" id="q42" data-topic="merge" data-level="Advanced" style="--i:4">
+  <header class="card-h">
+    <span class="qnum">Q42</span>
+    <span class="badge b-advanced">Advanced</span>
+    <span class="tlabel">MERGE &amp; idempotency</span>
+  </header>
+  <h3 class="qtext">Files can arrive out of order. How do you stop an older record from overwriting a newer one?</h3>
+  <div class="say" tabindex="0" role="button" aria-label="Answer (click to reveal in quiz mode)">
+    <span class="say-l">Say this</span>
+    <p>Carry a version or timestamp, here <code>last_updated</code>, and add a guard to the matched branch: only update when <code>s.last_updated &gt;= t.last_updated</code>. Within the batch, dedupe by latest first. That makes the MERGE order-independent: whichever file lands last, the newest data wins.</p>
+    <span class="reveal-hint">Click to reveal answer</span>
+  </div>
+  <div class="red"><div class="red-h">Red flag answers to avoid</div><ul><li>Assuming arrival order equals event order. A rerun of an old batch would roll prices back.</li></ul></div>
+  <details class="deep">
+    <summary><span>Deep dive</span><em>SQL</em></summary>
+    <div class="deep-b"><div class="code"><div class="code-h"><span class="lang">SQL</span><span class="code-l">Order-safe</span><button class="copy" type="button" data-copy="c42_0" aria-label="Copy code">Copy</button></div><pre id="c42_0"><code>WHEN MATCHED AND s.last_updated &gt;= t.last_updated THEN UPDATE SET ...</code></pre></div></div>
+  </details>
+</article></section><section class="topic" data-topic="scen" id="t-scen"><h2 class="topic-h"><span>Scenarios &amp; troubleshooting</span><small>6 questions</small></h2>
+<article class="card" id="q43" data-topic="scen" data-level="Scenario" style="--i:0">
+  <header class="card-h">
+    <span class="qnum">Q43</span>
+    <span class="badge b-scenario">Scenario</span>
+    <span class="tlabel">Scenarios &amp; troubleshooting</span>
+  </header>
+  <h3 class="qtext">Your task has run every 5 minutes for two days and the clean table is not updating. SHOW TASKS says started. Diagnose.</h3>
+  <div class="say" tabindex="0" role="button" aria-label="Answer (click to reveal in quiz mode)">
+    <span class="say-l">Say this</span>
+    <p>First, TASK_HISTORY: are the runs SKIPPED, FAILED or SUCCEEDED? All SKIPPED means the WHEN condition is false, so check <code>SYSTEM$STREAM_HAS_DATA</code>, <code>SHOW STREAMS</code> for stale, and whether new rows are reaching the raw table at all (COPY history). If the stream is empty but raw has new rows, something else consumed it, for example someone ran <code>CREATE TABLE ... AS SELECT * FROM stream</code> or a second task reads the same stream. FAILED means read the error message. SUCCEEDED with no change means the MERGE source was filtered to nothing.</p>
+    <span class="reveal-hint">Click to reveal answer</span>
+  </div>
+  <div class="red"><div class="red-h">Red flag answers to avoid</div><ul><li>Resuming and re-running blindly without reading history.</li></ul></div>
+  <details class="deep">
+    <summary><span>Deep dive</span><em>SQL</em></summary>
+    <div class="deep-b"><p>Check in this order: history state, stream has data, stream stale, raw row count versus COPY history, other consumers (query history for statements that mention the stream), then the MERGE logic.</p><div class="code"><div class="code-h"><span class="lang">SQL</span><span class="code-l">Triage queries</span><button class="copy" type="button" data-copy="c43_0" aria-label="Copy code">Copy</button></div><pre id="c43_0"><code>SELECT name, state, error_message FROM TABLE(INFORMATION_SCHEMA.TASK_HISTORY(RESULT_LIMIT =&gt; 20)) ORDER BY scheduled_time DESC;
+SHOW STREAMS IN SCHEMA STAGING;
+SELECT SYSTEM$STREAM_HAS_DATA(&#x27;STAGING.STRM_INVENTORY_RAW&#x27;);
+SELECT COUNT(*), MAX(last_updated) FROM STAGING.INVENTORY_RAW;
+SELECT query_text, user_name, start_time FROM TABLE(INFORMATION_SCHEMA.QUERY_HISTORY(RESULT_LIMIT =&gt; 200))
+WHERE query_text ILIKE &#x27;%STRM_INVENTORY_RAW%&#x27; ORDER BY start_time DESC;</code></pre></div></div>
+  </details>
+</article>
+<article class="card" id="q44" data-topic="scen" data-level="Scenario" style="--i:1">
+  <header class="card-h">
+    <span class="qnum">Q44</span>
+    <span class="badge b-scenario">Scenario</span>
+    <span class="tlabel">Scenarios &amp; troubleshooting</span>
+  </header>
+  <h3 class="qtext">An analyst says &quot;I only SELECTed from the stream to look&quot; but the stream is now empty. Possible?</h3>
+  <div class="say" tabindex="0" role="button" aria-label="Answer (click to reveal in quiz mode)">
+    <span class="say-l">Say this</span>
+    <p>A plain SELECT cannot do that, so I check what they actually ran. If it was a DML that reads the stream (<code>INSERT ... SELECT</code>, <code>CTAS</code>, <code>MERGE</code>, or a <code>COPY INTO</code> unload), it consumed the changes. The fix going forward: analysts query a copy or a view over the clean table, or a <code>SELECT</code> only; and give each consumer its own stream.</p>
+    <span class="reveal-hint">Click to reveal answer</span>
+  </div>
+  <div class="red"><div class="red-h">Red flag answers to avoid</div><ul><li>Restoring the data by hand without finding the consumer, so it happens again.</li></ul></div>
+  <details class="deep">
+    <summary><span>Deep dive</span><em>SQL</em></summary>
+    <div class="deep-b"><div class="code"><div class="code-h"><span class="lang">SQL</span><span class="code-l">What counts</span><button class="copy" type="button" data-copy="c44_0" aria-label="Copy code">Copy</button></div><pre id="c44_0"><code>SELECT * FROM STAGING.STRM_INVENTORY_RAW;                       -- safe
+CREATE TABLE ANALYTICS.TMP_LOOK AS SELECT * FROM STAGING.STRM_INVENTORY_RAW;   -- consumes!</code></pre></div></div>
+  </details>
+</article>
+<article class="card" id="q45" data-topic="scen" data-level="Scenario" style="--i:2">
+  <header class="card-h">
+    <span class="qnum">Q45</span>
+    <span class="badge b-scenario">Scenario</span>
+    <span class="tlabel">Scenarios &amp; troubleshooting</span>
+  </header>
+  <h3 class="qtext">Batch 3 COPY fails: &quot;number of columns in file (11) does not match that of the corresponding table (10)&quot;. What do you do?</h3>
+  <div class="say" tabindex="0" role="button" aria-label="Answer (click to reveal in quiz mode)">
+    <span class="say-l">Say this</span>
+    <p>It is schema drift: the vendor appended <code>reorder_point</code>. I do not flip the error off blindly. I confirm with a validation run, agree the new column with the owner, add it to the target (<code>ALTER TABLE ... ADD COLUMN</code>) or load by header name, and note the drift for downstream models. If I only needed the old 10 columns and it was agreed, I use name matching, which ignores the extra column deliberately and visibly.</p>
+    <span class="reveal-hint">Click to reveal answer</span>
+  </div>
+  <div class="red"><div class="red-h">Red flag answers to avoid</div><ul><li>Setting <code>ERROR_ON_COLUMN_COUNT_MISMATCH = FALSE</code> permanently on the shared file format.</li></ul></div>
+  <details class="deep">
+    <summary><span>Deep dive</span><em>SQL</em></summary>
+    <div class="deep-b"><div class="code"><div class="code-h"><span class="lang">SQL</span><span class="code-l">Evolve then load</span><button class="copy" type="button" data-copy="c45_0" aria-label="Copy code">Copy</button></div><pre id="c45_0"><code>ALTER TABLE STAGING.INVENTORY_RAW ADD COLUMN reorder_point NUMBER;
+-- then load with a format/option set that maps by name (see the schema drift card)</code></pre></div><div class="lab"><span class="lab-l">In the lab simulator</span>The lab data has this exact situation in batch 3, with 20 rows (5 new products P033-P037 and 15 existing ones).</div></div>
+  </details>
+</article>
+<article class="card" id="q46" data-topic="scen" data-level="Scenario" style="--i:3">
+  <header class="card-h">
+    <span class="qnum">Q46</span>
+    <span class="badge b-scenario">Scenario</span>
+    <span class="tlabel">Scenarios &amp; troubleshooting</span>
+  </header>
+  <h3 class="qtext">The nightly job was suspended for three weeks during a migration. You resume it and the stream errors. What happened?</h3>
+  <div class="say" tabindex="0" role="button" aria-label="Answer (click to reveal in quiz mode)">
+    <span class="say-l">Say this</span>
+    <p>The stream went stale: its offset fell out of the retained history, because three weeks exceeds the default 14-day maximum extension. Unconsumed changes are unrecoverable from the stream. I recreate it (with <code>SHOW_INITIAL_ROWS</code> if I want a full resync), run a full reconciliation MERGE, then resume the task. Afterwards I add monitoring on <code>stale_after</code> and raise the extension window if long pauses are routine.</p>
+    <span class="reveal-hint">Click to reveal answer</span>
+  </div>
+  <div class="red"><div class="red-h">Red flag answers to avoid</div><ul><li>Just recreating the stream and resuming. The three weeks of changes are never applied.</li></ul></div>
+  <details class="deep">
+    <summary><span>Deep dive</span><em>SQL</em></summary>
+    <div class="deep-b"><div class="code"><div class="code-h"><span class="lang">SQL</span><span class="code-l">Recover</span><button class="copy" type="button" data-copy="c46_0" aria-label="Copy code">Copy</button></div><pre id="c46_0"><code>CREATE OR REPLACE STREAM STAGING.STRM_INVENTORY_RAW ON TABLE STAGING.INVENTORY_RAW SHOW_INITIAL_ROWS = TRUE;
+ALTER TASK ANALYTICS.TSK_LOAD_PRICE_HISTORY RESUME;
+ALTER TASK ANALYTICS.TSK_MERGE_INVENTORY    RESUME;</code></pre></div></div>
+  </details>
+</article>
+<article class="card" id="q47" data-topic="scen" data-level="Scenario" style="--i:4">
+  <header class="card-h">
+    <span class="qnum">Q47</span>
+    <span class="badge b-scenario">Scenario</span>
+    <span class="tlabel">Scenarios &amp; troubleshooting</span>
+  </header>
+  <h3 class="qtext">A colleague runs PUT in a Snowsight worksheet and asks why it says &quot;not supported&quot;. What do you tell them?</h3>
+  <div class="say" tabindex="0" role="button" aria-label="Answer (click to reveal in quiz mode)">
+    <span class="say-l">Say this</span>
+    <p>PUT and GET are client-side file operations, so they only work from a client that can read the local disk: SnowSQL, Snowflake CLI, a connector (Python, JDBC and so on). In the web interface they are not supported. Upload from the terminal, then run the rest (COPY, streams, tasks) in the worksheet if you like.</p>
+    <span class="reveal-hint">Click to reveal answer</span>
+  </div>
+  <div class="red"><div class="red-h">Red flag answers to avoid</div><ul><li>Suggesting the colleague "enable PUT" in settings. There is no such setting.</li></ul></div>
+  <details class="deep">
+    <summary><span>Deep dive</span><em>SQL</em></summary>
+    <div class="deep-b"><div class="code"><div class="code-h"><span class="lang">SQL</span><span class="code-l">Terminal</span><button class="copy" type="button" data-copy="c47_0" aria-label="Copy code">Copy</button></div><pre id="c47_0"><code>snowsql -c retail
+PUT file:///Users/me/exports/inventory_2026-11-20_batch2.csv @STAGING.STG_INVENTORY;</code></pre></div><div class="lab"><span class="lab-l">In the lab simulator</span>The lab enforces this: worksheet PUT returns the web-interface error; terminal PUT succeeds.</div></div>
+  </details>
+</article>
+<article class="card" id="q48" data-topic="scen" data-level="Scenario" style="--i:5">
+  <header class="card-h">
+    <span class="qnum">Q48</span>
+    <span class="badge b-scenario">Scenario</span>
+    <span class="tlabel">Scenarios &amp; troubleshooting</span>
+  </header>
+  <h3 class="qtext">The audit table shows duplicated price-change rows after a rerun. Where could it come from?</h3>
+  <div class="say" tabindex="0" role="button" aria-label="Answer (click to reveal in quiz mode)">
+    <span class="say-l">Say this</span>
+    <p>Three suspects. A COPY with <code>FORCE = TRUE</code> reloaded a file, so raw has duplicate rows and the stream faithfully reports them. A non-idempotent INSERT in the child task ran on a replay. Or two consumers read the same append-only stream data through different paths. I find the duplicates by key in raw (via <code>_src_file</code> and <code>_src_row</code> lineage), fix the root cause, then dedupe the audit table and add a <code>NOT EXISTS</code> guard.</p>
+    <span class="reveal-hint">Click to reveal answer</span>
+  </div>
+  <div class="red"><div class="red-h">Red flag answers to avoid</div><ul><li>Deleting duplicates from the audit table and moving on.</li></ul></div>
+  <details class="deep">
+    <summary><span>Deep dive</span><em>SQL</em></summary>
+    <div class="deep-b"><div class="code"><div class="code-h"><span class="lang">SQL</span><span class="code-l">Find duplicates by lineage</span><button class="copy" type="button" data-copy="c48_0" aria-label="Copy code">Copy</button></div><pre id="c48_0"><code>SELECT _src_file, _src_row, COUNT(*) FROM STAGING.INVENTORY_RAW GROUP BY 1, 2 HAVING COUNT(*) &gt; 1;
+SELECT product_id, changed_at, new_price, COUNT(*) FROM ANALYTICS.PRICE_HISTORY GROUP BY 1, 2, 3 HAVING COUNT(*) &gt; 1;</code></pre></div></div>
+  </details>
+</article></section><section class="topic" data-topic="lab" id="t-lab"><h2 class="topic-h"><span>Lab vs real Snowflake</span><small>2 questions</small></h2>
+<article class="card" id="q49" data-topic="lab" data-level="Intermediate" style="--i:0">
+  <header class="card-h">
+    <span class="qnum">Q49</span>
+    <span class="badge b-intermediate">Intermediate</span>
+    <span class="tlabel">Lab vs real Snowflake</span>
+  </header>
+  <h3 class="qtext">Which parts of Snowflake behaviour does the lab simulator simplify, and how would you say that in an interview?</h3>
+  <div class="say" tabindex="0" role="button" aria-label="Answer (click to reveal in quiz mode)">
+    <span class="say-l">Say this</span>
+    <p>I would say the lab is a teaching model: the semantics of stream consumption, standard versus append-only, update pairs, WHEN-driven SKIPPED runs and DAG ordering are faithful, but it has no real clock, storage, or concurrency, so retention-based staleness, serverless tasks, retries, load-metadata expiry and PUT encryption are only described, not reproduced.</p>
+    <span class="reveal-hint">Click to reveal answer</span>
+  </div>
+  <div class="red"><div class="red-h">Red flag answers to avoid</div><ul><li>Presenting simulator numbers (for example "85 raw rows") as if they come from a production system.</li></ul></div>
+  <details class="deep">
+    <summary><span>Deep dive</span><em>visual</em></summary>
+    <div class="deep-b"><p>The lab is built as a companion to this guide: do the missions, then use the Q&amp;A to explain why each step works.</p><figure class="viz"><table class="tbl"><thead><tr><th>Area</th><th>Lab</th><th>Real Snowflake</th></tr></thead><tbody>
+<tr><td>Staleness</td><td>Only when source table dropped/replaced</td><td>Also when offset leaves retention (default max extension 14 days)</td></tr>
+<tr><td>Task scheduling</td><td>EXECUTE TASK + simulated time advance</td><td>Real scheduler, serverless option, overlap rules, retries</td></tr>
+<tr><td>PUT</td><td>Names, .gz naming, UPLOADED/SKIPPED</td><td>Real compression, client-side encryption, parallel upload</td></tr>
+<tr><td>METADATA$ROW_ID</td><td>Deterministic 40-char hex</td><td>Opaque unique id</td></tr>
+<tr><td>COPY metadata</td><td>Skips by name</td><td>64-day load metadata, checksum/ETag based</td></tr>
+<tr><td>Schema evolution</td><td>Manual ADD COLUMN, name matching</td><td>ENABLE_SCHEMA_EVOLUTION, INFER_SCHEMA</td></tr>
+<tr><td>Errors</td><td>Real-style text, approximate</td><td>Exact text varies by release</td></tr>
+<tr><td>Triggered tasks, finalizers, ACCOUNT_USAGE</td><td>Not modelled</td><td>Available (check edition and release)</td></tr></tbody></table></figure></div>
+  </details>
+</article>
+<article class="card" id="q50" data-topic="lab" data-level="Basic" style="--i:1">
+  <header class="card-h">
+    <span class="qnum">Q50</span>
+    <span class="badge b-basic">Basic</span>
+    <span class="tlabel">Lab vs real Snowflake</span>
+  </header>
+  <h3 class="qtext">What numbers should you remember from the RetailPulse lab run?</h3>
+  <div class="say" tabindex="0" role="button" aria-label="Answer (click to reveal in quiz mode)">
+    <span class="say-l">Say this</span>
+    <p>Three batch files of 30, 30 and 20 rows, 80 loaded from files, 85 raw rows after the manual rows, 37 unique products in the clean table, 7 price changes in the source data (6 distinct products, P004 changes twice) and 9 rows in the audit table after the DAG adds two more. The standard stream held 52 rows versus 50 for the append-only stream. Two tasks, two streams, tasks run SUCCEEDED three times and SKIPPED twice.</p>
+    <span class="reveal-hint">Click to reveal answer</span>
+  </div>
+  <div class="red"><div class="red-h">Red flag answers to avoid</div><ul><li>Quoting them without saying they come from the lab dataset.</li></ul></div>
+  <details class="deep">
+    <summary><span>Deep dive</span><em>visual</em></summary>
+    <div class="deep-b"><p>Derived from the lab's own flow notes and data facts; they hold when you follow the missions in order.</p><figure class="viz"><div class="tiles">
+<div class="tile"><b>80 / 85</b><span>Raw rows</span><small>80 from files, +3 manual, +2 task-demo rows.</small></div>
+<div class="tile hot"><b>37</b><span>Clean products</span><small>P001-P037 after all merges.</small></div>
+<div class="tile"><b>7 / 9</b><span>Price changes / audit rows</span><small>7 from files; 9 after the DAG step.</small></div>
+<div class="tile"><b>52 vs 50</b><span>Standard vs append</span><small>Update pair makes the difference.</small></div></div></figure></div>
+  </details>
+</article></section>
+    <div class="empty hidden" id="empty">No questions match. Clear the search or turn a filter back on.</div>
+  </main>
+
+  <section class="cheat" id="cheat">
+    <h2>Key commands on one page</h2>
+    <p class="sub">RetailPulse objects: RETAILPULSE_LAB.STAGING / ANALYTICS &middot; LAB_ANALYST &middot; LAB_WH &middot; STG_INVENTORY &middot; STRM_INVENTORY_RAW / STRM_INVENTORY_APPEND &middot; TSK_MERGE_INVENTORY &rarr; TSK_LOAD_PRICE_HISTORY</p>
+    <div class="nums"><div class="num"><b>14 days</b><span>default max data extension for streams (MAX_DATA_EXTENSION_TIME_IN_DAYS)</span></div><div class="num"><b>64 days</b><span>COPY load metadata (per table)</span></div><div class="num"><b>7 days</b><span>INFORMATION_SCHEMA.TASK_HISTORY reach</span></div><div class="num"><b>1,000</b><span>max tasks in a task graph (version-dependent)</span></div><div class="num"><b>3</b><span>stream columns: ACTION, ISUPDATE, ROW_ID</span></div><div class="num"><b>52 vs 50</b><span>lab: standard vs append-only pending rows</span></div></div>
+    <div class="cgrid"><div class="cc"><h4>SnowSQL</h4><pre>snowsql -c retail -D run_date=2026-11-21 -f nightly_rollup.sql \
+  -o exit_on_error=true -o friendly=false -o quiet=true
+!define wh=LAB_WH    USE WAREHOUSE &amp;wh;   &#x27;&amp;run_date&#x27;
+!set variable_substitution=false   -- literal &amp;</pre></div><div class="cc"><h4>Stage + PUT</h4><pre>CREATE STAGE STAGING.STG_INVENTORY FILE_FORMAT=(FORMAT_NAME=&#x27;STAGING.FF_CSV_INVENTORY&#x27;);
+PUT file:///path/batch1.csv @STAGING.STG_INVENTORY [OVERWRITE=TRUE];  -- terminal only
+LIST @STAGING.STG_INVENTORY;   GET @stage file:///dir/;</pre></div><div class="cc"><h4>CSV format</h4><pre>CREATE FILE FORMAT STAGING.FF_CSV_INVENTORY TYPE=CSV SKIP_HEADER=1
+  FIELD_OPTIONALLY_ENCLOSED_BY=&#x27;&quot;&#x27; ERROR_ON_COLUMN_COUNT_MISMATCH=TRUE;</pre></div><div class="cc"><h4>COPY with lineage</h4><pre>COPY INTO STAGING.INVENTORY_RAW (cols..., _src_file, _src_row)
+FROM (SELECT $1..$10, METADATA$FILENAME, METADATA$FILE_ROW_NUMBER
+      FROM @STAGING.STG_INVENTORY/file.csv.gz)
+FILE_FORMAT=(FORMAT_NAME=&#x27;STAGING.FF_CSV_INVENTORY&#x27;) [ON_ERROR=CONTINUE|FORCE=TRUE];</pre></div><div class="cc"><h4>Drift</h4><pre>-- by name: PARSE_HEADER=TRUE + MATCH_BY_COLUMN_NAME=CASE_INSENSITIVE
+ALTER TABLE t ADD COLUMN reorder_point NUMBER;
+ALTER TABLE t SET ENABLE_SCHEMA_EVOLUTION=TRUE;</pre></div><div class="cc"><h4>Streams</h4><pre>CREATE STREAM s ON TABLE t;                   -- standard
+CREATE STREAM a ON TABLE t APPEND_ONLY=TRUE;   -- inserts only
+SELECT *, METADATA$ACTION, METADATA$ISUPDATE, METADATA$ROW_ID FROM s;  -- no consume
+SELECT SYSTEM$STREAM_HAS_DATA(&#x27;s&#x27;);   SHOW STREAMS;  -- stale, stale_after</pre></div><div class="cc"><h4>Consume rule</h4><pre>INSERT/MERGE/CTAS ... FROM stream + COMMIT  =&gt; offset advances
+plain SELECT                                  =&gt; never
+ROLLBACK / failed task                        =&gt; not advanced</pre></div><div class="cc"><h4>Tasks</h4><pre>CREATE TASK x WAREHOUSE=w SCHEDULE=&#x27;5 MINUTE&#x27;
+  WHEN SYSTEM$STREAM_HAS_DATA(&#x27;s&#x27;) AS MERGE ...;
+ALTER TASK x RESUME;   EXECUTE TASK x;   -- WHEN false =&gt; SKIPPED</pre></div><div class="cc"><h4>DAG</h4><pre>ALTER TASK root SUSPEND;               -- required before editing the graph
+CREATE OR REPLACE TASK child ... AFTER root AS ...;
+ALTER TASK child RESUME;  ALTER TASK root RESUME;  -- children first
+SELECT SYSTEM$TASK_DEPENDENTS_ENABLE(&#x27;root&#x27;);</pre></div><div class="cc"><h4>Monitor</h4><pre>SELECT name, state, error_message FROM TABLE(INFORMATION_SCHEMA.TASK_HISTORY(
+  SCHEDULED_TIME_RANGE_START=&gt;DATEADD(&#x27;hour&#x27;,-24,CURRENT_TIMESTAMP()), RESULT_LIMIT=&gt;100));
+SELECT * FROM TABLE(VALIDATE(t, JOB_ID=&gt;&#x27;_last&#x27;));</pre></div><div class="cc"><h4>MERGE</h4><pre>MERGE INTO tgt t USING (SELECT ... FROM s WHERE METADATA$ACTION=&#x27;INSERT&#x27;
+  QUALIFY ROW_NUMBER() OVER (PARTITION BY k ORDER BY last_updated DESC)=1) x
+ON t.k=x.k WHEN MATCHED AND ... IS DISTINCT FROM ... THEN UPDATE SET ...
+WHEN NOT MATCHED THEN INSERT ...;</pre></div></div>
+  </section>
+
+  <footer>Generic, fictional scenario (RetailPulse) for interview practice. Snowflake features, defaults and limits change, so check current documentation for anything marked version-dependent. The lab simulator is a teaching model, not Snowflake itself.</footer>
+</div>
+<script>
+(function(){
+  'use strict';
+  var body = document.body;
+  var cards = Array.prototype.slice.call(document.querySelectorAll('.card'));
+  var topics = Array.prototype.slice.call(document.querySelectorAll('.topic'));
+  var search = document.getElementById('q');
+  var countEl = document.getElementById('count');
+  var emptyEl = document.getElementById('empty');
+  var activeTopic = 'all';
+  var activeLevels = {Basic:true, Intermediate:true, Advanced:true, Scenario:true};
+  var texts = cards.map(function(c){ return c.textContent.toLowerCase(); });
+
+  function apply(){
+    var term = (search.value || '').trim().toLowerCase();
+    var words = term ? term.split(/\s+/) : [];
+    var shown = 0;
+    cards.forEach(function(c, i){
+      var okT = activeTopic === 'all' || c.getAttribute('data-topic') === activeTopic;
+      var okL = !!activeLevels[c.getAttribute('data-level')];
+      var okS = words.every(function(w){ return texts[i].indexOf(w) !== -1; });
+      var vis = okT && okL && okS;
+      c.classList.toggle('hidden', !vis);
+      if (vis) { shown++; }
+    });
+    topics.forEach(function(t){
+      t.classList.toggle('hidden', !t.querySelector('.card:not(.hidden)'));
+    });
+    countEl.textContent = 'Showing ' + shown + ' of ' + cards.length;
+    emptyEl.classList.toggle('hidden', shown !== 0);
+  }
+
+  search.addEventListener('input', apply);
+  document.addEventListener('keydown', function(e){
+    var tag = (document.activeElement && document.activeElement.tagName) || '';
+    if (e.key === '/' && tag !== 'INPUT' && tag !== 'TEXTAREA') { e.preventDefault(); search.focus(); }
+    if (e.key === 'Escape' && document.activeElement === search) { search.value = ''; apply(); search.blur(); }
+  });
+
+  document.querySelectorAll('.chip[data-topic]').forEach(function(ch){
+    ch.addEventListener('click', function(){
+      document.querySelectorAll('.chip[data-topic]').forEach(function(x){ x.classList.remove('on'); });
+      ch.classList.add('on');
+      activeTopic = ch.getAttribute('data-topic');
+      apply();
+    });
+  });
+  document.querySelectorAll('.chip[data-level]').forEach(function(ch){
+    ch.addEventListener('click', function(){
+      var l = ch.getAttribute('data-level');
+      activeLevels[l] = !activeLevels[l];
+      ch.classList.toggle('on', activeLevels[l]);
+      apply();
+    });
+  });
+
+  var details = Array.prototype.slice.call(document.querySelectorAll('details.deep'));
+  document.getElementById('expand').addEventListener('click', function(){
+    details.forEach(function(d){ if (!d.closest('.card').classList.contains('hidden')) { d.open = true; } });
+  });
+  document.getElementById('collapse').addEventListener('click', function(){
+    details.forEach(function(d){ d.open = false; });
+  });
+
+  var quizBtn = document.getElementById('quiz');
+  quizBtn.addEventListener('click', function(){
+    var on = !body.classList.contains('quiz');
+    body.classList.toggle('quiz', on);
+    quizBtn.classList.toggle('on', on);
+    quizBtn.setAttribute('aria-pressed', on ? 'true' : 'false');
+    quizBtn.textContent = on ? 'Quiz mode: ON' : 'Quiz mode';
+    cards.forEach(function(c){ c.classList.remove('revealed'); });
+    if (on) { details.forEach(function(d){ d.open = false; }); }
+  });
+  function reveal(el){
+    if (!body.classList.contains('quiz')) { return; }
+    el.closest('.card').classList.add('revealed');
+  }
+  document.querySelectorAll('.say').forEach(function(s){
+    s.addEventListener('click', function(){ reveal(s); });
+    s.addEventListener('keydown', function(e){
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); reveal(s); }
+    });
+  });
+
+  function fallbackCopy(text){
+    var ta = document.createElement('textarea');
+    ta.value = text; ta.setAttribute('readonly', '');
+    ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select();
+    var ok = false;
+    try { ok = document.execCommand('copy'); } catch (err) { ok = false; }
+    document.body.removeChild(ta);
+    return ok;
+  }
+  function flash(btn, ok){
+    btn.textContent = ok ? 'Copied' : 'Press Ctrl+C';
+    btn.classList.toggle('done', ok);
+    setTimeout(function(){ btn.textContent = 'Copy'; btn.classList.remove('done'); }, 1400);
+  }
+  document.querySelectorAll('.copy').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var pre = document.getElementById(btn.getAttribute('data-copy'));
+      var text = pre ? pre.textContent : '';
+      if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(text).then(function(){ flash(btn, true); }, function(){ flash(btn, fallbackCopy(text)); });
+      } else {
+        flash(btn, fallbackCopy(text));
+      }
+    });
+  });
+
+  var saved = null;
+  window.addEventListener('beforeprint', function(){
+    saved = details.map(function(d){ return d.open; });
+    details.forEach(function(d){ d.open = true; });
+  });
+  window.addEventListener('afterprint', function(){
+    if (saved) { details.forEach(function(d, i){ d.open = saved[i]; }); saved = null; }
+  });
+  document.getElementById('print').addEventListener('click', function(){ window.print(); });
+
+  apply();
+})();
+</script>
+</body>
+</html>

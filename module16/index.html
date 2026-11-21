@@ -1,0 +1,919 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Snowflake Interview Lab · Module 16 · IaC, CI/CD &amp; Orchestration</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/space-grotesk@5/300.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/space-grotesk@5/700.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/ibm-plex-sans@5/400.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/ibm-plex-sans@5/600.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/jetbrains-mono@5/400.css">
+<style>
+:root{
+  --bg:#F2F6FA;--card:#FFFFFF;--card2:#E9EFF5;--ink:#0B1B2B;--ink2:#46596B;--ink3:#7F90A2;
+  --line:rgba(11,27,43,.12);--line2:rgba(11,27,43,.22);
+  --ice:#0A86C2;--ice-s:#DCEFF9;--amber:#B86F00;--amber-s:#FFF0D4;--teal:#0B8A6A;--teal-s:#DAF3EB;
+  --red:#C93C3C;--red-s:#FCE4E4;
+  --f-head:"Space Grotesk",sans-serif;--f-body:"IBM Plex Sans",sans-serif;--f-mono:"JetBrains Mono",monospace;
+  --r:10px;
+}
+[data-theme="dark"]{
+  --bg:#08121D;--card:#0F1D2C;--card2:#16293B;--ink:#E5EDF5;--ink2:#9DB0C3;--ink3:#687D91;
+  --line:rgba(229,237,245,.10);--line2:rgba(229,237,245,.22);
+  --ice:#4CC3F0;--ice-s:rgba(76,195,240,.13);--amber:#FFB938;--amber-s:rgba(255,185,56,.13);
+  --teal:#3FD3A8;--teal-s:rgba(63,211,168,.13);--red:#FF7070;--red-s:rgba(255,112,112,.14);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:var(--f-body);background:var(--bg);color:var(--ink);line-height:1.7;font-size:15px}
+h1,h2,h3,h4{font-family:var(--f-head);line-height:1.2}
+code,pre{font-family:var(--f-mono);font-size:13px}
+pre{background:var(--card2);border:1px solid var(--line);border-radius:var(--r);padding:16px 18px;overflow-x:auto;line-height:1.55}
+.kw{color:#0A86C2}.cm{color:var(--ink3);font-style:italic}.st{color:#0B8A6A}.nm{color:#B86F00}.tf{color:#7B61FF}
+.wrap{max-width:860px;margin:0 auto;padding:0 20px 80px}
+.topbar{background:var(--card);border-bottom:1px solid var(--line);padding:12px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50}
+.topbar .badge{font-family:var(--f-head);font-size:11px;font-weight:700;letter-spacing:.08em;color:var(--ice);text-transform:uppercase}
+.topbar .title{font-family:var(--f-head);font-size:14px;font-weight:700;color:var(--ink)}
+button.theme{background:none;border:1px solid var(--line);border-radius:6px;padding:5px 11px;font-size:12px;color:var(--ink2);cursor:pointer}
+.chapnav{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:18px 20px;margin:28px 0}
+.chapnav h4{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink3);margin-bottom:12px}
+.chapnav ul{list-style:none;display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:6px}
+.chapnav li a{display:block;padding:6px 10px;border-radius:6px;font-size:13px;color:var(--ink2);border:1px solid transparent;transition:all .15s}
+.chapnav li a:hover{background:var(--ice-s);border-color:var(--ice);color:var(--ice)}
+.hero{padding:48px 0 32px}
+.hero .mod{font-family:var(--f-head);font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--ice);margin-bottom:8px}
+.hero h1{font-size:clamp(28px,5vw,46px);font-weight:700;margin-bottom:14px}
+.hero p{font-size:16px;color:var(--ink2);max-width:640px}
+.section{margin:48px 0}
+.section-label{font-family:var(--f-head);font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--ice);margin-bottom:8px}
+.section h2{font-size:26px;font-weight:700;margin-bottom:18px}
+.section h3{font-size:17px;font-weight:700;color:var(--ink);margin:24px 0 10px}
+.section p{color:var(--ink2);margin-bottom:12px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:20px 22px;margin:16px 0}
+.card.ice{border-left:4px solid var(--ice);background:var(--ice-s)}
+.card.amber{border-left:4px solid var(--amber);background:var(--amber-s)}
+.card.teal{border-left:4px solid var(--teal);background:var(--teal-s)}
+.card.red{border-left:4px solid var(--red);background:var(--red-s)}
+.card h4{font-family:var(--f-head);font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px}
+.trio{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin:18px 0}
+.trio-item{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:16px}
+.trio-item .num{font-family:var(--f-head);font-size:28px;font-weight:700;color:var(--ice);opacity:.4;margin-bottom:4px}
+.trio-item h4{font-size:13px;font-weight:700;margin-bottom:6px;color:var(--ink)}
+.trio-item p{font-size:13px;color:var(--ink2)}
+.lab-step{display:flex;gap:16px;margin:20px 0}
+.lab-step .step-num{flex-shrink:0;width:32px;height:32px;border-radius:50%;background:var(--ice);color:#fff;font-family:var(--f-head);font-weight:700;font-size:14px;display:flex;align-items:center;justify-content:center}
+.lab-step .step-body h4{font-size:14px;font-weight:700;margin-bottom:6px}
+.lab-step .step-body p{font-size:14px;color:var(--ink2);margin-bottom:8px}
+.checkpoint{background:var(--teal-s);border:1px solid var(--teal);border-radius:var(--r);padding:10px 14px;font-size:13px;margin-top:8px}
+.checkpoint::before{content:"✓ Checkpoint: ";font-weight:600;color:var(--teal)}
+.pitfall{background:var(--amber-s);border:1px solid var(--amber);border-radius:var(--r);padding:10px 14px;font-size:13px;margin-top:8px}
+.pitfall::before{content:"⚠ Pitfall: ";font-weight:600;color:var(--amber)}
+details{border:1px solid var(--line);border-radius:var(--r);margin:10px 0;overflow:hidden}
+details summary{padding:14px 18px;cursor:pointer;font-weight:600;font-size:14px;list-style:none;display:flex;align-items:center;gap:10px;background:var(--card)}
+details summary::-webkit-details-marker{display:none}
+details summary::before{content:"▶";font-size:10px;color:var(--ice);transition:transform .2s;flex-shrink:0}
+details[open] summary::before{transform:rotate(90deg)}
+details[open] summary{border-bottom:1px solid var(--line)}
+.qa-body{padding:16px 18px;background:var(--card);font-size:14px;color:var(--ink2);line-height:1.7}
+.qa-tag{font-size:10px;font-family:var(--f-head);font-weight:700;text-transform:uppercase;letter-spacing:.06em;padding:2px 7px;border-radius:4px;margin-left:auto}
+.tag-fund{background:var(--ice-s);color:var(--ice)}
+.tag-tricky{background:var(--amber-s);color:var(--amber)}
+.tag-scenario{background:var(--teal-s);color:var(--teal)}
+.quiz-q{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:18px 20px;margin:14px 0}
+.quiz-q p{font-weight:600;margin-bottom:12px}
+.quiz-opt{display:flex;flex-direction:column;gap:7px}
+.quiz-opt label{display:flex;align-items:center;gap:10px;cursor:pointer;font-size:14px;padding:8px 10px;border-radius:6px;border:1px solid var(--line);transition:all .15s}
+.quiz-opt label:hover{background:var(--ice-s);border-color:var(--ice)}
+.quiz-opt input{accent-color:var(--ice)}
+.quiz-answer{display:none;margin-top:10px;padding:10px 14px;border-radius:6px;font-size:13px;font-weight:600}
+.quiz-answer.correct{background:var(--teal-s);color:var(--teal)}
+table{width:100%;border-collapse:collapse;margin:16px 0;font-size:13px}
+th{background:var(--card2);font-family:var(--f-head);font-size:11px;text-transform:uppercase;letter-spacing:.06em;padding:9px 12px;text-align:left;border-bottom:1px solid var(--line2)}
+td{padding:9px 12px;border-bottom:1px solid var(--line)}
+tr:last-child td{border-bottom:none}
+.cheat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin:18px 0}
+.cheat-item{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px}
+.cheat-item .label{font-family:var(--f-head);font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--ice);margin-bottom:5px}
+.cheat-item p{font-size:13px;color:var(--ink2)}
+hr{border:none;border-top:1px solid var(--line);margin:48px 0}
+.flow{display:flex;align-items:center;flex-wrap:wrap;gap:6px;margin:20px 0;padding:16px;background:var(--card);border:1px solid var(--line);border-radius:var(--r)}
+.flow-box{background:var(--ice-s);border:1px solid var(--ice);border-radius:6px;padding:6px 12px;font-size:12px;font-family:var(--f-head);font-weight:700;color:var(--ice);white-space:nowrap}
+.flow-arrow{color:var(--ink3);font-size:16px}
+
+/* ── COURSE ROADMAP ──────────────────────────────────── */
+.road{margin-top:12px;padding-top:12px;border-top:1px solid var(--line)}
+.road h4{font-family:var(--f-mono);font-size:10px;letter-spacing:.14em;color:var(--ink3);
+  text-transform:uppercase;margin-bottom:8px;cursor:pointer}
+.road h4::after{content:" ▼";font-size:9px}
+.road a{display:none;padding:5px 10px;border-radius:6px;font-size:12px;
+  color:var(--ink2);text-decoration:none;margin:2px 0;transition:background .15s}
+.road a:hover{background:var(--ice-s);color:var(--ice)}
+.road a em{font-family:var(--f-mono);font-size:10px;font-style:normal;
+  color:var(--ink3);min-width:20px;display:inline-block}
+.road a i{float:right;font-style:normal;font-family:var(--f-mono);
+  font-size:10px;color:var(--ink3)}
+.road a.rm.now{color:var(--ice);background:var(--ice-s)}
+.road a.rm.now i{color:var(--ice)}
+.road.open a{display:flex;align-items:center;gap:8px}
+/* ─────────────────────────────────────────────────────── */
+</style>
+</head>
+<body>
+<style id="sf-home-style">
+#sf-home-btn{
+  position:fixed;bottom:22px;right:22px;z-index:9998;
+  display:inline-flex;align-items:center;gap:7px;
+  padding:8px 18px 8px 14px;border-radius:999px;
+  background:rgba(255,255,255,.13);
+  border:1px solid rgba(255,255,255,.26);
+  color:#e5edf5;
+  font-family:system-ui,-apple-system,"Segoe UI",sans-serif;
+  font-size:12px;font-weight:600;letter-spacing:.04em;
+  text-decoration:none;cursor:pointer;
+  backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+  box-shadow:0 2px 12px rgba(0,0,0,.25);
+  transition:background .18s,border-color .18s,transform .18s,box-shadow .18s,color .18s;
+  white-space:nowrap;
+}
+#sf-home-btn::before{
+  content:"⌂";
+  font-size:14px;line-height:1;
+}
+#sf-home-btn:hover{
+  background:rgba(255,255,255,.24);
+  border-color:rgba(255,255,255,.46);
+  color:#fff;
+  transform:translateY(-2px);
+  box-shadow:0 6px 22px rgba(0,0,0,.35);
+  text-decoration:none;
+}
+/* Light theme — fires for all files that use data-theme="light" toggle */
+[data-theme="light"] #sf-home-btn{
+  background:rgba(11,27,43,.08);
+  border-color:rgba(11,27,43,.20);
+  color:#0b1b2b;
+  box-shadow:0 2px 12px rgba(0,0,0,.10);
+}
+[data-theme="light"] #sf-home-btn:hover{
+  background:rgba(10,134,194,.13);
+  border-color:rgba(10,134,194,.38);
+  color:#0a86c2;
+  box-shadow:0 6px 22px rgba(10,134,194,.18);
+}
+/* Interview QA files start in light mode via :root (paper theme) */
+body[style*="--paper"] #sf-home-btn,
+.mast ~ #sf-home-btn{
+  background:rgba(11,27,43,.07);
+  border-color:rgba(11,27,43,.18);
+  color:#15120f;
+}
+</style>
+<a id="sf-home-btn" href="../" title="Back to Course Home">Course Home</a>
+
+
+<div class="topbar">
+  <div>
+    <div class="badge">Snowflake Interview Lab</div>
+    <div class="title">Module 16 · IaC, CI/CD &amp; Orchestration</div>
+  </div>
+  <button class="theme" onclick="toggleTheme()">Dark / Light</button>
+</div>
+  <div class="road">
+    <h4>COURSE ROADMAP · CLICK TO OPEN</h4>
+    <a class="rm ready" href="../module01/"><em>01</em>Architecture<i>open</i></a>
+    <a class="rm ready" href="../module02/"><em>02</em>SnowSQL · unstructured · streams, tasks &amp; procedures<i>open</i></a>
+    <a class="rm ready" href="../module03/"><em>03</em>Performance tuning<i>open</i></a>
+    <a class="rm ready" href="../module04/"><em>04</em>Data ingestion (Snowpipe)<i>open</i></a>
+    <a class="rm ready" href="../module05/"><em>05</em>Dynamic tables &amp; transforms<i>open</i></a>
+    <a class="rm ready" href="../module06/"><em>06</em>Semi-structured data<i>open</i></a>
+    <a class="rm ready" href="../module07/"><em>07</em>Data protection<i>open</i></a>
+    <a class="rm ready" href="../module08/"><em>08</em>Security &amp; governance<i>open</i></a>
+    <a class="rm ready" href="../module09/"><em>09</em>Cost optimization<i>open</i></a>
+    <a class="rm ready" href="../module10/"><em>10</em>Data sharing<i>open</i></a>
+    <a class="rm ready" href="../module11/"><em>11</em>Snowpark &amp; Cortex AI<i>open</i></a>
+    <a class="rm ready" href="../module12/"><em>12</em>Advanced SQL<i>open</i></a>
+    <a class="rm ready" href="../module13/"><em>13</em>Modeling &amp; tooling<i>open</i></a>
+    <a class="rm ready" href="../module14/"><em>14</em>Enterprise Architecture &amp; Governance<i>open</i></a>
+    <a class="rm ready" href="../module15/"><em>15</em>External Integrations<i>open</i></a>
+    <a class="rm now"   href="../module16/"><em>16</em>IaC, CI/CD &amp; Orchestration<i>you are here</i></a>
+  </div>
+
+<div class="wrap">
+
+  <div class="chapnav">
+    <h4>MODULE 16 · CHAPTERS</h4>
+    <ul>
+      <li><a href="#ch01">01 · Terraform for Snowflake</a></li>
+      <li><a href="#ch02">02 · Snowflake Git Integration</a></li>
+      <li><a href="#ch03">03 · dbt + Airflow / Prefect / Dagster</a></li>
+      <li><a href="#ch04">04 · CI/CD pipelines for schema migrations</a></li>
+      <li><a href="#lab">05 · Lab: Terraform + CI/CD walkthrough</a></li>
+      <li><a href="#qa">06 · Interview Q&amp;A</a></li>
+      <li><a href="#quiz">07 · Quiz</a></li>
+      <li><a href="#cheat">08 · Cheat sheet</a></li>
+    </ul>
+  </div>
+
+  <div class="hero">
+    <div class="mod">Module 16</div>
+    <h1>IaC, CI/CD &amp; Orchestration</h1>
+    <p>How to manage Snowflake infrastructure as code, automate schema migrations with confidence, and wire dbt models into production orchestrators. The topics that make a data platform robust, repeatable, and safe to change.</p>
+  </div>
+
+  <!-- CHAPTER 01 — Terraform -->
+  <div class="section" id="ch01">
+    <div class="section-label">Chapter 01</div>
+    <h2>Terraform for Snowflake</h2>
+
+    <div class="trio">
+      <div class="trio-item"><div class="num">01</div><h4>What is it</h4><p>Using HashiCorp Terraform with the <code>snowflake-labs/snowflake</code> provider to define and manage Snowflake objects (warehouses, databases, schemas, roles, grants, users, resource monitors) declaratively in <code>.tf</code> files.</p></div>
+      <div class="trio-item"><div class="num">02</div><h4>Why it matters</h4><p>Without IaC, Snowflake object creation is undocumented, manual, and environment-inconsistent. Terraform makes infrastructure peer-reviewed, version-controlled, auditable, and idempotent — the same <code>terraform apply</code> can be run repeatedly without side effects.</p></div>
+      <div class="trio-item"><div class="num">03</div><h4>How it works</h4><p>Terraform reads .tf files, computes a diff against the last known state (stored in a state file), and applies only the changes. The Snowflake provider translates each resource block into Snowflake DDL/DML operations via the Snowflake REST API.</p></div>
+    </div>
+
+    <h3>Provider configuration</h3>
+    <pre><span class="cm"># versions.tf</span>
+<span class="tf">terraform</span> {
+  required_providers {
+    snowflake = {
+      source  = <span class="st">"snowflake-labs/snowflake"</span>
+      version = <span class="st">"~> 0.90"</span>
+    }
+  }
+  <span class="cm"># Store state remotely — never commit state files to git</span>
+  backend <span class="st">"s3"</span> {
+    bucket = <span class="st">"my-terraform-state"</span>
+    key    = <span class="st">"snowflake/prod/terraform.tfstate"</span>
+    region = <span class="st">"us-east-1"</span>
+  }
+}
+
+<span class="cm"># provider.tf — credentials via environment variables</span>
+<span class="tf">provider</span> <span class="st">"snowflake"</span> {
+  account  = <span class="st">var.snowflake_account</span>   <span class="cm"># e.g. "myorg-prod"</span>
+  username = <span class="st">var.snowflake_user</span>
+  <span class="cm"># Prefer key-pair auth — set SNOWFLAKE_PRIVATE_KEY_PATH env var</span>
+  role     = <span class="st">"TERRAFORM_ROLE"</span>         <span class="cm"># a role with SYSADMIN + SECURITYADMIN delegated</span>
+}</pre>
+
+    <h3>Core resources</h3>
+    <pre><span class="cm"># warehouses.tf</span>
+<span class="tf">resource</span> <span class="st">"snowflake_warehouse"</span> <span class="st">"transform_wh"</span> {
+  name           = <span class="st">"TRANSFORM_WH"</span>
+  warehouse_size = <span class="st">"MEDIUM"</span>
+  auto_suspend   = <span class="nm">120</span>
+  auto_resume    = <span class="kw">true</span>
+  initially_suspended = <span class="kw">true</span>
+  comment        = <span class="st">"dbt transformation warehouse"</span>
+}
+
+<span class="cm"># databases.tf</span>
+<span class="tf">resource</span> <span class="st">"snowflake_database"</span> <span class="st">"analytics"</span> {
+  name                        = <span class="st">"ANALYTICS"</span>
+  data_retention_time_in_days = <span class="nm">7</span>
+}
+
+<span class="tf">resource</span> <span class="st">"snowflake_schema"</span> <span class="st">"gold"</span> {
+  database = snowflake_database.analytics.name
+  name     = <span class="st">"GOLD"</span>
+}
+
+<span class="cm"># roles.tf</span>
+<span class="tf">resource</span> <span class="st">"snowflake_role"</span> <span class="st">"analyst_role"</span> {
+  name = <span class="st">"ANALYST_ROLE"</span>
+}
+
+<span class="tf">resource</span> <span class="st">"snowflake_grant_privileges_to_role"</span> <span class="st">"analyst_usage_db"</span> {
+  privileges = [<span class="st">"USAGE"</span>]
+  role_name  = snowflake_role.analyst_role.name
+  on_account_object {
+    object_type = <span class="st">"DATABASE"</span>
+    object_name = snowflake_database.analytics.name
+  }
+}
+
+<span class="tf">resource</span> <span class="st">"snowflake_grant_privileges_to_role"</span> <span class="st">"analyst_select_gold"</span> {
+  privileges = [<span class="st">"SELECT"</span>]
+  role_name  = snowflake_role.analyst_role.name
+  on_schema_object {
+    all {
+      object_type_plural = <span class="st">"TABLES"</span>
+      in_schema          = <span class="st">"ANALYTICS.GOLD"</span>
+    }
+  }
+}
+
+<span class="cm"># resource_monitors.tf</span>
+<span class="tf">resource</span> <span class="st">"snowflake_resource_monitor"</span> <span class="st">"prod_monitor"</span> {
+  name         = <span class="st">"PROD_CREDIT_MONITOR"</span>
+  credit_quota = <span class="nm">1000</span>
+  frequency    = <span class="st">"MONTHLY"</span>
+  start_timestamp = <span class="st">"2024-01-01 00:00"</span>
+  notify_triggers = [<span class="nm">75</span>, <span class="nm">90</span>]
+  suspend_triggers         = [<span class="nm">100</span>]
+  suspend_immediate_triggers = [<span class="nm">110</span>]
+  notify_users = [<span class="st">"data_eng_lead"</span>]
+}</pre>
+
+    <h3>Future grants (for new objects automatically)</h3>
+    <pre><span class="cm"># Grant SELECT on all FUTURE tables in the schema to analyst role</span>
+<span class="tf">resource</span> <span class="st">"snowflake_grant_privileges_to_role"</span> <span class="st">"analyst_future_tables"</span> {
+  privileges = [<span class="st">"SELECT"</span>]
+  role_name  = snowflake_role.analyst_role.name
+  on_schema_object {
+    future {
+      object_type_plural = <span class="st">"TABLES"</span>
+      in_schema          = <span class="st">"ANALYTICS.GOLD"</span>
+    }
+  }
+}</pre>
+
+    <div class="card amber">
+      <h4>Interview trap — Terraform state drift</h4>
+      <p>If someone manually runs an <code>ALTER WAREHOUSE</code> in Snowflake after the last <code>terraform apply</code>, the Terraform state is stale. The next <code>terraform plan</code> will show a diff and <code>terraform apply</code> will revert the manual change. Discipline: all Snowflake object changes must go through Terraform. For one-off emergency changes, run <code>terraform import</code> immediately after to sync state.</p>
+    </div>
+    <div class="card ice">
+      <h4>Senior angle — TERRAFORM_ROLE design</h4>
+      <p>Terraform needs a role with SYSADMIN (create databases, schemas, tables, warehouses) + SECURITYADMIN (create roles, grant privileges) + ACCOUNTADMIN (resource monitors, network policies). Create a dedicated <code>TERRAFORM_ROLE</code> and grant it those inherited roles. The Terraform service user should use key-pair auth, have no interactive login rights, and be rotated on a schedule. Store the private key in Vault or AWS Secrets Manager — inject via environment variable at pipeline runtime, never hardcode in .tf files.</p>
+    </div>
+  </div>
+
+  <hr>
+
+  <!-- CHAPTER 02 — Git Integration -->
+  <div class="section" id="ch02">
+    <div class="section-label">Chapter 02</div>
+    <h2>Snowflake Native Git Integration</h2>
+
+    <div class="trio">
+      <div class="trio-item"><div class="num">01</div><h4>What is it</h4><p>A Snowflake object (<code>GIT REPOSITORY</code>) that connects Snowflake to a GitHub, GitLab, or Bitbucket repository. Files in the repo — SQL scripts, Python scripts, Snowpark code — can be fetched and executed directly inside Snowflake without staging.</p></div>
+      <div class="trio-item"><div class="num">02</div><h4>Why it matters</h4><p>Closes the loop between source control and execution. You can run a <code>.sql</code> file from your GitHub repo in a Snowflake Task or Stored Procedure without copying it to a stage first — the git object handles the fetch.</p></div>
+      <div class="trio-item"><div class="num">03</div><h4>How it works</h4><p>Snowflake holds a periodic or on-demand clone of the repo. Files are accessed via the special <code>@&lt;repo_name&gt;/branches/&lt;branch&gt;/&lt;path&gt;</code> stage syntax. Changes are pulled in with <code>ALTER GIT REPOSITORY ... FETCH</code>.</p></div>
+    </div>
+
+    <h3>Setup: Git Integration from GitHub</h3>
+    <pre><span class="cm">-- Step 1: Create a secret to hold your GitHub PAT (Personal Access Token)</span>
+<span class="kw">USE ROLE</span> SYSADMIN;
+<span class="kw">CREATE OR REPLACE SECRET</span> github_pat
+  TYPE = PASSWORD
+  USERNAME = <span class="st">'sf-svc-account'</span>          <span class="cm">-- GitHub username</span>
+  PASSWORD = <span class="st">'ghp_xxxxxxxxxxxxxxxxxxxx'</span>;  <span class="cm">-- GitHub PAT with repo:read scope</span>
+
+<span class="cm">-- Step 2: Create an API Integration for GitHub</span>
+<span class="kw">USE ROLE</span> ACCOUNTADMIN;
+<span class="kw">CREATE OR REPLACE API INTEGRATION</span> github_integration
+  API_PROVIDER = git_https_api
+  API_ALLOWED_PREFIXES = (<span class="st">'https://github.com/my-org/'</span>)
+  ALLOWED_AUTHENTICATION_SECRETS = (github_pat)
+  ENABLED = <span class="kw">TRUE</span>;
+
+<span class="cm">-- Step 3: Create the Git Repository object</span>
+<span class="kw">USE ROLE</span> SYSADMIN;
+<span class="kw">CREATE OR REPLACE GIT REPOSITORY</span> snowflake_pipelines
+  API_INTEGRATION = github_integration
+  GIT_CREDENTIALS = github_pat
+  ORIGIN = <span class="st">'https://github.com/my-org/snowflake-pipelines.git'</span>;
+
+<span class="cm">-- Step 4: Fetch the latest commits</span>
+<span class="kw">ALTER GIT REPOSITORY</span> snowflake_pipelines <span class="kw">FETCH</span>;
+
+<span class="cm">-- Step 5: List files in the repo</span>
+<span class="kw">LS</span> @snowflake_pipelines/branches/main/;
+
+<span class="cm">-- Step 6: Execute a SQL file from the repo directly</span>
+<span class="kw">EXECUTE IMMEDIATE FROM</span>
+  @snowflake_pipelines/branches/main/sql/transforms/curate_sales.sql;</pre>
+
+    <h3>Use in a Task (automated nightly run from git)</h3>
+    <pre><span class="kw">CREATE OR REPLACE TASK</span> nightly_transform
+  WAREHOUSE = TRANSFORM_WH
+  SCHEDULE = <span class="st">'USING CRON 0 2 * * * America/New_York'</span>
+<span class="kw">AS</span>
+  <span class="kw">EXECUTE IMMEDIATE FROM</span>
+    @snowflake_pipelines/branches/main/sql/transforms/nightly_rollup.sql;
+
+<span class="kw">ALTER TASK</span> nightly_transform <span class="kw">RESUME</span>;</pre>
+
+    <div class="card amber">
+      <h4>Interview trap — branch vs tag</h4>
+      <p>Pointing a production Task at <code>branches/main</code> means every <code>FETCH</code> brings in the latest commits — including bad ones. For production stability, point Tasks at a tagged release: <code>@snowflake_pipelines/tags/v1.4.2/sql/...</code>. Promote a tag as part of your release process, not a floating branch reference.</p>
+    </div>
+  </div>
+
+  <hr>
+
+  <!-- CHAPTER 03 — dbt + Orchestrators -->
+  <div class="section" id="ch03">
+    <div class="section-label">Chapter 03</div>
+    <h2>dbt + Airflow / Prefect / Dagster</h2>
+
+    <div class="trio">
+      <div class="trio-item"><div class="num">01</div><h4>What is it</h4><p>Using an orchestrator (Airflow, Prefect, or Dagster) to schedule, sequence, and monitor dbt runs against Snowflake — combining dbt's SQL transform logic with an orchestrator's dependency management, alerting, and observability.</p></div>
+      <div class="trio-item"><div class="num">02</div><h4>Why it matters</h4><p>dbt Cloud Scheduler is simple but limited: it cannot coordinate dbt with upstream ingestion jobs, branch on conditions, fan out/in, or react to external events. Orchestrators unlock full DAG control over the entire data pipeline.</p></div>
+      <div class="trio-item"><div class="num">03</div><h4>Key patterns</h4><p>Trigger dbt after a Snowpipe/Kafka ingestion succeeds. Run dbt tests after models complete; fail the DAG if tests fail. Parameterise dbt runs by date range for backfills. Alert on model latency or test failures via Slack/PagerDuty.</p></div>
+    </div>
+
+    <h3>Airflow + dbt (using the dbt CLI operator)</h3>
+    <pre><span class="cm"># dags/dbt_snowflake_pipeline.py</span>
+<span class="kw">from</span> airflow <span class="kw">import</span> DAG
+<span class="kw">from</span> airflow.operators.bash <span class="kw">import</span> BashOperator
+<span class="kw">from</span> airflow.sensors.external_task <span class="kw">import</span> ExternalTaskSensor
+<span class="kw">from</span> datetime <span class="kw">import</span> datetime, timedelta
+
+<span class="kw">with</span> DAG(
+    <span class="st">'dbt_snowflake'</span>,
+    schedule_interval=<span class="st">'0 4 * * *'</span>,
+    start_date=datetime(<span class="nm">2024</span>, <span class="nm">1</span>, <span class="nm">1</span>),
+    catchup=<span class="kw">False</span>,
+    default_args={<span class="st">'retries'</span>: <span class="nm">1</span>, <span class="st">'retry_delay'</span>: timedelta(minutes=<span class="nm">5</span>)},
+) <span class="kw">as</span> dag:
+
+    <span class="cm"># Wait for the ingestion DAG to complete</span>
+    wait_ingestion = ExternalTaskSensor(
+        task_id=<span class="st">'wait_for_ingestion'</span>,
+        external_dag_id=<span class="st">'kafka_to_snowflake'</span>,
+        external_task_id=<span class="st">'validate_load'</span>,
+        timeout=<span class="nm">3600</span>,
+    )
+
+    <span class="cm"># Run dbt staging models</span>
+    dbt_stage = BashOperator(
+        task_id=<span class="st">'dbt_run_staging'</span>,
+        bash_command=<span class="st">'cd /opt/dbt && dbt run --select staging --target prod'</span>,
+    )
+
+    <span class="cm"># Run dbt mart models after staging</span>
+    dbt_marts = BashOperator(
+        task_id=<span class="st">'dbt_run_marts'</span>,
+        bash_command=<span class="st">'cd /opt/dbt && dbt run --select marts --target prod'</span>,
+    )
+
+    <span class="cm"># Run dbt tests — fail the DAG if any test fails</span>
+    dbt_test = BashOperator(
+        task_id=<span class="st">'dbt_test'</span>,
+        bash_command=<span class="st">'cd /opt/dbt && dbt test --target prod'</span>,
+    )
+
+    wait_ingestion >> dbt_stage >> dbt_marts >> dbt_test</pre>
+
+    <h3>Orchestrator comparison</h3>
+    <table>
+      <thead><tr><th>Tool</th><th>Strength</th><th>dbt Integration</th><th>Best for</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Apache Airflow</strong></td><td>Industry standard; huge ecosystem; Kubernetes Executor</td><td><code>BashOperator</code> (dbt CLI), <code>DbtCloudOperator</code>, Cosmos library</td><td>Large teams already on Airflow; enterprise deployments</td></tr>
+        <tr><td><strong>Prefect</strong></td><td>Pythonic flows; dynamic tasks; easy local dev; cloud or self-hosted</td><td><code>DbtCoreTask</code> in prefect-dbt; native result storage</td><td>Python-native teams; rapid iteration; modern UX</td></tr>
+        <tr><td><strong>Dagster</strong></td><td>Asset-based model; built-in dbt native integration; lineage UI</td><td><code>@dbt_assets</code> decorator; full model → asset mapping; native test integration</td><td>Asset-first thinking; best dbt UX; teams wanting lineage</td></tr>
+        <tr><td><strong>dbt Cloud</strong></td><td>Zero infra; built-in scheduler; CI/CD via webhooks</td><td>Native — it IS dbt</td><td>Simple pipelines; small teams; no cross-system dependencies</td></tr>
+      </tbody>
+    </table>
+
+    <div class="card ice">
+      <h4>Senior angle — Cosmos (Airflow + dbt)</h4>
+      <p>Astronomer's <strong>Cosmos</strong> library automatically converts each dbt model into an individual Airflow task, preserving the dbt DAG topology. This means per-model retries, per-model run time visibility, and dependency-aware partial re-runs — without maintaining a separate Airflow DAG definition. For large dbt projects (100+ models), Cosmos is the recommended Airflow approach over calling <code>dbt run</code> as a single BashOperator.</p>
+    </div>
+    <div class="card amber">
+      <h4>Interview trap — dbt run vs dbt build</h4>
+      <p><code>dbt run</code> materialises models only. <code>dbt build</code> runs models, tests, seeds, and snapshots in DAG order — a single command for a full pipeline. In production CI/CD, <code>dbt build --select state:modified+</code> runs only the modified models and their downstream dependents, reducing run time dramatically for large projects.</p>
+    </div>
+  </div>
+
+  <hr>
+
+  <!-- CHAPTER 04 — CI/CD -->
+  <div class="section" id="ch04">
+    <div class="section-label">Chapter 04</div>
+    <h2>CI/CD Pipelines for Schema Migrations</h2>
+
+    <div class="trio">
+      <div class="trio-item"><div class="num">01</div><h4>What is it</h4><p>Automating the testing and deployment of Snowflake schema changes (new tables, model changes, grants, dbt model updates) through a Git-based pipeline — PR open → CI → merge → CD.</p></div>
+      <div class="trio-item"><div class="num">02</div><h4>Why it matters</h4><p>Manual DDL deployments are error-prone and hard to audit. A CI/CD pipeline ensures every change is tested, peer-reviewed, and applied consistently across dev/test/prod accounts without human error.</p></div>
+      <div class="trio-item"><div class="num">03</div><h4>Pattern overview</h4><p>PR opens → CI builds a zero-copy clone of prod, runs dbt build --defer, runs dbt test → merge to main → CD applies to prod via Terraform plan/apply + dbt build. Infrastructure changes and model changes in the same PR.</p></div>
+    </div>
+
+    <h3>Full GitHub Actions CI/CD pipeline</h3>
+    <pre><span class="cm"># .github/workflows/snowflake_ci_cd.yml</span>
+<span class="kw">name</span>: Snowflake CI/CD
+
+<span class="kw">on</span>:
+  pull_request:
+    branches: [ main ]
+  push:
+    branches: [ main ]
+
+<span class="kw">env</span>:
+  SNOWFLAKE_ACCOUNT:  ${{ secrets.SNOWFLAKE_ACCOUNT }}
+  SNOWFLAKE_USER:     ${{ secrets.SNOWFLAKE_USER }}
+  SNOWFLAKE_PRIVATE_KEY: ${{ secrets.SNOWFLAKE_PRIVATE_KEY }}
+
+<span class="kw">jobs</span>:
+  ci:
+    <span class="kw">if</span>: github.event_name == 'pull_request'
+    <span class="kw">runs-on</span>: ubuntu-latest
+    <span class="kw">steps</span>:
+      - <span class="kw">uses</span>: actions/checkout@v4
+
+      - <span class="kw">name</span>: Set up Python + dbt
+        <span class="kw">run</span>: |
+          pip install dbt-snowflake==1.8.0
+
+      - <span class="kw">name</span>: Terraform init + validate (infrastructure changes)
+        <span class="kw">run</span>: |
+          terraform -chdir=infra init
+          terraform -chdir=infra validate
+          terraform -chdir=infra plan -out=tfplan
+
+      - <span class="kw">name</span>: Create PR clone (zero-copy clone of prod for testing)
+        <span class="kw">run</span>: |
+          snowsql -q "
+            CREATE OR REPLACE DATABASE PR_${{ github.event.number }}_ANALYTICS
+              CLONE ANALYTICS;
+          "
+
+      - <span class="kw">name</span>: dbt build on clone (CI target points to PR clone)
+        <span class="kw">run</span>: |
+          dbt build --target ci \
+                    --vars '{"database": "PR_${{ github.event.number }}_ANALYTICS"}' \
+                    --select state:modified+
+
+      - <span class="kw">name</span>: Cleanup PR clone
+        <span class="kw">if</span>: always()
+        <span class="kw">run</span>: |
+          snowsql -q "DROP DATABASE IF EXISTS PR_${{ github.event.number }}_ANALYTICS;"
+
+  cd:
+    <span class="kw">if</span>: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    <span class="kw">runs-on</span>: ubuntu-latest
+    <span class="kw">steps</span>:
+      - <span class="kw">uses</span>: actions/checkout@v4
+
+      - <span class="kw">name</span>: Terraform apply (infrastructure to prod)
+        <span class="kw">run</span>: |
+          terraform -chdir=infra init
+          terraform -chdir=infra apply -auto-approve
+
+      - <span class="kw">name</span>: dbt build to prod
+        <span class="kw">run</span>: |
+          dbt build --target prod
+
+      - <span class="kw">name</span>: Fetch git repository in Snowflake
+        <span class="kw">run</span>: |
+          snowsql -q "ALTER GIT REPOSITORY snowflake_pipelines FETCH;"</pre>
+
+    <h3>dbt profiles.yml for multi-environment targets</h3>
+    <pre><span class="cm"># profiles.yml (stored outside the project, ~/.dbt/profiles.yml or injected via env)</span>
+my_snowflake_project:
+  target: dev
+  outputs:
+    dev:
+      type: snowflake
+      account: <span class="st">"{{ env_var('SNOWFLAKE_ACCOUNT') }}"</span>
+      user: <span class="st">"{{ env_var('SNOWFLAKE_USER') }}"</span>
+      private_key_path: <span class="st">"{{ env_var('SNOWFLAKE_PRIVATE_KEY_PATH') }}"</span>
+      role: DBT_DEV_ROLE
+      database: DEV_ANALYTICS
+      warehouse: DEV_WH
+      schema: dbt_<span class="st">"{{ env_var('DBT_USER', 'ci') }}"</span>  <span class="cm"># developer-specific schema</span>
+      threads: 4
+
+    ci:
+      type: snowflake
+      account: <span class="st">"{{ env_var('SNOWFLAKE_ACCOUNT') }}"</span>
+      user: <span class="st">"{{ env_var('SNOWFLAKE_USER') }}"</span>
+      private_key_path: <span class="st">"{{ env_var('SNOWFLAKE_PRIVATE_KEY_PATH') }}"</span>
+      role: DBT_CI_ROLE
+      database: <span class="st">"{{ env_var('DBT_CI_DATABASE', 'CI_ANALYTICS') }}"</span>
+      warehouse: CI_WH
+      schema: PUBLIC
+      threads: 8
+
+    prod:
+      type: snowflake
+      account: <span class="st">"{{ env_var('SNOWFLAKE_PROD_ACCOUNT') }}"</span>  <span class="cm"># separate account!</span>
+      user: <span class="st">"{{ env_var('SNOWFLAKE_USER') }}"</span>
+      private_key_path: <span class="st">"{{ env_var('SNOWFLAKE_PRIVATE_KEY_PATH') }}"</span>
+      role: DBT_PROD_ROLE
+      database: ANALYTICS
+      warehouse: PROD_WH
+      schema: PUBLIC
+      threads: 16</pre>
+
+    <div class="card teal">
+      <h4>Blue/green deployment for zero-downtime schema changes</h4>
+      <pre><span class="cm">-- Blue is PRODUCTION (live traffic hits this)</span>
+<span class="cm">-- Green is STAGING (new version deployed and tested here)</span>
+
+<span class="cm">-- Step 1: Clone blue to green</span>
+<span class="kw">CREATE DATABASE</span> ANALYTICS_GREEN <span class="kw">CLONE</span> ANALYTICS;
+
+<span class="cm">-- Step 2: Run dbt build against green</span>
+<span class="cm">-- dbt build --target prod --vars '{"database": "ANALYTICS_GREEN"}'</span>
+
+<span class="cm">-- Step 3: Run validation queries against green</span>
+<span class="cm">-- SELECT COUNT(*) FROM ANALYTICS_GREEN.GOLD.SALES_FACT = expected</span>
+
+<span class="cm">-- Step 4: Atomic swap (rename = zero downtime)</span>
+<span class="kw">ALTER DATABASE</span> ANALYTICS <span class="kw">RENAME TO</span> ANALYTICS_OLD;
+<span class="kw">ALTER DATABASE</span> ANALYTICS_GREEN <span class="kw">RENAME TO</span> ANALYTICS;
+
+<span class="cm">-- Step 5: Rollback if needed (reverse swap)</span>
+<span class="kw">ALTER DATABASE</span> ANALYTICS <span class="kw">RENAME TO</span> ANALYTICS_GREEN;
+<span class="kw">ALTER DATABASE</span> ANALYTICS_OLD <span class="kw">RENAME TO</span> ANALYTICS;
+
+<span class="cm">-- Step 6: Drop old database after confidence period</span>
+<span class="kw">DROP DATABASE</span> ANALYTICS_OLD;</pre>
+    </div>
+
+    <div class="card amber">
+      <h4>Interview trap — dbt state:modified+ in CI</h4>
+      <p><code>dbt build --select state:modified+</code> selects the modified models and all their downstream dependents. It requires a <strong>manifest.json</strong> from the last successful prod run to compare against. In CI, download the prod manifest artifact (stored in S3 or dbt Cloud) and pass it via <code>--state /path/to/prod/manifest/</code>. Without the prod manifest, the state selector falls back to running everything.</p>
+    </div>
+  </div>
+
+  <hr>
+
+  <!-- LAB -->
+  <div class="section" id="lab">
+    <div class="section-label">Chapter 05 · Lab</div>
+    <h2>Hands-on: Terraform Snowflake objects + CI/CD flow</h2>
+    <p>This lab walks through the Terraform file structure for a production Snowflake account, and the SQL steps that mirror what a CI/CD pipeline does (clone → test → swap).</p>
+
+    <div class="lab-step">
+      <div class="step-num">1</div>
+      <div class="step-body">
+        <h4>Understand the Terraform file structure</h4>
+        <p>A well-organised Terraform repo for Snowflake follows this layout:</p>
+        <pre>snowflake-iac/
+├── environments/
+│   ├── dev/
+│   │   ├── main.tf         <span class="cm"># calls modules with dev-sized warehouses</span>
+│   │   ├── variables.tf
+│   │   └── terraform.tfvars
+│   └── prod/
+│       ├── main.tf
+│       ├── variables.tf
+│       └── terraform.tfvars
+├── modules/
+│   ├── warehouse/          <span class="cm"># reusable warehouse module</span>
+│   ├── database/           <span class="cm"># reusable database + schema module</span>
+│   ├── role/               <span class="cm"># reusable role + grant module</span>
+│   └── resource_monitor/   <span class="cm"># reusable monitor module</span>
+└── versions.tf</pre>
+        <div class="checkpoint">The key principle: environments/ are thin wrappers that pass environment-specific variables (account, warehouse size, credit quota) to shared modules/. Modules are reused across dev and prod without duplication.</div>
+      </div>
+    </div>
+
+    <div class="lab-step">
+      <div class="step-num">2</div>
+      <div class="step-body">
+        <h4>Write a reusable warehouse module</h4>
+        <pre><span class="cm"># modules/warehouse/main.tf</span>
+<span class="tf">variable</span> <span class="st">"name"</span>           {}
+<span class="tf">variable</span> <span class="st">"size"</span>           { default = <span class="st">"XSMALL"</span> }
+<span class="tf">variable</span> <span class="st">"auto_suspend"</span>   { default = <span class="nm">120</span> }
+<span class="tf">variable</span> <span class="st">"max_cluster_count"</span> { default = <span class="nm">1</span> }
+
+<span class="tf">resource</span> <span class="st">"snowflake_warehouse"</span> <span class="st">"this"</span> {
+  name                = var.name
+  warehouse_size      = var.size
+  auto_suspend        = var.auto_suspend
+  auto_resume         = <span class="kw">true</span>
+  initially_suspended = <span class="kw">true</span>
+  max_cluster_count   = var.max_cluster_count
+  min_cluster_count   = <span class="nm">1</span>
+}
+
+<span class="tf">output</span> <span class="st">"name"</span> { value = snowflake_warehouse.this.name }
+
+<span class="cm"># environments/prod/main.tf</span>
+<span class="tf">module</span> <span class="st">"transform_wh"</span> {
+  source         = <span class="st">"../../modules/warehouse"</span>
+  name           = <span class="st">"PROD_TRANSFORM_WH"</span>
+  size           = <span class="st">"LARGE"</span>
+  max_cluster_count = <span class="nm">3</span>
+}
+
+<span class="tf">module</span> <span class="st">"adhoc_wh"</span> {
+  source       = <span class="st">"../../modules/warehouse"</span>
+  name         = <span class="st">"PROD_ADHOC_WH"</span>
+  size         = <span class="st">"MEDIUM"</span>
+  auto_suspend = <span class="nm">60</span>
+}</pre>
+        <div class="checkpoint">terraform plan shows 2 warehouse resources to be created with the prod-specific sizes.</div>
+        <div class="pitfall">Renaming a Terraform resource block (e.g., "transform_wh" → "prod_transform_wh") causes Terraform to plan a destroy + create, which triggers a brief outage if the warehouse is in use. Use terraform state mv to rename in state without touching Snowflake.</div>
+      </div>
+    </div>
+
+    <div class="lab-step">
+      <div class="step-num">3</div>
+      <div class="step-body">
+        <h4>Simulate CI: PR clone → test → cleanup (SQL steps)</h4>
+        <pre><span class="kw">USE ROLE</span> SYSADMIN;
+<span class="kw">USE WAREHOUSE</span> COMPUTE_WH;
+
+<span class="cm">-- CI Step 1: Create PR clone (simulating PR #42)</span>
+<span class="kw">CREATE OR REPLACE DATABASE</span> PR_42_ANALYTICS
+  <span class="kw">CLONE</span> ANALYTICS;
+
+<span class="cm">-- CI Step 2: Run your dbt models against the clone</span>
+<span class="cm">-- (In real CI: dbt build --target ci --vars '{"database":"PR_42_ANALYTICS"}')</span>
+<span class="cm">-- For this lab, manually create a test table in the clone</span>
+<span class="kw">CREATE TABLE</span> PR_42_ANALYTICS.PUBLIC.test_new_model <span class="kw">AS</span>
+  <span class="kw">SELECT</span> <span class="nm">1</span> <span class="kw">AS</span> id, <span class="st">'test'</span> <span class="kw">AS</span> label;
+
+<span class="cm">-- CI Step 3: Run validation checks</span>
+<span class="kw">SELECT COUNT</span>(*) <span class="kw">FROM</span> PR_42_ANALYTICS.PUBLIC.test_new_model; <span class="cm">-- expect 1</span>
+
+<span class="cm">-- CI Step 4: Cleanup clone (always, even on failure)</span>
+<span class="kw">DROP DATABASE IF EXISTS</span> PR_42_ANALYTICS;</pre>
+        <div class="checkpoint">PR_42_ANALYTICS drops cleanly. Zero orphaned clones means zero ongoing storage cost.</div>
+      </div>
+    </div>
+
+    <div class="lab-step">
+      <div class="step-num">4</div>
+      <div class="step-body">
+        <h4>Simulate CD: blue/green deployment</h4>
+        <pre><span class="cm">-- Set up two databases representing blue (prod) and green (new version)</span>
+<span class="kw">CREATE OR REPLACE DATABASE</span> ANALYTICS_BLUE;
+<span class="kw">CREATE TABLE</span> ANALYTICS_BLUE.PUBLIC.sales_fact (id INT, amount FLOAT);
+<span class="kw">INSERT INTO</span> ANALYTICS_BLUE.PUBLIC.sales_fact <span class="kw">VALUES</span> (<span class="nm">1</span>, <span class="nm">100</span>), (<span class="nm">2</span>, <span class="nm">200</span>);
+
+<span class="cm">-- Step 1: Clone blue to green and deploy new version</span>
+<span class="kw">CREATE OR REPLACE DATABASE</span> ANALYTICS_GREEN
+  <span class="kw">CLONE</span> ANALYTICS_BLUE;
+
+<span class="cm">-- Simulate deploying a new model column in green</span>
+<span class="kw">ALTER TABLE</span> ANALYTICS_GREEN.PUBLIC.sales_fact
+  <span class="kw">ADD COLUMN</span> region <span class="kw">VARCHAR</span>;
+<span class="kw">UPDATE</span> ANALYTICS_GREEN.PUBLIC.sales_fact <span class="kw">SET</span> region = <span class="st">'EAST'</span>;
+
+<span class="cm">-- Step 2: Validate green</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> ANALYTICS_GREEN.PUBLIC.sales_fact;
+
+<span class="cm">-- Step 3: Atomic swap — zero downtime</span>
+<span class="kw">ALTER DATABASE</span> ANALYTICS_BLUE  <span class="kw">RENAME TO</span> ANALYTICS_OLD;
+<span class="kw">ALTER DATABASE</span> ANALYTICS_GREEN <span class="kw">RENAME TO</span> ANALYTICS_BLUE;
+
+<span class="cm">-- Step 4: Confirm production is now the new version</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> ANALYTICS_BLUE.PUBLIC.sales_fact;
+<span class="cm">-- Should now include the region column</span>
+
+<span class="cm">-- Step 5: Cleanup</span>
+<span class="kw">DROP DATABASE IF EXISTS</span> ANALYTICS_OLD;
+<span class="kw">DROP DATABASE IF EXISTS</span> ANALYTICS_BLUE;</pre>
+        <div class="checkpoint">After the swap, ANALYTICS_BLUE.PUBLIC.sales_fact has the region column. ANALYTICS_OLD is the rollback option until dropped.</div>
+      </div>
+    </div>
+  </div>
+
+  <hr>
+
+  <!-- Q&A -->
+  <div class="section" id="qa">
+    <div class="section-label">Chapter 06</div>
+    <h2>Interview Q&amp;A</h2>
+
+    <details>
+      <summary>What is Terraform state and why must you never commit it to git? <span class="qa-tag tag-fund">FUNDAMENTAL</span></summary>
+      <div class="qa-body">Terraform state (terraform.tfstate) is a JSON file mapping your .tf resource definitions to real Snowflake objects. It contains the current attribute values of every managed resource. It must NOT be in git because: (1) it may contain sensitive values (passwords, private keys) in plaintext, (2) concurrent team members will conflict on the file, causing state corruption. Store state remotely in S3 (with DynamoDB locking), Azure Blob, or Terraform Cloud. Use state encryption at rest.</div>
+    </details>
+    <details>
+      <summary>How does dbt --select state:modified+ work and what does it need? <span class="qa-tag tag-tricky">TRICKY</span></summary>
+      <div class="qa-body">It selects models whose compiled SQL has changed since the last run, plus all their downstream dependents (the + suffix). It requires a manifest.json from the last successful run as the baseline for comparison — passed via --state /path/to/baseline/. In CI/CD: download the prod manifest from S3 (or dbt Cloud artifact) before running dbt, so CI only tests what actually changed. Without the baseline manifest, the selector falls back to running all models.</div>
+    </details>
+    <details>
+      <summary>What happens if you run terraform apply and someone has manually changed a Snowflake warehouse size? <span class="qa-tag tag-scenario">SCENARIO</span></summary>
+      <div class="qa-body">Terraform plan will show a drift: "warehouse_size: LARGE → MEDIUM (config) = change". Terraform apply will revert the warehouse to MEDIUM as defined in the .tf file, overwriting the manual change. This is intentional — Terraform is the source of truth. To prevent this in emergency scenarios: make the emergency change, immediately run terraform import to sync state, then update the .tf file and commit via PR. Never leave state and code out of sync.</div>
+    </details>
+    <details>
+      <summary>Compare Airflow, Prefect, and Dagster for orchestrating a dbt Snowflake pipeline. <span class="qa-tag tag-scenario">SCENARIO</span></summary>
+      <div class="qa-body">Airflow: most widely adopted, best ecosystem, Cosmos library makes dbt integration first-class with per-model tasks. Requires infrastructure management (Kubernetes). Prefect: Python-native, easy local development, dynamic task mapping, good cloud option. Best for Python-heavy teams. Dagster: asset-based model aligns perfectly with dbt's declarative approach; best lineage visualization; @dbt_assets decorator maps every dbt model to a Dagster asset automatically. Recommend: Dagster for new data platform projects; Airflow+Cosmos for teams already on Airflow; Prefect for smaller teams wanting low ops overhead. All three support Snowflake natively via dbt's Snowflake adapter.</div>
+    </details>
+    <details>
+      <summary>What is the Snowflake Git Integration and when would you use it? <span class="qa-tag tag-fund">FUNDAMENTAL</span></summary>
+      <div class="qa-body">A GIT REPOSITORY object that connects Snowflake to a GitHub/GitLab repo. Use it to: (1) EXECUTE IMMEDIATE FROM @repo/branches/main/sql/transform.sql — run SQL scripts directly from git without staging. (2) Run Snowpark Python scripts from git in a Task. (3) Reference dbt or migration SQL scripts in a Snowflake-native workflow. Best suited for Snowflake-centric teams who want to manage SQL pipelines without an external orchestrator. For cross-system pipelines (Kafka + Snowflake + downstream APIs), an external orchestrator is still better.</div>
+    </details>
+    <details>
+      <summary>What is the blue/green deployment pattern and what makes it safe? <span class="qa-tag tag-tricky">TRICKY</span></summary>
+      <div class="qa-body">Blue = production (live). Green = new version being deployed. Steps: (1) Clone blue to green (zero-copy, instant). (2) Deploy and test new code against green. (3) Atomic rename: blue → old, green → blue. Downstream tools continue pointing to ANALYTICS (which is now the new version). Rollback: reverse the rename in seconds. What makes it safe: (a) the rename is atomic — no partial state visible to queries, (b) zero-copy cloning means no data duplication cost, (c) the old database persists for rollback with no extra storage until deleted. The only window of risk is the rename itself, which is a metadata operation (sub-second).</div>
+    </details>
+    <details>
+      <summary>How do you manage secrets (Snowflake passwords, private keys) in GitHub Actions? <span class="qa-tag tag-tricky">TRICKY</span></summary>
+      <div class="qa-body">Store secrets in GitHub Actions Secrets (Settings → Secrets and variables → Actions). Reference as ${{ secrets.SNOWFLAKE_PRIVATE_KEY }} in the workflow YAML — GitHub never logs these values. For the RSA private key: generate the key pair, add the public key to the Snowflake service user, store the private key PEM string as a GitHub secret. In the workflow step, write it to a temp file: echo "$SNOWFLAKE_PRIVATE_KEY" > /tmp/sf_key.pem. At the enterprise level, prefer AWS Secrets Manager or HashiCorp Vault with OIDC federated auth — the pipeline gets a short-lived token, not a stored credential.</div>
+    </details>
+  </div>
+
+  <hr>
+
+  <!-- QUIZ -->
+  <div class="section" id="quiz">
+    <div class="section-label">Chapter 07</div>
+    <h2>Quiz</h2>
+
+    <div class="quiz-q">
+      <p>1. Why must Terraform state files never be committed to git?</p>
+      <div class="quiz-opt">
+        <label><input type="radio" name="q1" value="a"> They are too large</label>
+        <label><input type="radio" name="q1" value="b"> They may contain secrets in plaintext and cause merge conflicts when multiple engineers apply changes simultaneously</label>
+        <label><input type="radio" name="q1" value="c"> Terraform doesn't support git integration</label>
+        <label><input type="radio" name="q1" value="d"> Snowflake rejects state-based deployments</label>
+      </div>
+      <div class="quiz-answer correct" id="q1-c">✓ State files may contain plaintext secrets and cause team conflicts. Store remotely in S3/Azure Blob/Terraform Cloud with locking.</div>
+    </div>
+
+    <div class="quiz-q">
+      <p>2. In a blue/green deployment, what does the atomic rename step achieve?</p>
+      <div class="quiz-opt">
+        <label><input type="radio" name="q2" value="a"> It copies all data from green to blue</label>
+        <label><input type="radio" name="q2" value="b"> It instantly switches traffic to the new version with no data movement and sub-second downtime risk</label>
+        <label><input type="radio" name="q2" value="c"> It runs dbt tests against both databases simultaneously</label>
+        <label><input type="radio" name="q2" value="d"> It permanently merges green into blue</label>
+      </div>
+      <div class="quiz-answer correct" id="q2-c">✓ ALTER DATABASE RENAME is a metadata-only, sub-second operation. Tools pointing to the original name instantly see the new version. The old database remains for rollback.</div>
+    </div>
+
+    <div class="quiz-q">
+      <p>3. dbt build --select state:modified+ requires which file from the previous run?</p>
+      <div class="quiz-opt">
+        <label><input type="radio" name="q3" value="a"> profiles.yml</label>
+        <label><input type="radio" name="q3" value="b"> sources.yml</label>
+        <label><input type="radio" name="q3" value="c"> manifest.json from the last successful prod run</label>
+        <label><input type="radio" name="q3" value="d"> dbt_project.yml</label>
+      </div>
+      <div class="quiz-answer correct" id="q3-c">✓ manifest.json is the compilation artifact that describes all models, their compiled SQL, and DAG dependencies. The state selector diffs the new manifest against it.</div>
+    </div>
+
+    <div class="quiz-q">
+      <p>4. What is Astronomer Cosmos used for?</p>
+      <div class="quiz-opt">
+        <label><input type="radio" name="q4" value="a"> Running Terraform plans in Snowflake</label>
+        <label><input type="radio" name="q4" value="b"> Automatically converting each dbt model into an individual Airflow task while preserving dbt's DAG topology</label>
+        <label><input type="radio" name="q4" value="c"> A replacement for the Snowflake Kafka Connector</label>
+        <label><input type="radio" name="q4" value="d"> Managing Snowflake git repository objects</label>
+      </div>
+      <div class="quiz-answer correct" id="q4-c">✓ Cosmos parses your dbt project and renders each model as a task in Airflow, inheriting dbt dependencies. This enables per-model retries, run-time visibility, and partial re-runs in Airflow.</div>
+    </div>
+
+    <div class="quiz-q">
+      <p>5. In Snowflake's Git Integration, pointing a production Task at branches/main creates what risk?</p>
+      <div class="quiz-opt">
+        <label><input type="radio" name="q5" value="a"> The task runs twice per commit</label>
+        <label><input type="radio" name="q5" value="b"> Every new commit to main (including bad ones) is immediately executed in production after the next FETCH</label>
+        <label><input type="radio" name="q5" value="c"> The git object cannot be fetched automatically</label>
+        <label><input type="radio" name="q5" value="d"> Snowflake reverts the branch after each run</label>
+      </div>
+      <div class="quiz-answer correct" id="q5-c">✓ A floating branch reference means untested commits go straight to prod. Use tagged releases (@repo/tags/v1.4.2/...) and promote tags as part of your release process.</div>
+    </div>
+  </div>
+
+  <hr>
+
+  <!-- CHEAT SHEET -->
+  <div class="section" id="cheat">
+    <div class="section-label">Chapter 08</div>
+    <h2>Cheat sheet</h2>
+    <div class="cheat-grid">
+      <div class="cheat-item"><div class="label">Terraform</div><p>snowflake-labs/snowflake provider. Resources: snowflake_warehouse, snowflake_database, snowflake_role, snowflake_grant_privileges_to_role, snowflake_resource_monitor. State in S3 + DynamoDB lock. Never commit state to git.</p></div>
+      <div class="cheat-item"><div class="label">Terraform role</div><p>TERRAFORM_ROLE needs SYSADMIN + SECURITYADMIN + ACCOUNTADMIN delegated. Use key-pair auth. Store private key in Vault/Secrets Manager. Rotate on schedule.</p></div>
+      <div class="cheat-item"><div class="label">Git Integration</div><p>CREATE GIT REPOSITORY → FETCH to sync. Access via @repo/branches/main/ or @repo/tags/v1.2.0/. EXECUTE IMMEDIATE FROM @repo/... to run SQL from git. Point prod Tasks at tags, not branches.</p></div>
+      <div class="cheat-item"><div class="label">dbt + Airflow</div><p>BashOperator(dbt run/build) or Cosmos (per-model tasks). dbt build = run + test + seed + snapshot in DAG order. state:modified+ for CI efficiency — requires manifest.json baseline.</p></div>
+      <div class="cheat-item"><div class="label">Orchestrator choice</div><p>Dagster = best dbt native UX + asset lineage. Airflow+Cosmos = most ecosystem. Prefect = easiest Python dev. dbt Cloud = no infra, limited cross-system dependencies.</p></div>
+      <div class="cheat-item"><div class="label">CI pipeline</div><p>PR open → clone prod → dbt build --select state:modified+ → dbt test → drop clone. Store PR clone cost: zero (metadata only until writes). Always drop in finally/always step.</p></div>
+      <div class="cheat-item"><div class="label">CD pipeline</div><p>Merge to main → terraform apply → dbt build --target prod. Optionally: blue/green swap (clone → deploy → rename → keep old for rollback).</p></div>
+      <div class="cheat-item"><div class="label">Blue/green</div><p>Clone PROD → PROD_GREEN. Deploy to green. Validate. ALTER DATABASE PROD RENAME TO PROD_OLD; ALTER DATABASE PROD_GREEN RENAME TO PROD. Rollback = reverse rename. Drop old after confidence period.</p></div>
+    </div>
+  </div>
+
+  <p style="color:var(--ink3);font-size:12px;text-align:center;margin-top:48px">Snowflake Interview Lab · Module 16 · IaC, CI/CD &amp; Orchestration · Prepared for Saurav Patel</p>
+
+</div>
+
+<script>
+function toggleTheme(){
+  const d=document.documentElement;
+  d.dataset.theme=d.dataset.theme==='dark'?'':'dark';
+}
+document.querySelectorAll('.quiz-opt input').forEach(inp=>{
+  inp.addEventListener('change',function(){
+    const qn=this.name;
+    const correct={q1:'b',q2:'b',q3:'c',q4:'b',q5:'b'}[qn];
+    const ans=document.getElementById(qn+'-c');
+    if(ans)ans.style.display='block';
+    this.closest('.quiz-opt').querySelectorAll('label').forEach(l=>{
+      const v=l.querySelector('input').value;
+      l.style.background=v===correct?'var(--teal-s)':v===this.value&&v!==correct?'var(--red-s)':'';
+      l.style.borderColor=v===correct?'var(--teal)':v===this.value&&v!==correct?'var(--red)':'var(--line)';
+    });
+  });
+});
+
+// COURSE ROADMAP toggle
+document.querySelectorAll('.road h4').forEach(function(h){
+  h.addEventListener('click', function(){
+    this.closest('.road').classList.toggle('open');
+  });
+});
+</script>
+</body>
+</html>

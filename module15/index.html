@@ -1,0 +1,860 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Snowflake Interview Lab · Module 15 · External Integrations</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/space-grotesk@5/300.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/space-grotesk@5/700.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/ibm-plex-sans@5/400.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/ibm-plex-sans@5/600.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/jetbrains-mono@5/400.css">
+<style>
+:root{
+  --bg:#F2F6FA;--card:#FFFFFF;--card2:#E9EFF5;--ink:#0B1B2B;--ink2:#46596B;--ink3:#7F90A2;
+  --line:rgba(11,27,43,.12);--line2:rgba(11,27,43,.22);
+  --ice:#0A86C2;--ice-s:#DCEFF9;--amber:#B86F00;--amber-s:#FFF0D4;--teal:#0B8A6A;--teal-s:#DAF3EB;
+  --red:#C93C3C;--red-s:#FCE4E4;
+  --f-head:"Space Grotesk",sans-serif;--f-body:"IBM Plex Sans",sans-serif;--f-mono:"JetBrains Mono",monospace;
+  --r:10px;
+}
+[data-theme="dark"]{
+  --bg:#08121D;--card:#0F1D2C;--card2:#16293B;--ink:#E5EDF5;--ink2:#9DB0C3;--ink3:#687D91;
+  --line:rgba(229,237,245,.10);--line2:rgba(229,237,245,.22);
+  --ice:#4CC3F0;--ice-s:rgba(76,195,240,.13);--amber:#FFB938;--amber-s:rgba(255,185,56,.13);
+  --teal:#3FD3A8;--teal-s:rgba(63,211,168,.13);--red:#FF7070;--red-s:rgba(255,112,112,.14);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:var(--f-body);background:var(--bg);color:var(--ink);line-height:1.7;font-size:15px}
+h1,h2,h3,h4{font-family:var(--f-head);line-height:1.2}
+code,pre{font-family:var(--f-mono);font-size:13px}
+pre{background:var(--card2);border:1px solid var(--line);border-radius:var(--r);padding:16px 18px;overflow-x:auto;line-height:1.55}
+.kw{color:#0A86C2}.cm{color:var(--ink3);font-style:italic}.st{color:#0B8A6A}.nm{color:#B86F00}
+.wrap{max-width:860px;margin:0 auto;padding:0 20px 80px}
+.topbar{background:var(--card);border-bottom:1px solid var(--line);padding:12px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50}
+.topbar .badge{font-family:var(--f-head);font-size:11px;font-weight:700;letter-spacing:.08em;color:var(--ice);text-transform:uppercase}
+.topbar .title{font-family:var(--f-head);font-size:14px;font-weight:700;color:var(--ink)}
+button.theme{background:none;border:1px solid var(--line);border-radius:6px;padding:5px 11px;font-size:12px;color:var(--ink2);cursor:pointer}
+.chapnav{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:18px 20px;margin:28px 0}
+.chapnav h4{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink3);margin-bottom:12px}
+.chapnav ul{list-style:none;display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:6px}
+.chapnav li a{display:block;padding:6px 10px;border-radius:6px;font-size:13px;color:var(--ink2);border:1px solid transparent;transition:all .15s}
+.chapnav li a:hover{background:var(--ice-s);border-color:var(--ice);color:var(--ice)}
+.hero{padding:48px 0 32px}
+.hero .mod{font-family:var(--f-head);font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--ice);margin-bottom:8px}
+.hero h1{font-size:clamp(28px,5vw,46px);font-weight:700;margin-bottom:14px}
+.hero p{font-size:16px;color:var(--ink2);max-width:640px}
+.section{margin:48px 0}
+.section-label{font-family:var(--f-head);font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--ice);margin-bottom:8px}
+.section h2{font-size:26px;font-weight:700;margin-bottom:18px}
+.section h3{font-size:17px;font-weight:700;color:var(--ink);margin:24px 0 10px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:20px 22px;margin:16px 0}
+.card.ice{border-left:4px solid var(--ice);background:var(--ice-s)}
+.card.amber{border-left:4px solid var(--amber);background:var(--amber-s)}
+.card.teal{border-left:4px solid var(--teal);background:var(--teal-s)}
+.card.red{border-left:4px solid var(--red);background:var(--red-s)}
+.card h4{font-family:var(--f-head);font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px}
+.trio{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin:18px 0}
+.trio-item{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:16px}
+.trio-item .num{font-family:var(--f-head);font-size:28px;font-weight:700;color:var(--ice);opacity:.4;margin-bottom:4px}
+.trio-item h4{font-size:13px;font-weight:700;margin-bottom:6px;color:var(--ink)}
+.trio-item p{font-size:13px;color:var(--ink2)}
+.lab-step{display:flex;gap:16px;margin:20px 0}
+.lab-step .step-num{flex-shrink:0;width:32px;height:32px;border-radius:50%;background:var(--ice);color:#fff;font-family:var(--f-head);font-weight:700;font-size:14px;display:flex;align-items:center;justify-content:center}
+.lab-step .step-body h4{font-size:14px;font-weight:700;margin-bottom:6px}
+.lab-step .step-body p{font-size:14px;color:var(--ink2);margin-bottom:8px}
+.checkpoint{background:var(--teal-s);border:1px solid var(--teal);border-radius:var(--r);padding:10px 14px;font-size:13px;margin-top:8px}
+.checkpoint::before{content:"✓ Checkpoint: ";font-weight:600;color:var(--teal)}
+.pitfall{background:var(--amber-s);border:1px solid var(--amber);border-radius:var(--r);padding:10px 14px;font-size:13px;margin-top:8px}
+.pitfall::before{content:"⚠ Pitfall: ";font-weight:600;color:var(--amber)}
+details{border:1px solid var(--line);border-radius:var(--r);margin:10px 0;overflow:hidden}
+details summary{padding:14px 18px;cursor:pointer;font-weight:600;font-size:14px;list-style:none;display:flex;align-items:center;gap:10px;background:var(--card)}
+details summary::-webkit-details-marker{display:none}
+details summary::before{content:"▶";font-size:10px;color:var(--ice);transition:transform .2s;flex-shrink:0}
+details[open] summary::before{transform:rotate(90deg)}
+details[open] summary{border-bottom:1px solid var(--line)}
+.qa-body{padding:16px 18px;background:var(--card);font-size:14px;color:var(--ink2);line-height:1.7}
+.qa-tag{font-size:10px;font-family:var(--f-head);font-weight:700;text-transform:uppercase;letter-spacing:.06em;padding:2px 7px;border-radius:4px;margin-left:auto}
+.tag-fund{background:var(--ice-s);color:var(--ice)}
+.tag-tricky{background:var(--amber-s);color:var(--amber)}
+.tag-scenario{background:var(--teal-s);color:var(--teal)}
+.quiz-q{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:18px 20px;margin:14px 0}
+.quiz-q p{font-weight:600;margin-bottom:12px}
+.quiz-opt{display:flex;flex-direction:column;gap:7px}
+.quiz-opt label{display:flex;align-items:center;gap:10px;cursor:pointer;font-size:14px;padding:8px 10px;border-radius:6px;border:1px solid var(--line);transition:all .15s}
+.quiz-opt label:hover{background:var(--ice-s);border-color:var(--ice)}
+.quiz-opt input{accent-color:var(--ice)}
+.quiz-answer{display:none;margin-top:10px;padding:10px 14px;border-radius:6px;font-size:13px;font-weight:600}
+.quiz-answer.correct{background:var(--teal-s);color:var(--teal)}
+table{width:100%;border-collapse:collapse;margin:16px 0;font-size:13px}
+th{background:var(--card2);font-family:var(--f-head);font-size:11px;text-transform:uppercase;letter-spacing:.06em;padding:9px 12px;text-align:left;border-bottom:1px solid var(--line2)}
+td{padding:9px 12px;border-bottom:1px solid var(--line)}
+tr:last-child td{border-bottom:none}
+.cheat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin:18px 0}
+.cheat-item{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px}
+.cheat-item .label{font-family:var(--f-head);font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--ice);margin-bottom:5px}
+.cheat-item p{font-size:13px;color:var(--ink2)}
+hr{border:none;border-top:1px solid var(--line);margin:48px 0}
+/* Architecture flow diagram */
+.flow{display:flex;align-items:center;flex-wrap:wrap;gap:6px;margin:20px 0;padding:16px;background:var(--card);border:1px solid var(--line);border-radius:var(--r)}
+.flow-box{background:var(--ice-s);border:1px solid var(--ice);border-radius:6px;padding:6px 12px;font-size:12px;font-family:var(--f-head);font-weight:700;color:var(--ice);white-space:nowrap}
+.flow-arrow{color:var(--ink3);font-size:16px}
+
+/* ── COURSE ROADMAP ──────────────────────────────────── */
+.road{margin-top:12px;padding-top:12px;border-top:1px solid var(--line)}
+.road h4{font-family:var(--f-mono);font-size:10px;letter-spacing:.14em;color:var(--ink3);
+  text-transform:uppercase;margin-bottom:8px;cursor:pointer}
+.road h4::after{content:" ▼";font-size:9px}
+.road a{display:none;padding:5px 10px;border-radius:6px;font-size:12px;
+  color:var(--ink2);text-decoration:none;margin:2px 0;transition:background .15s}
+.road a:hover{background:var(--ice-s);color:var(--ice)}
+.road a em{font-family:var(--f-mono);font-size:10px;font-style:normal;
+  color:var(--ink3);min-width:20px;display:inline-block}
+.road a i{float:right;font-style:normal;font-family:var(--f-mono);
+  font-size:10px;color:var(--ink3)}
+.road a.rm.now{color:var(--ice);background:var(--ice-s)}
+.road a.rm.now i{color:var(--ice)}
+.road.open a{display:flex;align-items:center;gap:8px}
+/* ─────────────────────────────────────────────────────── */
+</style>
+</head>
+<body>
+<style id="sf-home-style">
+#sf-home-btn{
+  position:fixed;bottom:22px;right:22px;z-index:9998;
+  display:inline-flex;align-items:center;gap:7px;
+  padding:8px 18px 8px 14px;border-radius:999px;
+  background:rgba(255,255,255,.13);
+  border:1px solid rgba(255,255,255,.26);
+  color:#e5edf5;
+  font-family:system-ui,-apple-system,"Segoe UI",sans-serif;
+  font-size:12px;font-weight:600;letter-spacing:.04em;
+  text-decoration:none;cursor:pointer;
+  backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+  box-shadow:0 2px 12px rgba(0,0,0,.25);
+  transition:background .18s,border-color .18s,transform .18s,box-shadow .18s,color .18s;
+  white-space:nowrap;
+}
+#sf-home-btn::before{
+  content:"⌂";
+  font-size:14px;line-height:1;
+}
+#sf-home-btn:hover{
+  background:rgba(255,255,255,.24);
+  border-color:rgba(255,255,255,.46);
+  color:#fff;
+  transform:translateY(-2px);
+  box-shadow:0 6px 22px rgba(0,0,0,.35);
+  text-decoration:none;
+}
+/* Light theme — fires for all files that use data-theme="light" toggle */
+[data-theme="light"] #sf-home-btn{
+  background:rgba(11,27,43,.08);
+  border-color:rgba(11,27,43,.20);
+  color:#0b1b2b;
+  box-shadow:0 2px 12px rgba(0,0,0,.10);
+}
+[data-theme="light"] #sf-home-btn:hover{
+  background:rgba(10,134,194,.13);
+  border-color:rgba(10,134,194,.38);
+  color:#0a86c2;
+  box-shadow:0 6px 22px rgba(10,134,194,.18);
+}
+/* Interview QA files start in light mode via :root (paper theme) */
+body[style*="--paper"] #sf-home-btn,
+.mast ~ #sf-home-btn{
+  background:rgba(11,27,43,.07);
+  border-color:rgba(11,27,43,.18);
+  color:#15120f;
+}
+</style>
+<a id="sf-home-btn" href="../" title="Back to Course Home">Course Home</a>
+
+
+<div class="topbar">
+  <div>
+    <div class="badge">Snowflake Interview Lab</div>
+    <div class="title">Module 15 · External Integrations: Kafka, Spark, CDC &amp; External Functions</div>
+  </div>
+  <button class="theme" onclick="toggleTheme()">Dark / Light</button>
+</div>
+  <div class="road">
+    <h4>COURSE ROADMAP · CLICK TO OPEN</h4>
+    <a class="rm ready" href="../module01/"><em>01</em>Architecture<i>open</i></a>
+    <a class="rm ready" href="../module02/"><em>02</em>SnowSQL · unstructured · streams, tasks &amp; procedures<i>open</i></a>
+    <a class="rm ready" href="../module03/"><em>03</em>Performance tuning<i>open</i></a>
+    <a class="rm ready" href="../module04/"><em>04</em>Data ingestion (Snowpipe)<i>open</i></a>
+    <a class="rm ready" href="../module05/"><em>05</em>Dynamic tables &amp; transforms<i>open</i></a>
+    <a class="rm ready" href="../module06/"><em>06</em>Semi-structured data<i>open</i></a>
+    <a class="rm ready" href="../module07/"><em>07</em>Data protection<i>open</i></a>
+    <a class="rm ready" href="../module08/"><em>08</em>Security &amp; governance<i>open</i></a>
+    <a class="rm ready" href="../module09/"><em>09</em>Cost optimization<i>open</i></a>
+    <a class="rm ready" href="../module10/"><em>10</em>Data sharing<i>open</i></a>
+    <a class="rm ready" href="../module11/"><em>11</em>Snowpark &amp; Cortex AI<i>open</i></a>
+    <a class="rm ready" href="../module12/"><em>12</em>Advanced SQL<i>open</i></a>
+    <a class="rm ready" href="../module13/"><em>13</em>Modeling &amp; tooling<i>open</i></a>
+    <a class="rm ready" href="../module14/"><em>14</em>Enterprise Architecture &amp; Governance<i>open</i></a>
+    <a class="rm now"   href="../module15/"><em>15</em>External Integrations<i>you are here</i></a>
+    <a class="rm ready" href="../module16/"><em>16</em>IaC, CI/CD &amp; Orchestration<i>open</i></a>
+  </div>
+
+<div class="wrap">
+
+  <div class="chapnav">
+    <h4>MODULE 15 · CHAPTERS</h4>
+    <ul>
+      <li><a href="#ch01">01 · Kafka Connector</a></li>
+      <li><a href="#ch02">02 · Spark Connector</a></li>
+      <li><a href="#ch03">03 · CDC — Debezium → Kafka → Snowpipe Streaming</a></li>
+      <li><a href="#ch04">04 · External Functions</a></li>
+      <li><a href="#lab">05 · SQL Lab</a></li>
+      <li><a href="#qa">06 · Interview Q&amp;A</a></li>
+      <li><a href="#quiz">07 · Quiz</a></li>
+      <li><a href="#cheat">08 · Cheat sheet</a></li>
+    </ul>
+  </div>
+
+  <div class="hero">
+    <div class="mod">Module 15</div>
+    <h1>External Integrations</h1>
+    <p>How Snowflake connects to the broader data ecosystem: streaming with Kafka, batch processing with Spark, real-time CDC with Debezium, and bidirectional REST API calls via External Functions. The integration layer is where most production complexity lives.</p>
+  </div>
+
+  <!-- CHAPTER 01 — Kafka -->
+  <div class="section" id="ch01">
+    <div class="section-label">Chapter 01</div>
+    <h2>Snowflake Kafka Connector</h2>
+
+    <div class="trio">
+      <div class="trio-item"><div class="num">01</div><h4>What is it</h4><p>A Kafka Connect sink connector that reads records from Kafka topics and writes them to Snowflake tables using Snowpipe under the hood. Available as an open-source plugin from Snowflake on GitHub/Confluent Hub.</p></div>
+      <div class="trio-item"><div class="num">02</div><h4>Why it matters</h4><p>Kafka is the dominant streaming backbone in enterprise data engineering. The Kafka Connector is the standard way to get event streams from Kafka into Snowflake without writing custom pipeline code.</p></div>
+      <div class="trio-item"><div class="num">03</div><h4>How it works</h4><p>The connector buffers Kafka records into micro-batch files (Avro, JSON, or Protobuf), uploads them to an internal stage, and triggers Snowpipe to ingest. Each Kafka topic maps to a Snowflake table.</p></div>
+    </div>
+
+    <h3>Architecture</h3>
+    <div class="flow">
+      <div class="flow-box">Source System</div><div class="flow-arrow">→</div>
+      <div class="flow-box">Kafka Topic</div><div class="flow-arrow">→</div>
+      <div class="flow-box">Kafka Connect Worker</div><div class="flow-arrow">→</div>
+      <div class="flow-box">Snowflake Kafka Connector</div><div class="flow-arrow">→</div>
+      <div class="flow-box">Internal Stage (Snowpipe)</div><div class="flow-arrow">→</div>
+      <div class="flow-box">Snowflake Table (VARIANT)</div>
+    </div>
+
+    <h3>Key configuration properties</h3>
+    <table>
+      <thead><tr><th>Property</th><th>Value / Notes</th></tr></thead>
+      <tbody>
+        <tr><td><code>connector.class</code></td><td><code>com.snowflake.kafka.connector.SnowflakeSinkConnector</code></td></tr>
+        <tr><td><code>snowflake.url.name</code></td><td><code>myaccount.snowflakecomputing.com:443</code></td></tr>
+        <tr><td><code>snowflake.user.name</code></td><td>Service account user</td></tr>
+        <tr><td><code>snowflake.private.key</code></td><td>RSA private key (key-pair auth — no passwords)</td></tr>
+        <tr><td><code>snowflake.database.name</code></td><td>Target database</td></tr>
+        <tr><td><code>snowflake.schema.name</code></td><td>Target schema</td></tr>
+        <tr><td><code>topics</code></td><td>Comma-separated Kafka topic names</td></tr>
+        <tr><td><code>buffer.count.records</code></td><td>Records per file (default 10,000)</td></tr>
+        <tr><td><code>buffer.flush.time</code></td><td>Max seconds before flushing (default 120s)</td></tr>
+        <tr><td><code>buffer.size.bytes</code></td><td>Max buffer size in bytes</td></tr>
+        <tr><td><code>value.converter</code></td><td><code>io.confluent.kafka.serializers.KafkaAvroSerializer</code> or <code>JsonConverter</code></td></tr>
+      </tbody>
+    </table>
+
+    <h3>Table format: RECORD_CONTENT and RECORD_METADATA</h3>
+    <p style="color:var(--ink2);margin-bottom:10px">By default, the connector creates a two-column table: <code>RECORD_CONTENT VARIANT</code> (the message payload) and <code>RECORD_METADATA VARIANT</code> (Kafka metadata: topic, partition, offset, timestamp).</p>
+    <pre><span class="cm">-- What the auto-created table looks like</span>
+<span class="kw">DESCRIBE TABLE</span> my_kafka_topic;
+<span class="cm">-- RECORD_CONTENT  VARIANT</span>
+<span class="cm">-- RECORD_METADATA VARIANT</span>
+
+<span class="cm">-- Query the topic data</span>
+<span class="kw">SELECT</span>
+  RECORD_METADATA:offset::INT        <span class="kw">AS</span> kafka_offset,
+  RECORD_METADATA:partition::INT     <span class="kw">AS</span> kafka_partition,
+  RECORD_METADATA:CreateTime::INT    <span class="kw">AS</span> kafka_ts_ms,
+  RECORD_CONTENT:event_type::STRING  <span class="kw">AS</span> event_type,
+  RECORD_CONTENT:user_id::INT        <span class="kw">AS</span> user_id,
+  RECORD_CONTENT:amount::FLOAT       <span class="kw">AS</span> amount
+<span class="kw">FROM</span> orders_kafka_topic
+<span class="kw">ORDER BY</span> kafka_ts_ms <span class="kw">DESC</span>
+<span class="kw">LIMIT</span> <span class="nm">100</span>;</pre>
+
+    <h3>Schema evolution handling</h3>
+    <p style="color:var(--ink2);margin-bottom:10px">Because the payload lands in a VARIANT column, adding new fields to the Kafka message requires <em>no schema change</em> in Snowflake — the new keys just appear in RECORD_CONTENT. The curated downstream table needs an <code>ALTER TABLE ... ADD COLUMN</code> and an updated transform.</p>
+
+    <div class="card amber">
+      <h4>Interview trap — buffer sizing</h4>
+      <p>If <code>buffer.flush.time</code> is too high (e.g., 600s), Kafka offsets are not committed until the buffer flushes, which means consumer lag appears inflated and a Connect worker restart may replay 10 minutes of messages. Tune to your latency SLA: 30s is typical for near-real-time, 120s for batch-style ingestion.</p>
+    </div>
+    <div class="card ice">
+      <h4>Senior angle — key-pair authentication</h4>
+      <p>The Kafka Connector does not support username/password auth — it requires RSA key-pair authentication. Generate a 2048-bit RSA key pair, assign the public key to the Snowflake service account user (<code>ALTER USER ... SET RSA_PUBLIC_KEY='...'</code>), and pass the private key PEM string (without headers) in the connector config. Store it in Kubernetes Secrets or HashiCorp Vault — never in the Kafka Connect config file in plaintext.</p>
+    </div>
+  </div>
+
+  <hr>
+
+  <!-- CHAPTER 02 — Spark -->
+  <div class="section" id="ch02">
+    <div class="section-label">Chapter 02</div>
+    <h2>Snowflake Spark Connector</h2>
+
+    <div class="trio">
+      <div class="trio-item"><div class="num">01</div><h4>What is it</h4><p>A Spark DataSource (v2 API) that lets Apache Spark read from and write to Snowflake tables. It serialises data to Parquet, stages it in S3/ADLS/GCS, and uses COPY INTO to load — bypassing JDBC row-at-a-time overhead.</p></div>
+      <div class="trio-item"><div class="num">02</div><h4>Why it matters</h4><p>Many enterprises run ML/data science workloads in Spark (Databricks, EMR, GCP Dataproc) but store governed data in Snowflake. The connector lets both sides coexist without manual ETL scripts.</p></div>
+      <div class="trio-item"><div class="num">03</div><h4>How it works</h4><p>Reads: Snowflake executes the query pushdown, exports result as Parquet to a stage, Spark reads the Parquet. Writes: Spark writes Parquet to a stage, Snowflake COPY INTO reads it. No row-at-a-time serialization.</p></div>
+    </div>
+
+    <h3>Reading from Snowflake in PySpark</h3>
+    <pre><span class="cm"># spark-submit --packages net.snowflake:spark-snowflake_2.12:2.12.0-spark_3.3,\</span>
+<span class="cm">#                            net.snowflake:snowflake-jdbc:3.13.30</span>
+
+SNOWFLAKE_SOURCE_NAME = <span class="st">"net.snowflake.spark.snowflake"</span>
+
+sfOptions = {
+  <span class="st">"sfURL"</span>:       <span class="st">"myaccount.snowflakecomputing.com"</span>,
+  <span class="st">"sfUser"</span>:      <span class="st">"spark_svc"</span>,
+  <span class="st">"sfPassword"</span>:  <span class="st">"&lt;password&gt;"</span>,   <span class="cm"># prefer pem_private_key</span>
+  <span class="st">"sfDatabase"</span>:  <span class="st">"ANALYTICS"</span>,
+  <span class="st">"sfSchema"</span>:    <span class="st">"GOLD"</span>,
+  <span class="st">"sfWarehouse"</span>: <span class="st">"SPARK_WH"</span>,
+  <span class="st">"sfRole"</span>:      <span class="st">"SPARK_ROLE"</span>,
+}
+
+<span class="cm"># Read a full table</span>
+df = spark.read \
+  .format(SNOWFLAKE_SOURCE_NAME) \
+  .options(**sfOptions) \
+  .option(<span class="st">"dbtable"</span>, <span class="st">"GOLD.SALES_FACT"</span>) \
+  .load()
+
+<span class="cm"># Read using a custom query (Snowflake executes this, returns Parquet)</span>
+df = spark.read \
+  .format(SNOWFLAKE_SOURCE_NAME) \
+  .options(**sfOptions) \
+  .option(<span class="st">"query"</span>, <span class="st">"SELECT * FROM SALES_FACT WHERE sale_date >= '2024-01-01'"</span>) \
+  .load()
+
+df.printSchema()
+df.show(5)</pre>
+
+    <h3>Writing to Snowflake from PySpark</h3>
+    <pre><span class="cm"># Write a Spark DataFrame back to Snowflake</span>
+df_result.write \
+  .format(SNOWFLAKE_SOURCE_NAME) \
+  .options(**sfOptions) \
+  .option(<span class="st">"dbtable"</span>, <span class="st">"GOLD.ML_PREDICTIONS"</span>) \
+  .mode(<span class="st">"overwrite"</span>) \   <span class="cm"># or "append", "errorifexists", "ignore"</span>
+  .save()
+
+<span class="cm"># Merge mode — use Snowflake's COPY + MERGE via a staging table</span>
+df_result.write \
+  .format(SNOWFLAKE_SOURCE_NAME) \
+  .options(**sfOptions) \
+  .option(<span class="st">"dbtable"</span>, <span class="st">"STAGE.ML_PREDICTIONS_STAGE"</span>) \
+  .mode(<span class="st">"overwrite"</span>) \
+  .save()
+<span class="cm"># Then trigger a Snowflake Task or stored procedure to MERGE from staging → gold</span></pre>
+
+    <h3>Query pushdown</h3>
+    <p style="color:var(--ink2);margin-bottom:10px">The Spark connector pushes filter and projection operations down to Snowflake. If you call <code>df.filter("region = 'EAST'")</code>, Snowflake adds that predicate to its export query — only the filtered rows leave Snowflake. Enable explicitly if needed:</p>
+    <pre><span class="cm"># Pushdown is on by default; verify or force via:</span>
+sfOptions[<span class="st">"autopushdown"</span>] = <span class="st">"on"</span>
+
+<span class="cm"># To debug what SQL is pushed down, check the Snowflake QUERY_HISTORY</span>
+<span class="cm"># after running the Spark job — look for queries from user spark_svc</span></pre>
+
+    <div class="card amber">
+      <h4>Interview trap — Spark mode vs Snowflake truncate</h4>
+      <p>Spark's <code>.mode("overwrite")</code> does NOT run <code>TRUNCATE TABLE</code>. It drops and recreates the target table, which loses your column masking policies, tags, grants, and clustering keys. For a safe overwrite, write to a staging table, then do an INSERT OVERWRITE or MERGE in Snowflake. Alternatively, use Snowpark for Python instead of the Spark connector — it runs entirely within Snowflake.</p>
+    </div>
+    <div class="card ice">
+      <h4>Spark connector vs Snowpark</h4>
+      <table>
+        <thead><tr><th>Dimension</th><th>Spark Connector</th><th>Snowpark</th></tr></thead>
+        <tbody>
+          <tr><td>Runs on</td><td>Your Spark cluster (external)</td><td>Snowflake Virtual Warehouse</td></tr>
+          <tr><td>Language</td><td>Python, Scala, Java</td><td>Python, Scala, Java</td></tr>
+          <tr><td>Data movement</td><td>Parquet via stage (significant for large datasets)</td><td>None — code runs inside Snowflake</td></tr>
+          <tr><td>Best for</td><td>ML workloads requiring Spark libraries (MLlib, etc.)</td><td>ELT transforms, feature engineering inside Snowflake</td></tr>
+          <tr><td>Cost</td><td>Spark cluster + Snowflake warehouse</td><td>Snowflake warehouse only</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <hr>
+
+  <!-- CHAPTER 03 — CDC -->
+  <div class="section" id="ch03">
+    <div class="section-label">Chapter 03</div>
+    <h2>CDC Pipeline: Debezium → Kafka → Snowpipe Streaming</h2>
+
+    <div class="trio">
+      <div class="trio-item"><div class="num">01</div><h4>What is it</h4><p>An end-to-end change data capture (CDC) architecture that captures row-level changes from an OLTP database (MySQL, Postgres, Oracle) in real time and delivers them to Snowflake with sub-second latency.</p></div>
+      <div class="trio-item"><div class="num">02</div><h4>Why it matters</h4><p>Traditional ETL from OLTP databases is batch (nightly dumps). CDC captures every INSERT, UPDATE, DELETE as it happens — enabling real-time analytics, event-driven pipelines, and audit trails without touching the source.</p></div>
+      <div class="trio-item"><div class="num">03</div><h4>How it works</h4><p>Debezium reads the database transaction log (binlog / WAL). Each change event is published to a Kafka topic. The Snowflake Kafka Connector or Snowpipe Streaming SDK consumes the topic and writes to Snowflake.</p></div>
+    </div>
+
+    <h3>Full architecture</h3>
+    <div class="flow">
+      <div class="flow-box">MySQL binlog</div><div class="flow-arrow">→</div>
+      <div class="flow-box">Debezium (Kafka Connect source)</div><div class="flow-arrow">→</div>
+      <div class="flow-box">Kafka Topic (orders.changes)</div><div class="flow-arrow">→</div>
+      <div class="flow-box">Snowflake Kafka Connector or Snowpipe Streaming</div><div class="flow-arrow">→</div>
+      <div class="flow-box">Snowflake RAW table (VARIANT)</div><div class="flow-arrow">→</div>
+      <div class="flow-box">Stream + Task MERGE → CURATED</div>
+    </div>
+
+    <h3>Debezium event envelope</h3>
+    <p style="color:var(--ink2);margin-bottom:10px">Every Debezium event is a JSON envelope with <code>before</code> (old row state), <code>after</code> (new row state), and <code>op</code> (c=create, u=update, d=delete, r=snapshot read).</p>
+    <pre><span class="cm">-- What a Debezium UPDATE event looks like in RECORD_CONTENT</span>
+{
+  <span class="st">"before"</span>: { <span class="st">"order_id"</span>: <span class="nm">101</span>, <span class="st">"status"</span>: <span class="st">"PENDING"</span>,   <span class="st">"amount"</span>: <span class="nm">100.00</span> },
+  <span class="st">"after"</span>:  { <span class="st">"order_id"</span>: <span class="nm">101</span>, <span class="st">"status"</span>: <span class="st">"CONFIRMED"</span>, <span class="st">"amount"</span>: <span class="nm">100.00</span> },
+  <span class="st">"op"</span>:     <span class="st">"u"</span>,
+  <span class="st">"ts_ms"</span>:  <span class="nm">1710000000000</span>
+}
+
+<span class="cm">-- Apply CDC events to a Snowflake CURATED table using MERGE</span>
+<span class="kw">MERGE INTO</span> orders_curated tgt
+<span class="kw">USING</span> (
+  <span class="kw">SELECT</span>
+    RECORD_CONTENT:op::STRING              <span class="kw">AS</span> op,
+    RECORD_CONTENT:after:order_id::INT     <span class="kw">AS</span> order_id,
+    RECORD_CONTENT:after:status::STRING    <span class="kw">AS</span> status,
+    RECORD_CONTENT:after:amount::FLOAT     <span class="kw">AS</span> amount,
+    RECORD_CONTENT:before:order_id::INT    <span class="kw">AS</span> del_order_id,
+    RECORD_METADATA:CreateTime::BIGINT     <span class="kw">AS</span> kafka_ts,
+    <span class="kw">ROW_NUMBER() OVER</span>(
+      <span class="kw">PARTITION BY COALESCE</span>(
+        RECORD_CONTENT:after:order_id::INT,
+        RECORD_CONTENT:before:order_id::INT)
+      <span class="kw">ORDER BY</span> RECORD_METADATA:CreateTime::BIGINT <span class="kw">DESC</span>
+    ) <span class="kw">AS</span> rn
+  <span class="kw">FROM</span> orders_kafka_raw
+  <span class="kw">QUALIFY</span> rn = <span class="nm">1</span>  <span class="cm">-- keep only the latest event per order_id</span>
+) src <span class="kw">ON</span> tgt.order_id = <span class="kw">COALESCE</span>(src.order_id, src.del_order_id)
+<span class="kw">WHEN MATCHED AND</span> src.op <span class="kw">IN</span> (<span class="st">'u'</span>, <span class="st">'r'</span>) <span class="kw">THEN</span>
+  <span class="kw">UPDATE SET</span> status = src.status, amount = src.amount
+<span class="kw">WHEN MATCHED AND</span> src.op = <span class="st">'d'</span> <span class="kw">THEN DELETE</span>
+<span class="kw">WHEN NOT MATCHED AND</span> src.op <span class="kw">IN</span> (<span class="st">'c'</span>, <span class="st">'r'</span>) <span class="kw">THEN</span>
+  <span class="kw">INSERT</span> (order_id, status, amount)
+  <span class="kw">VALUES</span> (src.order_id, src.status, src.amount);</pre>
+
+    <h3>Snowpipe Streaming SDK (low-latency alternative)</h3>
+    <p style="color:var(--ink2);margin-bottom:10px">For sub-second latency, bypass Kafka Connect entirely. The Snowpipe Streaming Java/Python SDK opens a persistent channel to Snowflake and streams rows directly — no staging files, no Snowpipe overhead.</p>
+    <pre><span class="cm"># Python Snowpipe Streaming SDK (conceptual)</span>
+<span class="kw">from</span> snowflake.ingest <span class="kw">import</span> SimpleIngestManager
+
+<span class="cm"># The SDK maintains an open channel; you push rows as Python dicts</span>
+<span class="cm"># Latency: ~1 second (vs ~90 seconds for file-based Snowpipe)</span>
+<span class="cm"># Use when: real-time dashboards, fraud detection, operational analytics</span>
+<span class="cm"># Cost model: serverless credits per row ingested (not per warehouse minute)</span></pre>
+
+    <div class="card amber">
+      <h4>Interview trap — initial snapshot</h4>
+      <p>Debezium starts capturing from the binlog at a point in time. For existing data before CDC was enabled, you must do an initial snapshot (Debezium's <code>snapshot.mode=initial</code> or a separate bulk load). The snapshot emits <code>op: "r"</code> (read) events. Your MERGE must handle <code>r</code> as an INSERT or UPSERT — do not filter it out.</p>
+    </div>
+    <div class="card ice">
+      <h4>Senior angle — ordering guarantees</h4>
+      <p>Kafka partitions guarantee order <em>within</em> a partition. If a table's CDC events land in multiple partitions (e.g., partitioned by order_id hash), the Kafka Connector may write events out of order per row. The QUALIFY ROW_NUMBER() trick in the MERGE above handles this by picking the latest event per key — but it means the raw table is the definitive log, and the curated table is the latest state only. Keep the raw table for full audit / time travel.</p>
+    </div>
+  </div>
+
+  <hr>
+
+  <!-- CHAPTER 04 — External Functions -->
+  <div class="section" id="ch04">
+    <div class="section-label">Chapter 04</div>
+    <h2>External Functions &amp; API Integration</h2>
+
+    <div class="trio">
+      <div class="trio-item"><div class="num">01</div><h4>What is it</h4><p>A mechanism to call an external REST API (via AWS API Gateway, Azure API Management, or GCP API Gateway) from within a Snowflake SQL query — as if it were a native UDF. The function sends rows out in batches and receives results back.</p></div>
+      <div class="trio-item"><div class="num">02</div><h4>Why it matters</h4><p>Enables SQL-native calls to: ML models hosted outside Snowflake, address standardisation APIs, geocoding services, fraud scoring engines, or any HTTP-based service — without writing a data pipeline or Snowpark stored procedure.</p></div>
+      <div class="trio-item"><div class="num">03</div><h4>How it works</h4><p>Snowflake sends a POST request with a JSON batch of rows to your API endpoint. Your function processes them and returns a JSON array of results. Snowflake maps results back to output rows. Auth is via the API Integration object (OAuth or IAM).</p></div>
+    </div>
+
+    <h3>Setup: API Integration + External Function</h3>
+    <pre><span class="cm">-- Step 1: Create the API Integration (connects Snowflake to your API Gateway)</span>
+<span class="kw">USE ROLE</span> ACCOUNTADMIN;
+
+<span class="kw">CREATE OR REPLACE API INTEGRATION</span> fraud_score_api
+  API_PROVIDER = aws_api_gateway
+  API_AWS_ROLE_ARN = <span class="st">'arn:aws:iam::123456789:role/snowflake-external-fn-role'</span>
+  API_ALLOWED_PREFIXES = (<span class="st">'https://abc123.execute-api.us-east-1.amazonaws.com/prod/'</span>)
+  ENABLED = <span class="kw">TRUE</span>;
+
+<span class="cm">-- Get the values to configure the IAM trust policy on the AWS side</span>
+<span class="kw">DESCRIBE INTEGRATION</span> fraud_score_api;
+<span class="cm">-- Note: API_AWS_IAM_USER_ARN and API_AWS_EXTERNAL_ID</span>
+<span class="cm">-- Add these to the trust policy of the AWS role above</span>
+
+<span class="cm">-- Step 2: Create the external function</span>
+<span class="kw">CREATE OR REPLACE EXTERNAL FUNCTION</span> score_fraud(
+  transaction_id  <span class="kw">VARCHAR</span>,
+  amount          <span class="kw">FLOAT</span>,
+  merchant_code   <span class="kw">VARCHAR</span>
+)
+<span class="kw">RETURNS VARIANT</span>
+<span class="kw">API_INTEGRATION</span> = fraud_score_api
+<span class="kw">AS</span> <span class="st">'https://abc123.execute-api.us-east-1.amazonaws.com/prod/fraud-score'</span>;
+
+<span class="cm">-- Step 3: Call it in a query — Snowflake batches the rows and sends them</span>
+<span class="kw">SELECT</span>
+  t.transaction_id,
+  t.amount,
+  score_fraud(t.transaction_id, t.amount, t.merchant_code) <span class="kw">AS</span> fraud_result,
+  fraud_result:score::FLOAT                                 <span class="kw">AS</span> fraud_score,
+  fraud_result:risk_band::STRING                            <span class="kw">AS</span> risk_band
+<span class="kw">FROM</span> transactions t
+<span class="kw">WHERE</span> t.transaction_date = <span class="kw">CURRENT_DATE</span>();</pre>
+
+    <h3>Request / response format</h3>
+    <p style="color:var(--ink2);margin-bottom:10px">Snowflake sends a JSON POST body. Your Lambda / API handler must accept and return this exact shape:</p>
+    <pre><span class="cm">// Snowflake sends (data = array of [row_number, col1, col2, ...])</span>
+{
+  <span class="st">"data"</span>: [
+    [<span class="nm">0</span>, <span class="st">"TXN001"</span>, <span class="nm">450.00</span>, <span class="st">"MCH_GROCERY"</span>],
+    [<span class="nm">1</span>, <span class="st">"TXN002"</span>, <span class="nm">9999.99</span>, <span class="st">"MCH_JEWELLERY"</span>]
+  ]
+}
+
+<span class="cm">// Your API must return (data = array of [row_number, result])</span>
+{
+  <span class="st">"data"</span>: [
+    [<span class="nm">0</span>, {<span class="st">"score"</span>: <span class="nm">0.12</span>, <span class="st">"risk_band"</span>: <span class="st">"LOW"</span>}],
+    [<span class="nm">1</span>, {<span class="st">"score"</span>: <span class="nm">0.94</span>, <span class="st">"risk_band"</span>: <span class="st">"HIGH"</span>}]
+  ]
+}</pre>
+
+    <div class="card amber">
+      <h4>Interview trap — batch size and latency</h4>
+      <p>External functions are designed for batch calls (Snowflake groups rows into batches of up to 10,000 by default). They are <em>not</em> suitable for sub-100ms row-at-a-time calls. Each API call has network round-trip latency. If latency is critical, materialise the scores into a Snowflake table using a scheduled Task rather than calling the API inline on every SELECT.</p>
+    </div>
+    <div class="card ice">
+      <h4>Senior angle — External Functions vs Cortex</h4>
+      <p>Snowflake Cortex (Module 11) provides built-in LLM and ML functions natively — no API Integration needed. If your use case is text classification, summarisation, or embedding generation, Cortex is simpler and cheaper. Use External Functions when you need a <em>specific proprietary model</em> or service that Cortex doesn't provide (e.g., your company's internal fraud model, a third-party geocoding API).</p>
+    </div>
+  </div>
+
+  <hr>
+
+  <!-- LAB -->
+  <div class="section" id="lab">
+    <div class="section-label">Chapter 05 · SQL Lab</div>
+    <h2>Hands-on: Simulate a CDC pipeline in Snowflake</h2>
+    <p style="color:var(--ink2);margin-bottom:24px">This lab simulates the Debezium → Kafka → Snowflake CDC pattern entirely within Snowflake by inserting mock Debezium-shaped events and applying them with MERGE. No external Kafka cluster needed.</p>
+
+    <div class="lab-step">
+      <div class="step-num">1</div>
+      <div class="step-body">
+        <h4>Set up the environment</h4>
+        <pre><span class="kw">USE ROLE</span> SYSADMIN;
+<span class="kw">CREATE DATABASE IF NOT EXISTS</span> CDC_LAB;
+<span class="kw">CREATE SCHEMA IF NOT EXISTS</span>   CDC_LAB.DEMO;
+<span class="kw">CREATE WAREHOUSE IF NOT EXISTS</span> CDC_WH
+  WAREHOUSE_SIZE = <span class="st">'XSMALL'</span> AUTO_SUSPEND = <span class="nm">60</span> AUTO_RESUME = <span class="kw">TRUE</span>;
+<span class="kw">USE</span> CDC_LAB.DEMO;
+<span class="kw">USE WAREHOUSE</span> CDC_WH;</pre>
+        <div class="checkpoint">SHOW DATABASES includes CDC_LAB.</div>
+      </div>
+    </div>
+
+    <div class="lab-step">
+      <div class="step-num">2</div>
+      <div class="step-body">
+        <h4>Create the RAW (Kafka landing) and CURATED tables</h4>
+        <pre><span class="cm">-- Simulates the auto-created table from the Kafka Connector</span>
+<span class="kw">CREATE OR REPLACE TABLE</span> orders_kafka_raw (
+  RECORD_CONTENT   <span class="kw">VARIANT</span>,
+  RECORD_METADATA  <span class="kw">VARIANT</span>
+);
+
+<span class="cm">-- Target curated table</span>
+<span class="kw">CREATE OR REPLACE TABLE</span> orders_curated (
+  order_id    <span class="kw">INT PRIMARY KEY</span>,
+  customer_id <span class="kw">INT</span>,
+  status      <span class="kw">VARCHAR</span>,
+  amount      <span class="kw">FLOAT</span>,
+  updated_at  <span class="kw">TIMESTAMP_NTZ</span>
+);</pre>
+        <div class="checkpoint">Both tables created. SHOW TABLES lists 2 tables.</div>
+      </div>
+    </div>
+
+    <div class="lab-step">
+      <div class="step-num">3</div>
+      <div class="step-body">
+        <h4>Insert mock Debezium CDC events (snapshot + changes)</h4>
+        <pre><span class="cm">-- Initial snapshot (op = 'r')</span>
+<span class="kw">INSERT INTO</span> orders_kafka_raw <span class="kw">SELECT</span>
+  PARSE_JSON(<span class="st">'{"op":"r","after":{"order_id":1,"customer_id":100,"status":"CONFIRMED","amount":250.00}}'</span>),
+  PARSE_JSON(<span class="st">'{"CreateTime":1710000000000,"offset":0,"partition":0}'</span>);
+<span class="kw">INSERT INTO</span> orders_kafka_raw <span class="kw">SELECT</span>
+  PARSE_JSON(<span class="st">'{"op":"r","after":{"order_id":2,"customer_id":101,"status":"PENDING","amount":99.99}}'</span>),
+  PARSE_JSON(<span class="st">'{"CreateTime":1710000001000,"offset":1,"partition":0}'</span>);
+
+<span class="cm">-- New order (op = 'c' create)</span>
+<span class="kw">INSERT INTO</span> orders_kafka_raw <span class="kw">SELECT</span>
+  PARSE_JSON(<span class="st">'{"op":"c","after":{"order_id":3,"customer_id":102,"status":"PENDING","amount":420.00}}'</span>),
+  PARSE_JSON(<span class="st">'{"CreateTime":1710000002000,"offset":2,"partition":0}'</span>);
+
+<span class="cm">-- Update (op = 'u')</span>
+<span class="kw">INSERT INTO</span> orders_kafka_raw <span class="kw">SELECT</span>
+  PARSE_JSON(<span class="st">'{"op":"u","before":{"order_id":2},"after":{"order_id":2,"customer_id":101,"status":"CONFIRMED","amount":99.99}}'</span>),
+  PARSE_JSON(<span class="st">'{"CreateTime":1710000003000,"offset":3,"partition":0}'</span>);
+
+<span class="cm">-- Delete (op = 'd')</span>
+<span class="kw">INSERT INTO</span> orders_kafka_raw <span class="kw">SELECT</span>
+  PARSE_JSON(<span class="st">'{"op":"d","before":{"order_id":3,"customer_id":102,"status":"PENDING","amount":420.00}}'</span>),
+  PARSE_JSON(<span class="st">'{"CreateTime":1710000004000,"offset":4,"partition":0}'</span>);</pre>
+        <div class="checkpoint">SELECT COUNT(*) FROM orders_kafka_raw = 5.</div>
+      </div>
+    </div>
+
+    <div class="lab-step">
+      <div class="step-num">4</div>
+      <div class="step-body">
+        <h4>Apply CDC events with MERGE</h4>
+        <pre><span class="kw">MERGE INTO</span> orders_curated tgt
+<span class="kw">USING</span> (
+  <span class="kw">SELECT</span>
+    RECORD_CONTENT:op::STRING                              <span class="kw">AS</span> op,
+    <span class="kw">COALESCE</span>(
+      RECORD_CONTENT:after:order_id::INT,
+      RECORD_CONTENT:before:order_id::INT)                 <span class="kw">AS</span> order_id,
+    RECORD_CONTENT:after:customer_id::INT                  <span class="kw">AS</span> customer_id,
+    RECORD_CONTENT:after:status::STRING                    <span class="kw">AS</span> status,
+    RECORD_CONTENT:after:amount::FLOAT                     <span class="kw">AS</span> amount,
+    RECORD_METADATA:CreateTime::BIGINT                     <span class="kw">AS</span> kafka_ts,
+    <span class="kw">ROW_NUMBER() OVER</span>(
+      <span class="kw">PARTITION BY COALESCE</span>(
+        RECORD_CONTENT:after:order_id::INT,
+        RECORD_CONTENT:before:order_id::INT)
+      <span class="kw">ORDER BY</span> RECORD_METADATA:CreateTime::BIGINT <span class="kw">DESC</span>
+    ) <span class="kw">AS</span> rn
+  <span class="kw">FROM</span>   orders_kafka_raw
+  <span class="kw">QUALIFY</span> rn = <span class="nm">1</span>
+) src <span class="kw">ON</span> tgt.order_id = src.order_id
+<span class="kw">WHEN MATCHED AND</span> src.op <span class="kw">IN</span> (<span class="st">'u'</span>, <span class="st">'r'</span>) <span class="kw">THEN</span>
+  <span class="kw">UPDATE SET</span>
+    status     = src.status,
+    amount     = src.amount,
+    updated_at = <span class="kw">TO_TIMESTAMP_NTZ</span>(src.kafka_ts/<span class="nm">1000</span>)
+<span class="kw">WHEN MATCHED AND</span> src.op = <span class="st">'d'</span> <span class="kw">THEN DELETE</span>
+<span class="kw">WHEN NOT MATCHED AND</span> src.op <span class="kw">IN</span> (<span class="st">'c'</span>, <span class="st">'r'</span>) <span class="kw">THEN</span>
+  <span class="kw">INSERT</span> (order_id, customer_id, status, amount, updated_at)
+  <span class="kw">VALUES</span> (src.order_id, src.customer_id, src.status, src.amount,
+          <span class="kw">TO_TIMESTAMP_NTZ</span>(src.kafka_ts/<span class="nm">1000</span>));</pre>
+        <div class="checkpoint">SELECT * FROM orders_curated — should have 2 rows: order_id=1 (CONFIRMED) and order_id=2 (CONFIRMED, updated). Order 3 was deleted and must not appear.</div>
+        <div class="pitfall">Order 3 had op='c' (insert) followed by op='d' (delete). The QUALIFY keeps only the latest event (the delete), so the MERGE sees op='d' with no existing row in curated. WHEN MATCHED AND op='d' won't fire (no match). Add a WHEN NOT MATCHED AND op != 'd' guard to avoid inserting deleted rows.</div>
+      </div>
+    </div>
+
+    <div class="lab-step">
+      <div class="step-num">5</div>
+      <div class="step-body">
+        <h4>Add a stream on the raw table and automate with a task</h4>
+        <pre><span class="kw">CREATE OR REPLACE STREAM</span> orders_cdc_stream
+  <span class="kw">ON TABLE</span> orders_kafka_raw
+  APPEND_ONLY = <span class="kw">TRUE</span>;  <span class="cm">-- Kafka raw is append-only; use append-only stream</span>
+
+<span class="kw">CREATE OR REPLACE TASK</span> apply_cdc_task
+  WAREHOUSE = CDC_WH
+  SCHEDULE = <span class="st">'1 MINUTE'</span>
+  WHEN <span class="kw">SYSTEM$STREAM_HAS_DATA</span>(<span class="st">'orders_cdc_stream'</span>)
+<span class="kw">AS</span>
+<span class="kw">MERGE INTO</span> orders_curated tgt
+<span class="kw">USING</span> (
+  <span class="kw">SELECT</span>
+    RECORD_CONTENT:op::STRING                              <span class="kw">AS</span> op,
+    <span class="kw">COALESCE</span>(
+      RECORD_CONTENT:after:order_id::INT,
+      RECORD_CONTENT:before:order_id::INT)                 <span class="kw">AS</span> order_id,
+    RECORD_CONTENT:after:customer_id::INT                  <span class="kw">AS</span> customer_id,
+    RECORD_CONTENT:after:status::STRING                    <span class="kw">AS</span> status,
+    RECORD_CONTENT:after:amount::FLOAT                     <span class="kw">AS</span> amount,
+    RECORD_METADATA:CreateTime::BIGINT                     <span class="kw">AS</span> kafka_ts,
+    <span class="kw">ROW_NUMBER() OVER</span>(
+      <span class="kw">PARTITION BY COALESCE</span>(
+        RECORD_CONTENT:after:order_id::INT,
+        RECORD_CONTENT:before:order_id::INT)
+      <span class="kw">ORDER BY</span> RECORD_METADATA:CreateTime::BIGINT <span class="kw">DESC</span>
+    ) rn
+  <span class="kw">FROM</span>   orders_cdc_stream
+  <span class="kw">QUALIFY</span> rn = <span class="nm">1</span>
+) src <span class="kw">ON</span> tgt.order_id = src.order_id
+<span class="kw">WHEN MATCHED AND</span> src.op <span class="kw">IN</span> (<span class="st">'u'</span>,<span class="st">'r'</span>) <span class="kw">THEN</span>
+  <span class="kw">UPDATE SET</span> status=src.status,amount=src.amount,updated_at=<span class="kw">TO_TIMESTAMP_NTZ</span>(src.kafka_ts/<span class="nm">1000</span>)
+<span class="kw">WHEN MATCHED AND</span> src.op=<span class="st">'d'</span> <span class="kw">THEN DELETE</span>
+<span class="kw">WHEN NOT MATCHED AND</span> src.op <span class="kw">IN</span> (<span class="st">'c'</span>,<span class="st">'r'</span>) <span class="kw">THEN</span>
+  <span class="kw">INSERT</span>(order_id,customer_id,status,amount,updated_at)
+  <span class="kw">VALUES</span>(src.order_id,src.customer_id,src.status,src.amount,<span class="kw">TO_TIMESTAMP_NTZ</span>(src.kafka_ts/<span class="nm">1000</span>));
+
+<span class="kw">ALTER TASK</span> apply_cdc_task <span class="kw">RESUME</span>;</pre>
+        <div class="checkpoint">SHOW TASKS shows apply_cdc_task with state=started. Insert a new CDC event into orders_kafka_raw; within 1 minute the task fires and the new row appears in orders_curated.</div>
+      </div>
+    </div>
+
+    <div class="lab-step">
+      <div class="step-num">6</div>
+      <div class="step-body">
+        <h4>Cleanup</h4>
+        <pre><span class="kw">ALTER TASK</span> apply_cdc_task <span class="kw">SUSPEND</span>;
+<span class="kw">DROP DATABASE IF EXISTS</span> CDC_LAB;
+<span class="kw">DROP WAREHOUSE IF EXISTS</span> CDC_WH;</pre>
+      </div>
+    </div>
+  </div>
+
+  <hr>
+
+  <!-- Q&A -->
+  <div class="section" id="qa">
+    <div class="section-label">Chapter 06</div>
+    <h2>Interview Q&amp;A</h2>
+
+    <details>
+      <summary>How does the Snowflake Kafka Connector handle schema evolution? <span class="qa-tag tag-tricky">TRICKY</span></summary>
+      <div class="qa-body">Because the payload lands in a VARIANT column (RECORD_CONTENT), new fields in the Kafka message appear automatically with no schema change required on the raw table. Schema evolution affects the downstream curated layer: when a new field appears, you add a column to the curated table and update the MERGE/transform query. With Avro + Schema Registry, Debezium/Kafka enforces a schema contract and generates versioned schemas; Snowflake's INFER_SCHEMA can read the Avro schema from the stage to assist with the ALTER TABLE.</div>
+    </details>
+    <details>
+      <summary>What is the difference between the Kafka Connector and Snowpipe Streaming? <span class="qa-tag tag-fund">FUNDAMENTAL</span></summary>
+      <div class="qa-body">The Kafka Connector uses file-based Snowpipe under the hood: it buffers records into files (up to buffer.flush.time seconds), uploads to an internal stage, then triggers Snowpipe. Latency is typically 90–120 seconds. Snowpipe Streaming (the SDK) opens a persistent channel and streams rows directly — no files, no stage — with ~1 second latency. Use Kafka Connector for throughput-oriented workloads where ~2 minutes is acceptable. Use Snowpipe Streaming for real-time dashboards, fraud detection, or operational analytics requiring sub-10-second freshness.</div>
+    </details>
+    <details>
+      <summary>Spark .mode("overwrite") drops my Snowflake table. How do you avoid this? <span class="qa-tag tag-scenario">SCENARIO</span></summary>
+      <div class="qa-body">Write to a dedicated staging table (e.g., ML_PREDICTIONS_STAGE), then use a Snowflake MERGE or INSERT OVERWRITE from the staging table into the target. This keeps the target table's tags, grants, masking policies, and clustering keys intact. Alternatively, use Snowpark for Python instead of the Spark connector — it runs transforms entirely within Snowflake and avoids cross-system data movement.</div>
+    </details>
+    <details>
+      <summary>What is an API Integration and why is it needed for External Functions? <span class="qa-tag tag-fund">FUNDAMENTAL</span></summary>
+      <div class="qa-body">An API Integration is a Snowflake object that defines the trust relationship between Snowflake and your cloud-hosted API Gateway. It specifies the cloud provider (AWS, Azure, GCP), the IAM role ARN or service principal, and allowed URL prefixes. DESCRIBE INTEGRATION gives you the IAM trust details (IAM user ARN + external ID for AWS) that you add to your cloud IAM role trust policy. Without this handshake, Snowflake cannot authenticate to your endpoint. The External Function then references the API Integration to inherit these auth credentials.</div>
+    </details>
+    <details>
+      <summary>A CDC pipeline is delivering duplicate rows to Snowflake. How do you diagnose and fix it? <span class="qa-tag tag-scenario">SCENARIO</span></summary>
+      <div class="qa-body">Diagnosis: (1) Check RECORD_METADATA offset — if the same Kafka offset appears twice, the Kafka Connector reprocessed after a restart. (2) Check if two Kafka partitions have the same records (misconfigured partitioning). (3) Check if the Debezium snapshot overlapped with the stream. Fix: (1) The QUALIFY ROW_NUMBER() OVER (PARTITION BY order_id ORDER BY CreateTime DESC) = 1 pattern in the MERGE source deduplicate by keeping only the latest event per key. (2) Snowpipe also deduplicates by file within a 1-hour window — ensure files are distinct. (3) For connector restarts, Kafka's exactly-once delivery (enable.idempotence=true + acks=all) prevents duplicate Kafka messages at the Kafka level.</div>
+    </details>
+    <details>
+      <summary>When would you choose Spark over Snowpark for a transformation workload? <span class="qa-tag tag-tricky">TRICKY</span></summary>
+      <div class="qa-body">Choose Spark when: (1) You need Spark-specific ML libraries (MLlib, XGBoost on Spark, graph algorithms via GraphX/Frames). (2) You have existing Spark-based pipelines and migrating is not cost-effective. (3) You need to join Snowflake data with datasets in other stores (S3, Delta Lake) in a single Spark job. (4) Your team is primarily Spark-native. Choose Snowpark when: the transformation logic is SQL-expressible or Python-expressible without Spark libraries, you want to eliminate data movement costs, and you prefer a single-platform governance model. The cost argument strongly favours Snowpark: no separate Spark cluster to manage or pay for.</div>
+    </details>
+    <details>
+      <summary>What is the Debezium initial snapshot and how do you handle op='r' events? <span class="qa-tag tag-tricky">TRICKY</span></summary>
+      <div class="qa-body">When Debezium first starts (or is reconfigured with snapshot.mode=initial), it reads every existing row from the source table and emits an event with op='r' (read). These look like CDC events but are full table reads, not incremental changes. In your MERGE: treat op='r' as UPSERT — WHEN NOT MATCHED AND op IN ('c','r') THEN INSERT, and WHEN MATCHED AND op IN ('u','r') THEN UPDATE. This correctly handles both: a snapshot row that doesn't yet exist in Snowflake (insert) and a re-snapshot of an existing row that may have been modified (update). Never filter out op='r' events.</div>
+    </details>
+  </div>
+
+  <hr>
+
+  <!-- QUIZ -->
+  <div class="section" id="quiz">
+    <div class="section-label">Chapter 07</div>
+    <h2>Quiz</h2>
+
+    <div class="quiz-q">
+      <p>1. What authentication method does the Snowflake Kafka Connector require?</p>
+      <div class="quiz-opt">
+        <label><input type="radio" name="q1" value="a"> Username and password</label>
+        <label><input type="radio" name="q1" value="b"> RSA key-pair authentication</label>
+        <label><input type="radio" name="q1" value="c"> OAuth bearer token</label>
+        <label><input type="radio" name="q1" value="d"> IP allowlist only</label>
+      </div>
+      <div class="quiz-answer correct" id="q1-c">✓ RSA key-pair authentication. The Kafka Connector does not support username/password. The RSA private key PEM is set in the connector config; the public key is registered on the Snowflake service account user.</div>
+    </div>
+
+    <div class="quiz-q">
+      <p>2. What does Spark .mode("overwrite") do to a Snowflake table's masking policies?</p>
+      <div class="quiz-opt">
+        <label><input type="radio" name="q2" value="a"> Preserves them</label>
+        <label><input type="radio" name="q2" value="b"> Drops and recreates the table, losing all policies, grants, and tags</label>
+        <label><input type="radio" name="q2" value="c"> Runs TRUNCATE TABLE and reloads</label>
+        <label><input type="radio" name="q2" value="d"> Updates only changed rows</label>
+      </div>
+      <div class="quiz-answer correct" id="q2-c">✓ Drops and recreates. mode("overwrite") in the Spark connector drops the target table and recreates it, destroying all attached policies, grants, clustering keys, and tags. Write to a staging table instead.</div>
+    </div>
+
+    <div class="quiz-q">
+      <p>3. A Debezium event has op='d'. How should your MERGE handle it?</p>
+      <div class="quiz-opt">
+        <label><input type="radio" name="q3" value="a"> INSERT the before values</label>
+        <label><input type="radio" name="q3" value="b"> WHEN MATCHED THEN DELETE — remove the row from the curated table</label>
+        <label><input type="radio" name="q3" value="c"> Ignore it — deletions are not needed in Snowflake</label>
+        <label><input type="radio" name="q3" value="d"> UPDATE the row's status to 'DELETED'</label>
+      </div>
+      <div class="quiz-answer correct" id="q3-c">✓ WHEN MATCHED AND op='d' THEN DELETE. If you want a soft delete for audit, UPDATE a deleted_at column instead. Hard DELETE is correct for GDPR right-to-erasure compliance.</div>
+    </div>
+
+    <div class="quiz-q">
+      <p>4. What is the approximate ingestion latency difference between the Kafka Connector and Snowpipe Streaming SDK?</p>
+      <div class="quiz-opt">
+        <label><input type="radio" name="q4" value="a"> Both are ~1 second</label>
+        <label><input type="radio" name="q4" value="b"> Kafka Connector ~90–120 seconds; Snowpipe Streaming ~1 second</label>
+        <label><input type="radio" name="q4" value="c"> Kafka Connector ~1 second; Snowpipe Streaming ~5 minutes</label>
+        <label><input type="radio" name="q4" value="d"> Both are ~90 seconds</label>
+      </div>
+      <div class="quiz-answer correct" id="q4-c">✓ The Kafka Connector buffers records into files before triggering Snowpipe (~90–120s). Snowpipe Streaming opens a persistent channel and streams rows directly (~1s). The tradeoff: Streaming is more expensive per row.</div>
+    </div>
+
+    <div class="quiz-q">
+      <p>5. What must your API return for an External Function to work correctly?</p>
+      <div class="quiz-opt">
+        <label><input type="radio" name="q5" value="a"> A flat CSV string</label>
+        <label><input type="radio" name="q5" value="b"> A JSON object with a "data" key containing an array of [row_number, result] pairs</label>
+        <label><input type="radio" name="q5" value="c"> A single scalar value</label>
+        <label><input type="radio" name="q5" value="d"> An Avro-encoded binary response</label>
+      </div>
+      <div class="quiz-answer correct" id="q5-c">✓ {"data": [[0, result0], [1, result1], ...]}. The row number must match what Snowflake sent so results map back to the correct rows. Missing or reordered row numbers cause Snowflake to raise an error.</div>
+    </div>
+  </div>
+
+  <hr>
+
+  <!-- CHEAT SHEET -->
+  <div class="section" id="cheat">
+    <div class="section-label">Chapter 08</div>
+    <h2>Cheat sheet</h2>
+    <div class="cheat-grid">
+      <div class="cheat-item"><div class="label">Kafka Connector</div><p>Kafka topic → buffer (buffer.flush.time) → Internal Stage → Snowpipe → RECORD_CONTENT VARIANT + RECORD_METADATA VARIANT. Auth = RSA key-pair. Latency ~90–120s.</p></div>
+      <div class="cheat-item"><div class="label">Kafka buffer tuning</div><p>buffer.count.records (rows per file), buffer.flush.time (max seconds before flush), buffer.size.bytes. Too high = consumer lag + replay on restart. Too low = many small files = Snowpipe overhead.</p></div>
+      <div class="cheat-item"><div class="label">Spark Connector</div><p>Read: Snowflake exports Parquet to stage → Spark reads. Write: Spark writes Parquet to stage → COPY INTO. mode("overwrite") drops table. Use staging table + MERGE for safe writes.</p></div>
+      <div class="cheat-item"><div class="label">Spark vs Snowpark</div><p>Spark = external cluster + Spark libraries. Snowpark = inside Snowflake, no data movement, lower cost. Choose Spark only for Spark-specific ML libs or cross-store joins.</p></div>
+      <div class="cheat-item"><div class="label">CDC with Debezium</div><p>op: c=create, u=update, d=delete, r=snapshot. MERGE handles all 4. QUALIFY ROW_NUMBER()=1 to dedup per key on kafka_ts. Keep raw table as audit log.</p></div>
+      <div class="cheat-item"><div class="label">Snowpipe Streaming</div><p>Java/Python SDK. Persistent channel. ~1s latency. No staging files. Priced per row (serverless). Best for fraud, real-time dashboards, IoT.</p></div>
+      <div class="cheat-item"><div class="label">External Functions</div><p>CREATE API INTEGRATION (cloud IAM trust) → CREATE EXTERNAL FUNCTION (references integration + endpoint URL). Input/output: {"data":[[row_num, val],...]}. Batch by default; not for sub-100ms per-row calls.</p></div>
+      <div class="cheat-item"><div class="label">External Functions vs Cortex</div><p>Cortex = built-in LLM/ML (no API Integration). External Functions = custom/proprietary APIs. Use Cortex first; External Functions for what Cortex can't do.</p></div>
+    </div>
+  </div>
+
+  <p style="color:var(--ink3);font-size:12px;text-align:center;margin-top:48px">Snowflake Interview Lab · Module 15 · External Integrations · Prepared for Saurav Patel</p>
+
+</div>
+
+<script>
+function toggleTheme(){
+  const d=document.documentElement;
+  d.dataset.theme=d.dataset.theme==='dark'?'':'dark';
+}
+document.querySelectorAll('.quiz-opt input').forEach(inp=>{
+  inp.addEventListener('change',function(){
+    const qn=this.name;
+    const correct={q1:'b',q2:'b',q3:'b',q4:'b',q5:'b'}[qn];
+    const ans=document.getElementById(qn+'-c');
+    if(ans)ans.style.display='block';
+    this.closest('.quiz-opt').querySelectorAll('label').forEach(l=>{
+      const v=l.querySelector('input').value;
+      l.style.background=v===correct?'var(--teal-s)':v===this.value&&v!==correct?'var(--red-s)':'';
+      l.style.borderColor=v===correct?'var(--teal)':v===this.value&&v!==correct?'var(--red)':'var(--line)';
+    });
+  });
+});
+
+// COURSE ROADMAP toggle
+document.querySelectorAll('.road h4').forEach(function(h){
+  h.addEventListener('click', function(){
+    this.closest('.road').classList.toggle('open');
+  });
+});
+</script>
+</body>
+</html>

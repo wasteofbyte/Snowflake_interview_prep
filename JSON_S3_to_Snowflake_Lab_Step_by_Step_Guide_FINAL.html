@@ -1,0 +1,716 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Lab Simulator: Step-by-Step Guide · JSON → S3 → Snowflake</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@200;400;500;600;700;800&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0a0e13;--bg2:#0f151c;--card:#121a23;--line:#223040;--ink:#e7eef6;--mute:#8396aa;--sf:#29b5e8;--sf2:#7fd6f5;--aws:#ff9900;--aws2:#ffc266;--ok:#3ddc97;--bad:#ff5d6c;--warn:#ffcc4d;--vio:#b392f0;
+--mono:'JetBrains Mono',ui-monospace,monospace;--sans:'Space Grotesk',sans-serif}
+*{box-sizing:border-box}html{scroll-behavior:smooth}
+body{margin:0;color:var(--ink);font:15px/1.6 var(--sans);background:
+radial-gradient(1200px 600px at 85% -10%,rgba(41,181,232,.13),transparent 60%),
+radial-gradient(900px 500px at -10% 20%,rgba(255,153,0,.08),transparent 60%),
+repeating-linear-gradient(0deg,rgba(255,255,255,.018) 0 1px,transparent 1px 32px),
+repeating-linear-gradient(90deg,rgba(255,255,255,.018) 0 1px,transparent 1px 32px),var(--bg);min-height:100vh}
+code,kbd,.mono{font-family:var(--mono)}code{font-size:.86em;background:rgba(127,214,245,.08);border:1px solid rgba(127,214,245,.16);padding:1px 5px;border-radius:5px;color:var(--sf2);word-break:break-word}
+a{color:var(--sf2)}
+.wrap{max-width:1240px;margin:0 auto;padding:0 28px}
+@keyframes up{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+@keyframes glow{0%,100%{box-shadow:0 0 0 0 rgba(41,181,232,.0)}50%{box-shadow:0 0 0 6px rgba(41,181,232,.12)}}
+/* hero */
+.hero{padding:64px 0 34px;border-bottom:1px solid var(--line)}
+.eyebrow{font:500 12px var(--mono);letter-spacing:.22em;text-transform:uppercase;color:var(--aws2)}
+.hero h1{font-weight:200;font-size:clamp(38px,6vw,76px);line-height:1.02;margin:14px 0 18px;letter-spacing:-.03em}
+.hero h1 b{font-weight:800;background:linear-gradient(90deg,var(--aws),var(--sf));-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero p.lead{max-width:760px;color:#c4d2e0;font-size:18px;font-weight:300}
+.stats{display:flex;gap:14px;flex-wrap:wrap;margin-top:26px}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 18px;animation:up .6s both;animation-delay:var(--d)}
+.stat b{display:block;font:800 26px var(--mono);color:var(--sf2)}.stat span{font-size:12px;color:var(--mute);text-transform:uppercase;letter-spacing:.1em}
+/* layout */
+.layout{display:grid;grid-template-columns:200px 1fr;gap:34px;padding:34px 0 80px}
+nav.side{position:sticky;top:18px;align-self:start;display:flex;flex-direction:column;gap:2px;font-size:13px}
+nav.side .lbl{font:600 11px var(--mono);letter-spacing:.18em;color:var(--mute);margin:14px 0 6px;text-transform:uppercase}
+nav.side a{display:flex;gap:10px;align-items:center;color:#b9c7d6;text-decoration:none;padding:5px 10px;border-radius:8px;border-left:2px solid transparent}
+nav.side a b{font:600 11px var(--mono);color:var(--mute);width:18px}
+nav.side a:hover{background:rgba(255,255,255,.04)}nav.side a.cur{background:rgba(41,181,232,.1);border-left-color:var(--sf);color:#fff}
+nav.side a.ok b{color:var(--ok)}
+.progress{margin:6px 0 4px;height:6px;border-radius:9px;background:#1b2632;overflow:hidden}.progress i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--aws),var(--sf));transition:width .4s}
+.ptxt{font:500 11px var(--mono);color:var(--mute)}
+section.blk{margin-bottom:46px;animation:up .6s both}
+h2{font-weight:800;font-size:30px;letter-spacing:-.02em;margin:0 0 6px}h2 small{display:block;font:500 12px var(--mono);letter-spacing:.2em;text-transform:uppercase;color:var(--aws2);margin-bottom:6px}
+.sub{color:var(--mute);margin:0 0 20px;max-width:780px}
+/* before you start */
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.tile{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 18px;animation:up .6s both;animation-delay:var(--d)}
+.tile h5{margin:0 0 6px;font-size:15px}.tile p{margin:0;color:#b9c7d6;font-size:14px}
+.tile .big{font:800 30px var(--mono);color:var(--aws2);line-height:1}
+/* screen map */
+.map{position:relative;background:linear-gradient(180deg,#0d131a,#0b1016);border:1px solid var(--line);border-radius:16px;padding:12px;font:12px var(--mono)}
+.m-top{display:flex;align-items:center;gap:8px;padding:8px 10px;border:1px solid var(--line);border-radius:10px;background:#0f1720}
+.m-top .brand{font-weight:700;margin-right:auto}.m-top .brand i{color:var(--aws);font-style:normal}.m-top .brand em{color:var(--sf);font-style:normal}
+.m-bar{width:120px;height:6px;border-radius:6px;background:#1b2632;overflow:hidden}.m-bar i{display:block;width:40%;height:100%;background:linear-gradient(90deg,var(--aws),var(--sf))}
+.mb{border:1px solid var(--line);border-radius:7px;padding:3px 8px;color:#c7d3df;background:#141d27}.mb.g{border-color:#6b5a1e;color:var(--warn)}.mb.r{border-color:#5a2028;color:#ff97a1}
+.m-mission{margin-top:8px;border:1px solid var(--line);border-radius:10px;padding:8px 10px;background:#0f1720}
+.m-pills{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px}.m-pills span{border:1px solid var(--line);border-radius:20px;padding:2px 8px;color:var(--mute)}.m-pills .d{color:var(--ok);border-color:#1f5a43}.m-pills .c{color:#fff;border-color:var(--sf);background:rgba(41,181,232,.15)}
+.m-card{display:grid;grid-template-columns:1.4fr 1fr;gap:10px}.m-card div{border:1px dashed #2b3b4d;border-radius:8px;padding:6px 8px;color:#a9b8c8}
+.m-split{display:grid;grid-template-columns:1fr 1.5fr;gap:8px;margin-top:8px;min-height:250px}
+.m-aws,.m-sf{border:1px solid var(--line);border-radius:10px;padding:8px;background:#0f1720;display:flex;flex-direction:column;gap:6px}
+.m-aws{border-top:3px solid var(--aws)}.m-sf{border-top:3px solid var(--sf)}
+.m-tabs{display:flex;gap:4px}.m-tabs span{padding:2px 7px;border-radius:6px;background:#141d27;color:#b5c3d2}.m-tabs .on{color:var(--aws2);background:rgba(255,153,0,.1)}
+.m-files{flex:1;border:1px dashed #2b3b4d;border-radius:8px;padding:6px;color:var(--mute)}
+.m-ctx{border:1px dashed #2b3b4d;border-radius:7px;padding:3px 8px;color:var(--sf2)}
+.m-ed{display:grid;grid-template-columns:90px 1fr;gap:6px;flex:1}.m-ed > div{border:1px dashed #2b3b4d;border-radius:8px;padding:6px;color:var(--mute)}
+.m-run{display:flex;gap:5px}.m-run span{background:var(--sf);color:#04202c;border-radius:6px;padding:2px 8px;font-weight:700}.m-run span.alt{background:#123548;color:var(--sf2)}
+.m-res{border:1px dashed #2b3b4d;border-radius:8px;padding:6px;color:var(--mute);min-height:60px}
+.co{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:50%;background:var(--warn);color:#1b1400;font:800 11px var(--mono);margin-right:4px;animation:glow 2.4s infinite;vertical-align:middle;flex:none}
+.legend{display:grid;grid-template-columns:repeat(2,1fr);gap:8px 22px;margin-top:16px}
+.legend div{display:flex;gap:10px;align-items:flex-start;font-size:14px;color:#c4d2e0}
+/* loop */
+.loop{display:grid;grid-template-columns:repeat(5,1fr);gap:0;align-items:stretch;counter-reset:l}
+.lp{position:relative;background:var(--card);border:1px solid var(--line);padding:16px 14px 14px;border-radius:14px;margin-right:22px;animation:up .6s both;animation-delay:var(--d)}
+.lp:not(:last-child)::after{content:'➜';position:absolute;right:-20px;top:50%;transform:translateY(-50%);color:var(--sf);font-size:16px}
+.lp b{display:block;font:800 13px var(--mono);color:var(--aws2);margin-bottom:4px}.lp h5{margin:0 0 4px;font-size:16px}.lp p{margin:0;font-size:13px;color:#aebdcc}
+/* phases */
+.phases{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:26px}
+.ph{border-radius:12px;padding:12px 14px;border:1px solid var(--line);background:var(--card);animation:up .6s both;animation-delay:var(--d)}
+.ph span{font:600 11px var(--mono);letter-spacing:.12em;color:var(--mute);text-transform:uppercase}.ph b{display:block;font-size:17px;margin:2px 0}.ph em{font-style:normal;font-size:12.5px;color:#aebdcc}
+.ph.aws{border-top:3px solid var(--aws)}.ph.sf{border-top:3px solid var(--sf)}.ph.mix{border-top:3px solid var(--vio)}.ph.mute{border-top:3px solid var(--mute)}
+/* step cards */
+.step{background:linear-gradient(180deg,rgba(18,26,35,.96),rgba(14,20,27,.96));border:1px solid var(--line);border-radius:18px;margin-bottom:22px;overflow:hidden;animation:up .6s both;animation-delay:var(--d);scroll-margin-top:14px}
+.step.isdone{border-color:#1f5a43}
+.sh{display:grid;grid-template-columns:auto 1fr auto;gap:18px;align-items:center;padding:18px 22px;border-bottom:1px solid var(--line);background:linear-gradient(90deg,rgba(41,181,232,.06),transparent 60%)}
+.num{font:200 46px/1 var(--mono);color:var(--sf2);letter-spacing:-.04em}.step.isdone .num{color:var(--ok)}
+.st h3{margin:0;font-size:21px;font-weight:700}.st p{margin:3px 0 0;color:#b9c7d6;font-size:14.5px}
+.bonus{font:600 10px var(--mono);letter-spacing:.14em;text-transform:uppercase;border:1px solid #6b5a1e;color:var(--warn);border-radius:20px;padding:2px 8px;vertical-align:middle}
+.meta{display:flex;flex-direction:column;align-items:flex-end;gap:5px}
+.where{font:600 11px var(--mono);border-radius:20px;padding:2px 9px;white-space:nowrap}.where.sf{color:var(--sf2);background:rgba(41,181,232,.1);border:1px solid rgba(41,181,232,.3)}.where.aws{color:var(--aws2);background:rgba(255,153,0,.08);border:1px solid rgba(255,153,0,.3)}
+.mins{font:500 11px var(--mono);color:var(--mute)}
+.done{font:600 12px var(--mono);color:var(--mute);cursor:pointer;display:flex;gap:6px;align-items:center}.done input{accent-color:var(--ok);width:15px;height:15px}
+.sbody{display:grid;grid-template-columns:1fr 1fr;gap:0}
+.col{padding:16px 22px 20px}.col:first-child{border-right:1px solid var(--line)}
+h4{margin:6px 0 10px;font-size:12px;font-family:var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--mute);display:flex;align-items:center;gap:8px}
+.ic{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:6px;background:rgba(41,181,232,.15);color:var(--sf2);font-size:10px}.ic.ck{background:rgba(61,220,151,.14);color:var(--ok)}.ic.eye{background:rgba(255,153,0,.14);color:var(--aws2)}
+ol.doo{margin:0 0 14px;padding:0;list-style:none;counter-reset:d}
+ol.doo li{counter-increment:d;position:relative;padding:0 0 10px 36px;font-size:14.5px}
+ol.doo li::before{content:counter(d);position:absolute;left:0;top:1px;width:24px;height:24px;border-radius:50%;display:grid;place-items:center;font:700 12px var(--mono);background:#16222e;border:1px solid #2b3d50;color:var(--sf2)}
+ol.doo li:not(:last-child)::after{content:'';position:absolute;left:11.5px;top:27px;bottom:2px;width:1px;background:#2b3d50}
+ul.see{margin:0 0 12px;padding-left:18px;font-size:14.5px}ul.see li{margin-bottom:6px}ul.see li::marker{color:var(--aws)}
+ul.checks{list-style:none;margin:0;padding:0;font-size:13.5px}
+ul.checks li{display:flex;gap:9px;align-items:flex-start;padding:5px 9px;border:1px solid #1d3a2f;background:rgba(61,220,151,.05);border-radius:8px;margin-bottom:5px;color:#cfeee0}
+ul.checks i{flex:none;width:14px;height:14px;border-radius:50%;border:2px solid var(--ok);margin-top:4px;position:relative}
+ul.checks i::after{content:'';position:absolute;left:3px;top:0;width:3px;height:6px;border:solid var(--ok);border-width:0 2px 2px 0;transform:rotate(45deg)}
+.chip{display:inline-block;font:600 12.5px var(--mono);padding:1px 8px;border-radius:7px;white-space:nowrap;vertical-align:baseline}
+.chip.b{background:#123548;color:var(--sf2);border:1px solid #1f5674}.chip.a{background:#3a2606;color:var(--aws2);border:1px solid #6b4a10}
+.keys{white-space:nowrap}kbd{display:inline-block;font-size:11.5px;padding:1px 6px;border-radius:5px;background:#1a2430;border:1px solid #33465b;border-bottom-width:3px;color:#e3ecf5}
+.box{border-radius:12px;padding:10px 14px;margin-top:10px;font-size:14px}.box b{display:block;font:700 11px var(--mono);letter-spacing:.14em;text-transform:uppercase;margin-bottom:3px}
+.box.warn{background:rgba(255,93,108,.06);border:1px solid rgba(255,93,108,.28)}.box.warn b{color:#ff8f9a}
+.box.say{background:rgba(179,146,240,.07);border:1px solid rgba(179,146,240,.3);font-style:italic}.box.say b{color:var(--vio);font-style:normal}
+.pill-ok,.pill-bad{font:600 12px var(--mono);padding:1px 8px;border-radius:20px;white-space:nowrap}.pill-ok{color:var(--ok);border:1px solid #1f5a43;background:rgba(61,220,151,.08)}.pill-bad{color:#ff8f9a;border:1px solid #5a2028;background:rgba(255,93,108,.08)}
+.mini{margin:6px 0 4px;border:1px solid var(--line);border-radius:10px;overflow:auto;background:#0d141b}
+.mini table{border-collapse:collapse;width:100%;font:12px var(--mono)}.mini th{text-align:left;color:var(--mute);font-weight:600;padding:6px 10px;border-bottom:1px solid var(--line);background:#111a23}.mini td{padding:5px 10px;border-bottom:1px solid #18222d;color:#cfe0ee;white-space:nowrap}
+.mnote{font:11px var(--mono);color:var(--mute);padding:5px 10px}
+/* tables */
+.ref{width:100%;border-collapse:collapse;font-size:14px;background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.ref th{text-align:left;font:600 11px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--mute);padding:10px 14px;border-bottom:1px solid var(--line);background:#111a23}
+.ref td{padding:10px 14px;border-bottom:1px solid #1a2531;vertical-align:top}.ref tr:last-child td{border-bottom:0}
+/* faq */
+details.faq{background:var(--card);border:1px solid var(--line);border-radius:12px;margin-bottom:8px}
+details.faq summary{cursor:pointer;padding:12px 16px;font-weight:600;list-style:none;display:flex;gap:10px;align-items:center}
+details.faq summary::before{content:'+';font:700 16px var(--mono);color:var(--aws2);width:14px}details.faq[open] summary::before{content:'–'}
+details.faq div{padding:0 16px 14px 40px;color:#c4d2e0;font-size:14.5px}
+.modes{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.mode{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 18px;animation:up .6s both;animation-delay:var(--d)}
+.mode h5{margin:0 0 4px;font-size:17px}.mode .tag{font:600 11px var(--mono);letter-spacing:.14em;color:var(--aws2);text-transform:uppercase}.mode p{margin:6px 0 0;color:#b9c7d6;font-size:14px}
+footer{border-top:1px solid var(--line);padding:22px 0 40px;color:var(--mute);font-size:13px}
+@media (max-width:980px){.layout{grid-template-columns:1fr}nav.side{display:none}.sbody,.grid3,.modes,.legend{grid-template-columns:1fr}.col:first-child{border-right:0;border-bottom:1px solid var(--line)}.loop,.phases{grid-template-columns:1fr 1fr}.lp{margin:0 0 10px}.lp::after{display:none}.sh{grid-template-columns:auto 1fr}.meta{grid-column:1/-1;flex-direction:row;flex-wrap:wrap;align-items:center}.m-split,.m-card{grid-template-columns:1fr}}
+@media print{body{background:#fff;color:#111}nav.side,.done{display:none}.layout{grid-template-columns:1fr}.step,.tile,.lp,.ph,.mode,.ref,details.faq,.map{background:#fff;border-color:#bbb;break-inside:avoid;animation:none}.st p,ul.see,ol.doo li,.lp p,.tile p,.mode p,details.faq div,.hero p.lead{color:#222}details.faq div{display:block}code{color:#05506e;background:#eef7fb}.hero h1 b{color:#05506e;-webkit-text-fill-color:#05506e}}
+</style>
+<style id="sf-lt">
+[data-theme="light"]{
+  --bg:#f0f5fa; --bg2:#e4edf7; --card:#ffffff; --line:#c0d0e0;
+  --ink:#0d1a2e; --mute:#3a5570; --sf:#0a86c2; --sf2:#085e8a;
+  --aws:#c46200; --aws2:#a05000; --ok:#0d7a4e; --bad:#c0392b; --warn:#9a6e00; --vio:#6a3fbe;
+}
+[data-theme="light"] body{
+  background:#f0f5fa!important; background-image:none!important;
+  background-attachment:initial!important; color:#0d1a2e!important;
+}
+/* Side nav */
+[data-theme="light"] nav.side,
+[data-theme="light"] .side-nav,
+[data-theme="light"] aside{
+  background:rgba(224,234,244,.97)!important; border-color:#c0d0e0!important;
+}
+/* Tiles / cards */
+[data-theme="light"] .step,
+[data-theme="light"] .tile,
+[data-theme="light"] .lp,
+[data-theme="light"] .ph,
+[data-theme="light"] .mode,
+[data-theme="light"] .ref,
+[data-theme="light"] details.faq,
+[data-theme="light"] .map{
+  background:#ffffff!important; border-color:#c0d0e0!important;
+}
+[data-theme="light"] .st p,
+[data-theme="light"] ul.see,
+[data-theme="light"] ol.doo li,
+[data-theme="light"] .lp p,
+[data-theme="light"] .tile p,
+[data-theme="light"] .mode p,
+[data-theme="light"] details.faq div,
+[data-theme="light"] .hero p.lead{
+  color:#1a2838!important;
+}
+/* Code blocks — keep dark */
+[data-theme="light"] code{
+  background:rgba(10,134,194,.09)!important; border-color:rgba(10,134,194,.22)!important;
+  color:#085e8a!important;
+}
+[data-theme="light"] pre{
+  background:#1e2d3c!important; color:#d0dce8!important;
+}
+/* Headers & text */
+[data-theme="light"] h1,
+[data-theme="light"] h2,
+[data-theme="light"] h3,
+[data-theme="light"] h4{ color:#0d1a2e!important; }
+[data-theme="light"] b,
+[data-theme="light"] strong{ color:#0d1a2e!important; }
+[data-theme="light"] .hero h1 b{
+  color:#0a86c2!important; -webkit-text-fill-color:#0a86c2!important;
+}
+/* Step indicators / section markers */
+[data-theme="light"] .done{ color:#ffffff!important; }
+</style>
+</head>
+<body>
+<style id="sf-home-style">
+#sf-home-btn{
+  position:fixed;bottom:22px;right:22px;z-index:9998;
+  display:inline-flex;align-items:center;gap:7px;
+  padding:8px 18px 8px 14px;border-radius:999px;
+  background:rgba(255,255,255,.13);
+  border:1px solid rgba(255,255,255,.26);
+  color:#e5edf5;
+  font-family:system-ui,-apple-system,"Segoe UI",sans-serif;
+  font-size:12px;font-weight:600;letter-spacing:.04em;
+  text-decoration:none;cursor:pointer;
+  backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+  box-shadow:0 2px 12px rgba(0,0,0,.25);
+  transition:background .18s,border-color .18s,transform .18s,box-shadow .18s,color .18s;
+  white-space:nowrap;
+}
+#sf-home-btn::before{
+  content:"⌂";
+  font-size:14px;line-height:1;
+}
+#sf-home-btn:hover{
+  background:rgba(255,255,255,.24);
+  border-color:rgba(255,255,255,.46);
+  color:#fff;
+  transform:translateY(-2px);
+  box-shadow:0 6px 22px rgba(0,0,0,.35);
+  text-decoration:none;
+}
+/* Light theme — fires for all files that use data-theme="light" toggle */
+[data-theme="light"] #sf-home-btn{
+  background:rgba(11,27,43,.08);
+  border-color:rgba(11,27,43,.20);
+  color:#0b1b2b;
+  box-shadow:0 2px 12px rgba(0,0,0,.10);
+}
+[data-theme="light"] #sf-home-btn:hover{
+  background:rgba(10,134,194,.13);
+  border-color:rgba(10,134,194,.38);
+  color:#0a86c2;
+  box-shadow:0 6px 22px rgba(10,134,194,.18);
+}
+/* Interview QA files start in light mode via :root (paper theme) */
+body[style*="--paper"] #sf-home-btn,
+.mast ~ #sf-home-btn{
+  background:rgba(11,27,43,.07);
+  border-color:rgba(11,27,43,.18);
+  color:#15120f;
+}
+</style>
+<a id="sf-home-btn" href="index.html" title="Back to Course Home">Course Home</a>
+
+<button id="sf-thm" title="Toggle light / dark" onclick="sfThm()" style="position:fixed;top:10px;right:14px;z-index:9999;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.26);color:inherit;padding:5px 14px;border-radius:999px;font-size:12px;font-weight:600;cursor:pointer;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);letter-spacing:.04em;transition:all .2s;font-family:system-ui,sans-serif;white-space:nowrap">&#9728;&#xFE0F;&nbsp;Light</button>
+<header class="hero"><div class="wrap">
+  <div class="eyebrow">ShopStream Lab · companion guide</div>
+  <h1>Use the <b>Lab Simulator</b>,<br>one click at a time.</h1>
+  <p class="lead">A walkthrough of the offline S3 → Snowflake simulator: what each part of the screen does, the exact buttons to press in each of the 15 steps, what you should see, which mistakes to try on purpose, and the line to say in an interview.</p>
+  <div class="stats">
+    <div class="stat" style="--d:0ms"><b>15</b><span>steps (14 + bonus)</span></div>
+    <div class="stat" style="--d:80ms"><b>~63</b><span>minutes end to end</span></div>
+    <div class="stat" style="--d:160ms"><b>0</b><span>installs or accounts</span></div>
+    <div class="stat" style="--d:240ms"><b>50 → 77</b><span>orders, first load → final</span></div>
+  </div>
+</div></header>
+
+<div class="wrap layout">
+<nav class="side">
+  <div class="lbl">Your progress</div><div class="progress"><i id="pbar"></i></div><div class="ptxt" id="ptxt">0 / 15 ticked</div>
+  <div class="lbl">Start here</div>
+  <a href="#start">Before you start</a><a href="#map">Screen map</a><a href="#loop">The 5-move loop</a><a href="#keys">Buttons + keys</a>
+  <div class="lbl">Steps</div><a href="#s1" data-nav="1"><b>01</b>Setup</a><a href="#s2" data-nav="2"><b>02</b>Integration</a><a href="#s3" data-nav="3"><b>03</b>Trust</a><a href="#s4" data-nav="4"><b>04</b>File formats</a><a href="#s5" data-nav="5"><b>05</b>Stage</a><a href="#s6" data-nav="6"><b>06</b>LIST</a><a href="#s7" data-nav="7"><b>07</b>Peek</a><a href="#s8" data-nav="8"><b>08</b>Raw table</a><a href="#s9" data-nav="9"><b>09</b>COPY</a><a href="#s10" data-nav="10"><b>10</b>Array</a><a href="#s11" data-nav="11"><b>11</b>Errors</a><a href="#s12" data-nav="12"><b>12</b>Curate</a><a href="#s13" data-nav="13"><b>13</b>Snowpipe</a><a href="#s14" data-nav="14"><b>14</b>Task MERGE</a><a href="#s15" data-nav="15"><b>15</b>Cleanup</a>
+  <div class="lbl">After</div><a href="#trouble">Troubleshooting</a><a href="#next">Practise for real</a>
+</nav>
+
+<main>
+<section class="blk" id="start">
+  <h2><small>00 · Prerequisites</small>Before you start</h2>
+  <p class="sub">There is nothing to install. The simulator is one HTML file with the sample data built in. It fakes the AWS console and a Snowflake worksheet entirely in your browser.</p>
+  <div class="grid3">
+    <div class="tile" style="--d:0ms"><div class="big">1</div><h5>Open the file</h5><p>Double-click <b>JSON_S3_to_Snowflake_Lab_Simulator_FINAL.html</b>. It opens in Chrome, Edge, Firefox or Safari and runs offline. With internet you also get the nicer fonts.</p></div>
+    <div class="tile" style="--d:80ms"><div class="big">2</div><h5>Use a wide window</h5><p>Use a laptop or desktop at least <b>1100 px</b> wide so AWS and Snowflake sit side by side. Narrower windows stack the panels.</p></div>
+    <div class="tile" style="--d:160ms"><div class="big">3</div><h5>Know the story</h5><p>ShopStream, a made-up online store, drops order JSON into S3. Your job: get it into Snowflake, clean it, and keep it updated automatically.</p></div>
+    <div class="tile" style="--d:240ms"><div class="big">4</div><h5>Budget about 63 min</h5><p>You can stop at any time. Progress saves in your browser and comes back when you reopen the same file in the same browser.</p></div>
+    <div class="tile" style="--d:320ms"><div class="big">5</div><h5>Read before you run</h5><p>Every <b>Insert SQL</b> button drops real Snowflake SQL into the editor. Read it first; that is where the learning happens.</p></div>
+    <div class="tile" style="--d:400ms"><div class="big">6</div><h5>Optional warm-up</h5><p>Skim the <b>Visual Guide</b> first for the big picture. Afterwards, drill the <b>Interview Q&amp;A</b>.</p></div>
+  </div>
+</section>
+
+<section class="blk" id="map">
+  <h2><small>01 · Orientation</small>Screen map</h2>
+  <p class="sub">The simulator has four zones. The yellow numbers match the legend below.</p>
+  <div class="map">
+    <div class="m-top"><span class="co">1</span><span class="brand"><i>S3</i> → <em>Snowflake</em> Lab</span><span class="m-bar"><i></i></span><span>6 / 14</span><span class="mb">Mission ▾</span><span class="mb">Free play</span><span class="mb g">Completion</span><span class="mb r">Reset</span></div>
+    <div class="m-mission"><div class="m-pills"><span class="co">2</span><span class="d">✓ Setup</span><span class="d">✓ Integration</span><span class="d">✓ Trust</span><span class="d">✓ File formats</span><span class="d">✓ Stage</span><span class="c">6 LIST</span><span>7 Peek</span><span>8 Raw table</span><span>…</span></div>
+      <div class="m-card"><div><span class="co">3</span>Goal · why · <b style="color:var(--sf2)">Insert SQL</b> buttons · Show hint</div><div><span class="co">4</span>Green checks · Next → · What just happened?</div></div></div>
+    <div class="m-split">
+      <div class="m-aws"><div><span class="co">5</span><b style="color:var(--aws2)">aws</b> S3 › shopstream-raw-landing <span class="pill-bad" style="font-size:10px">IAM: not trusted</span></div>
+        <div class="m-tabs"><span class="on">Objects</span><span>Event notifications</span><span>IAM role</span></div>
+        <div class="m-files">landing/ › orders/ · orders_array/ · orders_bad/ · orders_incremental/<br><br><span class="co">6</span>⇪ Upload · click a file to preview</div></div>
+      <div class="m-sf"><div><span class="co">7</span><b style="color:var(--sf2)">❄ snowflake</b> Worksheet</div><div class="m-ctx">LAB_ENGINEER · LAB_WH · SHOPSTREAM_LAB.RAW</div>
+        <div class="m-run"><span>▶ Run</span><span class="alt">▶▶ Run all</span><span class="alt">History</span></div>
+        <div class="m-ed"><div>Objects<br>browser</div><div><span class="co">8</span>SQL editor</div></div>
+        <div class="m-res"><span class="co">9</span>Results: one tab per statement · click a VARIANT cell for JSON</div></div>
+    </div>
+  </div>
+  <div class="legend">
+    <div><span class="co">1</span><span><b>Top bar.</b> Progress (x / 14). <b>Mission ▾</b> folds the guide card. <b>Free play</b> hides the guide. <b>Completion</b> shows the summary. <b>Reset</b> wipes everything.</span></div>
+    <div><span class="co">2</span><span><b>Step pills.</b> Click any pill to jump to that step. A ✓ means all its checks passed.</span></div>
+    <div><span class="co">3</span><span><b>Mission card, left.</b> Goal, why it matters, <b>Insert SQL</b> buttons and a hint. Shift+click an Insert button to append instead of replace.</span></div>
+    <div><span class="co">4</span><span><b>Mission card, right.</b> The checks you must turn green, Next / Skip buttons, and <b>What just happened?</b>, an animated diagram with an explanation.</span></div>
+    <div><span class="co">5</span><span><b>AWS panel.</b> A fake S3 console with three tabs. A dot on a tab means it needs your attention now. The badge shows IAM trust status.</span></div>
+    <div><span class="co">6</span><span><b>Objects.</b> Browse the bucket and preview any file (Pretty / Raw). <b>⇪ Upload</b> drops new files in step 13.</span></div>
+    <div><span class="co">7</span><span><b>Snowflake panel.</b> The context bar shows your current role, warehouse, database and schema.</span></div>
+    <div><span class="co">8</span><span><b>Editor.</b> Type or insert SQL. Syntax highlighting, several statements per run, <code>--</code> comments.</span></div>
+    <div><span class="co">9</span><span><b>Results.</b> A tab per statement with row count, duration and query ID. Errors look like Snowflake's. <b>History</b> lists every query you ran.</span></div>
+  </div>
+</section>
+
+<section class="blk" id="loop">
+  <h2><small>02 · The rhythm</small>The 5-move loop (every step)</h2>
+  <p class="sub">Once this loop feels natural, the rest of the lab is just new SQL.</p>
+  <div class="loop">
+    <div class="lp" style="--d:0ms"><b>01</b><h5>Read</h5><p>Read the goal and the "why" on the mission card.</p></div>
+    <div class="lp" style="--d:90ms"><b>02</b><h5>Insert</h5><p>Click an <span class="chip b">Insert SQL</span> button and read the SQL.</p></div>
+    <div class="lp" style="--d:180ms"><b>03</b><h5>Run</h5><p><span class="keys"><kbd>Ctrl/⌘</kbd>+<kbd>Shift</kbd>+<kbd>Enter</kbd></span> runs everything. <span class="keys"><kbd>Ctrl/⌘</kbd>+<kbd>Enter</kbd></span> runs the statement at the cursor.</p></div>
+    <div class="lp" style="--d:270ms"><b>04</b><h5>Check</h5><p>Read the results. Watch the checks turn green; a toast says "Step n complete".</p></div>
+    <div class="lp" style="--d:360ms"><b>05</b><h5>Understand</h5><p>Open <b>What just happened?</b>, then click <b>Next →</b>.</p></div>
+  </div>
+</section>
+
+<section class="blk" id="keys">
+  <h2><small>03 · Reference</small>Buttons + keyboard</h2>
+  <table class="ref">
+    <thead><tr><th>Action</th><th>How</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td>Run everything in the editor</td><td><span class="keys"><kbd>Ctrl/⌘</kbd>+<kbd>Shift</kbd>+<kbd>Enter</kbd></span> or <span class="chip b">▶▶ Run all</span></td><td>Use this for multi-statement snippets.</td></tr>
+      <tr><td>Run one statement</td><td><span class="keys"><kbd>Ctrl/⌘</kbd>+<kbd>Enter</kbd></span> or <span class="chip b">▶ Run</span></td><td>Runs the statement under the cursor, or the selected text.</td></tr>
+      <tr><td>Insert step SQL</td><td><span class="chip b">Insert SQL: …</span></td><td>Replaces the editor content. <b>Shift+click</b> appends instead.</td></tr>
+      <tr><td>See a JSON value</td><td>Click a VARIANT cell</td><td>Opens a pretty-printed viewer with a Copy button.</td></tr>
+      <tr><td>Past queries</td><td><span class="chip b">History</span></td><td>Every statement, with status and duration.</td></tr>
+      <tr><td>Hide the object tree</td><td><span class="chip b">Objects</span></td><td>Gives the editor more room.</td></tr>
+      <tr><td>Stuck</td><td><span class="chip b">Show hint</span> on the mission card</td><td>Each step has a targeted hint.</td></tr>
+      <tr><td>Jump around</td><td>Click a step pill, or <b>Skip to …</b></td><td>Later steps still need the objects from earlier ones.</td></tr>
+      <tr><td>Experiment freely</td><td><span class="chip b">Free play</span></td><td>Hides the guide. <b>Supported statements ▾</b> lists what the engine understands.</td></tr>
+      <tr><td>Start over</td><td><span class="chip b">Reset</span></td><td>Clears progress and all objects. You can't undo it.</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section class="blk">
+  <h2><small>04 · The journey</small>Five phases, fifteen steps</h2>
+  <p class="sub">Amber means work on the AWS side, cyan means Snowflake, and violet means both working together.</p>
+  <div class="phases"><div class="ph aws" style="--d:0ms"><span>Steps 1–6</span><b>Connect</b><em>Role, integration, IAM trust, formats, stage, LIST</em></div><div class="ph sf" style="--d:90ms"><span>Steps 7–11</span><b>Explore + load</b><em>Peek in place, raw table, COPY, array file, bad data</em></div><div class="ph sf" style="--d:180ms"><span>Steps 12</span><b>Transform</b><em>VARIANT paths, TRY_, FLATTEN, curated tables</em></div><div class="ph mix" style="--d:270ms"><span>Steps 13–14</span><b>Automate</b><em>Snowpipe, stream, task, MERGE upsert</em></div><div class="ph mute" style="--d:360ms"><span>Steps 15</span><b>Tidy up</b><em>Teardown, completion screen</em></div></div>
+</section>
+
+
+<article class="step" id="s1" style="--d:40ms">
+  <header class="sh">
+    <div class="num">01</div>
+    <div class="st"><h3>Set up the environment</h3><p>Create the role, warehouse, database and the RAW + CURATED schemas, then point your session at them.</p></div>
+    <div class="meta"><span class="where sf">Worksheet</span><span class="mins">~3 min</span>
+      <label class="done"><input type="checkbox" data-step="1"> done</label></div>
+  </header>
+  <div class="sbody">
+    <div class="col">
+      <h4><span class="ic">▶</span>Do this</h4><ol class="doo"><li>Click the step pill <span class="chip b">1 Setup</span> in the mission bar (it is selected on first open).</li><li>Click <span class="chip b">Insert SQL: Setup script</span>. The SQL appears in the editor.</li><li>Read it top to bottom, then press <span class="keys"><kbd>Ctrl/⌘</kbd>+<kbd>Shift</kbd>+<kbd>Enter</kbd></span> (or click <span class="chip b">▶▶ Run all</span>).</li></ol>
+      <h4><span class="ic ck">✓</span>Green checks the simulator waits for</h4><ul class="checks"><li><i></i>Role, warehouse, database, RAW + CURATED exist</li><li><i></i>Session context is LAB_ENGINEER / LAB_WH / SHOPSTREAM_LAB</li></ul>
+    </div>
+    <div class="col">
+      <h4><span class="ic eye">◉</span>You should see</h4><ul class="see"><li>One results tab per statement, each with a green success message.</li><li>The <b>context bar</b> above the editor changes to <code>LAB_ENGINEER · LAB_WH · SHOPSTREAM_LAB.RAW</code>.</li><li>The <b>Objects</b> browser on the left of the worksheet now shows <code>SHOPSTREAM_LAB</code> with RAW and CURATED.</li></ul>
+      
+      <div class="box warn"><b>Try the mistake</b>Press <span class="keys"><kbd>Ctrl/⌘</kbd>+<kbd>Enter</kbd></span> instead of Run all: only the line under the cursor runs, and the checks stay grey. Run all fixes it.</div>
+      <div class="box say"><b>Say it in the interview</b>"First I set up a role, an XSMALL auto-suspending warehouse, and a database with a RAW schema for landed data and a CURATED schema for clean tables."</div>
+    </div>
+  </div>
+</article>
+<article class="step" id="s2" style="--d:80ms">
+  <header class="sh">
+    <div class="num">02</div>
+    <div class="st"><h3>Create the storage integration</h3><p>Create <code>S3_LANDING_INT</code>, the keyless link that lets Snowflake assume an AWS IAM role.</p></div>
+    <div class="meta"><span class="where sf">Worksheet</span><span class="mins">~3 min</span>
+      <label class="done"><input type="checkbox" data-step="2"> done</label></div>
+  </header>
+  <div class="sbody">
+    <div class="col">
+      <h4><span class="ic">▶</span>Do this</h4><ol class="doo"><li><b>Optional, try the error first:</b> type <code>CREATE STORAGE INTEGRATION X TYPE=EXTERNAL_STAGE STORAGE_PROVIDER='S3' ENABLED=TRUE STORAGE_AWS_ROLE_ARN='arn:aws:iam::111122223333:role/snowflake-s3-access-role' STORAGE_ALLOWED_LOCATIONS=('s3://shopstream-raw-landing/landing/');</code> and press <span class="keys"><kbd>Ctrl/⌘</kbd>+<kbd>Enter</kbd></span> while you are still LAB_ENGINEER.</li><li>Click <span class="chip b">Insert SQL: Create integration</span> and press <span class="keys"><kbd>Ctrl/⌘</kbd>+<kbd>Shift</kbd>+<kbd>Enter</kbd></span>.</li></ol>
+      <h4><span class="ic ck">✓</span>Green checks the simulator waits for</h4><ul class="checks"><li><i></i>S3_LANDING_INT exists with the lab IAM role ARN</li><li><i></i>Allowed location covers s3://shopstream-raw-landing/landing/</li></ul>
+    </div>
+    <div class="col">
+      <h4><span class="ic eye">◉</span>You should see</h4><ul class="see"><li>The optional attempt fails with a real <b>Insufficient privileges</b> error: only ACCOUNTADMIN can create integrations.</li><li>The script switches to ACCOUNTADMIN, creates the integration, grants usage, and switches back to LAB_ENGINEER.</li><li>The left panel badge still says <span class="pill-bad">IAM: not trusted</span>. That is expected; step 3 fixes it.</li></ul>
+      
+      <div class="box warn"><b>Try the mistake</b>Avoid <code>CREATE OR REPLACE</code> on the integration later: it generates a <b>new external ID</b> and breaks the trust policy (the badge turns "external ID stale").</div>
+      <div class="box say"><b>Say it in the interview</b>"I use a storage integration, not access keys. It stores the IAM role ARN and the allowed S3 paths."</div>
+    </div>
+  </div>
+</article>
+<article class="step" id="s3" style="--d:120ms">
+  <header class="sh">
+    <div class="num">03</div>
+    <div class="st"><h3>DESC INTEGRATION + the IAM trust handshake</h3><p>Copy two values from Snowflake into the AWS role's trust policy, so each side trusts the other.</p></div>
+    <div class="meta"><span class="where sf">Worksheet</span><span class="where aws">AWS · IAM role</span><span class="mins">~4 min</span>
+      <label class="done"><input type="checkbox" data-step="3"> done</label></div>
+  </header>
+  <div class="sbody">
+    <div class="col">
+      <h4><span class="ic">▶</span>Do this</h4><ol class="doo"><li>Click <span class="chip b">Insert SQL: Describe integration</span> and press <span class="keys"><kbd>Ctrl/⌘</kbd>+<kbd>Enter</kbd></span>.</li><li>In the results, find <code>STORAGE_AWS_IAM_USER_ARN</code> and <code>STORAGE_AWS_EXTERNAL_ID</code>.</li><li>In the left (AWS) panel, open the <span class="chip a">IAM role</span> tab. A dot on the tab means it needs attention.</li><li>Under <b>Trust relationships</b>, check the "From DESC" values, then click <span class="chip a">Update trust policy</span>.</li></ol>
+      <h4><span class="ic ck">✓</span>Green checks the simulator waits for</h4><ul class="checks"><li><i></i>Ran DESC INTEGRATION</li><li><i></i>Trust policy holds the current IAM user ARN + external ID</li></ul>
+    </div>
+    <div class="col">
+      <h4><span class="ic eye">◉</span>You should see</h4><ul class="see"><li>The two grey placeholders in the trust-policy JSON fill in with real values.</li><li>The badge turns <span class="pill-ok">IAM: Snowflake trusted ✓</span> and the card says <b>handshake OK</b>.</li></ul>
+      
+      <div class="box warn"><b>Try the mistake</b>Skip this step and LIST in step 6 fails with the real <b>AccessDenied … sts:AssumeRole</b> error. If the badge says "external ID stale", run DESC again and click Update again.</div>
+      <div class="box say"><b>Say it in the interview</b>"DESC INTEGRATION gives me Snowflake's IAM user ARN and an external ID. I add both to the role's trust policy. The external ID prevents the confused-deputy problem."</div>
+    </div>
+  </div>
+</article>
+<article class="step" id="s4" style="--d:160ms">
+  <header class="sh">
+    <div class="num">04</div>
+    <div class="st"><h3>Create two JSON file formats</h3><p>One format for newline-delimited JSON, one for a single big <code>[ … ]</code> array.</p></div>
+    <div class="meta"><span class="where sf">Worksheet</span><span class="mins">~2 min</span>
+      <label class="done"><input type="checkbox" data-step="4"> done</label></div>
+  </header>
+  <div class="sbody">
+    <div class="col">
+      <h4><span class="ic">▶</span>Do this</h4><ol class="doo"><li>Click <span class="chip b">Insert SQL: File formats</span> and press <span class="keys"><kbd>Ctrl/⌘</kbd>+<kbd>Shift</kbd>+<kbd>Enter</kbd></span>.</li></ol>
+      <h4><span class="ic ck">✓</span>Green checks the simulator waits for</h4><ul class="checks"><li><i></i>RAW.FF_JSON_NDJSON (TYPE=JSON, STRIP_OUTER_ARRAY=FALSE)</li><li><i></i>RAW.FF_JSON_ARRAY (TYPE=JSON, STRIP_OUTER_ARRAY=TRUE)</li></ul>
+    </div>
+    <div class="col">
+      <h4><span class="ic eye">◉</span>You should see</h4><ul class="see"><li><code>SHOW FILE FORMATS</code> lists <code>FF_JSON_NDJSON</code> (STRIP_OUTER_ARRAY = FALSE) and <code>FF_JSON_ARRAY</code> (TRUE).</li></ul>
+      
+      <div class="box warn"><b>Try the mistake</b>Leave out the <code>RAW.</code> prefix and change schema later: the name no longer resolves. Always use qualified names.</div>
+      <div class="box say"><b>Say it in the interview</b>"The file format decides how bytes become rows. NDJSON is one row per line; an array export needs STRIP_OUTER_ARRAY."</div>
+    </div>
+  </div>
+</article>
+<article class="step" id="s5" style="--d:200ms">
+  <header class="sh">
+    <div class="num">05</div>
+    <div class="st"><h3>Create the external stage</h3><p>A named pointer to <code>s3://shopstream-raw-landing/landing/</code> that uses the integration and NDJSON by default.</p></div>
+    <div class="meta"><span class="where sf">Worksheet</span><span class="mins">~2 min</span>
+      <label class="done"><input type="checkbox" data-step="5"> done</label></div>
+  </header>
+  <div class="sbody">
+    <div class="col">
+      <h4><span class="ic">▶</span>Do this</h4><ol class="doo"><li>Click <span class="chip b">Insert SQL: Create stage</span> and press <span class="keys"><kbd>Ctrl/⌘</kbd>+<kbd>Shift</kbd>+<kbd>Enter</kbd></span>.</li></ol>
+      <h4><span class="ic ck">✓</span>Green checks the simulator waits for</h4><ul class="checks"><li><i></i>Stage exists with the right URL + integration</li></ul>
+    </div>
+    <div class="col">
+      <h4><span class="ic eye">◉</span>You should see</h4><ul class="see"><li><code>DESC STAGE</code> shows the URL, <code>STORAGE_INTEGRATION = S3_LANDING_INT</code> and the default file format.</li></ul>
+      
+      <div class="box warn"><b>Try the mistake</b>Create a second stage whose URL is outside the allowed location (e.g. <code>s3://shopstream-raw-landing/other/</code>). The CREATE succeeds, but LIST on it fails with "Location … is not allowed by integration".</div>
+      <div class="box say"><b>Say it in the interview</b>"The stage bundles location, credentials (via the integration) and a default file format. COPY, LIST and SELECT all go through it."</div>
+    </div>
+  </div>
+</article>
+<article class="step" id="s6" style="--d:240ms">
+  <header class="sh">
+    <div class="num">06</div>
+    <div class="st"><h3>LIST the staged files</h3><p>Prove the handshake works, then filter by sub-path and PATTERN.</p></div>
+    <div class="meta"><span class="where sf">Worksheet</span><span class="where aws">AWS · Objects</span><span class="mins">~3 min</span>
+      <label class="done"><input type="checkbox" data-step="6"> done</label></div>
+  </header>
+  <div class="sbody">
+    <div class="col">
+      <h4><span class="ic">▶</span>Do this</h4><ol class="doo"><li>Click <span class="chip b">Insert SQL: LIST</span> and press <span class="keys"><kbd>Ctrl/⌘</kbd>+<kbd>Shift</kbd>+<kbd>Enter</kbd></span>.</li><li>Compare with the left panel: open <span class="chip a">Objects</span> and click a file. Its <b>ETag</b> matches the <code>md5</code> column.</li></ol>
+      <h4><span class="ic ck">✓</span>Green checks the simulator waits for</h4><ul class="checks"><li><i></i>LIST succeeded (handshake OK)</li><li><i></i>Listed a sub-path or used PATTERN</li></ul>
+    </div>
+    <div class="col">
+      <h4><span class="ic eye">◉</span>You should see</h4><ul class="see"><li>First result: 4 files across <code>orders/</code>, <code>orders_array/</code> and <code>orders_bad/</code>, with name, size, md5 and last_modified.</li><li>Second result: only the two <code>orders_2026-11-18_part*.json</code> files.</li><li><code>orders_incremental/</code> is empty for now. Those files arrive in step 13.</li></ul>
+      <div class="mini"><table><thead><tr><th>name</th><th>size</th><th>md5</th></tr></thead><tbody><tr><td>…/orders/orders_2026-11-18_part1.json</td><td>…</td><td>a1b2…</td></tr><tr><td>…/orders/orders_2026-11-18_part2.json</td><td>…</td><td>c3d4…</td></tr><tr><td>…/orders_array/orders_bulk_export_2026-11-17.json</td><td>…</td><td>…</td></tr><tr><td>…/orders_bad/orders_2026-11-19_corrupt.json</td><td>…</td><td>…</td></tr></tbody></table><div class="mnote">Shape of the first LIST result (values come from the real files).</div></div>
+      <div class="box warn"><b>Try the mistake</b>Try <code>LIST @RAW.STG_S3_LANDING/orders;</code> without the trailing slash. It is a <b>prefix</b> match, so it also picks up orders_array/ and orders_bad/.</div>
+      <div class="box say"><b>Say it in the interview</b>"LIST is my first smoke test. If COPY loads 0 files, I LIST the exact path first."</div>
+    </div>
+  </div>
+</article>
+<article class="step" id="s7" style="--d:280ms">
+  <header class="sh">
+    <div class="num">07</div>
+    <div class="st"><h3>Query files in place before loading</h3><p>Look inside the JSON straight from S3 with <code>$1</code> and <code>METADATA$</code> columns, with no table needed.</p></div>
+    <div class="meta"><span class="where sf">Worksheet</span><span class="mins">~4 min</span>
+      <label class="done"><input type="checkbox" data-step="7"> done</label></div>
+  </header>
+  <div class="sbody">
+    <div class="col">
+      <h4><span class="ic">▶</span>Do this</h4><ol class="doo"><li>Click <span class="chip b">Insert SQL: Peek raw</span> and press <span class="keys"><kbd>Ctrl/⌘</kbd>+<kbd>Shift</kbd>+<kbd>Enter</kbd></span>.</li><li>Click any cell in the <code>$1</code> column. A <b>VARIANT value</b> pane opens with pretty-printed JSON.</li><li>Click <span class="chip b">Insert SQL: Profile</span> and press <span class="keys"><kbd>Ctrl/⌘</kbd>+<kbd>Shift</kbd>+<kbd>Enter</kbd></span>.</li></ol>
+      <h4><span class="ic ck">✓</span>Green checks the simulator waits for</h4><ul class="checks"><li><i></i>Queried @RAW.STG_S3_LANDING/orders/ directly</li></ul>
+    </div>
+    <div class="col">
+      <h4><span class="ic eye">◉</span>You should see</h4><ul class="see"><li>10 rows of whole JSON documents plus file name and row number.</li><li>The profile shows order_id, status and item count per order, then <b>25 orders per file</b>.</li></ul>
+      
+      <div class="box warn"><b>Try the mistake</b>Forget the <code>(FILE_FORMAT =&gt; …)</code> clause on a stage that has no default and the parse fails.</div>
+      <div class="box say"><b>Say it in the interview</b>"Before designing tables I profile the raw files in place with SELECT $1 from the stage."</div>
+    </div>
+  </div>
+</article>
+<article class="step" id="s8" style="--d:320ms">
+  <header class="sh">
+    <div class="num">08</div>
+    <div class="st"><h3>Create the raw landing table</h3><p><code>RAW.ORDERS_RAW</code>: one VARIANT column plus lineage columns and a load timestamp.</p></div>
+    <div class="meta"><span class="where sf">Worksheet</span><span class="mins">~2 min</span>
+      <label class="done"><input type="checkbox" data-step="8"> done</label></div>
+  </header>
+  <div class="sbody">
+    <div class="col">
+      <h4><span class="ic">▶</span>Do this</h4><ol class="doo"><li>Click <span class="chip b">Insert SQL: Create table</span> and press <span class="keys"><kbd>Ctrl/⌘</kbd>+<kbd>Shift</kbd>+<kbd>Enter</kbd></span>.</li></ol>
+      <h4><span class="ic ck">✓</span>Green checks the simulator waits for</h4><ul class="checks"><li><i></i>RAW.ORDERS_RAW exists with RAW VARIANT</li></ul>
+    </div>
+    <div class="col">
+      <h4><span class="ic eye">◉</span>You should see</h4><ul class="see"><li><code>DESC TABLE</code> shows four columns: <code>RAW VARIANT</code>, <code>SRC_FILE</code>, <code>SRC_ROW</code>, <code>LOADED_AT</code>.</li></ul>
+      
+      <div class="box warn"><b>Try the mistake</b>Re-running <code>CREATE OR REPLACE</code> later wipes the data <b>and</b> the load history, so the next COPY reloads everything.</div>
+      <div class="box say"><b>Say it in the interview</b>"I land JSON as VARIANT so new fields never break the load, and I keep file name and row number for lineage."</div>
+    </div>
+  </div>
+</article>
+<article class="step" id="s9" style="--d:360ms">
+  <header class="sh">
+    <div class="num">09</div>
+    <div class="st"><h3>Bulk load with COPY INTO</h3><p>Load the 50 orders, then re-run COPY to see that already-loaded files are skipped.</p></div>
+    <div class="meta"><span class="where sf">Worksheet</span><span class="mins">~4 min</span>
+      <label class="done"><input type="checkbox" data-step="9"> done</label></div>
+  </header>
+  <div class="sbody">
+    <div class="col">
+      <h4><span class="ic">▶</span>Do this</h4><ol class="doo"><li>Click <span class="chip b">Insert SQL: COPY orders/</span> and press <span class="keys"><kbd>Ctrl/⌘</kbd>+<kbd>Enter</kbd></span>.</li><li>Click <span class="chip b">Insert SQL: Verify</span> and press <span class="keys"><kbd>Ctrl/⌘</kbd>+<kbd>Enter</kbd></span>.</li><li>Click <span class="chip b">Insert SQL: Re-run (idempotency)</span> and press <span class="keys"><kbd>Ctrl/⌘</kbd>+<kbd>Shift</kbd>+<kbd>Enter</kbd></span>.</li></ol>
+      <h4><span class="ic ck">✓</span>Green checks the simulator waits for</h4><ul class="checks"><li><i></i>50 rows loaded from orders/</li><li><i></i>Re-ran COPY and saw &quot;0 files processed&quot;</li></ul>
+    </div>
+    <div class="col">
+      <h4><span class="ic eye">◉</span>You should see</h4><ul class="see"><li>COPY returns one row per file: status <b>LOADED</b>, 25 rows parsed and loaded each.</li><li>Verify shows 2 files × 25 rows = <b>50</b>.</li><li>The re-run returns <b>"Copy executed with 0 files processed."</b></li></ul>
+      <div class="mini"><table><thead><tr><th>file</th><th>status</th><th>rows_parsed</th><th>rows_loaded</th></tr></thead><tbody><tr><td>…part1.json</td><td>LOADED</td><td>25</td><td>25</td></tr><tr><td>…part2.json</td><td>LOADED</td><td>25</td><td>25</td></tr></tbody></table><div class="mnote">First COPY result.</div></div>
+      <div class="box warn"><b>Try the mistake</b>Adding <code>FORCE = TRUE</code> reloads the files anyway and creates duplicates. Don't do it here.</div>
+      <div class="box say"><b>Say it in the interview</b>"COPY keeps 64 days of load metadata per table, so re-running it is safe: files already loaded are skipped."</div>
+    </div>
+  </div>
+</article>
+<article class="step" id="s10" style="--d:400ms">
+  <header class="sh">
+    <div class="num">10</div>
+    <div class="st"><h3>The JSON-array file (STRIP_OUTER_ARRAY)</h3><p>See the array export become ONE giant row with the wrong format, then load it correctly as 10 rows.</p></div>
+    <div class="meta"><span class="where sf">Worksheet</span><span class="mins">~4 min</span>
+      <label class="done"><input type="checkbox" data-step="10"> done</label></div>
+  </header>
+  <div class="sbody">
+    <div class="col">
+      <h4><span class="ic">▶</span>Do this</h4><ol class="doo"><li>Click <span class="chip b">Insert SQL: Wrong format (1 row)</span> and press <span class="keys"><kbd>Ctrl/⌘</kbd>+<kbd>Enter</kbd></span>.</li><li>Click <span class="chip b">Insert SQL: Right format (10 rows)</span> and press <span class="keys"><kbd>Ctrl/⌘</kbd>+<kbd>Shift</kbd>+<kbd>Enter</kbd></span>.</li></ol>
+      <h4><span class="ic ck">✓</span>Green checks the simulator waits for</h4><ul class="checks"><li><i></i>Saw the one-giant-row outcome</li><li><i></i>10 order rows from orders_array/ and no leftover array row</li></ul>
+    </div>
+    <div class="col">
+      <h4><span class="ic eye">◉</span>You should see</h4><ul class="see"><li>Wrong format: <b>1 row</b>, <code>elements = 10</code>, <code>order_id = NULL</code> (an array has no keys).</li><li>Right format: count = <b>10</b>, then COPY loads 10 rows. RAW now holds 60 orders.</li></ul>
+      
+      <div class="box warn"><b>Try the mistake</b>If you already COPYed this file with the NDJSON format, it is marked as loaded. Use <span class="chip b">Insert SQL: Recovery</span>: DELETE those rows, then COPY with <code>FORCE = TRUE</code>.</div>
+      <div class="box say"><b>Say it in the interview</b>"An API export is often one big array. Without STRIP_OUTER_ARRAY it becomes one row and can hit the 16 MB VARIANT limit."</div>
+    </div>
+  </div>
+</article>
+<article class="step" id="s11" style="--d:440ms">
+  <header class="sh">
+    <div class="num">11</div>
+    <div class="st"><h3>Bad data: VALIDATION_MODE, ON_ERROR, VALIDATE()</h3><p>Dry-run the corrupt file, watch ABORT fail, load the good rows with CONTINUE, and save the rejects.</p></div>
+    <div class="meta"><span class="where sf">Worksheet</span><span class="mins">~6 min</span>
+      <label class="done"><input type="checkbox" data-step="11"> done</label></div>
+  </header>
+  <div class="sbody">
+    <div class="col">
+      <h4><span class="ic">▶</span>Do this</h4><ol class="doo"><li>Click <span class="chip b">Insert SQL: Dry run (probe table)</span> and press <span class="keys"><kbd>Ctrl/⌘</kbd>+<kbd>Shift</kbd>+<kbd>Enter</kbd></span>.</li><li>Click <span class="chip b">Insert SQL: ABORT_STATEMENT</span> and press <span class="keys"><kbd>Ctrl/⌘</kbd>+<kbd>Enter</kbd></span>.</li><li>Click <span class="chip b">Insert SQL: CONTINUE</span> and press <span class="keys"><kbd>Ctrl/⌘</kbd>+<kbd>Enter</kbd></span>.</li><li>Click <span class="chip b">Insert SQL: VALIDATE() rejects</span> and press <span class="keys"><kbd>Ctrl/⌘</kbd>+<kbd>Shift</kbd>+<kbd>Enter</kbd></span>.</li></ol>
+      <h4><span class="ic ck">✓</span>Green checks the simulator waits for</h4><ul class="checks"><li><i></i>Dry run returned the 2 parse errors</li><li><i></i>Saw ON_ERROR = ABORT_STATEMENT fail</li><li><i></i>ON_ERROR = CONTINUE loaded 9 of 11 rows</li><li><i></i>Captured rejects with VALIDATE()</li></ul>
+    </div>
+    <div class="col">
+      <h4><span class="ic eye">◉</span>You should see</h4><ul class="see"><li>Dry run: <b>2 parse errors</b> (lines 3 and 7), and nothing is loaded.</li><li>ABORT_STATEMENT: the statement fails on the first bad line, and nothing is loaded.</li><li>CONTINUE: status <b>PARTIALLY_LOADED</b>, 11 parsed, <b>9 loaded</b>.</li><li>VALIDATE(): <code>RAW.ORDERS_LOAD_ERRORS</code> holds the 2 rejected lines with error text.</li></ul>
+      
+      <div class="box warn"><b>Try the mistake</b>Do the snippets <b>in order</b>. Run CONTINUE before ABORT and the file is already loaded, so ABORT reports "0 files processed". Also try VALIDATION_MODE on the transforming COPY into ORDERS_RAW: Snowflake rejects it, which is why the lab uses a one-column probe table.</div>
+      <div class="box say"><b>Say it in the interview</b>"I dry-run with VALIDATION_MODE, load with ON_ERROR = CONTINUE or SKIP_FILE, and keep rejects from VALIDATE() in an errors table. Valid JSON with bad values is handled downstream with TRY_ functions."</div>
+    </div>
+  </div>
+</article>
+<article class="step" id="s12" style="--d:480ms">
+  <header class="sh">
+    <div class="num">12</div>
+    <div class="st"><h3>Query VARIANT, FLATTEN, build curated tables</h3><p>Turn nested JSON into two clean relational tables.</p></div>
+    <div class="meta"><span class="where sf">Worksheet</span><span class="mins">~8 min</span>
+      <label class="done"><input type="checkbox" data-step="12"> done</label></div>
+  </header>
+  <div class="sbody">
+    <div class="col">
+      <h4><span class="ic">▶</span>Do this</h4><ol class="doo"><li><span class="chip b">Insert SQL: Paths + casts</span> → <span class="keys"><kbd>Ctrl/⌘</kbd>+<kbd>Enter</kbd></span>. Note that the uncast column shows "quotes".</li><li><span class="chip b">Insert SQL: Cast fails ↯</span> → <span class="keys"><kbd>Ctrl/⌘</kbd>+<kbd>Enter</kbd></span>. This one is meant to fail.</li><li><span class="chip b">Insert SQL: TRY_TO_NUMBER</span> → <span class="keys"><kbd>Ctrl/⌘</kbd>+<kbd>Enter</kbd></span>.</li><li><span class="chip b">Insert SQL: LATERAL FLATTEN</span> → <span class="keys"><kbd>Ctrl/⌘</kbd>+<kbd>Enter</kbd></span>.</li><li><span class="chip b">Insert SQL: CTAS curated</span> → <span class="keys"><kbd>Ctrl/⌘</kbd>+<kbd>Shift</kbd>+<kbd>Enter</kbd></span>.</li><li><span class="chip b">Insert SQL: Revenue by category</span> → <span class="keys"><kbd>Ctrl/⌘</kbd>+<kbd>Enter</kbd></span>.</li></ol>
+      <h4><span class="ic ck">✓</span>Green checks the simulator waits for</h4><ul class="checks"><li><i></i>Queried VARIANT paths with casts</li><li><i></i>Used TRY_TO_NUMBER for the bad amount</li><li><i></i>Exploded items with LATERAL FLATTEN</li><li><i></i>CURATED.ORDERS and CURATED.ORDER_ITEMS built</li><li><i></i>Ran the revenue-by-category aggregate</li></ul>
+    </div>
+    <div class="col">
+      <h4><span class="ic eye">◉</span>You should see</h4><ul class="see"><li>The hard cast fails with <b>Numeric value 'forty-two' is not recognized</b>.</li><li>TRY_TO_NUMBER returns NULL instead, and surfaces ORD-100069 and the row with no order_id, with file and row number.</li><li>FLATTEN gives one row per item (line_no, sku, qty, unit_price).</li><li>CTAS result: <b>68 orders</b> and <b>126 order items</b>.</li><li>Revenue by category: <b>Electronics</b> is first at <b>4,037.29</b>.</li></ul>
+      
+      <div class="box warn"><b>Try the mistake</b>Use <code>raw:payment.amount::NUMBER</code> in the CTAS and the whole table build fails on one bad value. That is why curated code uses TRY_ functions.</div>
+      <div class="box say"><b>Say it in the interview</b>"I use colon paths with explicit casts, TRY_ functions for dirty values, LATERAL FLATTEN for arrays, and QUALIFY ROW_NUMBER() to keep the latest version of each order."</div>
+    </div>
+  </div>
+</article>
+<article class="step" id="s13" style="--d:520ms">
+  <header class="sh">
+    <div class="num">13</div>
+    <div class="st"><h3>Automate: stream + Snowpipe auto-ingest</h3><p>New files in S3 load by themselves. A stream records exactly which rows are new.</p></div>
+    <div class="meta"><span class="where sf">Worksheet</span><span class="where aws">AWS · Event notifications</span><span class="where aws">AWS · Upload</span><span class="mins">~8 min</span>
+      <label class="done"><input type="checkbox" data-step="13"> done</label></div>
+  </header>
+  <div class="sbody">
+    <div class="col">
+      <h4><span class="ic">▶</span>Do this</h4><ol class="doo"><li><span class="chip b">Insert SQL: Stream + pipe</span> → <span class="keys"><kbd>Ctrl/⌘</kbd>+<kbd>Shift</kbd>+<kbd>Enter</kbd></span>. Find <code>notification_channel</code> in the SHOW PIPES result.</li><li>Left panel: open <span class="chip a">Event notifications</span> (it now has a dot) and click <span class="chip a">Paste notification_channel from SHOW PIPES</span>.</li><li>Keep the prefix <code>landing/orders_incremental/</code> and click <span class="chip a">Save changes</span>.</li><li>Open <span class="chip a">Objects</span> and click <span class="chip a">⇪ Upload</span>. Leave both files ticked and click <span class="chip a">Upload</span>.</li><li>Watch the animation: <b>S3 PUT → Event → SQS → Snowpipe COPY → table</b>.</li><li><span class="chip b">Insert SQL: Monitor</span> → <span class="keys"><kbd>Ctrl/⌘</kbd>+<kbd>Shift</kbd>+<kbd>Enter</kbd></span>.</li><li><span class="chip b">Insert SQL: Read the stream</span> → <span class="keys"><kbd>Ctrl/⌘</kbd>+<kbd>Enter</kbd></span>.</li></ol>
+      <h4><span class="ic ck">✓</span>Green checks the simulator waits for</h4><ul class="checks"><li><i></i>Stream RAW.STRM_ORDERS_RAW exists</li><li><i></i>AUTO_INGEST pipe exists and SHOW PIPES was run</li><li><i></i>Snowpipe loaded the 10 incremental rows</li><li><i></i>Checked PIPE_STATUS or COPY_HISTORY</li><li><i></i>Read new rows from the stream</li></ul>
+    </div>
+    <div class="col">
+      <h4><span class="ic eye">◉</span>You should see</h4><ul class="see"><li>Toast "Event notification saved: S3 will now notify Snowpipe on new objects."</li><li>After upload, Snowpipe loads <b>10 rows</b> (5 + 5) into ORDERS_RAW.</li><li>PIPE_STATUS / COPY_HISTORY show the two files loaded by the pipe.</li><li>The stream returns exactly those <b>10 new rows</b>, each with <code>METADATA$ACTION = INSERT</code>.</li></ul>
+      
+      <div class="box warn"><b>Try the mistake</b><b>Order matters.</b> Upload before creating the stream and the rows never appear in it. Upload before saving the notification and you get "Uploaded, but Snowpipe was not notified": run <code>ALTER PIPE RAW.PIPE_ORDERS_INCREMENTAL REFRESH;</code> to catch up.</div>
+      <div class="box say"><b>Say it in the interview</b>"For continuous loading I use Snowpipe with AUTO_INGEST: an S3 event goes to Snowflake's SQS queue, and the pipe runs its COPY on serverless compute."</div>
+    </div>
+  </div>
+</article>
+<article class="step" id="s14" style="--d:560ms">
+  <header class="sh">
+    <div class="num">14</div>
+    <div class="st"><h3>Task + MERGE (upsert) into CURATED</h3><p>A scheduled task merges stream rows into the curated tables, updating changed orders and inserting new ones.</p></div>
+    <div class="meta"><span class="where sf">Worksheet</span><span class="mins">~8 min</span>
+      <label class="done"><input type="checkbox" data-step="14"> done</label></div>
+  </header>
+  <div class="sbody">
+    <div class="col">
+      <h4><span class="ic">▶</span>Do this</h4><ol class="doo"><li><span class="chip b">Insert SQL: Create task</span> → <span class="keys"><kbd>Ctrl/⌘</kbd>+<kbd>Shift</kbd>+<kbd>Enter</kbd></span>. It is one statement wrapped in <code>EXECUTE IMMEDIATE $$ … $$</code>.</li><li><span class="chip b">Insert SQL: Resume + run</span> → <span class="keys"><kbd>Ctrl/⌘</kbd>+<kbd>Shift</kbd>+<kbd>Enter</kbd></span>.</li><li><span class="chip b">Insert SQL: Verify upsert</span> → <span class="keys"><kbd>Ctrl/⌘</kbd>+<kbd>Shift</kbd>+<kbd>Enter</kbd></span>.</li><li><span class="chip b">Insert SQL: Schema drift</span> → <span class="keys"><kbd>Ctrl/⌘</kbd>+<kbd>Shift</kbd>+<kbd>Enter</kbd></span>.</li></ol>
+      <h4><span class="ic ck">✓</span>Green checks the simulator waits for</h4><ul class="checks"><li><i></i>Task exists and was resumed</li><li><i></i>Task run SUCCEEDED with a MERGE into CURATED.ORDERS</li><li><i></i>ORD-100003 is now DELIVERED in CURATED.ORDERS</li><li><i></i>Explored schema drift (loyalty_tier)</li><li><i></i>Stream is empty after the run</li></ul>
+    </div>
+    <div class="col">
+      <h4><span class="ic eye">◉</span>You should see</h4><ul class="see"><li>TASK_HISTORY shows the run as <b>SUCCEEDED</b>. The MERGE into ORDERS reports <b>9 inserted, 1 updated</b> (items: 18 / 1).</li><li><code>ORD-100003</code> is now <b>DELIVERED</b> (it was SHIPPED). ORDERS has <b>77</b> rows.</li><li><code>has_data = FALSE</code> and <code>pending = 0</code>: the stream was consumed.</li><li>Schema drift: the new <code>loyalty_tier</code> and <code>delivered_ts</code> fields are already queryable in RAW.</li><li>The <b>Completion screen</b> opens automatically about a second after the last check turns green.</li></ul>
+      
+      <div class="box warn"><b>Try the mistake</b>Remove <code>BEGIN TRANSACTION</code> / <code>COMMIT</code> from the task body and re-run. The first MERGE consumes the stream, so the second one sees nothing.</div>
+      <div class="box say"><b>Say it in the interview</b>"Stream plus task plus MERGE is the incremental pattern. The task only spends compute when SYSTEM$STREAM_HAS_DATA is true, and the stream offset advances on commit."</div>
+    </div>
+  </div>
+</article>
+<article class="step" id="s15" style="--d:600ms">
+  <header class="sh">
+    <div class="num">15</div>
+    <div class="st"><h3>Cleanup (bonus) <span class="bonus">bonus</span></h3><p>Suspend and drop everything, the way you would on a real trial account.</p></div>
+    <div class="meta"><span class="where sf">Worksheet</span><span class="mins">~2 min</span>
+      <label class="done"><input type="checkbox" data-step="15"> done</label></div>
+  </header>
+  <div class="sbody">
+    <div class="col">
+      <h4><span class="ic">▶</span>Do this</h4><ol class="doo"><li>Click the pill <span class="chip b">15 Cleanup</span>, then <span class="chip b">Insert SQL: Teardown</span>, and press <span class="keys"><kbd>Ctrl/⌘</kbd>+<kbd>Shift</kbd>+<kbd>Enter</kbd></span>.</li></ol>
+      <h4><span class="ic ck">✓</span>Green checks the simulator waits for</h4><ul class="checks"><li><i></i>Database and integration dropped</li></ul>
+    </div>
+    <div class="col">
+      <h4><span class="ic eye">◉</span>You should see</h4><ul class="see"><li>Objects disappear from the browser, and the context bar falls back to ACCOUNTADMIN with no warehouse or database.</li><li>The Completion screen keeps your numbers: they were saved before cleanup.</li></ul>
+      
+      <div class="box warn"><b>Try the mistake</b>To practise again from zero, click <span class="chip b">Reset</span> in the top bar. It clears progress and restores the starting state.</div>
+      <div class="box say"><b>Say it in the interview</b>"Dropping the database removes everything inside it. Integrations, warehouses and roles are account-level, so I drop them separately."</div>
+    </div>
+  </div>
+</article>
+
+<section class="blk" id="trouble">
+  <h2><small>05 · Help</small>Troubleshooting</h2>
+  <details class="faq"><summary>I ran the SQL but the checks stay grey.</summary><div>You probably pressed <span class="keys"><kbd>Ctrl/⌘</kbd>+<kbd>Enter</kbd></span>, which runs only the statement under the cursor. Press <span class="keys"><kbd>Ctrl/⌘</kbd>+<kbd>Shift</kbd>+<kbd>Enter</kbd></span>. Also check that the context bar says <code>LAB_ENGINEER · LAB_WH · SHOPSTREAM_LAB</code>; if not, re-run step 1.</div></details>
+  <details class="faq"><summary>I get "No active warehouse selected" or "does not exist or not authorized".</summary><div>Your session context was lost or an earlier step was skipped. Run <code>USE ROLE LAB_ENGINEER; USE WAREHOUSE LAB_WH; USE DATABASE SHOPSTREAM_LAB; USE SCHEMA RAW;</code> and check that the earlier pills show ✓.</div></details>
+  <details class="faq"><summary>LIST fails with AccessDenied / sts:AssumeRole.</summary><div>The IAM trust isn't set. Go to step 3: run <code>DESC INTEGRATION S3_LANDING_INT;</code>, open the <b>IAM role</b> tab and click <b>Update trust policy</b>. If the badge says "external ID stale", the integration was re-created: DESC again, then update again.</div></details>
+  <details class="faq"><summary>The "Paste notification_channel" button is greyed out.</summary><div>It unlocks only after the AUTO_INGEST pipe exists <b>and</b> you have run <code>SHOW PIPES;</code>. Run the "Stream + pipe" snippet with Run all.</div></details>
+  <details class="faq"><summary>Upload said "Snowpipe was not notified".</summary><div>The event notification wasn't saved, or doesn't match the pipe's queue. Save it in <b>Event notifications</b>, then run <code>ALTER PIPE RAW.PIPE_ORDERS_INCREMENTAL REFRESH;</code> to load the files already in S3.</div></details>
+  <details class="faq"><summary>The stream is empty after the upload.</summary><div>Streams only capture changes made <b>after</b> they are created. If you uploaded before creating the stream, click <b>Reset</b> and redo the steps in order, or keep going: the curated tables still work, but step 14's checks need stream rows.</div></details>
+  <details class="faq"><summary>Step 11: ABORT_STATEMENT says "0 files processed".</summary><div>You ran CONTINUE first, so the file is already recorded as loaded. Run the snippets top to bottom. To redo the step, <code>DELETE FROM RAW.ORDERS_RAW WHERE src_file LIKE 'orders_bad/%';</code> and add <code>FORCE = TRUE</code> once.</div></details>
+  <details class="faq"><summary>My progress disappeared.</summary><div>Progress is stored per browser and per file location. A different browser, a private window, or a moved file starts fresh. Ticks in this guide are stored separately, also in your browser.</div></details>
+  <details class="faq"><summary>Is this real Snowflake?</summary><div>No. It is a JavaScript engine built to behave like Snowflake for this lab's SQL, with realistic error messages. The real SQL scripts in the kit run on a Snowflake trial account; see below.</div></details>
+</section>
+
+<section class="blk" id="next">
+  <h2><small>06 · Level up</small>Practise for real</h2>
+  <div class="modes">
+    <div class="mode" style="--d:0ms"><span class="tag">Round 1</span><h5>Guided</h5><p>Follow this guide with the Insert SQL buttons. Goal: understand every result.</p></div>
+    <div class="mode" style="--d:90ms"><span class="tag">Round 2</span><h5>From memory</h5><p>Click <b>Reset</b>, switch to <b>Free play</b>, and type each step yourself. Use hints only when stuck.</p></div>
+    <div class="mode" style="--d:180ms"><span class="tag">Round 3</span><h5>Out loud</h5><p>Open the <b>Completion</b> screen and say the 60-second answer while sketching the architecture on paper.</p></div>
+  </div>
+  <p class="sub" style="margin-top:18px">Ready for a real account? The kit's numbered SQL scripts (01 to 11, then 99 for cleanup) mirror these steps against a Snowflake trial. The AWS setup guide covers the bucket and role, and script 04b offers an internal-stage option with no AWS account.</p>
+</section>
+</main>
+</div>
+<footer><div class="wrap">Companion to the JSON → S3 → Snowflake Lab Simulator. All data, names and the "ShopStream" company are fictional and generic, so share freely.</div></footer>
+<script>
+(function(){
+  var KEY='s3sf_lab_guide_done_v1', done={};
+  try{done=JSON.parse(localStorage.getItem(KEY)||'{}')}catch(e){}
+  var boxes=document.querySelectorAll('input[data-step]'), total=boxes.length;
+  function paint(){
+    var n=0;
+    boxes.forEach(function(b){var s=b.dataset.step,on=!!done[s];b.checked=on;if(on)n++;
+      document.getElementById('s'+s).classList.toggle('isdone',on);
+      var a=document.querySelector('[data-nav="'+s+'"]');if(a)a.classList.toggle('ok',on);});
+    document.getElementById('pbar').style.width=(n/total*100)+'%';
+    document.getElementById('ptxt').textContent=n+' / '+total+' ticked';
+  }
+  boxes.forEach(function(b){b.addEventListener('change',function(){done[b.dataset.step]=b.checked;try{localStorage.setItem(KEY,JSON.stringify(done))}catch(e){}paint();});});
+  paint();
+  var links=document.querySelectorAll('nav.side a[data-nav]');
+  if('IntersectionObserver' in window){
+    var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){links.forEach(function(l){l.classList.toggle('cur',l.dataset.nav===e.target.id.slice(1));});}});},{rootMargin:'-30% 0px -60% 0px'});
+    document.querySelectorAll('.step').forEach(function(s){io.observe(s);});
+  }
+})();
+</script>
+<script>
+function sfThm(){
+  var d=document.documentElement, b=document.getElementById('sf-thm');
+  if(d.dataset.theme==='light'){
+    d.removeAttribute('data-theme');
+    if(b){b.innerHTML='&#9728;&#xFE0F;&nbsp;Light';b.style.background='rgba(255,255,255,.14)';b.style.borderColor='rgba(255,255,255,.26)';}
+    try{localStorage.setItem('sf-theme','dark');}catch(e){}
+  } else {
+    d.dataset.theme='light';
+    if(b){b.innerHTML='&#127769;&nbsp;Dark';b.style.background='rgba(0,0,0,.07)';b.style.borderColor='rgba(0,0,0,.16)';}
+    try{localStorage.setItem('sf-theme','light');}catch(e){}
+  }
+}
+(function(){
+  try{
+    if(localStorage.getItem('sf-theme')==='light'){
+      document.documentElement.dataset.theme='light';
+      document.addEventListener('DOMContentLoaded',function(){
+        var b=document.getElementById('sf-thm');
+        if(b){b.innerHTML='&#127769;&nbsp;Dark';b.style.background='rgba(0,0,0,.07)';b.style.borderColor='rgba(0,0,0,.16)';}
+      });
+    }
+  }catch(e){}
+})();
+</script>
+</body></html>

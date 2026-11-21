@@ -1,0 +1,1172 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Lab Simulator: Step-by-Step Guide · SnowSQL · Streams · Tasks</title>
+<style>
+:root{--bg:#0a0e13;--bg2:#0f151c;--card:#121a23;--line:#223040;--ink:#e7eef6;--mute:#8396aa;--sf:#29b5e8;--sf2:#7fd6f5;--aws:#ff9900;--aws2:#ffc266;--ok:#3ddc97;--bad:#ff5d6c;--warn:#ffcc4d;--vio:#b392f0;
+--mono:'JetBrains Mono',ui-monospace,monospace;--sans:'Space Grotesk',sans-serif}
+*{box-sizing:border-box}html{scroll-behavior:smooth}
+body{margin:0;color:var(--ink);font:15px/1.6 var(--sans);background:
+radial-gradient(1200px 600px at 85% -10%,rgba(41,181,232,.13),transparent 60%),
+radial-gradient(900px 500px at -10% 20%,rgba(255,153,0,.08),transparent 60%),
+repeating-linear-gradient(0deg,rgba(255,255,255,.018) 0 1px,transparent 1px 32px),
+repeating-linear-gradient(90deg,rgba(255,255,255,.018) 0 1px,transparent 1px 32px),var(--bg);min-height:100vh}
+code,kbd,.mono{font-family:var(--mono)}code{font-size:.86em;background:rgba(127,214,245,.08);border:1px solid rgba(127,214,245,.16);padding:1px 5px;border-radius:5px;color:var(--sf2);word-break:break-word}
+a{color:var(--sf2)}
+.wrap{max-width:1240px;margin:0 auto;padding:0 28px}
+@keyframes up{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+@keyframes glow{0%,100%{box-shadow:0 0 0 0 rgba(41,181,232,.0)}50%{box-shadow:0 0 0 6px rgba(41,181,232,.12)}}
+/* hero */
+.hero{padding:64px 0 34px;border-bottom:1px solid var(--line)}
+.eyebrow{font:500 12px var(--mono);letter-spacing:.22em;text-transform:uppercase;color:var(--aws2)}
+.hero h1{font-weight:200;font-size:clamp(38px,6vw,76px);line-height:1.02;margin:14px 0 18px;letter-spacing:-.03em}
+.hero h1 b{font-weight:800;background:linear-gradient(90deg,var(--aws),var(--sf));-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero p.lead{max-width:760px;color:#c4d2e0;font-size:18px;font-weight:300}
+.stats{display:flex;gap:14px;flex-wrap:wrap;margin-top:26px}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 18px;animation:up .6s both;animation-delay:var(--d)}
+.stat b{display:block;font:800 26px var(--mono);color:var(--sf2)}.stat span{font-size:12px;color:var(--mute);text-transform:uppercase;letter-spacing:.1em}
+/* layout */
+.layout{display:grid;grid-template-columns:200px 1fr;gap:34px;padding:34px 0 80px}
+nav.side{position:sticky;top:18px;align-self:start;display:flex;flex-direction:column;gap:2px;font-size:13px}
+nav.side .lbl{font:600 11px var(--mono);letter-spacing:.18em;color:var(--mute);margin:14px 0 6px;text-transform:uppercase}
+nav.side a{display:flex;gap:10px;align-items:center;color:#b9c7d6;text-decoration:none;padding:5px 10px;border-radius:8px;border-left:2px solid transparent}
+nav.side a b{font:600 11px var(--mono);color:var(--mute);width:18px}
+nav.side a:hover{background:rgba(255,255,255,.04)}nav.side a.cur{background:rgba(41,181,232,.1);border-left-color:var(--sf);color:#fff}
+nav.side a.ok b{color:var(--ok)}
+.progress{margin:6px 0 4px;height:6px;border-radius:9px;background:#1b2632;overflow:hidden}.progress i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--aws),var(--sf));transition:width .4s}
+.ptxt{font:500 11px var(--mono);color:var(--mute)}
+section.blk{margin-bottom:46px;animation:up .6s both}
+h2{font-weight:800;font-size:30px;letter-spacing:-.02em;margin:0 0 6px}h2 small{display:block;font:500 12px var(--mono);letter-spacing:.2em;text-transform:uppercase;color:var(--aws2);margin-bottom:6px}
+.sub{color:var(--mute);margin:0 0 20px;max-width:780px}
+/* before you start */
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.tile{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 18px;animation:up .6s both;animation-delay:var(--d)}
+.tile h5{margin:0 0 6px;font-size:15px}.tile p{margin:0;color:#b9c7d6;font-size:14px}
+.tile .big{font:800 30px var(--mono);color:var(--aws2);line-height:1}
+/* screen map */
+.map{position:relative;background:linear-gradient(180deg,#0d131a,#0b1016);border:1px solid var(--line);border-radius:16px;padding:12px;font:12px var(--mono)}
+.m-top{display:flex;align-items:center;gap:8px;padding:8px 10px;border:1px solid var(--line);border-radius:10px;background:#0f1720}
+.m-top .brand{font-weight:700;margin-right:auto}.m-top .brand i{color:var(--aws);font-style:normal}.m-top .brand em{color:var(--sf);font-style:normal}
+.m-bar{width:120px;height:6px;border-radius:6px;background:#1b2632;overflow:hidden}.m-bar i{display:block;width:40%;height:100%;background:linear-gradient(90deg,var(--aws),var(--sf))}
+.mb{border:1px solid var(--line);border-radius:7px;padding:3px 8px;color:#c7d3df;background:#141d27}.mb.g{border-color:#6b5a1e;color:var(--warn)}.mb.r{border-color:#5a2028;color:#ff97a1}
+.m-mission{margin-top:8px;border:1px solid var(--line);border-radius:10px;padding:8px 10px;background:#0f1720}
+.m-pills{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px}.m-pills span{border:1px solid var(--line);border-radius:20px;padding:2px 8px;color:var(--mute)}.m-pills .d{color:var(--ok);border-color:#1f5a43}.m-pills .c{color:#fff;border-color:var(--sf);background:rgba(41,181,232,.15)}
+.m-card{display:grid;grid-template-columns:1.4fr 1fr;gap:10px}.m-card div{border:1px dashed #2b3b4d;border-radius:8px;padding:6px 8px;color:#a9b8c8}
+.m-split{display:grid;grid-template-columns:1fr 1.5fr;gap:8px;margin-top:8px;min-height:250px}
+.m-aws,.m-sf{border:1px solid var(--line);border-radius:10px;padding:8px;background:#0f1720;display:flex;flex-direction:column;gap:6px}
+.m-aws{border-top:3px solid var(--aws)}.m-sf{border-top:3px solid var(--sf)}
+.m-tabs{display:flex;gap:4px}.m-tabs span{padding:2px 7px;border-radius:6px;background:#141d27;color:#b5c3d2}.m-tabs .on{color:var(--aws2);background:rgba(255,153,0,.1)}
+.m-files{flex:1;border:1px dashed #2b3b4d;border-radius:8px;padding:6px;color:var(--mute)}
+.m-ctx{border:1px dashed #2b3b4d;border-radius:7px;padding:3px 8px;color:var(--sf2)}
+.m-ed{display:grid;grid-template-columns:90px 1fr;gap:6px;flex:1}.m-ed > div{border:1px dashed #2b3b4d;border-radius:8px;padding:6px;color:var(--mute)}
+.m-run{display:flex;gap:5px}.m-run span{background:var(--sf);color:#04202c;border-radius:6px;padding:2px 8px;font-weight:700}.m-run span.alt{background:#123548;color:var(--sf2)}
+.m-res{border:1px dashed #2b3b4d;border-radius:8px;padding:6px;color:var(--mute);min-height:60px}
+.co{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:50%;background:var(--warn);color:#1b1400;font:800 11px var(--mono);margin-right:4px;animation:glow 2.4s infinite;vertical-align:middle;flex:none}
+.legend{display:grid;grid-template-columns:repeat(2,1fr);gap:8px 22px;margin-top:16px}
+.legend div{display:flex;gap:10px;align-items:flex-start;font-size:14px;color:#c4d2e0}
+/* loop */
+.loop{display:grid;grid-template-columns:repeat(5,1fr);gap:0;align-items:stretch;counter-reset:l}
+.lp{position:relative;background:var(--card);border:1px solid var(--line);padding:16px 14px 14px;border-radius:14px;margin-right:22px;animation:up .6s both;animation-delay:var(--d)}
+.lp:not(:last-child)::after{content:'➜';position:absolute;right:-20px;top:50%;transform:translateY(-50%);color:var(--sf);font-size:16px}
+.lp b{display:block;font:800 13px var(--mono);color:var(--aws2);margin-bottom:4px}.lp h5{margin:0 0 4px;font-size:16px}.lp p{margin:0;font-size:13px;color:#aebdcc}
+/* phases */
+.phases{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:26px}
+.ph{border-radius:12px;padding:12px 14px;border:1px solid var(--line);background:var(--card);animation:up .6s both;animation-delay:var(--d)}
+.ph span{font:600 11px var(--mono);letter-spacing:.12em;color:var(--mute);text-transform:uppercase}.ph b{display:block;font-size:17px;margin:2px 0}.ph em{font-style:normal;font-size:12.5px;color:#aebdcc}
+.ph.aws{border-top:3px solid var(--aws)}.ph.sf{border-top:3px solid var(--sf)}.ph.mix{border-top:3px solid var(--vio)}.ph.mute{border-top:3px solid var(--mute)}
+/* step cards */
+.step{background:linear-gradient(180deg,rgba(18,26,35,.96),rgba(14,20,27,.96));border:1px solid var(--line);border-radius:18px;margin-bottom:22px;overflow:hidden;animation:up .6s both;animation-delay:var(--d);scroll-margin-top:14px}
+.step.isdone{border-color:#1f5a43}
+.sh{display:grid;grid-template-columns:auto 1fr auto;gap:18px;align-items:center;padding:18px 22px;border-bottom:1px solid var(--line);background:linear-gradient(90deg,rgba(41,181,232,.06),transparent 60%)}
+.num{font:200 46px/1 var(--mono);color:var(--sf2);letter-spacing:-.04em}.step.isdone .num{color:var(--ok)}
+.st h3{margin:0;font-size:21px;font-weight:700}.st p{margin:3px 0 0;color:#b9c7d6;font-size:14.5px}
+.bonus{font:600 10px var(--mono);letter-spacing:.14em;text-transform:uppercase;border:1px solid #6b5a1e;color:var(--warn);border-radius:20px;padding:2px 8px;vertical-align:middle}
+.meta{display:flex;flex-direction:column;align-items:flex-end;gap:5px}
+.where{font:600 11px var(--mono);border-radius:20px;padding:2px 9px;white-space:nowrap}.where.sf{color:var(--sf2);background:rgba(41,181,232,.1);border:1px solid rgba(41,181,232,.3)}.where.aws{color:var(--aws2);background:rgba(255,153,0,.08);border:1px solid rgba(255,153,0,.3)}
+.mins{font:500 11px var(--mono);color:var(--mute)}
+.done{font:600 12px var(--mono);color:var(--mute);cursor:pointer;display:flex;gap:6px;align-items:center}.done input{accent-color:var(--ok);width:15px;height:15px}
+.sbody{display:grid;grid-template-columns:1fr 1fr;gap:0}
+.col{padding:16px 22px 20px}.col:first-child{border-right:1px solid var(--line)}
+h4{margin:6px 0 10px;font-size:12px;font-family:var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--mute);display:flex;align-items:center;gap:8px}
+.ic{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:6px;background:rgba(41,181,232,.15);color:var(--sf2);font-size:10px}.ic.ck{background:rgba(61,220,151,.14);color:var(--ok)}.ic.eye{background:rgba(255,153,0,.14);color:var(--aws2)}
+ol.doo{margin:0 0 14px;padding:0;list-style:none;counter-reset:d}
+ol.doo li{counter-increment:d;position:relative;padding:0 0 10px 36px;font-size:14.5px}
+ol.doo li::before{content:counter(d);position:absolute;left:0;top:1px;width:24px;height:24px;border-radius:50%;display:grid;place-items:center;font:700 12px var(--mono);background:#16222e;border:1px solid #2b3d50;color:var(--sf2)}
+ol.doo li:not(:last-child)::after{content:'';position:absolute;left:11.5px;top:27px;bottom:2px;width:1px;background:#2b3d50}
+ul.see{margin:0 0 12px;padding-left:18px;font-size:14.5px}ul.see li{margin-bottom:6px}ul.see li::marker{color:var(--aws)}
+ul.checks{list-style:none;margin:0;padding:0;font-size:13.5px}
+ul.checks li{display:flex;gap:9px;align-items:flex-start;padding:5px 9px;border:1px solid #1d3a2f;background:rgba(61,220,151,.05);border-radius:8px;margin-bottom:5px;color:#cfeee0}
+ul.checks i{flex:none;width:14px;height:14px;border-radius:50%;border:2px solid var(--ok);margin-top:4px;position:relative}
+ul.checks i::after{content:'';position:absolute;left:3px;top:0;width:3px;height:6px;border:solid var(--ok);border-width:0 2px 2px 0;transform:rotate(45deg)}
+.chip{display:inline-block;font:600 12.5px var(--mono);padding:1px 8px;border-radius:7px;white-space:nowrap;vertical-align:baseline}
+.chip.b{background:#123548;color:var(--sf2);border:1px solid #1f5674}.chip.a{background:#3a2606;color:var(--aws2);border:1px solid #6b4a10}
+.keys{white-space:nowrap}kbd{display:inline-block;font-size:11.5px;padding:1px 6px;border-radius:5px;background:#1a2430;border:1px solid #33465b;border-bottom-width:3px;color:#e3ecf5}
+.box{border-radius:12px;padding:10px 14px;margin-top:10px;font-size:14px}.box b{display:block;font:700 11px var(--mono);letter-spacing:.14em;text-transform:uppercase;margin-bottom:3px}
+.box.warn{background:rgba(255,93,108,.06);border:1px solid rgba(255,93,108,.28)}.box.warn b{color:#ff8f9a}
+.box.say{background:rgba(179,146,240,.07);border:1px solid rgba(179,146,240,.3);font-style:italic}.box.say b{color:var(--vio);font-style:normal}
+.pill-ok,.pill-bad{font:600 12px var(--mono);padding:1px 8px;border-radius:20px;white-space:nowrap}.pill-ok{color:var(--ok);border:1px solid #1f5a43;background:rgba(61,220,151,.08)}.pill-bad{color:#ff8f9a;border:1px solid #5a2028;background:rgba(255,93,108,.08)}
+.mini{margin:6px 0 4px;border:1px solid var(--line);border-radius:10px;overflow:auto;background:#0d141b}
+.mini table{border-collapse:collapse;width:100%;font:12px var(--mono)}.mini th{text-align:left;color:var(--mute);font-weight:600;padding:6px 10px;border-bottom:1px solid var(--line);background:#111a23}.mini td{padding:5px 10px;border-bottom:1px solid #18222d;color:#cfe0ee;white-space:nowrap}
+.mnote{font:11px var(--mono);color:var(--mute);padding:5px 10px}
+/* tables */
+.ref{width:100%;border-collapse:collapse;font-size:14px;background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.ref th{text-align:left;font:600 11px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--mute);padding:10px 14px;border-bottom:1px solid var(--line);background:#111a23}
+.ref td{padding:10px 14px;border-bottom:1px solid #1a2531;vertical-align:top}.ref tr:last-child td{border-bottom:0}
+/* faq */
+details.faq{background:var(--card);border:1px solid var(--line);border-radius:12px;margin-bottom:8px}
+details.faq summary{cursor:pointer;padding:12px 16px;font-weight:600;list-style:none;display:flex;gap:10px;align-items:center}
+details.faq summary::before{content:'+';font:700 16px var(--mono);color:var(--aws2);width:14px}details.faq[open] summary::before{content:'–'}
+details.faq div{padding:0 16px 14px 40px;color:#c4d2e0;font-size:14.5px}
+.modes{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.mode{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 18px;animation:up .6s both;animation-delay:var(--d)}
+.mode h5{margin:0 0 4px;font-size:17px}.mode .tag{font:600 11px var(--mono);letter-spacing:.14em;color:var(--aws2);text-transform:uppercase}.mode p{margin:6px 0 0;color:#b9c7d6;font-size:14px}
+footer{border-top:1px solid var(--line);padding:22px 0 40px;color:var(--mute);font-size:13px}
+@media (max-width:980px){.layout{grid-template-columns:1fr}nav.side{display:none}.sbody,.grid3,.modes,.legend{grid-template-columns:1fr}.col:first-child{border-right:0;border-bottom:1px solid var(--line)}.loop,.phases{grid-template-columns:1fr 1fr}.lp{margin:0 0 10px}.lp::after{display:none}.sh{grid-template-columns:auto 1fr}.meta{grid-column:1/-1;flex-direction:row;flex-wrap:wrap;align-items:center}.m-split,.m-card{grid-template-columns:1fr}}
+@media print{body{background:#fff;color:#111}nav.side,.done{display:none}.layout{grid-template-columns:1fr}.step,.tile,.lp,.ph,.mode,.ref,details.faq,.map{background:#fff;border-color:#bbb;break-inside:avoid;animation:none}.st p,ul.see,ol.doo li,.lp p,.tile p,.mode p,details.faq div,.hero p.lead{color:#222}details.faq div{display:block}code{color:#05506e;background:#eef7fb}.hero h1 b{color:#05506e;-webkit-text-fill-color:#05506e}}
+
+/* snowsql guide additions */
+.snips{padding:16px 22px 4px;border-bottom:1px solid var(--line);background:rgba(7,11,16,.35)}
+.snip{margin:0 0 18px}
+.sniphead{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:6px}
+.sniphead b{font-size:14px}.sniphead .sp{flex:1}
+.tgt{font:700 10.5px var(--mono);letter-spacing:.12em;text-transform:uppercase;border-radius:20px;padding:2px 9px;white-space:nowrap}
+.tgt.ws{color:var(--sf2);background:rgba(41,181,232,.1);border:1px solid rgba(41,181,232,.3)}
+.tgt.tm{color:#9be7b0;background:rgba(61,220,151,.09);border:1px solid rgba(61,220,151,.32)}
+.tgt.fl{color:var(--aws2);background:rgba(255,153,0,.08);border:1px solid rgba(255,153,0,.3)}
+.cp{font:600 11px var(--mono);cursor:pointer;color:var(--sf2);background:#123548;border:1px solid #1f5674;border-radius:7px;padding:3px 10px}
+.cp:hover{background:#17506f}.cp.ok{color:#04202c;background:var(--ok);border-color:var(--ok)}
+pre.code{margin:0;padding:12px 14px;background:#0a1017;border:1px solid var(--line);border-radius:10px;font:12.5px/1.55 var(--mono);color:#d5e4f1;overflow:auto;white-space:pre}
+pre.code .cm{color:#6f869b}pre.code .kw{color:#7fd6f5}pre.code .st{color:#ffc266}
+.term{background:#06090d;border:1px solid #1d3a2f;border-radius:10px;overflow:hidden}
+.term .tbar{font:600 10.5px var(--mono);letter-spacing:.1em;color:#7fae92;background:#0b1510;padding:5px 12px;border-bottom:1px solid #1d3a2f;text-transform:uppercase}
+.cmdrow{display:flex;gap:10px;align-items:flex-start;padding:7px 12px;border-bottom:1px solid #12201a;font:12.5px/1.5 var(--mono);color:#d5f2e0}
+.cmdrow .ps{color:#5fd391;user-select:none}.cmdrow code.l{flex:1;background:none;border:0;padding:0;color:#d5f2e0;font-size:12.5px;white-space:pre-wrap;word-break:break-all}
+.out{margin-top:8px}
+.outlbl{font:600 10.5px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--ok);margin:0 0 4px;display:flex;gap:8px;align-items:center}
+.outlbl::before{content:'';width:8px;height:8px;border-radius:50%;background:var(--ok)}
+.okl{font:12.5px var(--mono);color:#cfeee0;margin:2px 0;display:flex;gap:8px}.okl i{font-style:normal;color:var(--ok)}
+.errl{border:1px solid rgba(255,93,108,.35);background:rgba(255,93,108,.07);border-radius:9px;padding:8px 12px;font:12.5px/1.5 var(--mono);color:#ffb3ba;white-space:pre-wrap;margin:4px 0}
+.errl b{color:#ff8f9a}
+.mini td.n,.mini td.nu{text-align:right}.mini td.nl{color:var(--mute);font-style:italic}
+.note2{font:11.5px/1.5 var(--mono);color:var(--mute);margin:4px 2px}
+.wherebox{display:flex;gap:8px;flex-wrap:wrap}
+table.flow td,table.flow th{font-size:13px}table.flow td.n{font-family:var(--mono);text-align:center}
+.errt{width:100%;border-collapse:collapse;font-size:13px;margin:0 0 10px}
+.errt td{padding:7px 9px;border:1px solid #2a1c22;vertical-align:top;background:rgba(255,93,108,.03)}
+.errt td:first-child{font-family:var(--mono);font-size:12px;color:#ffb3ba;width:38%;word-break:break-word}
+.explain{margin:10px 0 0;font-size:14px;color:#c4d2e0}
+.diag{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin:8px 0 2px}
+.diag span{font:600 11.5px var(--mono);background:#101a24;border:1px solid var(--line);border-radius:8px;padding:3px 9px;color:#cfe0ee}
+.diag span+span::before{content:'➜ ';color:var(--sf)}
+.deck{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+.hintbox{background:rgba(255,204,77,.06);border:1px solid rgba(255,204,77,.28)}.hintbox b{color:var(--warn)}
+.sbody h4+ul,.sbody h4+ol{margin-top:0}
+.tick{font:600 11px var(--mono);color:var(--mute)}
+@media print{.cp{display:none}pre.code,.term{background:#fff;color:#111;border-color:#bbb}.cmdrow,.cmdrow code.l{color:#111}.snips{background:#fff}}
+@media(max-width:980px){.snips{padding:14px 14px 2px}}
+</style>
+<style id="sf-lt">
+[data-theme="light"]{
+  --bg:#f0f5fa; --bg2:#e4edf7; --card:#ffffff; --line:#c0d0e0;
+  --ink:#0d1a2e; --mute:#3a5570; --sf:#0a86c2; --sf2:#085e8a;
+  --aws:#c46200; --aws2:#a05000; --ok:#0d7a4e; --bad:#c0392b; --warn:#9a6e00; --vio:#6a3fbe;
+}
+[data-theme="light"] body{
+  background:#f0f5fa!important; background-image:none!important;
+  background-attachment:initial!important; color:#0d1a2e!important;
+}
+/* Side nav */
+[data-theme="light"] nav.side,
+[data-theme="light"] .side-nav,
+[data-theme="light"] aside{
+  background:rgba(224,234,244,.97)!important; border-color:#c0d0e0!important;
+}
+/* Tiles / cards */
+[data-theme="light"] .step,
+[data-theme="light"] .tile,
+[data-theme="light"] .lp,
+[data-theme="light"] .ph,
+[data-theme="light"] .mode,
+[data-theme="light"] .ref,
+[data-theme="light"] details.faq,
+[data-theme="light"] .map{
+  background:#ffffff!important; border-color:#c0d0e0!important;
+}
+[data-theme="light"] .st p,
+[data-theme="light"] ul.see,
+[data-theme="light"] ol.doo li,
+[data-theme="light"] .lp p,
+[data-theme="light"] .tile p,
+[data-theme="light"] .mode p,
+[data-theme="light"] details.faq div,
+[data-theme="light"] .hero p.lead{
+  color:#1a2838!important;
+}
+/* Code blocks — keep dark */
+[data-theme="light"] code{
+  background:rgba(10,134,194,.09)!important; border-color:rgba(10,134,194,.22)!important;
+  color:#085e8a!important;
+}
+[data-theme="light"] pre{
+  background:#1e2d3c!important; color:#d0dce8!important;
+}
+/* Headers & text */
+[data-theme="light"] h1,
+[data-theme="light"] h2,
+[data-theme="light"] h3,
+[data-theme="light"] h4{ color:#0d1a2e!important; }
+[data-theme="light"] b,
+[data-theme="light"] strong{ color:#0d1a2e!important; }
+[data-theme="light"] .hero h1 b{
+  color:#0a86c2!important; -webkit-text-fill-color:#0a86c2!important;
+}
+/* Step indicators / section markers */
+[data-theme="light"] .done{ color:#ffffff!important; }
+</style>
+</head>
+<body>
+<style id="sf-home-style">
+#sf-home-btn{
+  position:fixed;bottom:22px;right:22px;z-index:9998;
+  display:inline-flex;align-items:center;gap:7px;
+  padding:8px 18px 8px 14px;border-radius:999px;
+  background:rgba(255,255,255,.13);
+  border:1px solid rgba(255,255,255,.26);
+  color:#e5edf5;
+  font-family:system-ui,-apple-system,"Segoe UI",sans-serif;
+  font-size:12px;font-weight:600;letter-spacing:.04em;
+  text-decoration:none;cursor:pointer;
+  backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+  box-shadow:0 2px 12px rgba(0,0,0,.25);
+  transition:background .18s,border-color .18s,transform .18s,box-shadow .18s,color .18s;
+  white-space:nowrap;
+}
+#sf-home-btn::before{
+  content:"⌂";
+  font-size:14px;line-height:1;
+}
+#sf-home-btn:hover{
+  background:rgba(255,255,255,.24);
+  border-color:rgba(255,255,255,.46);
+  color:#fff;
+  transform:translateY(-2px);
+  box-shadow:0 6px 22px rgba(0,0,0,.35);
+  text-decoration:none;
+}
+/* Light theme — fires for all files that use data-theme="light" toggle */
+[data-theme="light"] #sf-home-btn{
+  background:rgba(11,27,43,.08);
+  border-color:rgba(11,27,43,.20);
+  color:#0b1b2b;
+  box-shadow:0 2px 12px rgba(0,0,0,.10);
+}
+[data-theme="light"] #sf-home-btn:hover{
+  background:rgba(10,134,194,.13);
+  border-color:rgba(10,134,194,.38);
+  color:#0a86c2;
+  box-shadow:0 6px 22px rgba(10,134,194,.18);
+}
+/* Interview QA files start in light mode via :root (paper theme) */
+body[style*="--paper"] #sf-home-btn,
+.mast ~ #sf-home-btn{
+  background:rgba(11,27,43,.07);
+  border-color:rgba(11,27,43,.18);
+  color:#15120f;
+}
+</style>
+<a id="sf-home-btn" href="index.html" title="Back to Course Home">Course Home</a>
+
+<button id="sf-thm" title="Toggle light / dark" onclick="sfThm()" style="position:fixed;top:10px;right:14px;z-index:9999;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.26);color:inherit;padding:5px 14px;border-radius:999px;font-size:12px;font-weight:600;cursor:pointer;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);letter-spacing:.04em;transition:all .2s;font-family:system-ui,sans-serif;white-space:nowrap">&#9728;&#xFE0F;&nbsp;Light</button>
+<header class="hero"><div class="wrap">
+  <div class="eyebrow">RetailPulse Lab · companion guide</div>
+  <h1>Run the <b>Streams &amp; Tasks Lab</b>,<br>one command at a time.</h1>
+  <p class="lead">A walkthrough of the offline SnowSQL · Streams · Tasks simulator: the exact commands and SQL for each of the 15 steps, whether each one belongs in the terminal or the worksheet, the output you should get, the checkpoints the simulator waits for, and the errors you are likely to meet.</p>
+  <div class="stats">
+    <div class="stat" style="--d:0ms"><b>15</b><span>steps (14 + bonus)</span></div>
+    <div class="stat" style="--d:80ms"><b>~58</b><span>minutes end to end</span></div>
+    <div class="stat" style="--d:160ms"><b>0</b><span>installs or accounts</span></div>
+    <div class="stat" style="--d:240ms"><b>85 → 37</b><span>raw rows → products</span></div>
+    <div class="stat" style="--d:320ms"><b>9</b><span>price changes captured</span></div>
+  </div>
+</div></header>
+
+<div class="wrap layout">
+<nav class="side">
+  <div class="lbl">Your progress</div><div class="progress"><i id="pbar"></i></div><div class="ptxt" id="ptxt">0 / 15 ticked</div>
+  <div class="lbl">Start here</div>
+  <a href="#start">Before you start</a><a href="#map">Screen map</a><a href="#loop">The 5-move loop</a><a href="#keys">Buttons + keys</a><a href="#flow">Data at each step</a>
+  <div class="lbl">Steps</div><a href="#s1" data-nav="1"><b>01</b>Setup</a><a href="#s2" data-nav="2"><b>02</b>SnowSQL</a><a href="#s3" data-nav="3"><b>03</b>PUT</a><a href="#s4" data-nav="4"><b>04</b>Raw table</a><a href="#s5" data-nav="5"><b>05</b>COPY</a><a href="#s6" data-nav="6"><b>06</b>CTAS</a><a href="#s7" data-nav="7"><b>07</b>Stream</a><a href="#s8" data-nav="8"><b>08</b>MERGE</a><a href="#s9" data-nav="9"><b>09</b>Append + drift</a><a href="#s10" data-nav="10"><b>10</b>Price history</a><a href="#s11" data-nav="11"><b>11</b>Task</a><a href="#s12" data-nav="12"><b>12</b>DAG</a><a href="#s13" data-nav="13"><b>13</b>snowsql -f</a><a href="#s14" data-nav="14"><b>14</b>Monitor</a><a href="#s15" data-nav="15"><b>15</b>Cleanup</a>
+  <div class="lbl">After</div><a href="#dev">Deliberate deviations</a><a href="#trouble">Troubleshooting</a><a href="#next">Practise for real</a>
+</nav>
+
+<main>
+<section class="blk" id="start">
+  <h2><small>00 · Prerequisites</small>Before you start</h2>
+  <p class="sub">There is nothing to install. The simulator is one HTML file with the sample CSV files built in. It fakes a SnowSQL terminal, a local folder and a Snowflake worksheet in your browser.</p>
+  <div class="grid3">
+    <div class="tile" style="--d:0ms"><div class="big">1</div><h5>Open the file</h5><p>Double-click <b>SnowSQL_Streams_Tasks_Lab_Simulator_FINAL.html</b>. It runs offline in Chrome, Edge, Firefox or Safari.</p></div>
+    <div class="tile" style="--d:80ms"><div class="big">2</div><h5>Use a wide window</h5><p>At least <b>1100 px</b> wide so the terminal (left) and worksheet (right) sit side by side.</p></div>
+    <div class="tile" style="--d:160ms"><div class="big">3</div><h5>Know the story</h5><p>RetailPulse, a made-up retailer, exports inventory CSVs from a local folder. You PUT them to a stage, COPY them in, track changes with streams and automate the merge with tasks.</p></div>
+    <div class="tile" style="--d:240ms"><div class="big">4</div><h5>Budget about 58 min</h5><p>You can stop at any time. Progress saves in your browser for the same file in the same browser.</p></div>
+    <div class="tile" style="--d:320ms"><div class="big">5</div><h5>Terminal vs worksheet</h5><p>Every snippet in this guide carries a label: <span class="tgt tm">Terminal (SnowSQL)</span> or <span class="tgt ws">Worksheet</span>. <b>PUT only works in the terminal</b> and only after <code>snowsql</code> has connected.</p></div>
+    <div class="tile" style="--d:400ms"><div class="big">6</div><h5>Run in order</h5><p>Steps depend on each other (stream offsets, load metadata). Do them top to bottom. Expected outputs below come from running every step in order on a fresh state.</p></div>
+  </div>
+  <div class="box warn" style="margin-top:14px"><b>Values that differ on your screen</b>Timestamps, query IDs, <code>METADATA$ROW_ID</code>, md5 values and task <code>id</code>s change on every run. Counts, states (<code>SUCCEEDED</code> / <code>SKIPPED</code>), prices and quantities must match what is shown here.</div>
+</section>
+
+<section class="blk" id="map">
+  <h2><small>01 · Orientation</small>Screen map</h2>
+  <p class="sub">The simulator has the zones below. The yellow numbers match the legend.</p>
+  <div class="map">
+    <div class="m-top"><span class="co">1</span><span class="brand"><i>SnowSQL</i> · <em>Streams · Tasks</em> Lab</span><span class="m-bar"><i></i></span><span>6 / 15</span><span class="mb">Mission ▾</span><span class="mb">Free play</span><span class="mb g">Completion</span><span class="mb r">Reset</span></div>
+    <div class="m-mission"><div class="m-pills"><span class="co">2</span><span class="d">✓ Setup</span><span class="d">✓ SnowSQL</span><span class="d">✓ PUT</span><span class="d">✓ Raw table</span><span class="d">✓ COPY</span><span class="c">6 CTAS</span><span>7 Stream</span><span>8 MERGE</span><span>…</span></div>
+      <div class="m-card"><div><span class="co">3</span>Goal · why · <b style="color:var(--sf2)">Insert SQL</b> and <b style="color:#9be7b0">Insert Command</b> buttons · Show hint</div><div><span class="co">4</span>Green checks · Next → · What just happened?</div></div></div>
+    <div class="m-split">
+      <div class="m-aws" style="border-top-color:#3ddc97"><div><span class="co">5</span><b style="color:#9be7b0">terminal</b> · local laptop <span class="pill-ok" style="font-size:10px">connected</span></div>
+        <div class="m-tabs"><span class="on" style="color:#9be7b0">Terminal</span><span>Files</span><span>Config</span></div>
+        <div class="m-files">$ snowsql -a myaccount.us-east-1 -u lab_user<br>&gt; PUT file://~/exports/... @STAGING.STG_INVENTORY<br><br><span class="co">6</span>Files tab: ~/exports/*.csv and nightly_rollup.sql</div></div>
+      <div class="m-sf"><div><span class="co">7</span><b style="color:var(--sf2)">❄ snowflake</b> Worksheet</div><div class="m-ctx">LAB_ANALYST · LAB_WH · RETAILPULSE_LAB.STAGING</div>
+        <div class="m-run"><span>▶ Run</span><span class="alt">▶▶ Run all</span><span class="alt">History</span></div>
+        <div class="m-ed"><div>Objects<br>browser</div><div><span class="co">8</span>SQL editor</div></div>
+        <div class="m-res"><span class="co">9</span>Results: one tab per statement</div></div>
+    </div>
+  </div>
+  <div class="legend">
+    <div><span class="co">1</span><span><b>Top bar.</b> Progress, <b>Mission ▾</b> (fold the guide card), <b>Free play</b>, <b>Completion</b> (summary) and <b>Reset</b> (wipes everything).</span></div>
+    <div><span class="co">2</span><span><b>Step pills.</b> Click any pill to jump. A check mark means all its checks passed.</span></div>
+    <div><span class="co">3</span><span><b>Mission card, left.</b> Goal, why, <b>Insert SQL</b> buttons (worksheet snippets), <b>Insert Command</b> buttons (terminal lines) and a hint. Shift+click appends instead of replacing.</span></div>
+    <div><span class="co">4</span><span><b>Mission card, right.</b> The checks to turn green, Next / Skip, and <b>What just happened?</b>.</span></div>
+    <div><span class="co">5</span><span><b>Terminal tab.</b> A simulated shell. Connect with <code>snowsql</code>; lines starting with <code>!</code> are client commands; <code>ls</code>, <code>cat</code>, <code>pwd</code> and <code>help</code> also work.</span></div>
+    <div><span class="co">6</span><span><b>Files tab.</b> Your local <code>~/exports</code> folder and <code>nightly_rollup.sql</code>. <b>Config</b> shows a cosmetic <code>~/.snowsql/config</code>.</span></div>
+    <div><span class="co">7</span><span><b>Worksheet context bar.</b> Current role, warehouse, database and schema.</span></div>
+    <div><span class="co">8</span><span><b>Editor.</b> Type or insert SQL; several statements per run, <code>--</code> comments allowed. In the worksheet PUT always fails (by design).</span></div>
+    <div><span class="co">9</span><span><b>Results.</b> A tab per statement with row count and query ID. <b>History</b> lists every query.</span></div>
+  </div>
+</section>
+
+<section class="blk" id="loop">
+  <h2><small>02 · The rhythm</small>The 5-move loop (every step)</h2>
+  <p class="sub">Once this loop feels natural, the rest of the lab is just new SQL.</p>
+  <div class="loop">
+    <div class="lp" style="--d:0ms"><b>01</b><h5>Read</h5><p>Read the goal and the "why" on the mission card.</p></div>
+    <div class="lp" style="--d:90ms"><b>02</b><h5>Insert</h5><p>Click an <span class="chip b">Insert SQL</span> or <span class="chip b">Insert Command</span> button and read what it put in.</p></div>
+    <div class="lp" style="--d:180ms"><b>03</b><h5>Run</h5><p>Worksheet: <span class="keys"><kbd>Ctrl/⌘</kbd>+<kbd>Shift</kbd>+<kbd>Enter</kbd></span> runs everything, <span class="keys"><kbd>Ctrl/⌘</kbd>+<kbd>Enter</kbd></span> the statement at the cursor. Terminal: press <kbd>Enter</kbd>.</p></div>
+    <div class="lp" style="--d:270ms"><b>04</b><h5>Check</h5><p>Compare with the expected output here. Watch the checks turn green.</p></div>
+    <div class="lp" style="--d:360ms"><b>05</b><h5>Understand</h5><p>Open <b>What just happened?</b>, then click <b>Next →</b>.</p></div>
+  </div>
+</section>
+
+<section class="blk" id="keys">
+  <h2><small>03 · Reference</small>Buttons + keyboard</h2>
+  <table class="ref">
+    <thead><tr><th>Action</th><th>How</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td>Run everything in the editor</td><td><span class="keys"><kbd>Ctrl/⌘</kbd>+<kbd>Shift</kbd>+<kbd>Enter</kbd></span> or <span class="chip b">▶▶ Run all</span></td><td>Use this for multi-statement snippets.</td></tr>
+      <tr><td>Run one statement</td><td><span class="keys"><kbd>Ctrl/⌘</kbd>+<kbd>Enter</kbd></span> or <span class="chip b">▶ Run</span></td><td>Statement under the cursor, or the selected text.</td></tr>
+      <tr><td>Insert step SQL</td><td><span class="chip b">Insert SQL: …</span></td><td>Replaces the editor content. <b>Shift+click</b> appends.</td></tr>
+      <tr><td>Insert a terminal command</td><td><span class="chip b">Insert Command: …</span></td><td>Puts the line in the terminal prompt; press Enter to run it.</td></tr>
+      <tr><td>Connect SnowSQL</td><td><code>snowsql -a &lt;acct&gt; -u &lt;user&gt;</code></td><td>Any password is accepted. Needed before any PUT.</td></tr>
+      <tr><td>Client commands</td><td><code>!set output_format=table</code>, <code>!set header=true</code></td><td>Not SQL; handled by the client.</td></tr>
+      <tr><td>Past queries</td><td><span class="chip b">History</span></td><td>Every statement, with status and duration.</td></tr>
+      <tr><td>Stuck</td><td><span class="chip b">Show hint</span></td><td>Each step has a targeted hint (also quoted in this guide).</td></tr>
+      <tr><td>Experiment freely</td><td><span class="chip b">Free play</span></td><td><b>Supported statements ▾</b> lists what the engine understands.</td></tr>
+      <tr><td>Start over</td><td><span class="chip b">Reset</span></td><td>Clears progress and all objects. No undo.</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section class="blk" id="flow">
+  <h2><small>04 · The journey</small>Where the data is at each step</h2>
+  <p class="sub">Two streams sit on <code>STAGING.INVENTORY_RAW</code> with independent offsets. <b>S</b> = <code>STRM_INVENTORY_RAW</code> (standard), consumed only by the MERGE into <code>ANALYTICS.INVENTORY</code>. <b>A</b> = <code>STRM_INVENTORY_APPEND</code> (APPEND_ONLY), consumed only by the PRICE_HISTORY inserts. They never steal each other's rows.</p>
+  <div class="phases"><div class="ph sf" style="--d:0ms"><span>Steps 1–3</span><b>Connect</b><em>Role, SnowSQL, PUT to an internal stage</em></div><div class="ph sf" style="--d:90ms"><span>Steps 4–6</span><b>Load</b><em>Raw table, COPY, typed CTAS</em></div><div class="ph mix" style="--d:180ms"><span>Steps 7–10</span><b>Streams</b><em>Standard stream, MERGE, append-only, price history</em></div><div class="ph mix" style="--d:270ms"><span>Steps 11–12</span><b>Tasks</b><em>Task, then a DAG with a child</em></div><div class="ph aws" style="--d:360ms"><span>Steps 13–14</span><b>Operate</b><em>snowsql -f, monitoring, SKIPPED</em></div></div>
+  <table class="ref flow">
+    <thead><tr><th>Step</th><th>Event</th><th>S pending after</th><th>A pending after</th><th>Raw rows</th><th>INVENTORY</th></tr></thead>
+    <tbody><tr><td class="n">1</td><td>Roles, warehouse, DB, schemas</td><td class="n">–</td><td class="n">–</td><td class="n">–</td><td class="n">–</td></tr><tr><td class="n">2–3</td><td>SnowSQL connect; PUT batch1</td><td class="n">–</td><td class="n">–</td><td class="n">–</td><td class="n">–</td></tr><tr><td class="n">4–6</td><td>Raw table; COPY batch1 (30); CTAS</td><td class="n">(no stream yet)</td><td class="n">–</td><td class="n">30</td><td class="n">30</td></tr><tr><td class="n">7</td><td>Create S; 3 manual rows; UPDATE P001</td><td class="n">5</td><td class="n">–</td><td class="n">33</td><td class="n">30</td></tr><tr><td class="n">8</td><td>MERGE + COMMIT</td><td class="n">0</td><td class="n">–</td><td class="n">33</td><td class="n">31</td></tr><tr><td class="n">9</td><td>Create A; COPY batch2 (30) + batch3 (20); ADD COLUMN; UPDATE P002</td><td class="n">52</td><td class="n">50</td><td class="n">83</td><td class="n">31</td></tr><tr><td class="n">10</td><td>INSERT…SELECT from A (PRICE_HISTORY = 7)</td><td class="n">52</td><td class="n">0</td><td class="n">83</td><td class="n">31</td></tr><tr><td class="n">11</td><td>Task MERGE (WHEN HAS_DATA), EXECUTE</td><td class="n">0</td><td class="n">0</td><td class="n">83</td><td class="n"><b>37</b></td></tr><tr><td class="n">12</td><td>Child task; 2 new price rows; EXECUTE root (PRICE_HISTORY = 9)</td><td class="n">0</td><td class="n">0</td><td class="n">85</td><td class="n">37</td></tr><tr><td class="n">13</td><td>Snapshot + <code>snowsql -f</code> (SNAPSHOT = 37)</td><td class="n">0</td><td class="n">0</td><td class="n">85</td><td class="n">37</td></tr><tr><td class="n">14</td><td>HAS_DATA false; EXECUTE root = SKIPPED</td><td class="n">0</td><td class="n">0</td><td class="n">85</td><td class="n">37</td></tr></tbody>
+  </table>
+  <p class="sub" style="margin-top:12px">Step 15 tears everything down. Final stats on the Completion screen: 3 files PUT, 85 raw rows, 37 products, 9 price changes, 3 SUCCEEDED and 2 SKIPPED task runs, 2 streams, DAG depth 2.</p>
+</section>
+
+
+<article class="step" id="s1" style="--d:40ms">
+  <header class="sh">
+    <div class="num">01</div>
+    <div class="st"><h3>Set up the environment</h3><p>Create the role LAB_ANALYST, warehouse LAB_WH, database RETAILPULSE_LAB with STAGING + ANALYTICS schemas, then set your session context.</p></div>
+    <div class="meta"><span class="where sf">Worksheet</span><span class="mins">~3 min</span>
+      <label class="done"><input type="checkbox" data-step="1"> done</label></div>
+  </header>
+  <div class="snips">
+    <div class="note2" style="margin:0 0 10px"><b style="color:var(--aws2)">WHY</b> Every Snowflake object lives in a DATABASE.SCHEMA and every query needs a running warehouse (compute). Say this first in an interview.</div>
+    <div class="snip"><div class="sniphead"><span class="tgt ws">Worksheet</span><b>Setup script</b><span class="sp"></span><button class="cp" data-t="c1_0">Copy SQL</button></div><pre class="code" id="c1_0"><span class="kw">USE</span> <span class="kw">ROLE</span> ACCOUNTADMIN;
+<span class="kw">CREATE</span> <span class="kw">ROLE</span> <span class="kw">IF</span> <span class="kw">NOT</span> <span class="kw">EXISTS</span> LAB_ANALYST;
+<span class="kw">GRANT</span> <span class="kw">ROLE</span> LAB_ANALYST TO <span class="kw">ROLE</span> SYSADMIN;
+<span class="kw">CREATE</span> <span class="kw">WAREHOUSE</span> <span class="kw">IF</span> <span class="kw">NOT</span> <span class="kw">EXISTS</span> LAB_WH
+  WAREHOUSE_SIZE = <span class="st">'XSMALL'</span> AUTO_SUSPEND = 60 AUTO_RESUME = TRUE INITIALLY_SUSPENDED = TRUE;
+<span class="kw">CREATE</span> <span class="kw">DATABASE</span> <span class="kw">IF</span> <span class="kw">NOT</span> <span class="kw">EXISTS</span> RETAILPULSE_LAB;
+<span class="kw">CREATE</span> <span class="kw">SCHEMA</span> <span class="kw">IF</span> <span class="kw">NOT</span> <span class="kw">EXISTS</span> RETAILPULSE_LAB.STAGING;
+<span class="kw">CREATE</span> <span class="kw">SCHEMA</span> <span class="kw">IF</span> <span class="kw">NOT</span> <span class="kw">EXISTS</span> RETAILPULSE_LAB.ANALYTICS;
+<span class="kw">GRANT</span> USAGE <span class="kw">ON</span> <span class="kw">WAREHOUSE</span> LAB_WH TO <span class="kw">ROLE</span> LAB_ANALYST;
+<span class="kw">GRANT</span> ALL <span class="kw">ON</span> <span class="kw">DATABASE</span> RETAILPULSE_LAB TO <span class="kw">ROLE</span> LAB_ANALYST;
+<span class="kw">GRANT</span> ALL <span class="kw">ON</span> ALL SCHEMAS IN <span class="kw">DATABASE</span> RETAILPULSE_LAB TO <span class="kw">ROLE</span> LAB_ANALYST;
+<span class="kw">GRANT</span> <span class="kw">EXECUTE</span> <span class="kw">TASK</span> <span class="kw">ON</span> ACCOUNT TO <span class="kw">ROLE</span> LAB_ANALYST;
+<span class="kw">USE</span> <span class="kw">ROLE</span> LAB_ANALYST;
+<span class="kw">USE</span> <span class="kw">WAREHOUSE</span> LAB_WH;
+<span class="kw">USE</span> <span class="kw">DATABASE</span> RETAILPULSE_LAB;
+<span class="kw">USE</span> <span class="kw">SCHEMA</span> STAGING;</pre><div class="out"><div class="outlbl">Expected output</div><div class="okl"><i>✓</i><span>Statement executed successfully.</span></div><div class="okl"><i>✓</i><span>Role LAB_ANALYST successfully created.</span></div><div class="okl"><i>✓</i><span>Statement executed successfully.</span></div><div class="okl"><i>✓</i><span>Warehouse LAB_WH successfully created.</span></div><div class="okl"><i>✓</i><span>Database RETAILPULSE_LAB successfully created.</span></div><div class="okl"><i>✓</i><span>Schema STAGING successfully created.</span></div><div class="okl"><i>✓</i><span>Schema ANALYTICS successfully created.</span></div><div class="okl"><i>✓</i><span>Statement executed successfully.</span></div><div class="okl"><i>✓</i><span>Statement executed successfully.</span></div><div class="okl"><i>✓</i><span>Statement executed successfully.</span></div><div class="okl"><i>✓</i><span>Statement executed successfully.</span></div><div class="okl"><i>✓</i><span>Statement executed successfully.</span></div><div class="okl"><i>✓</i><span>Statement executed successfully.</span></div><div class="okl"><i>✓</i><span>Statement executed successfully.</span></div><div class="okl"><i>✓</i><span>Statement executed successfully.</span></div></div></div>
+  </div>
+  <div class="sbody">
+    <div class="col">
+      <h4><span class="ic">▶</span>Do this</h4><ol class="doo"><li>Open the simulator and stay on step <b>1</b> (worksheet, right-hand panel).</li><li>Click <span class="chip b">Insert SQL: Setup script</span>. Read it top to bottom: it starts as ACCOUNTADMIN, builds everything, then ends as <code>LAB_ANALYST</code>.</li><li>Press <span class="keys"><kbd>Ctrl/⌘</kbd>+<kbd>Shift</kbd>+<kbd>Enter</kbd></span> (or <span class="chip b">▶▶ Run all</span>). This is a 15-statement script, so it must be Run all.</li></ol>
+      <h4><span class="ic ck">✓</span>Checkpoint: green checks the simulator waits for</h4><ul class="checks"><li><i></i>Role LAB_ANALYST and warehouse LAB_WH exist</li><li><i></i>Database RETAILPULSE_LAB with STAGING + ANALYTICS schemas</li><li><i></i>Session is LAB_ANALYST / LAB_WH / RETAILPULSE_LAB</li></ul>
+      <div class="box hintbox"><b>Hint</b>Run the whole script with Run all (Ctrl/Cmd+Shift+Enter). Watch the context bar change to LAB_ANALYST / LAB_WH / RETAILPULSE_LAB.STAGING.</div>
+    </div>
+    <div class="col">
+      <h4><span class="ic eye">◉</span>You should see</h4><ul class="see"><li>15 result tabs, each a one-line status such as <code>Warehouse LAB_WH successfully created.</code></li><li>The context bar changes to <code>LAB_ANALYST · LAB_WH · RETAILPULSE_LAB.STAGING</code>.</li><li>The object browser lists <code>RETAILPULSE_LAB</code> with <code>STAGING</code> and <code>ANALYTICS</code>.</li></ul>
+      <h4><span class="ic" style="background:rgba(255,93,108,.14);color:#ff8f9a">!</span>Gotchas</h4><ul class="see"><li><b>Why XSMALL + AUTO_SUSPEND = 60?</b> Compute is billed only while the warehouse runs. This lab never needs more than the smallest size.</li><li><code>GRANT EXECUTE TASK ON ACCOUNT</code> is the privilege that later lets <code>LAB_ANALYST</code> create and resume tasks. Forget it and step 11 fails with insufficient privileges on real Snowflake.</li></ul>
+      <h4><span class="ic" style="background:rgba(255,93,108,.14);color:#ff8f9a">✕</span>Common errors</h4>
+      <table class="errt"><tbody><tr><td>No active warehouse selected in the current session</td><td><b>Cause:</b> A statement ran before <code>USE WAREHOUSE LAB_WH</code> (you pressed <span class="keys"><kbd>Ctrl/⌘</kbd>+<kbd>Enter</kbd></span> and only one line ran).<br><b>Fix:</b> Re-run the whole script with Run all.</td></tr><tr><td>Database 'RETAILPULSE_LAB' does not exist or not authorized</td><td><b>Cause:</b> The script was cut short, or you are still ACCOUNTADMIN without the USE lines.<br><b>Fix:</b> Run all again; every <code>CREATE ... IF NOT EXISTS</code> is safe to repeat.</td></tr></tbody></table>
+      <div class="diag"><span>Role LAB_ANALYST</span><span>Warehouse LAB_WH</span><span>DB RETAILPULSE_LAB</span><span>STAGING / ANALYTICS</span></div>
+      <div class="explain"><b>What just happened.</b> You created the <b>security context</b> (a role), <b>compute</b> (an XSMALL warehouse that suspends after 60 s, so it costs almost nothing) and <b>storage namespaces</b> (a database and two schemas). <code>STAGING</code> holds data exactly as it lands from files; <code>ANALYTICS</code> holds the clean, typed tables. Streams and tasks later sit between the two.</div>
+      <div class="box say"><b>Say it in the interview</b>"I create a role, an XSMALL auto-suspending warehouse, and a database with STAGING for landed data and ANALYTICS for clean tables. Everything after that runs as the lab role, not ACCOUNTADMIN."</div>
+    </div>
+  </div>
+</article>
+<article class="step" id="s2" style="--d:80ms">
+  <header class="sh">
+    <div class="num">02</div>
+    <div class="st"><h3>Install SnowSQL and connect</h3><p>Connect with the SnowSQL command-line client, switch on table output + headers, and prove the session works.</p></div>
+    <div class="meta"><span class="where aws">Terminal (SnowSQL)</span><span class="mins">~4 min</span>
+      <label class="done"><input type="checkbox" data-step="2"> done</label></div>
+  </header>
+  <div class="snips">
+    <div class="note2" style="margin:0 0 10px"><b style="color:var(--aws2)">WHY</b> PUT (uploading local files to an internal stage) only works from SnowSQL or a driver, never from the web worksheet. You need this connection before step 3.</div>
+    <div class="snip"><div class="sniphead"><span class="tgt tm">Terminal (SnowSQL)</span><b>Connect + sanity query</b><span class="sp"></span><button class="cp" data-c="snowsql -a myaccount.us-east-1 -u lab_user
+!set output_format=table
+!set header=true
+SELECT CURRENT_VERSION(), CURRENT_ROLE(), CURRENT_WAREHOUSE();">Copy all lines</button></div><div class="term"><div class="tbar">$ terminal · left panel</div><div class="cmdrow"><span class="ps">$</span><code class="l">snowsql -a myaccount.us-east-1 -u lab_user</code><button class="cp" data-c="snowsql -a myaccount.us-east-1 -u lab_user">Copy</button></div><div class="cmdrow"><span class="ps">></span><code class="l">!set output_format=table</code><button class="cp" data-c="!set output_format=table">Copy</button></div><div class="cmdrow"><span class="ps">></span><code class="l">!set header=true</code><button class="cp" data-c="!set header=true">Copy</button></div><div class="cmdrow"><span class="ps">user#wh@db.schema></span><code class="l">SELECT CURRENT_VERSION(), CURRENT_ROLE(), CURRENT_WAREHOUSE();</code><button class="cp" data-c="SELECT CURRENT_VERSION(), CURRENT_ROLE(), CURRENT_WAREHOUSE();">Copy</button></div></div><div class="out"><div class="outlbl">Expected output (terminal, output_format=table)</div><div class="okl"><i>✓</i><span>* SnowSQL * v1.3.2</span></div><div class="okl"><i>✓</i><span>Type SQL statements or !help</span></div><div class="mini"><table><thead><tr><th>CURRENT_VERSION()</th><th>CURRENT_ROLE()</th><th>CURRENT_WAREHOUSE()</th></tr></thead><tbody><tr><td>9.38.1</td><td>LAB_ANALYST</td><td>LAB_WH</td></tr></tbody></table><div class="mnote">1 row</div></div></div></div>
+  </div>
+  <div class="sbody">
+    <div class="col">
+      <h4><span class="ic">▶</span>Do this</h4><ol class="doo"><li>Switch to the <b>Terminal</b> tab (left panel).</li><li>Click <span class="chip b">Insert Command: Connect + sanity query</span>, or type the lines one by one: <code>snowsql -a myaccount.us-east-1 -u lab_user</code>. The simulator asks for a password: type anything and press Enter.</li><li>Type <code>!set output_format=table</code> and <code>!set header=true</code> (lines starting with <code>!</code> are SnowSQL client commands, not SQL).</li><li>Type <code>SELECT CURRENT_VERSION(), CURRENT_ROLE(), CURRENT_WAREHOUSE();</code> and press Enter.</li></ol>
+      <h4><span class="ic ck">✓</span>Checkpoint: green checks the simulator waits for</h4><ul class="checks"><li><i></i>Connected with SnowSQL (PUT is now enabled)</li><li><i></i>Ran SELECT CURRENT_VERSION() in the terminal</li></ul>
+      <div class="box hintbox"><b>Hint</b>Type each command in the Terminal tab (left panel) and press Enter, or click a command chip. Lines starting with ! are SnowSQL client commands, not SQL. Install is a one-liner (brew install --cask snowflake-snowsql or the installer from the Snowflake client downloads page).</div>
+    </div>
+    <div class="col">
+      <h4><span class="ic eye">◉</span>You should see</h4><ul class="see"><li>The banner <code>* SnowSQL * v...</code> and a prompt that shows you are connected.</li><li>One result row with a version number, <code>LAB_ANALYST</code> and <code>LAB_WH</code>.</li><li>The terminal badge shows connected. PUT is now enabled in the terminal (it never works in the worksheet).</li></ul>
+      <h4><span class="ic" style="background:rgba(255,93,108,.14);color:#ff8f9a">!</span>Gotchas</h4><ul class="see"><li>Real install: <code>brew install --cask snowflake-snowsql</code>, or the installer from the Snowflake client downloads page. In real life keep account, user and defaults in <code>~/.snowsql/config</code> and use <code>-c &lt;connection&gt;</code>.</li><li>The account <code>myaccount.us-east-1</code> is a placeholder. Use your own account identifier on a real trial.</li></ul>
+      <h4><span class="ic" style="background:rgba(255,93,108,.14);color:#ff8f9a">✕</span>Common errors</h4>
+      <table class="errt"><tbody><tr><td>250001 (08001): Account and user are required.</td><td><b>Cause:</b> <code>-a</code> or <code>-u</code> missing.<br><b>Fix:</b> Pass both, or fill them in on the Config tab.</td></tr><tr><td>Hint: that looks like SQL or a SnowSQL command. Connect first</td><td><b>Cause:</b> You typed SQL in the shell before <code>snowsql</code> connected.<br><b>Fix:</b> Run the <code>snowsql -a ... -u ...</code> line first.</td></tr></tbody></table>
+      <div class="diag"><span>snowsql -a account -u user</span><span>Authenticated session</span><span>!set options</span><span>SELECT CURRENT_VERSION()</span></div>
+      <div class="explain"><b>What just happened.</b> SnowSQL is a thin client: it opens a session against your account, and everything after the prompt is either a <b>client command</b> (<code>!set</code>, <code>!define</code>, <code>!source</code>) or <b>SQL sent to the warehouse</b>. In real life you would keep the account, user and defaults in <code>~/.snowsql/config</code> and use a named connection (<code>-c</code>) instead of typing them.</div>
+      <div class="box say"><b>Say it in the interview</b>"PUT only works from a client like SnowSQL or a driver, never from the web UI, because the client reads the file off the local disk."</div>
+    </div>
+  </div>
+</article>
+<article class="step" id="s3" style="--d:120ms">
+  <header class="sh">
+    <div class="num">03</div>
+    <div class="st"><h3>PUT files to an internal stage</h3><p>Create STAGING.STG_INVENTORY, PUT the batch 1 CSV from your laptop, then LIST the stage.</p></div>
+    <div class="meta"><span class="where sf">Worksheet</span><span class="where aws">Terminal (SnowSQL)</span><span class="mins">~5 min</span>
+      <label class="done"><input type="checkbox" data-step="3"> done</label></div>
+  </header>
+  <div class="snips">
+    <div class="note2" style="margin:0 0 10px"><b style="color:var(--aws2)">WHY</b> An internal stage is Snowflake-managed storage: no cloud account needed. PUT uploads (and by default compresses + encrypts) local files; COPY INTO then loads from the stage.</div>
+    <div class="snip"><div class="sniphead"><span class="tgt ws">Worksheet</span><b>Create stage (worksheet)</b><span class="sp"></span><button class="cp" data-t="c3_0">Copy SQL</button></div><pre class="code" id="c3_0"><span class="kw">CREATE</span> <span class="kw">OR</span> <span class="kw">REPLACE</span> <span class="kw">STAGE</span> STAGING.STG_INVENTORY;
+<span class="kw">DESC</span> <span class="kw">STAGE</span> STAGING.STG_INVENTORY;</pre><div class="out"><div class="outlbl">Expected output</div><div class="okl"><i>✓</i><span>Stage area STG_INVENTORY successfully created.</span></div><div class="mini"><table><thead><tr><th>parent_property</th><th>property</th><th>property_type</th><th>property_value</th><th>property_default</th></tr></thead><tbody><tr><td>STAGE_FILE_FORMAT</td><td>TYPE</td><td>String</td><td>CSV</td><td>CSV</td></tr><tr><td>STAGE_FILE_FORMAT</td><td>RECORD_DELIMITER</td><td>String</td><td>\n</td><td>\n</td></tr><tr><td>STAGE_FILE_FORMAT</td><td>FIELD_DELIMITER</td><td>String</td><td>,</td><td>,</td></tr><tr><td>STAGE_FILE_FORMAT</td><td>FILE_EXTENSION</td><td>String</td><td></td><td></td></tr><tr><td>STAGE_FILE_FORMAT</td><td>SKIP_HEADER</td><td>Long</td><td>0</td><td>0</td></tr><tr><td>STAGE_FILE_FORMAT</td><td>PARSE_HEADER</td><td>Boolean</td><td>false</td><td>false</td></tr><tr><td>STAGE_FILE_FORMAT</td><td>SKIP_BLANK_LINES</td><td>Boolean</td><td>false</td><td>false</td></tr><tr><td>STAGE_FILE_FORMAT</td><td>DATE_FORMAT</td><td>String</td><td>AUTO</td><td>AUTO</td></tr></tbody></table><div class="mnote">first 8 of 29 rows shown</div></div></div></div><div class="snip"><div class="sniphead"><span class="tgt tm">Terminal (SnowSQL)</span><b>PUT + LIST (terminal)</b><span class="sp"></span><button class="cp" data-c="PUT file://~/exports/inventory_2026-11-20_batch1.csv @STAGING.STG_INVENTORY AUTO_COMPRESS=FALSE OVERWRITE=TRUE;
+LIST @STAGING.STG_INVENTORY;">Copy all lines</button></div><div class="term"><div class="tbar">$ terminal · left panel</div><div class="cmdrow"><span class="ps">user#wh@db.schema></span><code class="l">PUT file://~/exports/inventory_2026-11-20_batch1.csv @STAGING.STG_INVENTORY AUTO_COMPRESS=FALSE OVERWRITE=TRUE;</code><button class="cp" data-c="PUT file://~/exports/inventory_2026-11-20_batch1.csv @STAGING.STG_INVENTORY AUTO_COMPRESS=FALSE OVERWRITE=TRUE;">Copy</button></div><div class="cmdrow"><span class="ps">user#wh@db.schema></span><code class="l">LIST @STAGING.STG_INVENTORY;</code><button class="cp" data-c="LIST @STAGING.STG_INVENTORY;">Copy</button></div></div><div class="out"><div class="outlbl">Expected output (terminal, output_format=table)</div><div class="mini"><table><thead><tr><th>source</th><th>source_size</th><th>target_size</th><th>status</th><th>encryption</th></tr></thead><tbody><tr><td>inventory_2026-11-20_batch1.csv</td><td class="n">2601</td><td class="n">2601</td><td>UPLOADED</td><td>ENCRYPTED</td></tr></tbody></table><div class="mnote">1 row · wide result: only the key columns are shown</div></div><div class="mini"><table><thead><tr><th>name</th><th>size</th><th>md5</th></tr></thead><tbody><tr><td>stg_inventory/inventory_2026-11-20_batch1.csv</td><td class="n">2601</td><td>3966db7a7592f5f756898a0e9c7ade6c</td></tr></tbody></table><div class="mnote">1 row · wide result: only the key columns are shown</div></div></div></div><div class="note2" style="margin-top:8px">Real error you can trigger on purpose:</div><pre class="code" style="padding:6px 10px"><span class="kw">PUT</span> file://~/exports/inventory_2026-11-20_batch1.csv @STAGING.STG_INVENTORY;</pre><div class="errl"><b>Error 000002: </b>SQL compilation error:
+PUT command is not supported in the Snowflake web interface (Snowsight worksheets). Run PUT from SnowSQL or another client/driver.</div>
+  </div>
+  <div class="sbody">
+    <div class="col">
+      <h4><span class="ic">▶</span>Do this</h4><ol class="doo"><li><b>Worksheet.</b> Click <span class="chip b">Insert SQL: Create stage (worksheet)</span> and press <span class="keys"><kbd>Ctrl/⌘</kbd>+<kbd>Shift</kbd>+<kbd>Enter</kbd></span>. The stage exists and <code>DESC STAGE</code> lists its properties.</li><li><b>Optional, try the error:</b> paste the PUT line into the <i>worksheet</i> and run it. Read the real error, then clear the editor.</li><li><b>Terminal.</b> Click <span class="chip b">Insert Command: PUT + LIST (terminal)</span> or run the two commands: first the <code>PUT file://~/exports/...batch1.csv</code> line, then <code>LIST @STAGING.STG_INVENTORY;</code>.</li><li>Open the <b>Files</b> tab to see the local <code>~/exports</code> folder you just uploaded from.</li></ol>
+      <h4><span class="ic ck">✓</span>Checkpoint: green checks the simulator waits for</h4><ul class="checks"><li><i></i>Stage STAGING.STG_INVENTORY exists</li><li><i></i>inventory_2026-11-20_batch1.csv is in the stage</li><li><i></i>LIST ran and returned 1 file</li></ul>
+      <div class="box hintbox"><b>Hint</b>Create the stage in the worksheet first. Open the Files tab to see the local ~/exports folder. Try the PUT in the worksheet and read the real error (PUT is not supported in the web interface). AUTO_COMPRESS=FALSE keeps the file as plain .csv so the name stays readable; the default would stage inventory_...batch1.csv.gz.</div>
+    </div>
+    <div class="col">
+      <h4><span class="ic eye">◉</span>You should see</h4><ul class="see"><li>PUT shows <code>status = UPLOADED</code>, <code>source_compression = NONE</code> (we asked for AUTO_COMPRESS=FALSE).</li><li>LIST returns exactly <b>1</b> file, <code>stg_inventory/inventory_2026-11-20_batch1.csv</code>, 2601 bytes.</li></ul>
+      <h4><span class="ic" style="background:rgba(255,93,108,.14);color:#ff8f9a">!</span>Gotchas</h4><ul class="see"><li><code>AUTO_COMPRESS=FALSE</code> keeps the name readable. The default would stage <code>...batch1.csv.gz</code> and the later COPY paths would need the <code>.gz</code> name.</li><li>Re-PUT of the same file <b>without</b> <code>OVERWRITE=TRUE</code> is silently <b>SKIPPED</b> (status column says so).</li></ul>
+      <h4><span class="ic" style="background:rgba(255,93,108,.14);color:#ff8f9a">✕</span>Common errors</h4>
+      <table class="errt"><tbody><tr><td>PUT command is not supported in the Snowflake web interface (Snowsight worksheets). Run PUT from SnowSQL or another client.</td><td><b>Cause:</b> You ran PUT in the worksheet.<br><b>Fix:</b> Run it in the connected terminal instead.</td></tr><tr><td>File doesn't exist: ['~/exports/...']</td><td><b>Cause:</b> Typo in the local path.<br><b>Fix:</b> Use <code>ls ~/exports</code> in the terminal to copy the exact name.</td></tr><tr><td>Stage 'X' does not exist or not authorized.</td><td><b>Cause:</b> The worksheet stage snippet was not run first.<br><b>Fix:</b> Run the stage snippet, then repeat PUT.</td></tr></tbody></table>
+      <div class="diag"><span>Local CSV (~/exports)</span><span>PUT via SnowSQL</span><span>@STG_INVENTORY</span><span>LIST: name / size / md5</span></div>
+      <div class="explain"><b>What just happened.</b> <code>PUT</code> runs <b>on the client</b>: SnowSQL reads the file from your disk, (optionally) gzips it, encrypts it and uploads it to the stage in cloud storage managed by Snowflake. Re-PUTting the same file without <code>OVERWRITE=TRUE</code> is silently <b>SKIPPED</b>. <code>LIST</code> shows what the stage holds, with the md5 that load metadata later uses to remember which files are loaded.</div>
+      <div class="box say"><b>Say it in the interview</b>"An internal stage is Snowflake-managed storage with no cloud account to configure. PUT uploads and encrypts, COPY INTO loads."</div>
+    </div>
+  </div>
+</article>
+<article class="step" id="s4" style="--d:160ms">
+  <header class="sh">
+    <div class="num">04</div>
+    <div class="st"><h3>Raw table + CSV file format</h3><p>Create FF_CSV_INVENTORY and the all-VARCHAR landing table STAGING.INVENTORY_RAW with lineage columns.</p></div>
+    <div class="meta"><span class="where sf">Worksheet</span><span class="mins">~3 min</span>
+      <label class="done"><input type="checkbox" data-step="4"> done</label></div>
+  </header>
+  <div class="snips">
+    <div class="note2" style="margin:0 0 10px"><b style="color:var(--aws2)">WHY</b> Landing everything as text means a bad value never blocks the load; you type and clean it on the way to ANALYTICS. Lineage columns (_src_file, _src_row) make every row traceable.</div>
+    <div class="snip"><div class="sniphead"><span class="tgt ws">Worksheet</span><b>File format + raw table</b><span class="sp"></span><button class="cp" data-t="c4_0">Copy SQL</button></div><pre class="code" id="c4_0"><span class="kw">CREATE</span> <span class="kw">OR</span> <span class="kw">REPLACE</span> <span class="kw">FILE FORMAT</span> STAGING.FF_CSV_INVENTORY
+  TYPE = CSV
+  SKIP_HEADER = 1
+  FIELD_OPTIONALLY_ENCLOSED_BY = <span class="st">'"'</span>
+  TRIM_SPACE = TRUE
+  ERROR_ON_COLUMN_COUNT_MISMATCH = FALSE;
+
+<span class="kw">CREATE</span> <span class="kw">OR</span> <span class="kw">REPLACE</span> <span class="kw">TABLE</span> STAGING.INVENTORY_RAW (
+  product_id       VARCHAR,
+  sku              VARCHAR,
+  name             VARCHAR,
+  category         VARCHAR,
+  quantity_on_hand VARCHAR,
+  unit_cost        VARCHAR,
+  unit_price       VARCHAR,
+  warehouse_id     VARCHAR,
+  last_updated     VARCHAR,
+  status           VARCHAR,
+  _src_file        VARCHAR,
+  _src_row         NUMBER,
+  _loaded_at       TIMESTAMP_LTZ DEFAULT CURRENT_TIMESTAMP()
+);
+<span class="kw">DESC</span> <span class="kw">TABLE</span> STAGING.INVENTORY_RAW;</pre><div class="out"><div class="outlbl">Expected output</div><div class="okl"><i>✓</i><span>File format FF_CSV_INVENTORY successfully created.</span></div><div class="okl"><i>✓</i><span>Table INVENTORY_RAW successfully created.</span></div><div class="mini"><table><thead><tr><th>name</th><th>type</th><th>null?</th><th>default</th></tr></thead><tbody><tr><td>PRODUCT_ID</td><td>VARCHAR(16777216)</td><td>Y</td><td class="nl">NULL</td></tr><tr><td>SKU</td><td>VARCHAR(16777216)</td><td>Y</td><td class="nl">NULL</td></tr><tr><td>NAME</td><td>VARCHAR(16777216)</td><td>Y</td><td class="nl">NULL</td></tr><tr><td>CATEGORY</td><td>VARCHAR(16777216)</td><td>Y</td><td class="nl">NULL</td></tr><tr><td>QUANTITY_ON_HAND</td><td>VARCHAR(16777216)</td><td>Y</td><td class="nl">NULL</td></tr><tr><td>UNIT_COST</td><td>VARCHAR(16777216)</td><td>Y</td><td class="nl">NULL</td></tr><tr><td>UNIT_PRICE</td><td>VARCHAR(16777216)</td><td>Y</td><td class="nl">NULL</td></tr><tr><td>WAREHOUSE_ID</td><td>VARCHAR(16777216)</td><td>Y</td><td class="nl">NULL</td></tr></tbody></table><div class="mnote">first 8 of 13 rows shown · wide result: only the key columns are shown</div></div></div></div>
+  </div>
+  <div class="sbody">
+    <div class="col">
+      <h4><span class="ic">▶</span>Do this</h4><ol class="doo"><li>Click <span class="chip b">Insert SQL: File format + raw table</span> and press <span class="keys"><kbd>Ctrl/⌘</kbd>+<kbd>Shift</kbd>+<kbd>Enter</kbd></span>.</li><li>Scroll the last result tab (<code>DESC TABLE</code>): 13 columns, all VARCHAR except <code>_src_row</code> (NUMBER) and <code>_loaded_at</code> (TIMESTAMP_LTZ).</li></ol>
+      <h4><span class="ic ck">✓</span>Checkpoint: green checks the simulator waits for</h4><ul class="checks"><li><i></i>FF_CSV_INVENTORY exists (TYPE = CSV, SKIP_HEADER = 1)</li><li><i></i>INVENTORY_RAW exists with _src_file (and all 10 CSV columns)</li></ul>
+      <div class="box hintbox"><b>Hint</b>Names like "Wireless Earbuds, Noise Cancelling" contain a comma: without FIELD_OPTIONALLY_ENCLOSED_BY = '"' the row would split into too many columns.</div>
+    </div>
+    <div class="col">
+      <h4><span class="ic eye">◉</span>You should see</h4><ul class="see"><li>Two success tabs (file format, table) and a 13-row DESC.</li><li><code>_loaded_at</code> has default <code>CURRENT_TIMESTAMP()</code>, which is why it never appears in the COPY column list.</li></ul>
+      <h4><span class="ic" style="background:rgba(255,93,108,.14);color:#ff8f9a">!</span>Gotchas</h4><ul class="see"><li>Names such as <code>"Wireless Earbuds, Noise Cancelling"</code> contain a comma. Without <code>FIELD_OPTIONALLY_ENCLOSED_BY = '"'</code> that row would split into too many columns.</li><li><code>ERROR_ON_COLUMN_COUNT_MISMATCH = FALSE</code> is what lets batch 3 (with an extra column) load in step 9.</li></ul>
+      <h4><span class="ic" style="background:rgba(255,93,108,.14);color:#ff8f9a">✕</span>Common errors</h4>
+      <table class="errt"><tbody><tr><td>Number of columns in file (11) does not match that of the corresponding table (10)</td><td><b>Cause:</b> The format was created without <code>ERROR_ON_COLUMN_COUNT_MISMATCH = FALSE</code> (the default is TRUE).<br><b>Fix:</b> Re-run the step 4 script, then re-run the COPY.</td></tr><tr><td>Schema 'STAGING' does not exist or not authorized</td><td><b>Cause:</b> Step 1 was skipped or the session lost its context.<br><b>Fix:</b> Re-run step 1.</td></tr></tbody></table>
+      <div class="diag"><span>CSV bytes</span><span>FF_CSV_INVENTORY</span><span>VARCHAR columns</span><span>_src_file / _src_row</span></div>
+      <div class="explain"><b>What just happened.</b> The file format tells Snowflake how to split bytes into fields: skip the header line, honour quotes around fields that contain commas, trim stray spaces. <code>ERROR_ON_COLUMN_COUNT_MISMATCH = FALSE</code> is what lets a later file with an <b>extra column</b> (batch 3 adds <code>reorder_point</code>) still load. The raw table has 10 data columns + 3 housekeeping ones; <code>_loaded_at</code> fills itself from its DEFAULT.</div>
+      <div class="box say"><b>Say it in the interview</b>"I land everything as text so a bad value never blocks the load, and keep _src_file and _src_row for lineage."</div>
+    </div>
+  </div>
+</article>
+<article class="step" id="s5" style="--d:200ms">
+  <header class="sh">
+    <div class="num">05</div>
+    <div class="st"><h3>COPY batch 1 into STAGING</h3><p>Dry-run with VALIDATION_MODE, load batch 1 (30 rows) with lineage columns, verify the count, then re-run to see load metadata skip the file.</p></div>
+    <div class="meta"><span class="where sf">Worksheet</span><span class="mins">~4 min</span>
+      <label class="done"><input type="checkbox" data-step="5"> done</label></div>
+  </header>
+  <div class="snips">
+    <div class="note2" style="margin:0 0 10px"><b style="color:var(--aws2)">WHY</b> COPY INTO is the bulk-load workhorse. Knowing it skips files it already loaded (64-day load metadata) is a classic interview question.</div>
+    <div class="snip"><div class="sniphead"><span class="tgt ws">Worksheet</span><b>(a) Dry run: RETURN_ERRORS</b><span class="sp"></span><button class="cp" data-t="c5_0">Copy SQL</button></div><pre class="code" id="c5_0"><span class="cm">-- VALIDATION_MODE checks the file but loads nothing</span>
+<span class="kw">COPY</span> <span class="kw">INTO</span> STAGING.INVENTORY_RAW
+<span class="kw">FROM</span> @STAGING.STG_INVENTORY/inventory_2026-11-20_batch1.csv
+FILE_FORMAT = (FORMAT_NAME = <span class="st">'STAGING.FF_CSV_INVENTORY'</span>)
+VALIDATION_MODE = RETURN_ERRORS;</pre><div class="out"><div class="outlbl">Expected output</div><div class="mini"><table><thead><tr><th>ERROR</th><th>FILE</th><th>LINE</th><th>CHARACTER</th><th>BYTE_OFFSET</th><th>CATEGORY</th><th>CODE</th><th>SQL_STATE</th><th>COLUMN_NAME</th><th>ROW_NUMBER</th><th>ROW_START_LINE</th><th>REJECTED_RECORD</th></tr></thead><tbody></tbody></table><div class="mnote">0 rows</div></div><div class="note2">note: Dry run only. Nothing was loaded. 0 error(s) found in 1 file(s).</div></div></div><div class="snip"><div class="sniphead"><span class="tgt ws">Worksheet</span><b>(b) COPY with lineage transform</b><span class="sp"></span><button class="cp" data-t="c5_1">Copy SQL</button></div><pre class="code" id="c5_1"><span class="kw">COPY</span> <span class="kw">INTO</span> STAGING.INVENTORY_RAW (product_id, sku, name, category, quantity_on_hand, unit_cost, unit_price, warehouse_id, last_updated, status, _src_file, _src_row)
+<span class="kw">FROM</span> (
+  <span class="kw">SELECT</span> $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, METADATA$FILENAME, METADATA$FILE_ROW_NUMBER
+  <span class="kw">FROM</span> @STAGING.STG_INVENTORY/inventory_2026-11-20_batch1.csv
+)
+FILE_FORMAT = (FORMAT_NAME = <span class="st">'STAGING.FF_CSV_INVENTORY'</span>)
+ON_ERROR = <span class="st">'ABORT_STATEMENT'</span>;</pre><div class="out"><div class="outlbl">Expected output</div><div class="mini"><table><thead><tr><th>file</th><th>status</th><th>rows_parsed</th><th>rows_loaded</th><th>errors_seen</th></tr></thead><tbody><tr><td>stg_inventory/inventory_2026-11-20_batch1.csv</td><td>LOADED</td><td class="n">30</td><td class="n">30</td><td class="n">0</td></tr></tbody></table><div class="mnote">1 row · wide result: only the key columns are shown</div></div></div></div><div class="snip"><div class="sniphead"><span class="tgt ws">Worksheet</span><b>(c) Verify row count</b><span class="sp"></span><button class="cp" data-t="c5_2">Copy SQL</button></div><pre class="code" id="c5_2"><span class="kw">SELECT</span> _src_file, COUNT(*) <span class="kw">AS</span> rows_loaded
+<span class="kw">FROM</span> STAGING.INVENTORY_RAW
+<span class="kw">GROUP BY</span> _src_file
+<span class="kw">ORDER BY</span> _src_file;</pre><div class="out"><div class="outlbl">Expected output</div><div class="mini"><table><thead><tr><th>_SRC_FILE</th><th>ROWS_LOADED</th></tr></thead><tbody><tr><td>inventory_2026-11-20_batch1.csv</td><td class="n">30</td></tr></tbody></table><div class="mnote">1 row</div></div></div></div><div class="snip"><div class="sniphead"><span class="tgt ws">Worksheet</span><b>(d) Re-run (idempotency)</b><span class="sp"></span><button class="cp" data-t="c5_3">Copy SQL</button></div><pre class="code" id="c5_3"><span class="cm">-- Same COPY again: load metadata knows this file+md5 was loaded</span>
+<span class="kw">COPY</span> <span class="kw">INTO</span> STAGING.INVENTORY_RAW (product_id, sku, name, category, quantity_on_hand, unit_cost, unit_price, warehouse_id, last_updated, status, _src_file, _src_row)
+<span class="kw">FROM</span> (
+  <span class="kw">SELECT</span> $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, METADATA$FILENAME, METADATA$FILE_ROW_NUMBER
+  <span class="kw">FROM</span> @STAGING.STG_INVENTORY/inventory_2026-11-20_batch1.csv
+)
+FILE_FORMAT = (FORMAT_NAME = <span class="st">'STAGING.FF_CSV_INVENTORY'</span>);</pre><div class="out"><div class="outlbl">Expected output</div><div class="okl"><i>✓</i><span>Copy executed with 0 files processed.</span></div><div class="note2">note: 1 file(s) matched, but load metadata says they were already loaded into INVENTORY_RAW (same name + checksum). COPY skips them. Use FORCE = TRUE to reload them (this creates duplicates), or TRUNCATE the table first (clears load metadata).</div></div></div>
+  </div>
+  <div class="sbody">
+    <div class="col">
+      <h4><span class="ic">▶</span>Do this</h4><ol class="doo"><li>Click <span class="chip b">Insert SQL: (a) Dry run: RETURN_ERRORS</span> and run it. It loads nothing.</li><li>Click <span class="chip b">Insert SQL: (b) COPY with lineage transform</span> and run it: 30 rows load.</li><li>Click <span class="chip b">Insert SQL: (c) Verify row count</span> and run it: one group, 30 rows.</li><li>Click <span class="chip b">Insert SQL: (d) Re-run (idempotency)</span> and run it. Nothing loads this time.</li></ol>
+      <h4><span class="ic ck">✓</span>Checkpoint: green checks the simulator waits for</h4><ul class="checks"><li><i></i>30 rows loaded from batch1</li><li><i></i>Re-ran COPY and saw "0 files processed"</li></ul>
+      <div class="box hintbox"><b>Hint</b>FORCE = TRUE would reload the file and create duplicates. Do not use it here. VALIDATION_MODE cannot be combined with a transform (COPY ... FROM (SELECT ...)), which is why the dry run is a plain COPY.</div>
+    </div>
+    <div class="col">
+      <h4><span class="ic eye">◉</span>You should see</h4><ul class="see"><li>(a) An empty error table plus the note <i>Dry run only. Nothing was loaded. 0 error(s) found in 1 file(s).</i></li><li>(b) <code>LOADED</code>, rows_parsed 30, rows_loaded 30.</li><li>(d) <code>Copy executed with 0 files processed.</code> with a note that load metadata remembers the file (name + md5).</li></ul>
+      <h4><span class="ic" style="background:rgba(255,93,108,.14);color:#ff8f9a">!</span>Gotchas</h4><ul class="see"><li><code>VALIDATION_MODE</code> cannot be combined with a transform, which is why the dry run is a plain COPY.</li><li><code>FORCE = TRUE</code> would reload the file and create duplicates. Do not use it here.</li><li>Load metadata is kept 64 days per table. <code>TRUNCATE</code> or <code>CREATE OR REPLACE TABLE</code> clears it.</li></ul>
+      <h4><span class="ic" style="background:rgba(255,93,108,.14);color:#ff8f9a">✕</span>Common errors</h4>
+      <table class="errt"><tbody><tr><td>Copy executed with 0 files processed.</td><td><b>Cause:</b> Not an error: file already loaded, or the path/pattern matched no file.<br><b>Fix:</b> Check <code>LIST @STAGING.STG_INVENTORY</code>. Only add FORCE if you intend duplicates.</td></tr><tr><td>Number of columns in file (10) does not match that of the corresponding table (13)</td><td><b>Cause:</b> A plain COPY without the column list/transform.<br><b>Fix:</b> Use the step 5 (b) snippet with <code>(cols) FROM (SELECT $1..$10, METADATA$FILENAME, ...)</code>.</td></tr></tbody></table>
+      <div class="diag"><span>@STG_INVENTORY/batch1.csv</span><span>COPY INTO + transform</span><span>INVENTORY_RAW (30)</span><span>Load metadata: skip next time</span></div>
+      <div class="explain"><b>What just happened.</b> The transform form <code>COPY INTO t (cols) FROM (SELECT $1..$10, METADATA$FILENAME, METADATA$FILE_ROW_NUMBER FROM @stage)</code> lets you capture lineage while loading. Snowflake remembers each loaded file (name + md5) per table for 64 days, so the identical re-run reports <b>0 files processed</b> instead of duplicating rows.</div>
+      <div class="box say"><b>Say it in the interview</b>"COPY remembers which files it loaded for 64 days, so the same file is not loaded twice."</div>
+    </div>
+  </div>
+</article>
+<article class="step" id="s6" style="--d:240ms">
+  <header class="sh">
+    <div class="num">06</div>
+    <div class="st"><h3>Build ANALYTICS.INVENTORY</h3><p>Create the typed, de-duplicated ANALYTICS.INVENTORY from the raw text rows with CTAS + QUALIFY ROW_NUMBER().</p></div>
+    <div class="meta"><span class="where sf">Worksheet</span><span class="mins">~3 min</span>
+      <label class="done"><input type="checkbox" data-step="6"> done</label></div>
+  </header>
+  <div class="snips">
+    <div class="note2" style="margin:0 0 10px"><b style="color:var(--aws2)">WHY</b> This is the cast-and-dedupe boundary: raw text in, typed latest-version-per-product out. It is also the MERGE target for everything that follows.</div>
+    <div class="snip"><div class="sniphead"><span class="tgt ws">Worksheet</span><b>CTAS with casts + dedupe</b><span class="sp"></span><button class="cp" data-t="c6_0">Copy SQL</button></div><pre class="code" id="c6_0"><span class="kw">CREATE</span> <span class="kw">OR</span> <span class="kw">REPLACE</span> <span class="kw">TABLE</span> ANALYTICS.INVENTORY <span class="kw">AS</span>
+<span class="kw">SELECT</span>
+  product_id::VARCHAR                  <span class="kw">AS</span> product_id,
+  sku::VARCHAR                         <span class="kw">AS</span> sku,
+  name::VARCHAR                        <span class="kw">AS</span> name,
+  category::VARCHAR                    <span class="kw">AS</span> category,
+  quantity_on_hand::NUMBER             <span class="kw">AS</span> quantity_on_hand,
+  unit_cost::NUMBER(10,2)              <span class="kw">AS</span> unit_cost,
+  unit_price::NUMBER(10,2)             <span class="kw">AS</span> unit_price,
+  warehouse_id::VARCHAR                <span class="kw">AS</span> warehouse_id,
+  last_updated::TIMESTAMP_NTZ          <span class="kw">AS</span> last_updated,
+  status::VARCHAR                      <span class="kw">AS</span> status
+<span class="kw">FROM</span> STAGING.INVENTORY_RAW
+<span class="kw">QUALIFY</span> ROW_NUMBER() OVER (PARTITION BY product_id <span class="kw">ORDER BY</span> last_updated <span class="kw">DESC</span>) = 1;
+
+<span class="kw">DESC</span> <span class="kw">TABLE</span> ANALYTICS.INVENTORY;
+<span class="kw">SELECT</span> COUNT(*) <span class="kw">AS</span> products <span class="kw">FROM</span> ANALYTICS.INVENTORY;</pre><div class="out"><div class="outlbl">Expected output</div><div class="okl"><i>✓</i><span>Table INVENTORY successfully created.</span></div><div class="mini"><table><thead><tr><th>name</th><th>type</th><th>null?</th><th>default</th></tr></thead><tbody><tr><td>PRODUCT_ID</td><td>VARCHAR(16777216)</td><td>Y</td><td class="nl">NULL</td></tr><tr><td>SKU</td><td>VARCHAR(16777216)</td><td>Y</td><td class="nl">NULL</td></tr><tr><td>NAME</td><td>VARCHAR(16777216)</td><td>Y</td><td class="nl">NULL</td></tr><tr><td>CATEGORY</td><td>VARCHAR(16777216)</td><td>Y</td><td class="nl">NULL</td></tr><tr><td>QUANTITY_ON_HAND</td><td>NUMBER(38,0)</td><td>Y</td><td class="nl">NULL</td></tr><tr><td>UNIT_COST</td><td>NUMBER(10,2)</td><td>Y</td><td class="nl">NULL</td></tr><tr><td>UNIT_PRICE</td><td>NUMBER(10,2)</td><td>Y</td><td class="nl">NULL</td></tr><tr><td>WAREHOUSE_ID</td><td>VARCHAR(16777216)</td><td>Y</td><td class="nl">NULL</td></tr></tbody></table><div class="mnote">first 8 of 10 rows shown · wide result: only the key columns are shown</div></div><div class="mini"><table><thead><tr><th>PRODUCTS</th></tr></thead><tbody><tr><td class="n">30</td></tr></tbody></table><div class="mnote">1 row</div></div></div></div><div class="note2" style="margin-top:8px">Real error you can trigger on purpose:</div><pre class="code" style="padding:6px 10px"><span class="kw">SELECT</span> <span class="st">'abc'</span>::NUMBER;</pre><div class="errl"><b>Error 100038: </b>Numeric value 'abc' is not recognized</div>
+  </div>
+  <div class="sbody">
+    <div class="col">
+      <h4><span class="ic">▶</span>Do this</h4><ol class="doo"><li>Click <span class="chip b">Insert SQL: CTAS with casts + dedupe</span> and press <span class="keys"><kbd>Ctrl/⌘</kbd>+<kbd>Shift</kbd>+<kbd>Enter</kbd></span>.</li><li>Read the <code>DESC TABLE</code> tab: quantity is NUMBER, prices NUMBER(10,2), <code>last_updated</code> TIMESTAMP_NTZ.</li></ol>
+      <h4><span class="ic ck">✓</span>Checkpoint: green checks the simulator waits for</h4><ul class="checks"><li><i></i>ANALYTICS.INVENTORY exists with typed columns (NUMBER, TIMESTAMP_NTZ)</li><li><i></i>ANALYTICS.INVENTORY has 30 rows</li></ul>
+      <div class="box hintbox"><b>Hint</b>Hard casts (::NUMBER) fail on bad data. That is fine for this clean sample; TRY_TO_NUMBER is the forgiving alternative in production.</div>
+    </div>
+    <div class="col">
+      <h4><span class="ic eye">◉</span>You should see</h4><ul class="see"><li>Three tabs: CTAS success, DESC (10 columns), and <code>PRODUCTS = 30</code>.</li></ul>
+      <h4><span class="ic" style="background:rgba(255,93,108,.14);color:#ff8f9a">!</span>Gotchas</h4><ul class="see"><li>Hard casts (<code>::NUMBER</code>) fail on bad data. That is fine for this clean sample; <code>TRY_TO_NUMBER</code> is the forgiving production alternative.</li><li><code>QUALIFY</code> filters on a window function with no subquery.</li></ul>
+      <h4><span class="ic" style="background:rgba(255,93,108,.14);color:#ff8f9a">✕</span>Common errors</h4>
+      <table class="errt"><tbody><tr><td>Numeric value 'abc' is not recognized</td><td><b>Cause:</b> A hard cast met non-numeric text.<br><b>Fix:</b> Use <code>TRY_TO_NUMBER(col)</code> and inspect the NULLs, or clean the source.</td></tr><tr><td>Object 'RETAILPULSE_LAB.STAGING.INVENTORY_RAW' does not exist or not authorized</td><td><b>Cause:</b> Step 4 not run, or the raw table was recreated in another schema.<br><b>Fix:</b> Run steps 4 and 5 first.</td></tr></tbody></table>
+      <div class="diag"><span>INVENTORY_RAW (VARCHAR)</span><span>::casts</span><span>QUALIFY ROW_NUMBER() = 1</span><span>ANALYTICS.INVENTORY (30)</span></div>
+      <div class="explain"><b>What just happened.</b> <code>QUALIFY</code> filters on a window function without a subquery. Partitioning by <code>product_id</code> and ordering by <code>last_updated DESC</code> keeps only the <b>latest version</b> of each product, so the table has one row per product no matter how many raw files mention it.</div>
+      <div class="box say"><b>Say it in the interview</b>"The CTAS is my cast-and-dedupe boundary: raw text in, one typed latest row per product out."</div>
+    </div>
+  </div>
+</article>
+<article class="step" id="s7" style="--d:280ms">
+  <header class="sh">
+    <div class="num">07</div>
+    <div class="st"><h3>Standard stream on INVENTORY_RAW</h3><p>Create STRM_INVENTORY_RAW, make changes, read the delta (ACTION / ISUPDATE / ROW_ID), see an UPDATE become a DELETE + INSERT pair, and check HAS_DATA.</p></div>
+    <div class="meta"><span class="where sf">Worksheet</span><span class="mins">~4 min</span>
+      <label class="done"><input type="checkbox" data-step="7"> done</label></div>
+  </header>
+  <div class="snips">
+    <div class="note2" style="margin:0 0 10px"><b style="color:var(--aws2)">WHY</b> A stream is a bookmark (offset) on a table plus a view of what changed since. It is the "C" in change-data-capture and the trigger for tasks.</div>
+    <div class="snip"><div class="sniphead"><span class="tgt ws">Worksheet</span><b>(a) Create the stream</b><span class="sp"></span><button class="cp" data-t="c7_0">Copy SQL</button></div><pre class="code" id="c7_0"><span class="kw">CREATE</span> <span class="kw">OR</span> <span class="kw">REPLACE</span> <span class="kw">STREAM</span> STAGING.STRM_INVENTORY_RAW <span class="kw">ON</span> <span class="kw">TABLE</span> STAGING.INVENTORY_RAW;
+<span class="kw">SELECT</span> COUNT(*) <span class="kw">AS</span> pending_rows <span class="kw">FROM</span> STAGING.STRM_INVENTORY_RAW;</pre><div class="out"><div class="outlbl">Expected output</div><div class="okl"><i>✓</i><span>Stream STRM_INVENTORY_RAW successfully created.</span></div><div class="mini"><table><thead><tr><th>PENDING_ROWS</th></tr></thead><tbody><tr><td class="n">0</td></tr></tbody></table><div class="mnote">1 row</div></div></div></div><div class="snip"><div class="sniphead"><span class="tgt ws">Worksheet</span><b>(b) Insert 3 rows by hand</b><span class="sp"></span><button class="cp" data-t="c7_1">Copy SQL</button></div><pre class="code" id="c7_1"><span class="cm">-- a restock of P005, a restock of P009 and a manually keyed new product P031</span>
+<span class="kw">INSERT</span> <span class="kw">INTO</span> STAGING.INVENTORY_RAW (product_id, sku, name, category, quantity_on_hand, unit_cost, unit_price, warehouse_id, last_updated, status, _src_file, _src_row) <span class="kw">VALUES</span>
+  (<span class="st">'P005'</span>,<span class="st">'SKU-1029'</span>,<span class="st">'Portable Charger 10000mAh'</span>,<span class="st">'Electronics'</span>,<span class="st">'60'</span>,<span class="st">'14.20'</span>,<span class="st">'29.99'</span>,<span class="st">'WH-02'</span>,<span class="st">'2026-11-18'</span>,<span class="st">'ACTIVE'</span>,<span class="st">'manual_insert'</span>,1),
+  (<span class="st">'P009'</span>,<span class="st">'SKU-1057'</span>,<span class="st">'Men''s Rain Jacket'</span>,<span class="st">'Apparel'</span>,<span class="st">'150'</span>,<span class="st">'28.00'</span>,<span class="st">'64.95'</span>,<span class="st">'WH-03'</span>,<span class="st">'2026-11-18'</span>,<span class="st">'ACTIVE'</span>,<span class="st">'manual_insert'</span>,2),
+  (<span class="st">'P031'</span>,<span class="st">'SKU-1211'</span>,<span class="st">'Smart Fitness Tracker'</span>,<span class="st">'Electronics'</span>,<span class="st">'40'</span>,<span class="st">'26.00'</span>,<span class="st">'59.99'</span>,<span class="st">'WH-01'</span>,<span class="st">'2026-11-18'</span>,<span class="st">'ACTIVE'</span>,<span class="st">'manual_insert'</span>,3);</pre><div class="out"><div class="outlbl">Expected output</div><div class="mini"><table><thead><tr><th>number of rows inserted</th></tr></thead><tbody><tr><td class="n">3</td></tr></tbody></table><div class="mnote">1 row</div></div></div></div><div class="snip"><div class="sniphead"><span class="tgt ws">Worksheet</span><b>(c) Read the stream</b><span class="sp"></span><button class="cp" data-t="c7_2">Copy SQL</button></div><pre class="code" id="c7_2"><span class="kw">SELECT</span> product_id, name, quantity_on_hand, METADATA$ACTION, METADATA$ISUPDATE, METADATA$ROW_ID
+<span class="kw">FROM</span> STAGING.STRM_INVENTORY_RAW
+<span class="kw">ORDER BY</span> product_id;</pre><div class="out"><div class="outlbl">Expected output</div><div class="mini"><table><thead><tr><th>PRODUCT_ID</th><th>NAME</th><th>QUANTITY_ON_HAND</th><th>METADATA$ACTION</th><th>METADATA$ISUPDATE</th><th>METADATA$ROW_ID</th></tr></thead><tbody><tr><td>P005</td><td>Portable Charger 10000mAh</td><td>60</td><td>INSERT</td><td>false</td><td>03aa8e4a…</td></tr><tr><td>P009</td><td>Men's Rain Jacket</td><td>150</td><td>INSERT</td><td>false</td><td>0be6c00b…</td></tr><tr><td>P031</td><td>Smart Fitness Tracker</td><td>40</td><td>INSERT</td><td>false</td><td>0f9bf6e9…</td></tr></tbody></table><div class="mnote">3 rows</div></div></div></div><div class="snip"><div class="sniphead"><span class="tgt ws">Worksheet</span><b>(d) UPDATE, then read again</b><span class="sp"></span><button class="cp" data-t="c7_3">Copy SQL</button></div><pre class="code" id="c7_3"><span class="kw">UPDATE</span> STAGING.INVENTORY_RAW <span class="kw">SET</span> quantity_on_hand = <span class="st">'99'</span> <span class="kw">WHERE</span> product_id = <span class="st">'P001'</span>;
+
+<span class="kw">SELECT</span> product_id, name, quantity_on_hand, METADATA$ACTION, METADATA$ISUPDATE, METADATA$ROW_ID
+<span class="kw">FROM</span> STAGING.STRM_INVENTORY_RAW
+<span class="kw">ORDER BY</span> product_id, METADATA$ACTION;</pre><div class="out"><div class="outlbl">Expected output</div><div class="mini"><table><thead><tr><th>number of rows updated</th><th>number of multi-joined rows updated</th></tr></thead><tbody><tr><td class="n">1</td><td class="n">0</td></tr></tbody></table><div class="mnote">1 row</div></div><div class="mini"><table><thead><tr><th>PRODUCT_ID</th><th>NAME</th><th>QUANTITY_ON_HAND</th><th>METADATA$ACTION</th><th>METADATA$ISUPDATE</th><th>METADATA$ROW_ID</th></tr></thead><tbody><tr><td>P001</td><td>Wireless Earbuds, Noise Cancelling</td><td>74</td><td>DELETE</td><td>true</td><td>1d65cf5f…</td></tr><tr><td>P001</td><td>Wireless Earbuds, Noise Cancelling</td><td>99</td><td>INSERT</td><td>true</td><td>1d65cf5f…</td></tr><tr><td>P005</td><td>Portable Charger 10000mAh</td><td>60</td><td>INSERT</td><td>false</td><td>03aa8e4a…</td></tr><tr><td>P009</td><td>Men's Rain Jacket</td><td>150</td><td>INSERT</td><td>false</td><td>0be6c00b…</td></tr><tr><td>P031</td><td>Smart Fitness Tracker</td><td>40</td><td>INSERT</td><td>false</td><td>0f9bf6e9…</td></tr></tbody></table><div class="mnote">5 rows</div></div></div></div><div class="snip"><div class="sniphead"><span class="tgt ws">Worksheet</span><b>(e) HAS_DATA</b><span class="sp"></span><button class="cp" data-t="c7_4">Copy SQL</button></div><pre class="code" id="c7_4"><span class="kw">SELECT</span> SYSTEM$STREAM_HAS_DATA(<span class="st">'STAGING.STRM_INVENTORY_RAW'</span>) <span class="kw">AS</span> has_data;</pre><div class="out"><div class="outlbl">Expected output</div><div class="mini"><table><thead><tr><th>HAS_DATA</th></tr></thead><tbody><tr><td>true</td></tr></tbody></table><div class="mnote">1 row</div></div></div></div><div class="note2" style="margin-top:8px">Real error you can trigger on purpose:</div><pre class="code" style="padding:6px 10px"><span class="kw">SELECT</span> * <span class="kw">FROM</span> STAGING.STRM_NOT_THERE;</pre><div class="errl"><b>Error 002003: </b>SQL compilation error:
+Object 'RETAILPULSE_LAB.STAGING.STRM_NOT_THERE' does not exist or not authorized.</div>
+  </div>
+  <div class="sbody">
+    <div class="col">
+      <h4><span class="ic">▶</span>Do this</h4><ol class="doo"><li>Run <span class="chip b">Insert SQL: (a) Create the stream</span>. The pending count is 0 because a stream only sees changes made <b>after</b> it exists.</li><li>Run <span class="chip b">Insert SQL: (b) Insert 3 rows by hand</span> (P005, P009 restocks and a new product P031).</li><li>Run <span class="chip b">Insert SQL: (c) Read the stream</span>: 3 rows, all <code>INSERT</code>.</li><li>Run <span class="chip b">Insert SQL: (d) UPDATE, then read again</span>: the UPDATE of P001 shows up as a DELETE and an INSERT.</li><li>Run <span class="chip b">Insert SQL: (e) HAS_DATA</span>: <code>TRUE</code>.</li></ol>
+      <h4><span class="ic ck">✓</span>Checkpoint: green checks the simulator waits for</h4><ul class="checks"><li><i></i>Stream STRM_INVENTORY_RAW exists</li><li><i></i>Read stream rows with METADATA$ACTION</li><li><i></i>Saw the DELETE + INSERT pair from an UPDATE</li><li><i></i>SYSTEM$STREAM_HAS_DATA returned TRUE</li></ul>
+      <div class="box hintbox"><b>Hint</b>A plain SELECT never moves the offset, so read the stream as often as you like. Only a DML statement (INSERT...SELECT, MERGE, CTAS) that reads it AND commits advances it.</div>
+    </div>
+    <div class="col">
+      <h4><span class="ic eye">◉</span>You should see</h4><ul class="see"><li>(c) 3 rows with <code>METADATA$ACTION = INSERT</code>, <code>METADATA$ISUPDATE = false</code> and a 40-character <code>METADATA$ROW_ID</code>.</li><li>(d) 5 rows: the 3 inserts plus <b>P001 DELETE (qty 74) and P001 INSERT (qty 99)</b>, both with <code>ISUPDATE = true</code>.</li><li>The stream stores no data, only an offset.</li></ul>
+      <h4><span class="ic" style="background:rgba(255,93,108,.14);color:#ff8f9a">!</span>Gotchas</h4><ul class="see"><li>A plain <code>SELECT</code> never moves the offset. Read the stream as often as you like. Only a DML that reads it <b>and commits</b> (INSERT...SELECT, MERGE, CTAS) advances it.</li><li>P001 existed <i>before</i> the offset, hence the DELETE+INSERT pair. An update to a row inserted <i>after</i> the offset would collapse into one INSERT.</li></ul>
+      <h4><span class="ic" style="background:rgba(255,93,108,.14);color:#ff8f9a">✕</span>Common errors</h4>
+      <table class="errt"><tbody><tr><td>Object 'RETAILPULSE_LAB.STAGING.STRM_NOT_THERE' does not exist or not authorized.</td><td><b>Cause:</b> Typo, or the stream was not created (or was dropped by an earlier CREATE OR REPLACE of the base table).<br><b>Fix:</b> Re-run snippet (a). Note that this resets the offset.</td></tr><tr><td>Pending rows is 0 after your INSERT</td><td><b>Cause:</b> You created the stream <i>after</i> inserting.<br><b>Fix:</b> Insert again after the stream exists.</td></tr></tbody></table>
+      <div class="diag"><span>INSERT / UPDATE on INVENTORY_RAW</span><span>Change log since offset</span><span>Stream: ACTION + ISUPDATE</span><span>HAS_DATA = TRUE</span></div>
+      <div class="explain"><b>What just happened.</b> A stream stores <b>no data</b>, only an offset. Reading it returns the rows that changed since that offset plus 3 metadata columns. The 3 inserts appear as <code>INSERT</code>. The UPDATE of P001 (a row that existed <i>before</i> the offset) appears as a <b>DELETE of the old values + INSERT of the new values</b>, both with <code>METADATA$ISUPDATE = TRUE</code>. Had the update touched a row inserted <i>after</i> the offset, the changes would have collapsed into one INSERT.</div>
+      <div class="box say"><b>Say it in the interview</b>"A stream is a bookmark on a table plus a view of what changed since. Reading it is free; consuming it needs a committed DML."</div>
+    </div>
+  </div>
+</article>
+<article class="step" id="s8" style="--d:320ms">
+  <header class="sh">
+    <div class="num">08</div>
+    <div class="st"><h3>Consume the stream with MERGE</h3><p>Upsert the stream's INSERT rows into ANALYTICS.INVENTORY inside a transaction, then confirm the stream is empty.</p></div>
+    <div class="meta"><span class="where sf">Worksheet</span><span class="mins">~3 min</span>
+      <label class="done"><input type="checkbox" data-step="8"> done</label></div>
+  </header>
+  <div class="snips">
+    <div class="note2" style="margin:0 0 10px"><b style="color:var(--aws2)">WHY</b> Consuming a stream means a DML statement reads it and commits. After that the offset has moved: the same changes will never be delivered twice.</div>
+    <div class="snip"><div class="sniphead"><span class="tgt ws">Worksheet</span><b>MERGE in a transaction</b><span class="sp"></span><button class="cp" data-t="c8_0">Copy SQL</button></div><pre class="code" id="c8_0"><span class="kw">BEGIN</span> <span class="kw">TRANSACTION</span>;
+
+<span class="kw">MERGE</span> <span class="kw">INTO</span> ANALYTICS.INVENTORY t
+<span class="kw">USING</span> (
+  <span class="kw">SELECT</span>
+    product_id::VARCHAR                  <span class="kw">AS</span> product_id,
+    sku::VARCHAR                         <span class="kw">AS</span> sku,
+    name::VARCHAR                        <span class="kw">AS</span> name,
+    category::VARCHAR                    <span class="kw">AS</span> category,
+    quantity_on_hand::NUMBER             <span class="kw">AS</span> quantity_on_hand,
+    unit_cost::NUMBER(10,2)              <span class="kw">AS</span> unit_cost,
+    unit_price::NUMBER(10,2)             <span class="kw">AS</span> unit_price,
+    warehouse_id::VARCHAR                <span class="kw">AS</span> warehouse_id,
+    last_updated::TIMESTAMP_NTZ          <span class="kw">AS</span> last_updated,
+    status::VARCHAR                      <span class="kw">AS</span> status
+  <span class="kw">FROM</span> STAGING.STRM_INVENTORY_RAW
+  <span class="kw">WHERE</span> METADATA$ACTION = <span class="st">'<span class="kw">INSERT</span>'</span>
+  <span class="kw">QUALIFY</span> ROW_NUMBER() OVER (PARTITION BY product_id <span class="kw">ORDER BY</span> last_updated <span class="kw">DESC</span>) = 1
+) s
+<span class="kw">ON</span> t.product_id = s.product_id
+<span class="kw">WHEN</span> <span class="kw">MATCHED</span> <span class="kw">THEN</span> <span class="kw">UPDATE</span> <span class="kw">SET</span>
+  t.sku = s.sku, t.name = s.name, t.category = s.category,
+  t.quantity_on_hand = s.quantity_on_hand, t.unit_cost = s.unit_cost, t.unit_price = s.unit_price,
+  t.warehouse_id = s.warehouse_id, t.last_updated = s.last_updated, t.status = s.status
+<span class="kw">WHEN</span> <span class="kw">NOT</span> <span class="kw">MATCHED</span> <span class="kw">THEN</span> <span class="kw">INSERT</span>
+  (product_id, sku, name, category, quantity_on_hand, unit_cost, unit_price, warehouse_id, last_updated, status)
+<span class="kw">VALUES</span>
+  (s.product_id, s.sku, s.name, s.category, s.quantity_on_hand, s.unit_cost, s.unit_price, s.warehouse_id, s.last_updated, s.status);
+
+<span class="kw">COMMIT</span>;</pre><div class="out"><div class="outlbl">Expected output</div><div class="okl"><i>✓</i><span>Statement executed successfully.</span></div><div class="mini"><table><thead><tr><th>number of rows inserted</th><th>number of rows updated</th></tr></thead><tbody><tr><td class="n">1</td><td class="n">3</td></tr></tbody></table><div class="mnote">1 row</div></div><div class="okl"><i>✓</i><span>Statement executed successfully.</span></div></div></div><div class="snip"><div class="sniphead"><span class="tgt ws">Worksheet</span><b>Verify</b><span class="sp"></span><button class="cp" data-t="c8_1">Copy SQL</button></div><pre class="code" id="c8_1"><span class="kw">SELECT</span> SYSTEM$STREAM_HAS_DATA(<span class="st">'STAGING.STRM_INVENTORY_RAW'</span>) <span class="kw">AS</span> has_data;
+<span class="kw">SELECT</span> COUNT(*) <span class="kw">AS</span> products <span class="kw">FROM</span> ANALYTICS.INVENTORY;
+<span class="kw">SELECT</span> product_id, quantity_on_hand <span class="kw">FROM</span> ANALYTICS.INVENTORY <span class="kw">WHERE</span> product_id IN (<span class="st">'P001'</span>,<span class="st">'P005'</span>,<span class="st">'P009'</span>,<span class="st">'P031'</span>) <span class="kw">ORDER BY</span> 1;</pre><div class="out"><div class="outlbl">Expected output</div><div class="mini"><table><thead><tr><th>HAS_DATA</th></tr></thead><tbody><tr><td>false</td></tr></tbody></table><div class="mnote">1 row</div></div><div class="mini"><table><thead><tr><th>PRODUCTS</th></tr></thead><tbody><tr><td class="n">31</td></tr></tbody></table><div class="mnote">1 row</div></div><div class="mini"><table><thead><tr><th>PRODUCT_ID</th><th>QUANTITY_ON_HAND</th></tr></thead><tbody><tr><td>P001</td><td class="n">99</td></tr><tr><td>P005</td><td class="n">60</td></tr><tr><td>P009</td><td class="n">150</td></tr><tr><td>P031</td><td class="n">40</td></tr></tbody></table><div class="mnote">4 rows</div></div></div></div>
+  </div>
+  <div class="sbody">
+    <div class="col">
+      <h4><span class="ic">▶</span>Do this</h4><ol class="doo"><li>Click <span class="chip b">Insert SQL: MERGE in a transaction</span> and press <span class="keys"><kbd>Ctrl/⌘</kbd>+<kbd>Shift</kbd>+<kbd>Enter</kbd></span>. It is <code>BEGIN; MERGE; COMMIT;</code>.</li><li>Click <span class="chip b">Insert SQL: Verify</span> and run all.</li></ol>
+      <h4><span class="ic ck">✓</span>Checkpoint: green checks the simulator waits for</h4><ul class="checks"><li><i></i>MERGE ran successfully</li><li><i></i>Stream is empty after COMMIT</li><li><i></i>INVENTORY row count updated correctly (30 + 1 new product = 31)</li></ul>
+      <div class="box hintbox"><b>Hint</b>The source filters METADATA$ACTION = 'INSERT' (the new values) and the QUALIFY removes duplicate keys: MERGE refuses non-deterministic matches. Try ROLLBACK instead of COMMIT and HAS_DATA stays TRUE.</div>
+    </div>
+    <div class="col">
+      <h4><span class="ic eye">◉</span>You should see</h4><ul class="see"><li>MERGE result: <b>1 inserted, 3 updated</b> (P031 new; P001, P005, P009 matched).</li><li>Verify: <code>HAS_DATA = false</code>, <code>PRODUCTS = 31</code>, and P001 now has quantity 99.</li></ul>
+      <h4><span class="ic" style="background:rgba(255,93,108,.14);color:#ff8f9a">!</span>Gotchas</h4><ul class="see"><li>The source keeps <code>METADATA$ACTION = 'INSERT'</code> (the new values) and the <code>QUALIFY</code> removes duplicate keys: MERGE refuses non-deterministic matches. The original spec omitted the QUALIFY.</li><li>Try <code>ROLLBACK</code> instead of <code>COMMIT</code> and HAS_DATA stays TRUE: the offset only advances on commit.</li></ul>
+      <h4><span class="ic" style="background:rgba(255,93,108,.14);color:#ff8f9a">✕</span>Common errors</h4>
+      <table class="errt"><tbody><tr><td>Duplicate row detected during DML action</td><td><b>Cause:</b> More than one source row per join key (QUALIFY missing).<br><b>Fix:</b> Keep the <code>QUALIFY ROW_NUMBER() OVER (PARTITION BY product_id ORDER BY last_updated DESC) = 1</code> line.</td></tr><tr><td>HAS_DATA is still TRUE after the MERGE</td><td><b>Cause:</b> The transaction was rolled back or never committed.<br><b>Fix:</b> Run the whole snippet with Run all so COMMIT executes.</td></tr></tbody></table>
+      <div class="diag"><span>Stream delta (4 INSERT + 1 DELETE)</span><span>MERGE ... WHERE ACTION=INSERT</span><span>COMMIT</span><span>Offset moves: HAS_DATA = FALSE</span></div>
+      <div class="explain"><b>What just happened.</b> P001, P005 and P009 matched an existing key, so MERGE <b>updated</b> them; P031 had no match, so it was <b>inserted</b> (30 → 31 rows). The DELETE half of the P001 update pair was ignored by the <code>ACTION = 'INSERT'</code> filter. The offset only advances when the transaction commits; that is why MERGE + task patterns wrap multiple statements in <code>BEGIN ... COMMIT</code>.</div>
+      <div class="box say"><b>Say it in the interview</b>"Consuming a stream means a DML reads it and commits; after that the same changes are never delivered twice."</div>
+    </div>
+  </div>
+</article>
+<article class="step" id="s9" style="--d:360ms">
+  <header class="sh">
+    <div class="num">09</div>
+    <div class="st"><h3>Append-only stream and schema drift</h3><p>PUT batch 2 and 3, create an APPEND_ONLY stream, load both files (batch 3 has an extra column), and compare the two streams.</p></div>
+    <div class="meta"><span class="where aws">Terminal (SnowSQL)</span><span class="where sf">Worksheet</span><span class="mins">~5 min</span>
+      <label class="done"><input type="checkbox" data-step="9"> done</label></div>
+  </header>
+  <div class="snips">
+    <div class="note2" style="margin:0 0 10px"><b style="color:var(--aws2)">WHY</b> Append-only streams are cheaper and ignore updates/deletes: ideal for event/log tables. Schema drift (a new column in a feed) is a daily reality.</div>
+    <div class="snip"><div class="sniphead"><span class="tgt tm">Terminal (SnowSQL)</span><b>PUT batch 2 + 3 (terminal)</b><span class="sp"></span><button class="cp" data-c="PUT file://~/exports/inventory_2026-11-20_batch2.csv @STAGING.STG_INVENTORY AUTO_COMPRESS=FALSE OVERWRITE=TRUE;
+PUT file://~/exports/inventory_2026-11-20_batch3.csv @STAGING.STG_INVENTORY AUTO_COMPRESS=FALSE OVERWRITE=TRUE;
+LIST @STAGING.STG_INVENTORY;">Copy all lines</button></div><div class="term"><div class="tbar">$ terminal · left panel</div><div class="cmdrow"><span class="ps">user#wh@db.schema></span><code class="l">PUT file://~/exports/inventory_2026-11-20_batch2.csv @STAGING.STG_INVENTORY AUTO_COMPRESS=FALSE OVERWRITE=TRUE;</code><button class="cp" data-c="PUT file://~/exports/inventory_2026-11-20_batch2.csv @STAGING.STG_INVENTORY AUTO_COMPRESS=FALSE OVERWRITE=TRUE;">Copy</button></div><div class="cmdrow"><span class="ps">user#wh@db.schema></span><code class="l">PUT file://~/exports/inventory_2026-11-20_batch3.csv @STAGING.STG_INVENTORY AUTO_COMPRESS=FALSE OVERWRITE=TRUE;</code><button class="cp" data-c="PUT file://~/exports/inventory_2026-11-20_batch3.csv @STAGING.STG_INVENTORY AUTO_COMPRESS=FALSE OVERWRITE=TRUE;">Copy</button></div><div class="cmdrow"><span class="ps">user#wh@db.schema></span><code class="l">LIST @STAGING.STG_INVENTORY;</code><button class="cp" data-c="LIST @STAGING.STG_INVENTORY;">Copy</button></div></div><div class="out"><div class="outlbl">Expected output (terminal, output_format=table)</div><div class="mini"><table><thead><tr><th>source</th><th>source_size</th><th>target_size</th><th>status</th><th>encryption</th></tr></thead><tbody><tr><td>inventory_2026-11-20_batch2.csv</td><td class="n">2627</td><td class="n">2627</td><td>UPLOADED</td><td>ENCRYPTED</td></tr></tbody></table><div class="mnote">1 row · wide result: only the key columns are shown</div></div><div class="mini"><table><thead><tr><th>source</th><th>source_size</th><th>target_size</th><th>status</th><th>encryption</th></tr></thead><tbody><tr><td>inventory_2026-11-20_batch3.csv</td><td class="n">1886</td><td class="n">1886</td><td>UPLOADED</td><td>ENCRYPTED</td></tr></tbody></table><div class="mnote">1 row · wide result: only the key columns are shown</div></div><div class="mini"><table><thead><tr><th>name</th><th>size</th><th>md5</th></tr></thead><tbody><tr><td>stg_inventory/inventory_2026-11-20_batch1.csv</td><td class="n">2601</td><td>3966db7a7592f5f756898a0e9c7ade6c</td></tr><tr><td>stg_inventory/inventory_2026-11-20_batch2.csv</td><td class="n">2627</td><td>1af3ad4294a55a8477f60f153f89ab36</td></tr><tr><td>stg_inventory/inventory_2026-11-20_batch3.csv</td><td class="n">1886</td><td>3428280e6162e0481dcd3b8aa2a35454</td></tr></tbody></table><div class="mnote">3 rows · wide result: only the key columns are shown</div></div></div></div><div class="snip"><div class="sniphead"><span class="tgt ws">Worksheet</span><b>(a) Append-only stream</b><span class="sp"></span><button class="cp" data-t="c9_1">Copy SQL</button></div><pre class="code" id="c9_1"><span class="kw">CREATE</span> <span class="kw">OR</span> <span class="kw">REPLACE</span> <span class="kw">STREAM</span> STAGING.STRM_INVENTORY_APPEND <span class="kw">ON</span> <span class="kw">TABLE</span> STAGING.INVENTORY_RAW <span class="kw">APPEND_ONLY</span> = TRUE;
+<span class="kw">SHOW</span> STREAMS IN <span class="kw">SCHEMA</span> STAGING;</pre><div class="out"><div class="outlbl">Expected output</div><div class="okl"><i>✓</i><span>Stream STRM_INVENTORY_APPEND successfully created.</span></div><div class="mini"><table><thead><tr><th>name</th><th>table_name</th><th>stale</th><th>mode</th></tr></thead><tbody><tr><td>STRM_INVENTORY_RAW</td><td>RETAILPULSE_LAB.STAGING.INVENTORY_RAW</td><td>false</td><td>DEFAULT</td></tr><tr><td>STRM_INVENTORY_APPEND</td><td>RETAILPULSE_LAB.STAGING.INVENTORY_RAW</td><td>false</td><td>APPEND_ONLY</td></tr></tbody></table><div class="mnote">2 rows · wide result: only the key columns are shown</div></div></div></div><div class="snip"><div class="sniphead"><span class="tgt ws">Worksheet</span><b>(b) COPY batch 2 (ON_ERROR=CONTINUE)</b><span class="sp"></span><button class="cp" data-t="c9_2">Copy SQL</button></div><pre class="code" id="c9_2"><span class="kw">COPY</span> <span class="kw">INTO</span> STAGING.INVENTORY_RAW (product_id, sku, name, category, quantity_on_hand, unit_cost, unit_price, warehouse_id, last_updated, status, _src_file, _src_row)
+<span class="kw">FROM</span> (
+  <span class="kw">SELECT</span> $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, METADATA$FILENAME, METADATA$FILE_ROW_NUMBER
+  <span class="kw">FROM</span> @STAGING.STG_INVENTORY/inventory_2026-11-20_batch2.csv
+)
+FILE_FORMAT = (FORMAT_NAME = <span class="st">'STAGING.FF_CSV_INVENTORY'</span>)
+ON_ERROR = <span class="st">'CONTINUE'</span>;</pre><div class="out"><div class="outlbl">Expected output</div><div class="mini"><table><thead><tr><th>file</th><th>status</th><th>rows_parsed</th><th>rows_loaded</th><th>errors_seen</th></tr></thead><tbody><tr><td>stg_inventory/inventory_2026-11-20_batch2.csv</td><td>LOADED</td><td class="n">30</td><td class="n">30</td><td class="n">0</td></tr></tbody></table><div class="mnote">1 row · wide result: only the key columns are shown</div></div></div></div><div class="snip"><div class="sniphead"><span class="tgt ws">Worksheet</span><b>(c) COPY batch 3 (extra column)</b><span class="sp"></span><button class="cp" data-t="c9_3">Copy SQL</button></div><pre class="code" id="c9_3"><span class="cm">-- batch3 has an 11th column (reorder_point) the table does not have yet</span>
+<span class="kw">COPY</span> <span class="kw">INTO</span> STAGING.INVENTORY_RAW
+<span class="kw">FROM</span> @STAGING.STG_INVENTORY/inventory_2026-11-20_batch3.csv
+FILE_FORMAT = (FORMAT_NAME = <span class="st">'STAGING.FF_CSV_INVENTORY'</span>)
+MATCH_BY_COLUMN_NAME = CASE_INSENSITIVE;</pre><div class="out"><div class="outlbl">Expected output</div><div class="mini"><table><thead><tr><th>file</th><th>status</th><th>rows_parsed</th><th>rows_loaded</th><th>errors_seen</th></tr></thead><tbody><tr><td>stg_inventory/inventory_2026-11-20_batch3.csv</td><td>LOADED</td><td class="n">20</td><td class="n">20</td><td class="n">0</td></tr></tbody></table><div class="mnote">1 row · wide result: only the key columns are shown</div></div><div class="note2">note: Heads-up: real Snowflake requires FILE_FORMAT PARSE_HEADER = TRUE for MATCH_BY_COLUMN_NAME on CSV; the simulator accepted SKIP_HEADER = 1 and used the first line as the header.</div></div></div><div class="snip"><div class="sniphead"><span class="tgt ws">Worksheet</span><b>(d) Adapt to the drift</b><span class="sp"></span><button class="cp" data-t="c9_4">Copy SQL</button></div><pre class="code" id="c9_4"><span class="kw">ALTER</span> <span class="kw">TABLE</span> STAGING.INVENTORY_RAW <span class="kw">ADD</span> <span class="kw">COLUMN</span> <span class="kw">IF</span> <span class="kw">NOT</span> <span class="kw">EXISTS</span> reorder_point VARCHAR;
+<span class="kw">DESC</span> <span class="kw">TABLE</span> STAGING.INVENTORY_RAW;</pre><div class="out"><div class="outlbl">Expected output</div><div class="okl"><i>✓</i><span>Statement executed successfully.</span></div><div class="mini"><table><thead><tr><th>name</th><th>type</th><th>null?</th><th>default</th></tr></thead><tbody><tr><td>PRODUCT_ID</td><td>VARCHAR(16777216)</td><td>Y</td><td class="nl">NULL</td></tr><tr><td>SKU</td><td>VARCHAR(16777216)</td><td>Y</td><td class="nl">NULL</td></tr><tr><td>NAME</td><td>VARCHAR(16777216)</td><td>Y</td><td class="nl">NULL</td></tr><tr><td>CATEGORY</td><td>VARCHAR(16777216)</td><td>Y</td><td class="nl">NULL</td></tr><tr><td>QUANTITY_ON_HAND</td><td>VARCHAR(16777216)</td><td>Y</td><td class="nl">NULL</td></tr><tr><td>UNIT_COST</td><td>VARCHAR(16777216)</td><td>Y</td><td class="nl">NULL</td></tr><tr><td>UNIT_PRICE</td><td>VARCHAR(16777216)</td><td>Y</td><td class="nl">NULL</td></tr><tr><td>WAREHOUSE_ID</td><td>VARCHAR(16777216)</td><td>Y</td><td class="nl">NULL</td></tr></tbody></table><div class="mnote">first 8 of 14 rows shown · wide result: only the key columns are shown</div></div></div></div><div class="snip"><div class="sniphead"><span class="tgt ws">Worksheet</span><b>(e) Make a difference: UPDATE an old row</b><span class="sp"></span><button class="cp" data-t="c9_5">Copy SQL</button></div><pre class="code" id="c9_5"><span class="cm">-- a pre-offset row changes: standard stream reports DELETE+INSERT, append-only ignores it</span>
+<span class="kw">UPDATE</span> STAGING.INVENTORY_RAW <span class="kw">SET</span> quantity_on_hand = <span class="st">'120'</span> <span class="kw">WHERE</span> product_id = <span class="st">'P002'</span> AND _src_file LIKE <span class="st">'%batch1%'</span>;</pre><div class="out"><div class="outlbl">Expected output</div><div class="mini"><table><thead><tr><th>number of rows updated</th><th>number of multi-joined rows updated</th></tr></thead><tbody><tr><td class="n">1</td><td class="n">0</td></tr></tbody></table><div class="mnote">1 row</div></div></div></div><div class="snip"><div class="sniphead"><span class="tgt ws">Worksheet</span><b>(f) Compare the two streams</b><span class="sp"></span><button class="cp" data-t="c9_6">Copy SQL</button></div><pre class="code" id="c9_6"><span class="kw">SELECT</span> COUNT(*) <span class="kw">AS</span> append_only_rows <span class="kw">FROM</span> STAGING.STRM_INVENTORY_APPEND;
+<span class="kw">SELECT</span> COUNT(*) <span class="kw">AS</span> standard_rows <span class="kw">FROM</span> STAGING.STRM_INVENTORY_RAW;</pre><div class="out"><div class="outlbl">Expected output</div><div class="mini"><table><thead><tr><th>APPEND_ONLY_ROWS</th></tr></thead><tbody><tr><td class="n">50</td></tr></tbody></table><div class="mnote">1 row</div></div><div class="mini"><table><thead><tr><th>STANDARD_ROWS</th></tr></thead><tbody><tr><td class="n">52</td></tr></tbody></table><div class="mnote">1 row</div></div></div></div>
+  </div>
+  <div class="sbody">
+    <div class="col">
+      <h4><span class="ic">▶</span>Do this</h4><ol class="doo"><li><b>Terminal.</b> Click <span class="chip b">Insert Command: PUT batch 2 + 3 (terminal)</span> (two PUTs and a LIST: 3 files in the stage).</li><li><b>Worksheet, in order:</b> (a) create the APPEND_ONLY stream, (b) COPY batch 2, (c) COPY batch 3, (d) ALTER TABLE ADD COLUMN, (e) UPDATE an old row, (f) compare the two streams.</li></ol>
+      <h4><span class="ic ck">✓</span>Checkpoint: green checks the simulator waits for</h4><ul class="checks"><li><i></i>batch2 and batch3 are in the stage</li><li><i></i>APPEND_ONLY stream STRM_INVENTORY_APPEND exists</li><li><i></i>Loaded batch2 (30 rows) + batch3 (20 rows)</li><li><i></i>Append-only count &lt; standard stream count</li></ul>
+      <div class="box hintbox"><b>Hint</b>Order matters: create the APPEND_ONLY stream BEFORE the COPYs so its offset is earlier than the new rows. Batch 2 should load 30 rows, batch 3 20.</div>
+    </div>
+    <div class="col">
+      <h4><span class="ic eye">◉</span>You should see</h4><ul class="see"><li>(b) 30 rows loaded; (c) 20 rows loaded (the 11th column is ignored); (d) DESC now shows 14 columns including <code>REORDER_POINT</code>.</li><li>(f) <code>append_only_rows = 50</code> and <code>standard_rows = 52</code>.</li></ul>
+      <h4><span class="ic" style="background:rgba(255,93,108,.14);color:#ff8f9a">!</span>Gotchas</h4><ul class="see"><li>Create the APPEND_ONLY stream <b>before</b> the COPYs so its offset is earlier than the new rows.</li><li>Batch 3 is a plain COPY with <code>MATCH_BY_COLUMN_NAME = CASE_INSENSITIVE</code> (no transform allowed with that option), so its <code>_src_file</code> and <code>_src_row</code> stay NULL. The simulator also prints a heads-up that real Snowflake needs <code>PARSE_HEADER = TRUE</code> for CSV name matching.</li><li>Snippet (e) updates a <b>batch 1</b> row (P002) on purpose, a row from before the standard stream's offset, so the two counts differ.</li></ul>
+      <h4><span class="ic" style="background:rgba(255,93,108,.14);color:#ff8f9a">✕</span>Common errors</h4>
+      <table class="errt"><tbody><tr><td>Number of columns in file (11) does not match that of the corresponding table (13)</td><td><b>Cause:</b> The file format lacks <code>ERROR_ON_COLUMN_COUNT_MISMATCH = FALSE</code>, or no column list was given.<br><b>Fix:</b> Recreate the format from step 4, then re-run.</td></tr><tr><td>append_only_rows is 0 or equals standard_rows</td><td><b>Cause:</b> The stream was created after the COPYs, or the UPDATE (e) targeted a row inserted inside the window.<br><b>Fix:</b> Follow the order (a) to (f); keep the batch 1 filter in (e).</td></tr><tr><td>Copy executed with 0 files processed.</td><td><b>Cause:</b> That batch was already loaded.<br><b>Fix:</b> Do not re-run (b) or (c); only FORCE would reload and duplicate.</td></tr></tbody></table>
+      <div class="diag"><span>PUT batch2 + batch3</span><span>COPY (new column ignored)</span><span>ALTER TABLE ADD COLUMN</span><span>Append stream 50 &lt; Standard 52</span></div>
+      <div class="explain"><b>What just happened.</b> Both streams saw the 50 newly inserted rows. The standard stream additionally reports the UPDATE of an old row as a DELETE + INSERT pair (2 more rows: 52 in total) while the append-only stream ignores it (50). Batch 3 carried an extra <code>reorder_point</code> column: <code>ERROR_ON_COLUMN_COUNT_MISMATCH = FALSE</code> let the load through without it, and <code>ALTER TABLE ... ADD COLUMN</code> makes future loads capture it. Adding the column does not break either stream.</div>
+      <div class="box say"><b>Say it in the interview</b>"Append-only streams are cheaper and ignore updates and deletes, ideal for event feeds. Schema drift is handled by tolerant file formats plus ALTER TABLE ADD COLUMN."</div>
+    </div>
+  </div>
+</article>
+<article class="step" id="s10" style="--d:400ms">
+  <header class="sh">
+    <div class="num">10</div>
+    <div class="st"><h3>ANALYTICS.PRICE_HISTORY</h3><p>Create PRICE_HISTORY and fill it from the append-only stream, keeping only rows whose price differs from the previous version of the product.</p></div>
+    <div class="meta"><span class="where sf">Worksheet</span><span class="mins">~3 min</span>
+      <label class="done"><input type="checkbox" data-step="10"> done</label></div>
+  </header>
+  <div class="snips">
+    <div class="note2" style="margin:0 0 10px"><b style="color:var(--aws2)">WHY</b> A second consumer: because the append-only stream is separate from the standard one, MERGE-ing INVENTORY and capturing price history do not steal each other's changes.</div>
+    <div class="snip"><div class="sniphead"><span class="tgt ws">Worksheet</span><b>Create table</b><span class="sp"></span><button class="cp" data-t="c10_0">Copy SQL</button></div><pre class="code" id="c10_0"><span class="kw">CREATE</span> <span class="kw">OR</span> <span class="kw">REPLACE</span> <span class="kw">TABLE</span> ANALYTICS.PRICE_HISTORY (
+  product_id    VARCHAR,
+  sku           VARCHAR,
+  old_price     NUMBER(10,2),
+  new_price     NUMBER(10,2),
+  changed_at    TIMESTAMP_NTZ,
+  change_source VARCHAR
+);</pre><div class="out"><div class="outlbl">Expected output</div><div class="okl"><i>✓</i><span>Table PRICE_HISTORY successfully created.</span></div></div></div><div class="snip"><div class="sniphead"><span class="tgt ws">Worksheet</span><b>INSERT ... SELECT from the stream</b><span class="sp"></span><button class="cp" data-t="c10_1">Copy SQL</button></div><pre class="code" id="c10_1"><span class="cm">-- old_price = the product's previous version in the raw history (same idea as LEFT JOIN to the current row,</span>
+<span class="cm">-- but correct when a product changes price twice, or the same new price shows up in two files)</span>
+<span class="kw">INSERT</span> <span class="kw">INTO</span> ANALYTICS.PRICE_HISTORY (product_id, sku, old_price, new_price, changed_at, change_source)
+<span class="kw">SELECT</span> product_id, sku, old_price, new_price, changed_at, <span class="st">'STREAM_APPEND'</span>
+<span class="kw">FROM</span> (
+  <span class="kw">SELECT</span> s.product_id, s.sku,
+         p.unit_price::NUMBER(10,2)    <span class="kw">AS</span> old_price,
+         s.unit_price::NUMBER(10,2)    <span class="kw">AS</span> new_price,
+         s.last_updated::TIMESTAMP_NTZ <span class="kw">AS</span> changed_at,
+         ROW_NUMBER() OVER (PARTITION BY s.product_id, s.METADATA$ROW_ID <span class="kw">ORDER BY</span> p.last_updated <span class="kw">DESC</span>) <span class="kw">AS</span> rn
+  <span class="kw">FROM</span> STAGING.STRM_INVENTORY_APPEND s
+  <span class="kw">JOIN</span> STAGING.INVENTORY_RAW p
+    <span class="kw">ON</span> p.product_id = s.product_id AND p.last_updated &lt; s.last_updated
+)
+<span class="kw">WHERE</span> rn = 1 AND old_price &lt;&gt; new_price;</pre><div class="out"><div class="outlbl">Expected output</div><div class="mini"><table><thead><tr><th>number of rows inserted</th></tr></thead><tbody><tr><td class="n">7</td></tr></tbody></table><div class="mnote">1 row</div></div></div></div><div class="snip"><div class="sniphead"><span class="tgt ws">Worksheet</span><b>Check</b><span class="sp"></span><button class="cp" data-t="c10_2">Copy SQL</button></div><pre class="code" id="c10_2"><span class="kw">SELECT</span> * <span class="kw">FROM</span> ANALYTICS.PRICE_HISTORY <span class="kw">ORDER BY</span> changed_at, product_id;
+<span class="kw">SELECT</span> COUNT(*) <span class="kw">AS</span> pending_in_append_stream <span class="kw">FROM</span> STAGING.STRM_INVENTORY_APPEND;</pre><div class="out"><div class="outlbl">Expected output</div><div class="mini"><table><thead><tr><th>PRODUCT_ID</th><th>SKU</th><th>OLD_PRICE</th><th>NEW_PRICE</th><th>CHANGED_AT</th><th>CHANGE_SOURCE</th></tr></thead><tbody><tr><td>P004</td><td>SKU-1022</td><td class="n">24.99</td><td class="n">27.99</td><td>2026-11-19 00:00:00.000</td><td>STREAM_APPEND</td></tr><tr><td>P012</td><td>SKU-1078</td><td class="n">44.95</td><td class="n">39.95</td><td>2026-11-19 00:00:00.000</td><td>STREAM_APPEND</td></tr><tr><td>P017</td><td>SKU-1113</td><td class="n">29.99</td><td class="n">32.49</td><td>2026-11-19 00:00:00.000</td><td>STREAM_APPEND</td></tr><tr><td>P004</td><td>SKU-1022</td><td class="n">27.99</td><td class="n">23.99</td><td>2026-11-20 00:00:00.000</td><td>STREAM_APPEND</td></tr><tr><td>P008</td><td>SKU-1050</td><td class="n">19.99</td><td class="n">21.99</td><td>2026-11-20 00:00:00.000</td><td>STREAM_APPEND</td></tr><tr><td>P019</td><td>SKU-1127</td><td class="n">17.49</td><td class="n">20.49</td><td>2026-11-20 00:00:00.000</td><td>STREAM_APPEND</td></tr><tr><td>P031</td><td>SKU-1211</td><td class="n">59.99</td><td class="n">64.99</td><td>2026-11-20 00:00:00.000</td><td>STREAM_APPEND</td></tr></tbody></table><div class="mnote">7 rows</div></div><div class="mini"><table><thead><tr><th>PENDING_IN_APPEND_STREAM</th></tr></thead><tbody><tr><td class="n">0</td></tr></tbody></table><div class="mnote">1 row</div></div></div></div>
+  </div>
+  <div class="sbody">
+    <div class="col">
+      <h4><span class="ic">▶</span>Do this</h4><ol class="doo"><li>Run <span class="chip b">Insert SQL: Create table</span>.</li><li>Run <span class="chip b">Insert SQL: INSERT ... SELECT from the stream</span>: 7 rows inserted.</li><li>Run <span class="chip b">Insert SQL: Check</span>: the table, then the append stream pending count.</li></ol>
+      <h4><span class="ic ck">✓</span>Checkpoint: green checks the simulator waits for</h4><ul class="checks"><li><i></i>ANALYTICS.PRICE_HISTORY exists</li><li><i></i>At least 7 price-change rows captured</li></ul>
+      <div class="box hintbox"><b>Hint</b>A filter on METADATA$ISUPDATE = TRUE would find nothing here: COPY-loaded rows are plain INSERTs. A change is detected by comparing the new price with the previous version of the same product. Note P004 changed twice (24.99 → 27.99 → 23.99) and P012 appears in two files at the same new price (one change).</div>
+    </div>
+    <div class="col">
+      <h4><span class="ic eye">◉</span>You should see</h4><ul class="see"><li>The INSERT reports <b>7</b> rows. The check shows the 7 price changes and <code>pending_in_append_stream = 0</code> (the autocommit INSERT consumed the stream).</li><li>P004 appears twice (24.99 → 27.99, then 27.99 → 23.99); P012, P017, P008, P019, P031 once each.</li></ul>
+      <h4><span class="ic" style="background:rgba(255,93,108,.14);color:#ff8f9a">!</span>Gotchas</h4><ul class="see"><li>A filter on <code>METADATA$ISUPDATE = TRUE</code> (the original spec) finds nothing: COPY-loaded rows are plain INSERTs.</li><li>Joining to the current INVENTORY row over-counts (P012 is in two files at the same new price, 8 rows). The old price is therefore the <b>previous raw version of the same product</b>.</li><li>The standard stream is untouched: still 52 rows pending for the MERGE task.</li></ul>
+      <h4><span class="ic" style="background:rgba(255,93,108,.14);color:#ff8f9a">✕</span>Common errors</h4>
+      <table class="errt"><tbody><tr><td>Table 'ANALYTICS.PRICE_HISTORY' does not exist</td><td><b>Cause:</b> The CREATE TABLE snippet was skipped.<br><b>Fix:</b> Run the first snippet.</td></tr><tr><td>INSERT reports 0 rows</td><td><b>Cause:</b> The append stream was already consumed by an earlier INSERT.<br><b>Fix:</b> Do not re-run the INSERT. If you did, the 7 rows from the first run are still in the table.</td></tr></tbody></table>
+      <div class="diag"><span>STRM_INVENTORY_APPEND (50 rows)</span><span>JOIN previous raw version</span><span>WHERE new &lt;&gt; old</span><span>PRICE_HISTORY (7)</span></div>
+      <div class="explain"><b>What just happened.</b> The INSERT...SELECT reads the stream and autocommits, so the append-only stream's offset advances and it is empty again. Seven rows differ from the current price: P004 (twice), P012, P017, P008, P019 and P031. The previous version is looked up in the raw history (INVENTORY has not been merged with batches 2/3 yet, and comparing with it would count P012 twice). The next step automates the MERGE.</div>
+      <div class="box say"><b>Say it in the interview</b>"A second consumer on a separate append-only stream means the MERGE and the price history never steal each other's changes."</div>
+    </div>
+  </div>
+</article>
+<article class="step" id="s11" style="--d:440ms">
+  <header class="sh">
+    <div class="num">11</div>
+    <div class="st"><h3>Your first Task</h3><p>Create TSK_MERGE_INVENTORY (every 5 minutes, only WHEN the stream has data), resume it, EXECUTE it and read TASK_HISTORY.</p></div>
+    <div class="meta"><span class="where sf">Worksheet</span><span class="mins">~5 min</span>
+      <label class="done"><input type="checkbox" data-step="11"> done</label></div>
+  </header>
+  <div class="snips">
+    <div class="note2" style="margin:0 0 10px"><b style="color:var(--aws2)">WHY</b> Stream + Task + MERGE is Snowflake's native incremental pipeline. The WHEN clause means the warehouse is only woken when there is work.</div>
+    <div class="snip"><div class="sniphead"><span class="tgt ws">Worksheet</span><b>Create task</b><span class="sp"></span><button class="cp" data-t="c11_0">Copy SQL</button></div><pre class="code" id="c11_0"><span class="kw">CREATE</span> <span class="kw">OR</span> <span class="kw">REPLACE</span> <span class="kw">TASK</span> ANALYTICS.TSK_MERGE_INVENTORY
+  <span class="kw">WAREHOUSE</span> = LAB_WH
+  SCHEDULE = <span class="st">'5 MINUTE'</span>
+  <span class="kw">WHEN</span> SYSTEM$STREAM_HAS_DATA(<span class="st">'STAGING.STRM_INVENTORY_RAW'</span>)
+<span class="kw">AS</span>
+<span class="kw">MERGE</span> <span class="kw">INTO</span> ANALYTICS.INVENTORY t
+<span class="kw">USING</span> (
+  <span class="kw">SELECT</span>
+    product_id::VARCHAR                  <span class="kw">AS</span> product_id,
+    sku::VARCHAR                         <span class="kw">AS</span> sku,
+    name::VARCHAR                        <span class="kw">AS</span> name,
+    category::VARCHAR                    <span class="kw">AS</span> category,
+    quantity_on_hand::NUMBER             <span class="kw">AS</span> quantity_on_hand,
+    unit_cost::NUMBER(10,2)              <span class="kw">AS</span> unit_cost,
+    unit_price::NUMBER(10,2)             <span class="kw">AS</span> unit_price,
+    warehouse_id::VARCHAR                <span class="kw">AS</span> warehouse_id,
+    last_updated::TIMESTAMP_NTZ          <span class="kw">AS</span> last_updated,
+    status::VARCHAR                      <span class="kw">AS</span> status
+  <span class="kw">FROM</span> STAGING.STRM_INVENTORY_RAW
+  <span class="kw">WHERE</span> METADATA$ACTION = <span class="st">'<span class="kw">INSERT</span>'</span>
+  <span class="kw">QUALIFY</span> ROW_NUMBER() OVER (PARTITION BY product_id <span class="kw">ORDER BY</span> last_updated <span class="kw">DESC</span>) = 1
+) s
+<span class="kw">ON</span> t.product_id = s.product_id
+<span class="kw">WHEN</span> <span class="kw">MATCHED</span> <span class="kw">THEN</span> <span class="kw">UPDATE</span> <span class="kw">SET</span>
+  t.sku = s.sku, t.name = s.name, t.category = s.category,
+  t.quantity_on_hand = s.quantity_on_hand, t.unit_cost = s.unit_cost, t.unit_price = s.unit_price,
+  t.warehouse_id = s.warehouse_id, t.last_updated = s.last_updated, t.status = s.status
+<span class="kw">WHEN</span> <span class="kw">NOT</span> <span class="kw">MATCHED</span> <span class="kw">THEN</span> <span class="kw">INSERT</span>
+  (product_id, sku, name, category, quantity_on_hand, unit_cost, unit_price, warehouse_id, last_updated, status)
+<span class="kw">VALUES</span>
+  (s.product_id, s.sku, s.name, s.category, s.quantity_on_hand, s.unit_cost, s.unit_price, s.warehouse_id, s.last_updated, s.status);</pre><div class="out"><div class="outlbl">Expected output</div><div class="okl"><i>✓</i><span>Task TSK_MERGE_INVENTORY successfully created.</span></div><div class="note2">note: New tasks are created SUSPENDED. Run ALTER TASK ... RESUME to start the schedule (resume child tasks before the root), or EXECUTE TASK to run the graph once.</div></div></div><div class="snip"><div class="sniphead"><span class="tgt ws">Worksheet</span><b>Resume + run + history</b><span class="sp"></span><button class="cp" data-t="c11_1">Copy SQL</button></div><pre class="code" id="c11_1"><span class="kw">ALTER</span> <span class="kw">TASK</span> ANALYTICS.TSK_MERGE_INVENTORY <span class="kw">RESUME</span>;
+<span class="kw">SHOW</span> TASKS IN <span class="kw">SCHEMA</span> ANALYTICS;
+<span class="kw">EXECUTE</span> <span class="kw">TASK</span> ANALYTICS.TSK_MERGE_INVENTORY;
+<span class="kw">SELECT</span> name, state, scheduled_time, completed_time, error_message
+<span class="kw">FROM</span> <span class="kw">TABLE</span>(INFORMATION_SCHEMA.TASK_HISTORY(TASK_NAME =&gt; <span class="st">'TSK_MERGE_INVENTORY'</span>))
+<span class="kw">ORDER BY</span> scheduled_time <span class="kw">DESC</span>;</pre><div class="out"><div class="outlbl">Expected output</div><div class="okl"><i>✓</i><span>Statement executed successfully.</span></div><div class="mini"><table><thead><tr><th>name</th><th>warehouse</th><th>schedule</th><th>predecessors</th><th>state</th><th>condition</th></tr></thead><tbody><tr><td>TSK_MERGE_INVENTORY</td><td>LAB_WH</td><td>5 MINUTE</td><td>[]</td><td>started</td><td>SYSTEM$STREAM_HAS_DATA('STAGING.STRM_INVENTORY_RAW')</td></tr></tbody></table><div class="mnote">1 row · wide result: only the key columns are shown</div></div><div class="okl"><i>✓</i><span>Task TSK_MERGE_INVENTORY is scheduled to run immediately.</span></div><div class="note2">note: Task run SUCCEEDED. TSK_MERGE_INVENTORY: SUCCEEDED (MERGE ANALYTICS.INVENTORY: 6 inserted, 29 updated)</div><div class="mini"><table><thead><tr><th>NAME</th><th>STATE</th><th>SCHEDULED_TIME</th><th>COMPLETED_TIME</th><th>ERROR_MESSAGE</th></tr></thead><tbody><tr><td>TSK_MERGE_INVENTORY</td><td>SUCCEEDED</td><td>2026-11-21 04:53:34.056 +0000</td><td>2026-11-21 04:53:35.764 +0000</td><td class="nl">NULL</td></tr></tbody></table><div class="mnote">1 row</div></div></div></div><div class="snip"><div class="sniphead"><span class="tgt ws">Worksheet</span><b>Verify</b><span class="sp"></span><button class="cp" data-t="c11_2">Copy SQL</button></div><pre class="code" id="c11_2"><span class="kw">SELECT</span> COUNT(*) <span class="kw">AS</span> products <span class="kw">FROM</span> ANALYTICS.INVENTORY;
+<span class="kw">SELECT</span> SYSTEM$STREAM_HAS_DATA(<span class="st">'STAGING.STRM_INVENTORY_RAW'</span>) <span class="kw">AS</span> has_data;
+<span class="kw">SELECT</span> product_id, unit_price, quantity_on_hand, last_updated <span class="kw">FROM</span> ANALYTICS.INVENTORY <span class="kw">WHERE</span> product_id IN (<span class="st">'P004'</span>,<span class="st">'P031'</span>,<span class="st">'P033'</span>) <span class="kw">ORDER BY</span> 1;</pre><div class="out"><div class="outlbl">Expected output</div><div class="mini"><table><thead><tr><th>PRODUCTS</th></tr></thead><tbody><tr><td class="n">37</td></tr></tbody></table><div class="mnote">1 row</div></div><div class="mini"><table><thead><tr><th>HAS_DATA</th></tr></thead><tbody><tr><td>false</td></tr></tbody></table><div class="mnote">1 row</div></div><div class="mini"><table><thead><tr><th>PRODUCT_ID</th><th>UNIT_PRICE</th><th>QUANTITY_ON_HAND</th><th>LAST_UPDATED</th></tr></thead><tbody><tr><td>P004</td><td class="n">23.99</td><td class="n">101</td><td>2026-11-20 00:00:00.000</td></tr><tr><td>P031</td><td class="n">64.99</td><td class="n">150</td><td>2026-11-20 00:00:00.000</td></tr><tr><td>P033</td><td class="n">189.99</td><td class="n">34</td><td>2026-11-20 00:00:00.000</td></tr></tbody></table><div class="mnote">3 rows</div></div></div></div><div class="note2" style="margin-top:8px">Real error you can trigger on purpose:</div><pre class="code" style="padding:6px 10px"><span class="kw">EXECUTE</span> <span class="kw">TASK</span> ANALYTICS.TSK_NOT_THERE;</pre><div class="errl"><b>Error 002003: </b>SQL compilation error:
+Task 'RETAILPULSE_LAB.ANALYTICS.TSK_NOT_THERE' does not exist or not authorized.</div>
+  </div>
+  <div class="sbody">
+    <div class="col">
+      <h4><span class="ic">▶</span>Do this</h4><ol class="doo"><li>Run <span class="chip b">Insert SQL: Create task</span>: it is created SUSPENDED.</li><li>Run <span class="chip b">Insert SQL: Resume + run + history</span>: RESUME, SHOW TASKS, EXECUTE TASK, then TASK_HISTORY.</li><li>Run <span class="chip b">Insert SQL: Verify</span>.</li></ol>
+      <h4><span class="ic ck">✓</span>Checkpoint: green checks the simulator waits for</h4><ul class="checks"><li><i></i>Task exists and is STARTED</li><li><i></i>EXECUTE TASK run SUCCEEDED</li><li><i></i>ANALYTICS.INVENTORY is deduplicated to 37 products</li><li><i></i>Stream is empty after the run (HAS_DATA = FALSE)</li></ul>
+      <div class="box hintbox"><b>Hint</b>New tasks are created SUSPENDED: nothing runs until ALTER TASK ... RESUME. EXECUTE TASK works on a suspended task too, but the schedule only ticks when it is STARTED.</div>
+    </div>
+    <div class="col">
+      <h4><span class="ic eye">◉</span>You should see</h4><ul class="see"><li>SHOW TASKS: <code>state = started</code>, schedule <code>5 MINUTE</code>, condition <code>SYSTEM$STREAM_HAS_DATA('STAGING.STRM_INVENTORY_RAW')</code>.</li><li>EXECUTE TASK note: <i>MERGE ANALYTICS.INVENTORY: 6 inserted, 29 updated</i>; TASK_HISTORY has one <code>SUCCEEDED</code> row.</li><li>Verify: <code>PRODUCTS = 37</code>, <code>HAS_DATA = false</code>, P004 price 23.99.</li></ul>
+      <h4><span class="ic" style="background:rgba(255,93,108,.14);color:#ff8f9a">!</span>Gotchas</h4><ul class="see"><li>New tasks are created <b>SUSPENDED</b>. Nothing runs until <code>ALTER TASK ... RESUME</code>.</li><li><code>EXECUTE TASK</code> works on a suspended task too, but the schedule only ticks when it is STARTED.</li><li>Task times and query IDs differ every run.</li></ul>
+      <h4><span class="ic" style="background:rgba(255,93,108,.14);color:#ff8f9a">✕</span>Common errors</h4>
+      <table class="errt"><tbody><tr><td>Task 'RETAILPULSE_LAB.ANALYTICS.TSK_NOT_THERE' does not exist or not authorized.</td><td><b>Cause:</b> Typo in the task name or wrong schema.<br><b>Fix:</b> Use the fully qualified name <code>ANALYTICS.TSK_MERGE_INVENTORY</code>.</td></tr><tr><td>Insufficient privileges (EXECUTE TASK)</td><td><b>Cause:</b> <code>GRANT EXECUTE TASK ON ACCOUNT</code> from step 1 was missed (real Snowflake).<br><b>Fix:</b> Run the grant as ACCOUNTADMIN.</td></tr><tr><td>TASK_HISTORY is empty / task SKIPPED</td><td><b>Cause:</b> The stream was empty (WHEN false).<br><b>Fix:</b> Check <code>SYSTEM$STREAM_HAS_DATA</code>; in this lab it is TRUE here because 52 rows are pending.</td></tr></tbody></table>
+      <div class="diag"><span>STRM_INVENTORY_RAW</span><span>Task: every 5 min, WHEN has data</span><span>MERGE (dedupe)</span><span>INVENTORY (37)</span></div>
+      <div class="explain"><b>What just happened.</b> One task run swallowed everything that piled up in the standard stream (batches 2 + 3 and the P002 update): the QUALIFY picked the latest row per product, so 31 products grew to <b>37</b> (6 new: P032–P037) with the newest prices and quantities. The task state machine is <code>SUSPENDED → STARTED</code>; <code>TASK_HISTORY</code> shows SCHEDULED / SUCCEEDED / FAILED / SKIPPED per run.</div>
+      <div class="box say"><b>Say it in the interview</b>"Stream + task + MERGE is Snowflake's native incremental pipeline. The WHEN clause means the warehouse only wakes when there is work."</div>
+    </div>
+  </div>
+</article>
+<article class="step" id="s12" style="--d:480ms">
+  <header class="sh">
+    <div class="num">12</div>
+    <div class="st"><h3>Task DAG: add a child task</h3><p>Add TSK_LOAD_PRICE_HISTORY as a child (AFTER the merge task). First try to change the DAG while it runs and read the error, then do it properly.</p></div>
+    <div class="meta"><span class="where sf">Worksheet</span><span class="mins">~5 min</span>
+      <label class="done"><input type="checkbox" data-step="12"> done</label></div>
+  </header>
+  <div class="snips">
+    <div class="note2" style="margin:0 0 10px"><b style="color:var(--aws2)">WHY</b> A DAG chains tasks: the child only runs after its predecessor succeeds. Knowing that you must SUSPEND the root before changing the graph is a favourite gotcha.</div>
+    <div class="snip"><div class="sniphead"><span class="tgt ws">Worksheet</span><b>1. Try without suspending (error)</b><span class="sp"></span><button class="cp" data-t="c12_0">Copy SQL</button></div><pre class="code" id="c12_0"><span class="cm">-- The root task is STARTED, so the graph cannot be changed</span>
+<span class="kw">CREATE</span> <span class="kw">OR</span> <span class="kw">REPLACE</span> <span class="kw">TASK</span> ANALYTICS.TSK_LOAD_PRICE_HISTORY
+  <span class="kw">WAREHOUSE</span> = LAB_WH
+  <span class="kw">AFTER</span> ANALYTICS.TSK_MERGE_INVENTORY
+<span class="kw">AS</span>
+<span class="kw">SELECT</span> 1;</pre><div class="out"><div class="outlbl">Expected output</div><div class="errl"><b>Error 091089: </b>Unable to update graph with root task RETAILPULSE_LAB.ANALYTICS.TSK_MERGE_INVENTORY since that task is not suspended.</div></div></div><div class="snip"><div class="sniphead"><span class="tgt ws">Worksheet</span><b>2. Suspend, create child, resume child then root</b><span class="sp"></span><button class="cp" data-t="c12_1">Copy SQL</button></div><pre class="code" id="c12_1"><span class="kw">ALTER</span> <span class="kw">TASK</span> ANALYTICS.TSK_MERGE_INVENTORY <span class="kw">SUSPEND</span>;
+
+<span class="kw">CREATE</span> <span class="kw">OR</span> <span class="kw">REPLACE</span> <span class="kw">TASK</span> ANALYTICS.TSK_LOAD_PRICE_HISTORY
+  <span class="kw">WAREHOUSE</span> = LAB_WH
+  <span class="kw">AFTER</span> ANALYTICS.TSK_MERGE_INVENTORY
+<span class="kw">AS</span>
+<span class="kw">INSERT</span> <span class="kw">INTO</span> ANALYTICS.PRICE_HISTORY (product_id, sku, old_price, new_price, changed_at, change_source)
+<span class="kw">SELECT</span> product_id, sku, old_price, new_price, changed_at, <span class="st">'TASK_DAG'</span>
+<span class="kw">FROM</span> (
+  <span class="kw">SELECT</span> s.product_id, s.sku,
+         p.unit_price::NUMBER(10,2)    <span class="kw">AS</span> old_price,
+         s.unit_price::NUMBER(10,2)    <span class="kw">AS</span> new_price,
+         s.last_updated::TIMESTAMP_NTZ <span class="kw">AS</span> changed_at,
+         ROW_NUMBER() OVER (PARTITION BY s.product_id, s.METADATA$ROW_ID <span class="kw">ORDER BY</span> p.last_updated <span class="kw">DESC</span>) <span class="kw">AS</span> rn
+  <span class="kw">FROM</span> STAGING.STRM_INVENTORY_APPEND s
+  <span class="kw">JOIN</span> STAGING.INVENTORY_RAW p
+    <span class="kw">ON</span> p.product_id = s.product_id AND p.last_updated &lt; s.last_updated
+)
+<span class="kw">WHERE</span> rn = 1 AND old_price &lt;&gt; new_price;
+
+<span class="kw">ALTER</span> <span class="kw">TASK</span> ANALYTICS.TSK_LOAD_PRICE_HISTORY <span class="kw">RESUME</span>;
+<span class="kw">ALTER</span> <span class="kw">TASK</span> ANALYTICS.TSK_MERGE_INVENTORY <span class="kw">RESUME</span>;
+<span class="kw">SHOW</span> TASKS IN <span class="kw">SCHEMA</span> ANALYTICS;</pre><div class="out"><div class="outlbl">Expected output</div><div class="okl"><i>✓</i><span>Statement executed successfully.</span></div><div class="okl"><i>✓</i><span>Task TSK_LOAD_PRICE_HISTORY successfully created.</span></div><div class="note2">note: New tasks are created SUSPENDED. Run ALTER TASK ... RESUME to start the schedule (resume child tasks before the root), or EXECUTE TASK to run the graph once.</div><div class="okl"><i>✓</i><span>Statement executed successfully.</span></div><div class="okl"><i>✓</i><span>Statement executed successfully.</span></div><div class="mini"><table><thead><tr><th>name</th><th>warehouse</th><th>schedule</th><th>predecessors</th><th>state</th><th>condition</th></tr></thead><tbody><tr><td>TSK_MERGE_INVENTORY</td><td>LAB_WH</td><td>5 MINUTE</td><td>[]</td><td>started</td><td>SYSTEM$STREAM_HAS_DATA('STAGING.STRM_INVENTORY_RAW')</td></tr><tr><td>TSK_LOAD_PRICE_HISTORY</td><td>LAB_WH</td><td class="nl">NULL</td><td>["RETAILPULSE_LAB.ANALYTICS.TSK_MERGE_INVENTORY"]</td><td>started</td><td class="nl">NULL</td></tr></tbody></table><div class="mnote">2 rows · wide result: only the key columns are shown</div></div></div></div><div class="snip"><div class="sniphead"><span class="tgt ws">Worksheet</span><b>3. New price changes arrive</b><span class="sp"></span><button class="cp" data-t="c12_2">Copy SQL</button></div><pre class="code" id="c12_2"><span class="cm">-- two price changes dated the next day land in the raw table</span>
+<span class="kw">INSERT</span> <span class="kw">INTO</span> STAGING.INVENTORY_RAW (product_id, sku, name, category, quantity_on_hand, unit_cost, unit_price, warehouse_id, last_updated, status, _src_file, _src_row) <span class="kw">VALUES</span>
+  (<span class="st">'P003'</span>,<span class="st">'SKU-1015'</span>,<span class="st">'Bluetooth Speaker Mini'</span>,<span class="st">'Electronics'</span>,<span class="st">'64'</span>,<span class="st">'18.50'</span>,<span class="st">'42.99'</span>,<span class="st">'WH-03'</span>,<span class="st">'2026-11-21'</span>,<span class="st">'ACTIVE'</span>,<span class="st">'manual_insert'</span>,4),
+  (<span class="st">'P006'</span>,<span class="st">'SKU-1036'</span>,<span class="st">'Mechanical Keyboard'</span>,<span class="st">'Electronics'</span>,<span class="st">'175'</span>,<span class="st">'35.00'</span>,<span class="st">'69.99'</span>,<span class="st">'WH-03'</span>,<span class="st">'2026-11-21'</span>,<span class="st">'ACTIVE'</span>,<span class="st">'manual_insert'</span>,5);</pre><div class="out"><div class="outlbl">Expected output</div><div class="mini"><table><thead><tr><th>number of rows inserted</th></tr></thead><tbody><tr><td class="n">2</td></tr></tbody></table><div class="mnote">1 row</div></div></div></div><div class="snip"><div class="sniphead"><span class="tgt ws">Worksheet</span><b>4. Run the DAG + both histories</b><span class="sp"></span><button class="cp" data-t="c12_3">Copy SQL</button></div><pre class="code" id="c12_3"><span class="kw">EXECUTE</span> <span class="kw">TASK</span> ANALYTICS.TSK_MERGE_INVENTORY;
+
+<span class="kw">SELECT</span> name, state, scheduled_time, completed_time, error_message
+<span class="kw">FROM</span> <span class="kw">TABLE</span>(INFORMATION_SCHEMA.TASK_HISTORY(TASK_NAME =&gt; <span class="st">'TSK_MERGE_INVENTORY'</span>))
+<span class="kw">UNION ALL</span>
+<span class="kw">SELECT</span> name, state, scheduled_time, completed_time, error_message
+<span class="kw">FROM</span> <span class="kw">TABLE</span>(INFORMATION_SCHEMA.TASK_HISTORY(TASK_NAME =&gt; <span class="st">'TSK_LOAD_PRICE_HISTORY'</span>))
+<span class="kw">ORDER BY</span> scheduled_time <span class="kw">DESC</span>;
+
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> ANALYTICS.PRICE_HISTORY <span class="kw">WHERE</span> change_source = <span class="st">'TASK_DAG'</span>;</pre><div class="out"><div class="outlbl">Expected output</div><div class="okl"><i>✓</i><span>Task TSK_MERGE_INVENTORY is scheduled to run immediately.</span></div><div class="note2">note: Task run SUCCEEDED. TSK_MERGE_INVENTORY: SUCCEEDED (MERGE ANALYTICS.INVENTORY: 0 inserted, 2 updated) | TSK_LOAD_PRICE_HISTORY: SUCCEEDED</div><div class="mini"><table><thead><tr><th>NAME</th><th>STATE</th><th>SCHEDULED_TIME</th><th>COMPLETED_TIME</th><th>ERROR_MESSAGE</th></tr></thead><tbody><tr><td>TSK_MERGE_INVENTORY</td><td>SUCCEEDED</td><td>2026-11-21 04:53:34.066 +0000</td><td>2026-11-21 04:53:35.766 +0000</td><td class="nl">NULL</td></tr><tr><td>TSK_LOAD_PRICE_HISTORY</td><td>SUCCEEDED</td><td>2026-11-21 04:53:34.066 +0000</td><td>2026-11-21 04:53:35.767 +0000</td><td class="nl">NULL</td></tr><tr><td>TSK_MERGE_INVENTORY</td><td>SUCCEEDED</td><td>2026-11-21 04:53:34.056 +0000</td><td>2026-11-21 04:53:35.764 +0000</td><td class="nl">NULL</td></tr></tbody></table><div class="mnote">3 rows</div></div><div class="mini"><table><thead><tr><th>PRODUCT_ID</th><th>SKU</th><th>OLD_PRICE</th><th>NEW_PRICE</th><th>CHANGED_AT</th><th>CHANGE_SOURCE</th></tr></thead><tbody><tr><td>P003</td><td>SKU-1015</td><td class="n">39.99</td><td class="n">42.99</td><td>2026-11-21 00:00:00.000</td><td>TASK_DAG</td></tr><tr><td>P006</td><td>SKU-1036</td><td class="n">74.99</td><td class="n">69.99</td><td>2026-11-21 00:00:00.000</td><td>TASK_DAG</td></tr></tbody></table><div class="mnote">2 rows</div></div></div></div><div class="note2" style="margin-top:8px">Real error you can trigger on purpose:</div><pre class="code" style="padding:6px 10px"><span class="kw">EXECUTE</span> <span class="kw">TASK</span> ANALYTICS.TSK_LOAD_PRICE_HISTORY;</pre><div class="errl"><b>Error 091098: </b>Cannot execute task TSK_LOAD_PRICE_HISTORY: EXECUTE TASK can only be used on a standalone task or the root task of a task graph (root: RETAILPULSE_LAB.ANALYTICS.TSK_MERGE_INVENTORY).</div>
+  </div>
+  <div class="sbody">
+    <div class="col">
+      <h4><span class="ic">▶</span>Do this</h4><ol class="doo"><li>Run snippet <b>1</b> first: the error is the point. The root is STARTED so the graph cannot change.</li><li>Run <b>2</b>: suspend root, create the child, resume <b>child then root</b>.</li><li>Run <b>3</b>: two new price rows (P003, P006) arrive.</li><li>Run <b>4</b>: <code>EXECUTE TASK</code> on the root, then both histories and the child's rows.</li></ol>
+      <h4><span class="ic ck">✓</span>Checkpoint: green checks the simulator waits for</h4><ul class="checks"><li><i></i>TSK_LOAD_PRICE_HISTORY exists with AFTER TSK_MERGE_INVENTORY</li><li><i></i>Both tasks SUCCEEDED in TASK_HISTORY</li><li><i></i>PRICE_HISTORY received new rows from the child run</li><li><i></i>Tried altering the DAG while running and saw the error</li></ul>
+      <div class="box hintbox"><b>Hint</b>Run snippet 1 first and read the error, then 2, 3, 4. Resume the CHILD before the ROOT: a root that starts first would run its (still suspended) children never. The child reads the APPEND-ONLY stream, the root reads the standard one: two independent consumers.</div>
+    </div>
+    <div class="col">
+      <h4><span class="ic eye">◉</span>You should see</h4><ul class="see"><li>1: <code>Unable to update graph with root task RETAILPULSE_LAB.ANALYTICS.TSK_MERGE_INVENTORY since that task is not suspended.</code></li><li>4: three history rows (two root runs + one child run, all SUCCEEDED) and <b>2</b> <code>TASK_DAG</code> rows: P003 39.99 → 42.99 and P006.</li><li>PRICE_HISTORY now holds 9 rows; INVENTORY stays at 37.</li></ul>
+      <h4><span class="ic" style="background:rgba(255,93,108,.14);color:#ff8f9a">!</span>Gotchas</h4><ul class="see"><li>Resume the <b>child before the root</b>. Suspended children are skipped when the root runs.</li><li>The child reads the append-only stream; the root reads the standard one: two independent consumers. Its body uses the previous raw version (comparing to INVENTORY would find nothing, since the root already merged the new price).</li><li>The history UNION ALL is a union of two TASK_HISTORY calls, hence one combined list.</li></ul>
+      <h4><span class="ic" style="background:rgba(255,93,108,.14);color:#ff8f9a">✕</span>Common errors</h4>
+      <table class="errt"><tbody><tr><td>Unable to update graph with root task ... since that task is not suspended.</td><td><b>Cause:</b> You changed or replaced a task in a graph whose root is STARTED.<br><b>Fix:</b> <code>ALTER TASK root SUSPEND</code>, change, resume children, resume root.</td></tr><tr><td>Cannot execute task TSK_LOAD_PRICE_HISTORY: EXECUTE TASK can only be used on a standalone task or the root task of a task graph</td><td><b>Cause:</b> You tried to EXECUTE the child.<br><b>Fix:</b> Execute the root; the child follows on success.</td></tr><tr><td>Child shows no run</td><td><b>Cause:</b> The child was left SUSPENDED.<br><b>Fix:</b> <code>ALTER TASK ...TSK_LOAD_PRICE_HISTORY RESUME</code>, then run the root again.</td></tr></tbody></table>
+      <div class="diag"><span>TSK_MERGE_INVENTORY (root)</span><span>AFTER predecessor SUCCEEDED</span><span>TSK_LOAD_PRICE_HISTORY (child)</span><span>PRICE_HISTORY +2</span></div>
+      <div class="explain"><b>What just happened.</b> The root task is the only one with a schedule; the child has <code>AFTER root</code> and fires when the root run succeeds. Changing a graph while any task in it is STARTED fails with <i>"Unable to update graph with root task ... since that task is not suspended"</i>, so the recipe is: suspend root, change, resume children, resume root. The root merged 2 new rows into INVENTORY; the child (reading the separate append-only stream) found 2 real price changes (P003 and P006) and added them to PRICE_HISTORY: 9 rows in total.</div>
+      <div class="box say"><b>Say it in the interview</b>"Before changing a task graph I suspend the root, then resume the children before the root."</div>
+    </div>
+  </div>
+</article>
+<article class="step" id="s13" style="--d:520ms">
+  <header class="sh">
+    <div class="num">13</div>
+    <div class="st"><h3>SnowSQL batch mode (-f)</h3><p>Create ANALYTICS.INVENTORY_SNAPSHOT, read nightly_rollup.sql in the Files tab, and run it non-interactively with snowsql -f.</p></div>
+    <div class="meta"><span class="where sf">Worksheet</span><span class="where aws">Files tab</span><span class="where aws">Terminal (SnowSQL)</span><span class="mins">~4 min</span>
+      <label class="done"><input type="checkbox" data-step="13"> done</label></div>
+  </header>
+  <div class="snips">
+    <div class="note2" style="margin:0 0 10px"><b style="color:var(--aws2)">WHY</b> Batch mode is how SnowSQL scripts get scheduled from cron / CI: connect, run a file, exit with a status code.</div>
+    <div class="snip"><div class="sniphead"><span class="tgt ws">Worksheet</span><b>Snapshot table (worksheet)</b><span class="sp"></span><button class="cp" data-t="c13_0">Copy SQL</button></div><pre class="code" id="c13_0"><span class="kw">CREATE</span> <span class="kw">OR</span> <span class="kw">REPLACE</span> <span class="kw">TABLE</span> ANALYTICS.INVENTORY_SNAPSHOT <span class="kw">AS</span>
+<span class="kw">SELECT</span> *, CURRENT_DATE()::DATE <span class="kw">AS</span> snapshot_date
+<span class="kw">FROM</span> ANALYTICS.INVENTORY
+<span class="kw">WHERE</span> 1 = 0;
+<span class="kw">DESC</span> <span class="kw">TABLE</span> ANALYTICS.INVENTORY_SNAPSHOT;</pre><div class="out"><div class="outlbl">Expected output</div><div class="okl"><i>✓</i><span>Table INVENTORY_SNAPSHOT successfully created.</span></div><div class="mini"><table><thead><tr><th>name</th><th>type</th><th>null?</th><th>default</th></tr></thead><tbody><tr><td>PRODUCT_ID</td><td>VARCHAR</td><td>Y</td><td class="nl">NULL</td></tr><tr><td>SKU</td><td>VARCHAR</td><td>Y</td><td class="nl">NULL</td></tr><tr><td>NAME</td><td>VARCHAR</td><td>Y</td><td class="nl">NULL</td></tr><tr><td>CATEGORY</td><td>VARCHAR</td><td>Y</td><td class="nl">NULL</td></tr><tr><td>QUANTITY_ON_HAND</td><td>VARCHAR</td><td>Y</td><td class="nl">NULL</td></tr><tr><td>UNIT_COST</td><td>VARCHAR</td><td>Y</td><td class="nl">NULL</td></tr><tr><td>UNIT_PRICE</td><td>VARCHAR</td><td>Y</td><td class="nl">NULL</td></tr><tr><td>WAREHOUSE_ID</td><td>VARCHAR</td><td>Y</td><td class="nl">NULL</td></tr></tbody></table><div class="mnote">first 8 of 11 rows shown · wide result: only the key columns are shown</div></div></div></div><div class="snip"><div class="sniphead"><span class="tgt fl">Files tab</span><b>Read nightly_rollup.sql (Files tab)</b><span class="sp"></span><button class="cp" data-c="USE ROLE LAB_ANALYST;
+USE WAREHOUSE LAB_WH;
+USE DATABASE RETAILPULSE_LAB;
+INSERT INTO ANALYTICS.INVENTORY_SNAPSHOT SELECT *, CURRENT_DATE() AS snapshot_date FROM ANALYTICS.INVENTORY;
+">Copy file</button></div><pre class="code"><span class="kw">USE</span> <span class="kw">ROLE</span> LAB_ANALYST;
+<span class="kw">USE</span> <span class="kw">WAREHOUSE</span> LAB_WH;
+<span class="kw">USE</span> <span class="kw">DATABASE</span> RETAILPULSE_LAB;
+<span class="kw">INSERT</span> <span class="kw">INTO</span> ANALYTICS.INVENTORY_SNAPSHOT <span class="kw">SELECT</span> *, CURRENT_DATE() <span class="kw">AS</span> snapshot_date <span class="kw">FROM</span> ANALYTICS.INVENTORY;</pre><div class="note2">Open the <b>Files</b> tab in the left panel and click <code>nightly_rollup.sql</code>. Nothing runs; you are only reading the script.</div></div><div class="snip"><div class="sniphead"><span class="tgt tm">Terminal (SnowSQL)</span><b>Run the script (terminal)</b><span class="sp"></span><button class="cp" data-c="snowsql -a myaccount -u lab_user -d RETAILPULSE_LAB -s ANALYTICS -f nightly_rollup.sql">Copy all lines</button></div><div class="term"><div class="tbar">$ terminal · left panel</div><div class="cmdrow"><span class="ps">$</span><code class="l">snowsql -a myaccount -u lab_user -d RETAILPULSE_LAB -s ANALYTICS -f nightly_rollup.sql</code><button class="cp" data-c="snowsql -a myaccount -u lab_user -d RETAILPULSE_LAB -s ANALYTICS -f nightly_rollup.sql">Copy</button></div></div><div class="out"><div class="outlbl">Expected output (terminal, output_format=table)</div><div class="okl"><i>✓</i><span>Statement executed successfully.</span></div><div class="okl"><i>✓</i><span>Statement executed successfully.</span></div><div class="okl"><i>✓</i><span>Statement executed successfully.</span></div><div class="mini"><table><thead><tr><th>number of rows inserted</th></tr></thead><tbody><tr><td class="n">37</td></tr></tbody></table><div class="mnote">1 row</div></div></div></div><div class="snip"><div class="sniphead"><span class="tgt ws">Worksheet</span><b>Verify</b><span class="sp"></span><button class="cp" data-t="c13_3">Copy SQL</button></div><pre class="code" id="c13_3"><span class="kw">SELECT</span> (<span class="kw">SELECT</span> COUNT(*) <span class="kw">FROM</span> ANALYTICS.INVENTORY_SNAPSHOT) <span class="kw">AS</span> snapshot_rows,
+       (<span class="kw">SELECT</span> COUNT(*) <span class="kw">FROM</span> ANALYTICS.INVENTORY) <span class="kw">AS</span> inventory_rows;</pre><div class="out"><div class="outlbl">Expected output</div><div class="mini"><table><thead><tr><th>SNAPSHOT_ROWS</th><th>INVENTORY_ROWS</th></tr></thead><tbody><tr><td class="n">37</td><td class="n">37</td></tr></tbody></table><div class="mnote">1 row</div></div></div></div><div class="note2" style="margin-top:8px">Real error you can trigger on purpose:</div><pre class="code" style="padding:6px 10px"><span class="kw">SELECT</span> * <span class="kw">FROM</span> ANALYTICS.NOT_A_TABLE;</pre><div class="errl"><b>Error 002003: </b>SQL compilation error:
+Object 'RETAILPULSE_LAB.ANALYTICS.NOT_A_TABLE' does not exist or not authorized.</div>
+  </div>
+  <div class="sbody">
+    <div class="col">
+      <h4><span class="ic">▶</span>Do this</h4><ol class="doo"><li><b>Worksheet.</b> Run <span class="chip b">Insert SQL: Snapshot table (worksheet)</span>: an empty copy of INVENTORY plus <code>snapshot_date</code>.</li><li><b>Files tab.</b> Open <code>nightly_rollup.sql</code> (4 lines: three USEs and an INSERT ... SELECT).</li><li><b>Terminal.</b> Run <code>snowsql -a myaccount -u lab_user -d RETAILPULSE_LAB -s ANALYTICS -f nightly_rollup.sql</code> (once).</li><li><b>Worksheet.</b> Run <span class="chip b">Insert SQL: Verify</span>.</li></ol>
+      <h4><span class="ic ck">✓</span>Checkpoint: green checks the simulator waits for</h4><ul class="checks"><li><i></i>ANALYTICS.INVENTORY_SNAPSHOT exists</li><li><i></i>Ran snowsql ... -f nightly_rollup.sql</li><li><i></i>Snapshot row count = INVENTORY row count</li></ul>
+      <div class="box hintbox"><b>Hint</b>-d and -s set the default database and schema, -f runs a file and quits. Run the snapshot only once, or the row count will double.</div>
+    </div>
+    <div class="col">
+      <h4><span class="ic eye">◉</span>You should see</h4><ul class="see"><li>The script runs its three USE statements and <code>number of rows inserted = 37</code>, then exits.</li><li>Verify: <code>snapshot_rows = 37</code> and <code>inventory_rows = 37</code>.</li></ul>
+      <h4><span class="ic" style="background:rgba(255,93,108,.14);color:#ff8f9a">!</span>Gotchas</h4><ul class="see"><li><code>-d</code> and <code>-s</code> set the default database and schema; <code>-f</code> runs the file and quits with a status code, so cron, Airflow or CI can schedule it.</li><li>Run the snapshot only <b>once</b> or the row count doubles.</li><li>The script switches context itself (<code>USE ROLE/WAREHOUSE/DATABASE</code>).</li></ul>
+      <h4><span class="ic" style="background:rgba(255,93,108,.14);color:#ff8f9a">✕</span>Common errors</h4>
+      <table class="errt"><tbody><tr><td>[Errno 2] No such file or directory: 'nightly_rollup.sql'</td><td><b>Cause:</b> Wrong file name or path.<br><b>Fix:</b> Use the Files tab name exactly: <code>nightly_rollup.sql</code>.</td></tr><tr><td>Object 'RETAILPULSE_LAB.ANALYTICS.INVENTORY_SNAPSHOT' does not exist or not authorized</td><td><b>Cause:</b> The snapshot table was not created before the script.<br><b>Fix:</b> Run the worksheet snippet first.</td></tr><tr><td>snapshot_rows = 74</td><td><b>Cause:</b> The script was run twice.<br><b>Fix:</b> Recreate the snapshot table (snippet 1) and run <code>-f</code> once.</td></tr></tbody></table>
+      <div class="diag"><span>nightly_rollup.sql</span><span>snowsql -f (batch)</span><span>INSERT ... SELECT</span><span>INVENTORY_SNAPSHOT (37)</span></div>
+      <div class="explain"><b>What just happened.</b> In batch mode SnowSQL connects, executes every statement in the file in order, prints the results and exits (non-zero on error), so cron, Airflow or CI can run it. The script switches context itself (<code>USE ROLE/WAREHOUSE/DATABASE</code>) and appends today's copy of INVENTORY tagged with <code>snapshot_date</code>: a simple daily history table.</div>
+      <div class="box say"><b>Say it in the interview</b>"SnowSQL batch mode connects, runs a file, prints results and exits non-zero on error, which is what you want from a scheduler."</div>
+    </div>
+  </div>
+</article>
+<article class="step" id="s14" style="--d:560ms">
+  <header class="sh">
+    <div class="num">14</div>
+    <div class="st"><h3>Monitor, troubleshoot and tune</h3><p>Review TASK_HISTORY, check stream health (STALE), confirm HAS_DATA is FALSE, and see the task SKIP when there is nothing to do.</p></div>
+    <div class="meta"><span class="where sf">Worksheet</span><span class="mins">~5 min</span>
+      <label class="done"><input type="checkbox" data-step="14"> done</label></div>
+  </header>
+  <div class="snips">
+    <div class="note2" style="margin:0 0 10px"><b style="color:var(--aws2)">WHY</b> Operating the pipeline is the other half of the job: tasks fail quietly, streams go stale if unread past the retention window, and SKIPPED is not an error.</div>
+    <div class="snip"><div class="sniphead"><span class="tgt ws">Worksheet</span><b>(a) Recent task runs</b><span class="sp"></span><button class="cp" data-t="c14_0">Copy SQL</button></div><pre class="code" id="c14_0"><span class="kw">SELECT</span> * <span class="kw">FROM</span> <span class="kw">TABLE</span>(INFORMATION_SCHEMA.TASK_HISTORY())
+<span class="kw">ORDER BY</span> scheduled_time <span class="kw">DESC</span>
+<span class="kw">LIMIT</span> 20;</pre><div class="out"><div class="outlbl">Expected output</div><div class="mini"><table><thead><tr><th>NAME</th><th>STATE</th><th>ERROR_MESSAGE</th><th>SCHEDULED_TIME</th><th>COMPLETED_TIME</th></tr></thead><tbody><tr><td>TSK_LOAD_PRICE_HISTORY</td><td>SUCCEEDED</td><td class="nl">NULL</td><td>2026-11-21 04:53:34.066 +0000</td><td>2026-11-21 04:53:35.767 +0000</td></tr><tr><td>TSK_MERGE_INVENTORY</td><td>SUCCEEDED</td><td class="nl">NULL</td><td>2026-11-21 04:53:34.066 +0000</td><td>2026-11-21 04:53:35.766 +0000</td></tr><tr><td>TSK_MERGE_INVENTORY</td><td>SUCCEEDED</td><td class="nl">NULL</td><td>2026-11-21 04:53:34.056 +0000</td><td>2026-11-21 04:53:35.764 +0000</td></tr></tbody></table><div class="mnote">3 rows · wide result: only the key columns are shown</div></div></div></div><div class="snip"><div class="sniphead"><span class="tgt ws">Worksheet</span><b>(b) Stream health</b><span class="sp"></span><button class="cp" data-t="c14_1">Copy SQL</button></div><pre class="code" id="c14_1"><span class="kw">SHOW</span> STREAMS IN <span class="kw">SCHEMA</span> STAGING;</pre><div class="out"><div class="outlbl">Expected output</div><div class="mini"><table><thead><tr><th>name</th><th>table_name</th><th>stale</th><th>mode</th></tr></thead><tbody><tr><td>STRM_INVENTORY_RAW</td><td>RETAILPULSE_LAB.STAGING.INVENTORY_RAW</td><td>false</td><td>DEFAULT</td></tr><tr><td>STRM_INVENTORY_APPEND</td><td>RETAILPULSE_LAB.STAGING.INVENTORY_RAW</td><td>false</td><td>APPEND_ONLY</td></tr></tbody></table><div class="mnote">2 rows · wide result: only the key columns are shown</div></div></div></div><div class="snip"><div class="sniphead"><span class="tgt ws">Worksheet</span><b>(c) Is there work?</b><span class="sp"></span><button class="cp" data-t="c14_2">Copy SQL</button></div><pre class="code" id="c14_2"><span class="kw">SELECT</span> SYSTEM$STREAM_HAS_DATA(<span class="st">'STAGING.STRM_INVENTORY_RAW'</span>) <span class="kw">AS</span> has_data;</pre><div class="out"><div class="outlbl">Expected output</div><div class="mini"><table><thead><tr><th>HAS_DATA</th></tr></thead><tbody><tr><td>false</td></tr></tbody></table><div class="mnote">1 row</div></div></div></div><div class="snip"><div class="sniphead"><span class="tgt ws">Worksheet</span><b>(d) Run the root: expect SKIPPED</b><span class="sp"></span><button class="cp" data-t="c14_3">Copy SQL</button></div><pre class="code" id="c14_3"><span class="kw">EXECUTE</span> <span class="kw">TASK</span> ANALYTICS.TSK_MERGE_INVENTORY;
+<span class="kw">SELECT</span> name, state, condition_text, scheduled_time
+<span class="kw">FROM</span> <span class="kw">TABLE</span>(INFORMATION_SCHEMA.TASK_HISTORY(TASK_NAME =&gt; <span class="st">'TSK_MERGE_INVENTORY'</span>))
+<span class="kw">ORDER BY</span> scheduled_time <span class="kw">DESC</span>
+<span class="kw">LIMIT</span> 3;</pre><div class="out"><div class="outlbl">Expected output</div><div class="okl"><i>✓</i><span>Task TSK_MERGE_INVENTORY is scheduled to run immediately.</span></div><div class="note2">note: Task run SKIPPED: the WHEN condition evaluated to false (for a stream condition: the stream has no data), so the task body did not run. TSK_MERGE_INVENTORY: SKIPPED (WHEN condition was false) | TSK_LOAD_PRICE_HISTORY: SKIPPED (WHEN condition was false)</div><div class="mini"><table><thead><tr><th>NAME</th><th>STATE</th><th>CONDITION_TEXT</th><th>SCHEDULED_TIME</th></tr></thead><tbody><tr><td>TSK_MERGE_INVENTORY</td><td>SKIPPED</td><td>SYSTEM$STREAM_HAS_DATA('STAGING.STRM_INVENTORY_RAW')</td><td>2026-11-21 04:53:34.069 +0000</td></tr><tr><td>TSK_MERGE_INVENTORY</td><td>SUCCEEDED</td><td>SYSTEM$STREAM_HAS_DATA('STAGING.STRM_INVENTORY_RAW')</td><td>2026-11-21 04:53:34.066 +0000</td></tr><tr><td>TSK_MERGE_INVENTORY</td><td>SUCCEEDED</td><td>SYSTEM$STREAM_HAS_DATA('STAGING.STRM_INVENTORY_RAW')</td><td>2026-11-21 04:53:34.056 +0000</td></tr></tbody></table><div class="mnote">3 rows</div></div></div></div><div class="snip"><div class="sniphead"><span class="tgt ws">Worksheet</span><b>(e) Task definitions</b><span class="sp"></span><button class="cp" data-t="c14_4">Copy SQL</button></div><pre class="code" id="c14_4"><span class="kw">SHOW</span> TASKS IN <span class="kw">SCHEMA</span> ANALYTICS;</pre><div class="out"><div class="outlbl">Expected output</div><div class="mini"><table><thead><tr><th>name</th><th>warehouse</th><th>schedule</th><th>predecessors</th><th>state</th><th>condition</th></tr></thead><tbody><tr><td>TSK_MERGE_INVENTORY</td><td>LAB_WH</td><td>5 MINUTE</td><td>[]</td><td>started</td><td>SYSTEM$STREAM_HAS_DATA('STAGING.STRM_INVENTORY_RAW')</td></tr><tr><td>TSK_LOAD_PRICE_HISTORY</td><td>LAB_WH</td><td class="nl">NULL</td><td>["RETAILPULSE_LAB.ANALYTICS.TSK_MERGE_INVENTORY"]</td><td>started</td><td class="nl">NULL</td></tr></tbody></table><div class="mnote">2 rows · wide result: only the key columns are shown</div></div></div></div>
+  </div>
+  <div class="sbody">
+    <div class="col">
+      <h4><span class="ic">▶</span>Do this</h4><ol class="doo"><li>Run (a) <code>TASK_HISTORY()</code>, (b) <code>SHOW STREAMS</code>, (c) <code>HAS_DATA</code>.</li><li>Run (d): <code>EXECUTE TASK</code> on the root and look at the newest row: <code>SKIPPED</code>.</li><li>Run (e) <code>SHOW TASKS</code>.</li></ol>
+      <h4><span class="ic ck">✓</span>Checkpoint: green checks the simulator waits for</h4><ul class="checks"><li><i></i>Saw at least 1 SUCCEEDED and 1 SKIPPED run</li><li><i></i>Ran SHOW STREAMS and neither stream is STALE</li><li><i></i>Saw the task SKIPPED because the stream was empty</li></ul>
+      <div class="box hintbox"><b>Hint</b>SKIPPED means the WHEN condition was false: that is the cheap path working as designed. To troubleshoot a FAILED run, read error_message in TASK_HISTORY and re-run its SQL by hand. A stream turns STALE if its offset falls outside the table's retention window; recreate it and reconcile.</div>
+    </div>
+    <div class="col">
+      <h4><span class="ic eye">◉</span>You should see</h4><ul class="see"><li>(a) 3 earlier runs (one child, two root) all <code>SUCCEEDED</code>.</li><li>(b) both streams listed, <code>stale = false</code>; modes <code>DEFAULT</code> and <code>APPEND_ONLY</code>.</li><li>(c) <code>has_data = false</code>.</li><li>(d) the newest <code>TSK_MERGE_INVENTORY</code> row is <code>SKIPPED</code>, condition <code>SYSTEM$STREAM_HAS_DATA(...)</code>; the child is skipped as well.</li></ul>
+      <h4><span class="ic" style="background:rgba(255,93,108,.14);color:#ff8f9a">!</span>Gotchas</h4><ul class="see"><li><b>SKIPPED is not an error.</b> The WHEN condition was false, so no warehouse time was used.</li><li>A stream turns STALE if its offset falls outside the table's retention window. Read streams more often than that, or recreate and reconcile.</li><li>For a FAILED run read <code>error_message</code> in TASK_HISTORY and re-run its SQL by hand.</li></ul>
+      <h4><span class="ic" style="background:rgba(255,93,108,.14);color:#ff8f9a">✕</span>Common errors</h4>
+      <table class="errt"><tbody><tr><td>stale = true in SHOW STREAMS</td><td><b>Cause:</b> The base table was dropped or recreated (<code>CREATE OR REPLACE TABLE</code>), or the offset aged out.<br><b>Fix:</b> Recreate the stream and reconcile the missed rows.</td></tr><tr><td>Run (d) shows SUCCEEDED instead of SKIPPED</td><td><b>Cause:</b> The stream still had data, so the MERGE ran.<br><b>Fix:</b> That is fine; run (d) again and the stream will be empty.</td></tr></tbody></table>
+      <div class="diag"><span>TASK_HISTORY()</span><span>SHOW STREAMS: STALE?</span><span>HAS_DATA = FALSE</span><span>EXECUTE TASK → SKIPPED</span></div>
+      <div class="explain"><b>What just happened.</b> Your monitoring checklist: <b>TASK_HISTORY</b> (state, error_message, scheduled vs completed), <b>SHOW STREAMS</b> (<code>stale</code> must be false; read streams more often than the retention window), <b>SYSTEM$STREAM_HAS_DATA</b> (is there backlog?), <b>SHOW TASKS</b> (state, schedule, predecessors). A run with no new data is <b>SKIPPED</b> and costs no warehouse time. Tuning levers: schedule frequency, warehouse size, WHEN clauses, and serverless tasks.</div>
+      <div class="box say"><b>Say it in the interview</b>"I monitor TASK_HISTORY, SHOW STREAMS for staleness, and SYSTEM$STREAM_HAS_DATA for backlog. SKIPPED just means nothing to do."</div>
+    </div>
+  </div>
+</article>
+<article class="step" id="s15" style="--d:600ms">
+  <header class="sh">
+    <div class="num">15</div>
+    <div class="st"><h3>Cleanup (bonus) <span class="bonus">bonus</span></h3><p>Suspend and drop the tasks and streams, then drop the database, warehouse and role.</p></div>
+    <div class="meta"><span class="where sf">Worksheet</span><span class="mins">~2 min</span>
+      <label class="done"><input type="checkbox" data-step="15"> done</label></div>
+  </header>
+  <div class="snips">
+    <div class="note2" style="margin:0 0 10px"><b style="color:var(--aws2)">WHY</b> Running tasks and warehouses burn credits. Clean teardown (children before parents, tasks suspended first) is good hygiene.</div>
+    <div class="snip"><div class="sniphead"><span class="tgt ws">Worksheet</span><b>Teardown</b><span class="sp"></span><button class="cp" data-t="c15_0">Copy SQL</button></div><pre class="code" id="c15_0"><span class="kw">ALTER</span> <span class="kw">TASK</span> <span class="kw">IF</span> <span class="kw">EXISTS</span> ANALYTICS.TSK_MERGE_INVENTORY <span class="kw">SUSPEND</span>;
+<span class="kw">ALTER</span> <span class="kw">TASK</span> <span class="kw">IF</span> <span class="kw">EXISTS</span> ANALYTICS.TSK_LOAD_PRICE_HISTORY <span class="kw">SUSPEND</span>;
+<span class="kw">DROP</span> <span class="kw">TASK</span> <span class="kw">IF</span> <span class="kw">EXISTS</span> ANALYTICS.TSK_LOAD_PRICE_HISTORY;
+<span class="kw">DROP</span> <span class="kw">TASK</span> <span class="kw">IF</span> <span class="kw">EXISTS</span> ANALYTICS.TSK_MERGE_INVENTORY;
+<span class="kw">DROP</span> <span class="kw">STREAM</span> <span class="kw">IF</span> <span class="kw">EXISTS</span> STAGING.STRM_INVENTORY_APPEND;
+<span class="kw">DROP</span> <span class="kw">STREAM</span> <span class="kw">IF</span> <span class="kw">EXISTS</span> STAGING.STRM_INVENTORY_RAW;
+<span class="kw">USE</span> <span class="kw">ROLE</span> ACCOUNTADMIN;
+<span class="kw">DROP</span> <span class="kw">DATABASE</span> <span class="kw">IF</span> <span class="kw">EXISTS</span> RETAILPULSE_LAB;
+<span class="kw">DROP</span> <span class="kw">WAREHOUSE</span> <span class="kw">IF</span> <span class="kw">EXISTS</span> LAB_WH;
+<span class="kw">DROP</span> <span class="kw">ROLE</span> <span class="kw">IF</span> <span class="kw">EXISTS</span> LAB_ANALYST;</pre><div class="out"><div class="outlbl">Expected output</div><div class="okl"><i>✓</i><span>Statement executed successfully.</span></div><div class="okl"><i>✓</i><span>Statement executed successfully.</span></div><div class="okl"><i>✓</i><span>TSK_LOAD_PRICE_HISTORY successfully dropped.</span></div><div class="okl"><i>✓</i><span>TSK_MERGE_INVENTORY successfully dropped.</span></div><div class="okl"><i>✓</i><span>STRM_INVENTORY_APPEND successfully dropped.</span></div><div class="okl"><i>✓</i><span>STRM_INVENTORY_RAW successfully dropped.</span></div><div class="okl"><i>✓</i><span>Statement executed successfully.</span></div><div class="okl"><i>✓</i><span>RETAILPULSE_LAB successfully dropped.</span></div><div class="okl"><i>✓</i><span>LAB_WH successfully dropped.</span></div><div class="okl"><i>✓</i><span>LAB_ANALYST successfully dropped.</span></div></div></div>
+  </div>
+  <div class="sbody">
+    <div class="col">
+      <h4><span class="ic">▶</span>Do this</h4><ol class="doo"><li>Click <span class="chip b">Insert SQL: Teardown</span> and press <span class="keys"><kbd>Ctrl/⌘</kbd>+<kbd>Shift</kbd>+<kbd>Enter</kbd></span>.</li><li>Open the <b>Completion</b> screen: the numbers are saved before the cleanup, so they survive the drops.</li></ol>
+      <h4><span class="ic ck">✓</span>Checkpoint: green checks the simulator waits for</h4><ul class="checks"><li><i></i>Both tasks dropped</li><li><i></i>Both streams dropped</li><li><i></i>Database RETAILPULSE_LAB dropped</li><li><i></i>Warehouse LAB_WH dropped</li></ul>
+      <div class="box hintbox"><b>Hint</b>Your completion summary is saved before cleanup, so the numbers stay on the Completion screen.</div>
+    </div>
+    <div class="col">
+      <h4><span class="ic eye">◉</span>You should see</h4><ul class="see"><li>Ten success tabs (suspend x2, drop tasks child first, drop streams, switch to ACCOUNTADMIN, drop database, warehouse, role).</li><li>Completion stats: 3 files PUT, 85 raw rows, 37 inventory rows, 9 price changes, 3 SUCCEEDED + 2 SKIPPED runs, 2 streams, DAG depth 2.</li></ul>
+      <h4><span class="ic" style="background:rgba(255,93,108,.14);color:#ff8f9a">!</span>Gotchas</h4><ul class="see"><li>Suspend before drop, child before root, as you would in a shared environment.</li><li>Warehouses and roles are account-level, so they need their own <code>DROP</code> as ACCOUNTADMIN.</li><li>Running tasks and warehouses burn credits; do this on a real trial account too.</li></ul>
+      <h4><span class="ic" style="background:rgba(255,93,108,.14);color:#ff8f9a">✕</span>Common errors</h4>
+      <table class="errt"><tbody><tr><td>Insufficient privileges (DROP ROLE or WAREHOUSE)</td><td><b>Cause:</b> The <code>USE ROLE ACCOUNTADMIN</code> line did not run.<br><b>Fix:</b> Run the whole script with Run all.</td></tr><tr><td>Cleanup checks stay grey</td><td><b>Cause:</b> Tasks were never resumed in this session (checks guard on that).<br><b>Fix:</b> Complete steps 11 and 12 first, then run the teardown.</td></tr></tbody></table>
+      <div class="diag"><span>SUSPEND tasks</span><span>DROP tasks + streams</span><span>DROP DATABASE</span><span>DROP WAREHOUSE / ROLE</span></div>
+      <div class="explain"><b>What just happened.</b> Dropping the database also drops its schemas, tables, stages, streams and tasks, but we drop tasks and streams explicitly first (suspend before drop, child before root) to mirror what you would do in a shared environment. Warehouses and roles are account-level objects, so they need their own DROP as ACCOUNTADMIN.</div>
+      <div class="box say"><b>Say it in the interview</b>"I tear down tasks and streams explicitly, children before parents, so nothing keeps running and billing."</div>
+    </div>
+  </div>
+</article>
+
+<section class="blk" id="dev">
+  <h2><small>05 · Read this</small>Deliberate deviations from the original spec</h2>
+  <p class="sub">The lab follows its own step definitions, which differ from the first spec in these places on purpose. If a number here differs from your notes, this table is why.</p>
+  <table class="ref"><thead><tr><th>Where</th><th>What the lab does</th></tr></thead><tbody>
+    <tr><td>Step 7 manual rows</td><td>3 rows: P005 and P009 (existing) and P031 (a new product that batch 2 also contains), <code>last_updated = 2026-11-18</code>, <code>_src_file = 'manual_insert'</code>. Final deduped count stays 37 and step 8 shows both MATCHED and NOT MATCHED. INVENTORY is 31 after step 8.</td></tr>
+    <tr><td>Raw row total</td><td>85, not 80: 80 loaded from files + 3 manual (step 7) + 2 manual price-change rows (step 12).</td></tr>
+    <tr><td>Step 8 MERGE source</td><td>Adds <code>QUALIFY ROW_NUMBER() ... = 1</code>, because MERGE errors on duplicate source keys.</td></tr>
+    <tr><td>Step 9 order and drift</td><td>COPY batch 3 comes before the ALTER (the extra column is ignored, which is the teaching point). Extra snippet (e) updates a batch 1 row so append (50) &lt; standard (52). Batch 3 is a plain COPY with <code>MATCH_BY_COLUMN_NAME</code>, so its lineage columns stay NULL.</td></tr>
+    <tr><td>Step 10 source</td><td>The spec's <code>METADATA$ISUPDATE = TRUE</code> filter never matches COPY-loaded rows and is dropped. The source is the APPEND stream. old_price is the previous raw version of the product (the LEFT JOIN to INVENTORY over-counts: 8 rows, wrong old price for P004). Result: exactly 7 changes.</td></tr>
+    <tr><td>Step 11 task body</td><td>The same single MERGE statement; no EXECUTE IMMEDIATE wrapper. INVENTORY must equal 37.</td></tr>
+    <tr><td>Step 12 child + error</td><td>Child body reuses the step 10 logic against the append stream (adds 2 rows, source <code>TASK_DAG</code>). Snippet 1 deliberately runs <code>CREATE OR REPLACE TASK ... AFTER ...</code> while the root is STARTED to show the <i>not suspended</i> error.</td></tr>
+    <tr><td>Step 14</td><td>Adds the re-query in (d) so the SKIPPED row is visible.</td></tr>
+    <tr><td>Step 15</td><td>Suspends and drops child before parent and also drops the role (the role is not part of the checks).</td></tr>
+    <tr><td>PUT</td><td>Terminal only. Worksheet PUT attempts show the real error. No step needs the worksheet to PUT.</td></tr>
+  </tbody></table>
+</section>
+
+<section class="blk" id="trouble">
+  <h2><small>06 · Help</small>Troubleshooting</h2>
+  <details class="faq"><summary>I ran the SQL but the checks stay grey.</summary><div>You probably pressed <span class="keys"><kbd>Ctrl/⌘</kbd>+<kbd>Enter</kbd></span>, which runs only the statement under the cursor. Use <span class="keys"><kbd>Ctrl/⌘</kbd>+<kbd>Shift</kbd>+<kbd>Enter</kbd></span>. Check that the context bar says <code>LAB_ANALYST · LAB_WH · RETAILPULSE_LAB</code>; if not, re-run step 1 (or the <code>USE</code> lines).</div></details>
+  <details class="faq"><summary>PUT says it is not supported in the web interface.</summary><div>You ran it in the worksheet. Use the Terminal tab, and connect first with <code>snowsql -a myaccount.us-east-1 -u lab_user</code>.</div></details>
+  <details class="faq"><summary>The terminal says "Connect first".</summary><div>You typed SQL or a PUT before <code>snowsql</code> connected. Run the connect line and type any password.</div></details>
+  <details class="faq"><summary>COPY says "0 files processed".</summary><div>Load metadata remembers the file (name + md5) for 64 days. That is the desired result on a re-run in step 5. If you need to reload on purpose, truncate the table (which clears the metadata) or use <code>FORCE = TRUE</code> and accept duplicates.</div></details>
+  <details class="faq"><summary>The stream is empty when I expected rows.</summary><div>Streams only show changes made after they were created, and a committed DML that reads them (MERGE, INSERT...SELECT) moves the offset. Check the order in the data table above; if you consumed S or A too early, <b>Reset</b> and redo the steps in order.</div></details>
+  <details class="faq"><summary>"Unable to update graph with root task ... not suspended".</summary><div>Expected in step 12 snippet 1. Otherwise suspend the root, change the graph, resume the children, then the root.</div></details>
+  <details class="faq"><summary>INVENTORY is not 37 after step 11.</summary><div>The standard stream S was consumed by something other than the MERGE, or step 9 was skipped. Reset and redo from step 7; only the MERGE (step 8, then the task) may read S.</div></details>
+  <details class="faq"><summary>Snapshot count is double the inventory count.</summary><div>The <code>-f nightly_rollup.sql</code> run happened twice. Recreate the snapshot table (step 13 snippet 1) and run the file once.</div></details>
+  <details class="faq"><summary>My progress disappeared.</summary><div>Progress is stored per browser and per file location. A different browser, a private window or a moved file starts fresh. Ticks in this guide are stored separately in your browser.</div></details>
+  <details class="faq"><summary>Is this real Snowflake?</summary><div>No. It is a JavaScript engine built to behave like Snowflake for this lab's statements, with realistic error messages. A few details are simplified (for example the simulator accepts <code>MATCH_BY_COLUMN_NAME</code> on CSV without <code>PARSE_HEADER</code> and prints a heads-up). The same SQL runs on a real trial account.</div></details>
+</section>
+
+<section class="blk" id="next">
+  <h2><small>07 · Level up</small>Practise for real</h2>
+  <div class="modes">
+    <div class="mode" style="--d:0ms"><span class="tag">Round 1</span><h5>Guided</h5><p>Follow this guide with the Insert buttons. Goal: understand every result.</p></div>
+    <div class="mode" style="--d:90ms"><span class="tag">Round 2</span><h5>From memory</h5><p>Click <b>Reset</b>, switch to <b>Free play</b>, and type each step yourself. Use hints only when stuck.</p></div>
+    <div class="mode" style="--d:180ms"><span class="tag">Round 3</span><h5>Out loud</h5><p>Open <b>Completion</b> and explain the pipeline in 60 seconds: PUT, COPY, stream, MERGE, task, DAG, monitoring.</p></div>
+  </div>
+  <p class="sub" style="margin-top:18px">On a real trial account: install SnowSQL, put your real account identifier in <code>-a</code>, and run the same snippets. Remember to run step 15 so no warehouse or task keeps consuming credits.</p>
+</section>
+</main>
+</div>
+<footer><div class="wrap">Companion to the SnowSQL · Streams · Tasks Lab Simulator. All data, names and the "RetailPulse" company are fictional and generic, so share freely.</div></footer>
+<script>
+(function(){
+  var KEY='snowsql_lab_guide_done_v1', done={};
+  try{done=JSON.parse(localStorage.getItem(KEY)||'{}')}catch(e){}
+  var boxes=document.querySelectorAll('input[data-step]'), total=boxes.length;
+  function paint(){
+    var n=0;
+    boxes.forEach(function(b){var s=b.dataset.step,on=!!done[s];b.checked=on;if(on)n++;
+      document.getElementById('s'+s).classList.toggle('isdone',on);
+      var a=document.querySelector('[data-nav="'+s+'"]');if(a)a.classList.toggle('ok',on);});
+    document.getElementById('pbar').style.width=(n/total*100)+'%';
+    document.getElementById('ptxt').textContent=n+' / '+total+' ticked';
+  }
+  boxes.forEach(function(b){b.addEventListener('change',function(){done[b.dataset.step]=b.checked;try{localStorage.setItem(KEY,JSON.stringify(done))}catch(e){}paint();});});
+  paint();
+  var links=document.querySelectorAll('nav.side a[data-nav]');
+  if('IntersectionObserver' in window){
+    var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){links.forEach(function(l){l.classList.toggle('cur',l.dataset.nav===e.target.id.slice(1));});}});},{rootMargin:'-30% 0px -60% 0px'});
+    document.querySelectorAll('.step').forEach(function(s){io.observe(s);});
+  }
+  function copyText(t,btn){
+    function ok(){var o=btn.textContent;btn.textContent='Copied';btn.classList.add('ok');setTimeout(function(){btn.textContent=o;btn.classList.remove('ok');},1200);}
+    function fb(){var ta=document.createElement('textarea');ta.value=t;ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.select();try{document.execCommand('copy');ok();}catch(e){}document.body.removeChild(ta);}
+    if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t).then(ok,fb);}else{fb();}
+  }
+  document.querySelectorAll('button.cp').forEach(function(b){b.addEventListener('click',function(){
+    var t=b.dataset.c;if(t==null){var el=document.getElementById(b.dataset.t);t=el?el.textContent:'';}
+    copyText(t,b);});});
+})();
+</script>
+<script>
+function sfThm(){
+  var d=document.documentElement, b=document.getElementById('sf-thm');
+  if(d.dataset.theme==='light'){
+    d.removeAttribute('data-theme');
+    if(b){b.innerHTML='&#9728;&#xFE0F;&nbsp;Light';b.style.background='rgba(255,255,255,.14)';b.style.borderColor='rgba(255,255,255,.26)';}
+    try{localStorage.setItem('sf-theme','dark');}catch(e){}
+  } else {
+    d.dataset.theme='light';
+    if(b){b.innerHTML='&#127769;&nbsp;Dark';b.style.background='rgba(0,0,0,.07)';b.style.borderColor='rgba(0,0,0,.16)';}
+    try{localStorage.setItem('sf-theme','light');}catch(e){}
+  }
+}
+(function(){
+  try{
+    if(localStorage.getItem('sf-theme')==='light'){
+      document.documentElement.dataset.theme='light';
+      document.addEventListener('DOMContentLoaded',function(){
+        var b=document.getElementById('sf-thm');
+        if(b){b.innerHTML='&#127769;&nbsp;Dark';b.style.background='rgba(0,0,0,.07)';b.style.borderColor='rgba(0,0,0,.16)';}
+      });
+    }
+  }catch(e){}
+})();
+</script>
+</body></html>

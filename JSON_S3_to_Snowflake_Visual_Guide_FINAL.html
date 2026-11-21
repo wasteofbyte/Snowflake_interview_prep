@@ -1,0 +1,1776 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>JSON → S3 → Snowflake · A Visual Interview Guide (ShopStream)</title>
+<meta name="description" content="A visual, end-to-end walkthrough of loading JSON from Amazon S3 into Snowflake, built for data-engineering interview prep. Fictional ShopStream example.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,200;12..96,400;12..96,800&family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,600;1,400&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg-0:#070a0e; --bg-1:#0b1016; --bg-2:#111821; --panel:#0f151d; --panel-2:#141c26;
+  --line:#1f2b38; --line-2:#2a3a4b;
+  --text:#d9e1ea; --muted:#8696a8; --dim:#5d6c7d;
+  --aws:#ff9a1f; --aws-2:#ffc061; --aws-bg:rgba(255,154,31,.08); --aws-line:rgba(255,154,31,.45);
+  --sf:#29b5e8; --sf-2:#9be7ff; --sf-bg:rgba(41,181,232,.08); --sf-line:rgba(41,181,232,.45);
+  --ok:#5fd68a; --err:#ff6170; --warn:#ffd25f; --pink:#ff7eb6; --mint:#5ef0c8; --coral:#ff8f6b;
+  --code-bg:#0a0f15;
+  --f-head:"Bricolage Grotesque","Space Grotesk","Segoe UI Variable Display",Georgia,serif;
+  --f-body:"IBM Plex Sans","Source Sans 3","Segoe UI",Helvetica,sans-serif;
+  --f-mono:"JetBrains Mono","Fira Code","IBM Plex Mono",Menlo,Consolas,monospace;
+  --nav-w:270px; --radius:14px;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0; color:var(--text); font-family:var(--f-body); font-size:16px; line-height:1.6;
+  background-color:var(--bg-0);
+  background-image:
+    radial-gradient(1200px 600px at 8% -5%, rgba(255,154,31,.10), transparent 60%),
+    radial-gradient(1000px 700px at 100% 10%, rgba(41,181,232,.11), transparent 60%),
+    radial-gradient(900px 600px at 50% 110%, rgba(94,240,200,.05), transparent 60%),
+    linear-gradient(rgba(255,255,255,.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,.025) 1px, transparent 1px),
+    linear-gradient(180deg, var(--bg-1), var(--bg-0) 40%, var(--bg-1));
+  background-size:auto,auto,auto,40px 40px,40px 40px,auto;
+  background-attachment:fixed;
+}
+a{color:var(--sf-2)}
+code,pre,.mono{font-family:var(--f-mono)}
+.aws{color:var(--aws-2)} .sf{color:var(--sf-2)} .ok{color:var(--ok)} .err{color:var(--err)} .warn{color:var(--warn)} .muted{color:var(--muted)}
+
+/* ---------- top progress + side nav ---------- */
+.progress{position:fixed;top:0;left:0;height:3px;width:100%;z-index:60;background:transparent}
+.progress i{display:block;height:100%;width:var(--p,0%);background:linear-gradient(90deg,var(--aws),var(--sf));box-shadow:0 0 12px rgba(41,181,232,.6)}
+nav.side{
+  position:fixed; top:0; left:0; bottom:0; width:var(--nav-w); z-index:50; overflow-y:auto;
+  padding:26px 18px 30px; border-right:1px solid var(--line);
+  background:linear-gradient(180deg, rgba(11,16,22,.96), rgba(7,10,14,.96));
+  backdrop-filter:blur(6px);
+}
+.brand{font-family:var(--f-head);font-weight:800;font-size:1.25rem;letter-spacing:-.02em;line-height:1.1;margin:0 0 4px}
+.brand span{font-weight:200}
+.brand-sub{font-family:var(--f-mono);font-size:.68rem;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;margin-bottom:18px}
+.navprog{height:4px;border-radius:4px;background:var(--line);overflow:hidden;margin:0 0 6px}
+.navprog i{display:block;height:100%;width:var(--p,0%);background:linear-gradient(90deg,var(--aws),var(--sf))}
+.navpct{font-family:var(--f-mono);font-size:.68rem;color:var(--dim);margin-bottom:14px}
+nav.side ol{list-style:none;margin:0;padding:0;counter-reset:n}
+nav.side li a{
+  display:flex;gap:10px;align-items:baseline;padding:6px 10px;border-radius:8px;text-decoration:none;
+  color:var(--muted);font-size:.86rem;line-height:1.3;border-left:2px solid transparent;transition:all .2s;
+}
+nav.side li a b{font-family:var(--f-mono);font-weight:400;font-size:.7rem;color:var(--dim);min-width:18px}
+nav.side li a:hover{color:var(--text);background:rgba(255,255,255,.03)}
+nav.side li a.active{color:var(--sf-2);background:var(--sf-bg);border-left-color:var(--sf)}
+nav.side li a.active b{color:var(--sf)}
+.navtoggle{display:none}
+
+main{margin-left:var(--nav-w);padding:0 clamp(18px,4vw,64px) 80px;max-width:calc(1280px + var(--nav-w))}
+
+/* ---------- section scaffolding ---------- */
+section{padding:88px 0 24px;border-bottom:1px dashed var(--line);scroll-margin-top:10px}
+section:last-of-type{border-bottom:0}
+.sh{display:flex;align-items:flex-end;gap:22px;margin-bottom:22px;flex-wrap:wrap}
+.sh .num{font-family:var(--f-head);font-weight:200;font-size:clamp(4rem,9vw,6.6rem);line-height:.8;color:transparent;-webkit-text-stroke:1px var(--line-2);letter-spacing:-.04em}
+.sh h2{font-family:var(--f-head);font-weight:800;font-size:clamp(1.6rem,2.6vw,2.2rem);letter-spacing:-.025em;line-height:1.05;margin:0}
+.sh .kicker{display:block;font-family:var(--f-mono);font-weight:400;font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+.lede{max-width:760px;color:var(--muted);font-size:1.02rem;margin:0 0 26px}
+h3{font-family:var(--f-head);font-weight:800;letter-spacing:-.015em;font-size:1.15rem;margin:0 0 8px}
+.thin{font-weight:200}
+
+.panel{background:linear-gradient(180deg,rgba(20,28,38,.85),rgba(13,19,26,.85));border:1px solid var(--line);border-radius:var(--radius);padding:22px;position:relative}
+.panel.aws-edge{border-color:var(--aws-line)} .panel.sf-edge{border-color:var(--sf-line)}
+.grid{display:grid;gap:18px}
+.g2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.g3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.g4{grid-template-columns:repeat(4,minmax(0,1fr))}
+.pill{display:inline-flex;align-items:center;gap:6px;font-family:var(--f-mono);font-size:.72rem;padding:3px 9px;border-radius:999px;border:1px solid var(--line-2);color:var(--muted);background:rgba(255,255,255,.02)}
+.pill.aws{border-color:var(--aws-line);color:var(--aws-2);background:var(--aws-bg)}
+.pill.sf{border-color:var(--sf-line);color:var(--sf-2);background:var(--sf-bg)}
+.pill.ok{border-color:rgba(95,214,138,.4);color:var(--ok)}
+.pill.err{border-color:rgba(255,97,112,.45);color:var(--err)}
+.callout{border-left:3px solid var(--warn);background:rgba(255,210,95,.06);padding:12px 16px;border-radius:0 10px 10px 0;font-size:.93rem;margin:16px 0}
+.callout.sf{border-color:var(--sf);background:var(--sf-bg)}
+.callout.aws{border-color:var(--aws);background:var(--aws-bg)}
+.callout.err{border-color:var(--err);background:rgba(255,97,112,.06)}
+.callout b{color:var(--text)}
+svg{max-width:100%;height:auto;display:block}
+svg text{font-family:var(--f-mono)}
+.diagram{background:linear-gradient(180deg,rgba(10,15,21,.9),rgba(8,12,17,.9));border:1px solid var(--line);border-radius:var(--radius);padding:14px;overflow-x:auto}
+.diagram svg{min-width:760px}
+.caption{font-family:var(--f-mono);font-size:.74rem;color:var(--dim);margin-top:8px}
+
+/* ---------- code ---------- */
+.code{border:1px solid var(--line);border-radius:12px;background:var(--code-bg);overflow:hidden;margin:12px 0}
+.code-h{display:flex;justify-content:space-between;align-items:center;padding:6px 10px 6px 14px;border-bottom:1px solid var(--line);background:rgba(255,255,255,.02)}
+.code-h span{font-family:var(--f-mono);font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;color:var(--dim)}
+.copy{font-family:var(--f-mono);font-size:.7rem;color:var(--muted);background:transparent;border:1px solid var(--line-2);border-radius:6px;padding:3px 10px;cursor:pointer;transition:all .15s}
+.copy:hover{color:var(--sf-2);border-color:var(--sf-line)}
+.copy.done{color:var(--ok);border-color:rgba(95,214,138,.5)}
+.code pre{margin:0;padding:14px 16px;overflow-x:auto;font-size:.8rem;line-height:1.55;color:#c9d4df;tab-size:2}
+.tk-kw{color:var(--sf)} .tk-str{color:#f5c27a} .tk-com{color:#5f7184;font-style:italic} .tk-num{color:var(--mint)} .tk-fn{color:var(--pink)} .tk-key{color:var(--sf-2)}
+
+/* ---------- hero ---------- */
+.hero{padding:70px 0 40px;border-bottom:1px dashed var(--line)}
+.eyebrow{font-family:var(--f-mono);font-size:.74rem;letter-spacing:.18em;text-transform:uppercase;color:var(--muted)}
+.hero h1{font-family:var(--f-head);font-weight:800;font-size:clamp(3rem,8.4vw,7.2rem);line-height:.9;letter-spacing:-.045em;margin:14px 0 10px}
+.hero h1 .a{color:var(--aws)} .hero h1 .s{color:var(--sf)}
+.hero h1 .arrow{font-weight:200;color:var(--dim)}
+.hero .subtitle{font-family:var(--f-head);font-weight:200;font-size:clamp(1.3rem,2.4vw,2rem);letter-spacing:-.01em;color:var(--text);margin:0 0 30px;max-width:900px}
+.problem{display:flex;gap:14px;align-items:flex-start;padding:18px 20px;border:1px solid var(--line-2);border-radius:var(--radius);background:rgba(255,255,255,.02);max-width:900px;margin-bottom:30px}
+.problem .q{font-family:var(--f-head);font-weight:800;font-size:2.4rem;line-height:1;color:var(--aws)}
+.problem p{margin:0;font-size:1.08rem}
+.answer{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;counter-reset:s}
+.answer li{list-style:none;position:relative;padding:16px 16px 16px 58px;border:1px solid var(--line);border-radius:12px;background:linear-gradient(160deg,rgba(20,28,38,.9),rgba(10,14,20,.9));font-size:.93rem}
+.answer li::before{counter-increment:s;content:counter(s);position:absolute;left:14px;top:12px;font-family:var(--f-head);font-weight:800;font-size:2rem;line-height:1;color:var(--sf)}
+.answer li:nth-child(-n+2)::before{color:var(--aws)}
+.answer li strong{display:block;font-family:var(--f-head);font-weight:800;font-size:1rem;margin-bottom:2px}
+.answer-head{display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:10px;margin-bottom:12px}
+.answer-head h3{font-size:1.4rem;margin:0}
+
+/* ---------- animated flows ---------- */
+.flow{fill:none;stroke-width:2.2;stroke-dasharray:7 9;animation:dash 1.1s linear infinite}
+.flow.aws{stroke:var(--aws)} .flow.sf{stroke:var(--sf)} .flow.mint{stroke:var(--mint)} .flow.slow{animation-duration:2.2s}
+.flow.rev{animation-direction:reverse}
+@keyframes dash{to{stroke-dashoffset:-32}}
+.node rect,.node path.shape{transition:filter .2s}
+.node:hover rect{filter:brightness(1.35)}
+.pulse{animation:pulse 2.6s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:.35}50%{opacity:1}}
+.glow-aws{filter:drop-shadow(0 0 6px rgba(255,154,31,.35))}
+.glow-sf{filter:drop-shadow(0 0 6px rgba(41,181,232,.35))}
+
+/* ---------- reveal ---------- */
+.js .reveal{opacity:0;transform:translateY(18px)}
+.js .reveal.in{animation:rise .7s cubic-bezier(.2,.7,.2,1) forwards;animation-delay:calc(var(--d,0) * 90ms)}
+@keyframes rise{to{opacity:1;transform:none}}
+
+/* ---------- object cards ---------- */
+.card{background:linear-gradient(170deg,rgba(20,28,38,.92),rgba(10,14,20,.92));border:1px solid var(--line);border-radius:var(--radius);padding:18px;display:flex;flex-direction:column;gap:8px}
+.card .top{display:flex;gap:12px;align-items:center}
+.card .ico{width:42px;height:42px;flex:0 0 42px}
+.card .name{font-family:var(--f-mono);font-size:.82rem;color:var(--sf-2)}
+.card .what{font-size:.92rem;margin:0}
+.card .analogy{font-size:.88rem;color:var(--muted);margin:0;padding-left:12px;border-left:2px solid var(--line-2)}
+.card .analogy::before{content:"Analogy · ";color:var(--warn);font-family:var(--f-mono);font-size:.72rem}
+.card .code{margin-top:auto}
+
+/* ---------- JSON map ---------- */
+.json{font-family:var(--f-mono);font-size:.8rem;line-height:1.7;white-space:pre;overflow-x:auto;color:#9fb0c2;padding:16px;background:var(--code-bg);border:1px solid var(--line);border-radius:12px}
+.hl{border-radius:4px;padding:1px 3px;outline:1.5px solid}
+.c1{color:#7fe0ff;outline-color:rgba(127,224,255,.55);background:rgba(127,224,255,.08)}
+.c2{color:#ffc061;outline-color:rgba(255,192,97,.55);background:rgba(255,192,97,.08)}
+.c3{color:#5ef0c8;outline-color:rgba(94,240,200,.55);background:rgba(94,240,200,.08)}
+.c4{color:#ff7eb6;outline-color:rgba(255,126,182,.55);background:rgba(255,126,182,.08)}
+.c5{color:#ffe36e;outline-color:rgba(255,227,110,.55);background:rgba(255,227,110,.08)}
+.c6{color:#ff8f6b;outline-color:rgba(255,143,107,.55);background:rgba(255,143,107,.08)}
+.c7{color:#b8c4d0;outline-color:rgba(184,196,208,.45);background:rgba(184,196,208,.06)}
+.maprow{display:grid;grid-template-columns:minmax(0,1.5fr) 26px minmax(0,1fr);gap:8px;align-items:center;margin:7px 0;font-family:var(--f-mono);font-size:.8rem}
+.maprow .expr{padding:7px 10px;border-radius:8px}
+.maprow .arr{color:var(--dim);text-align:center}
+.maprow .val{padding:7px 10px;border-radius:8px;background:rgba(255,255,255,.03);border:1px solid var(--line);color:var(--text)}
+
+/* ---------- explode ---------- */
+.explode{display:grid;grid-template-columns:minmax(0,1fr) 170px minmax(0,1.6fr);gap:16px;align-items:center}
+.order-blob{border:1px solid var(--sf-line);border-radius:12px;padding:14px;background:var(--sf-bg);font-family:var(--f-mono);font-size:.78rem}
+.order-blob .chip{display:block;margin:6px 0;padding:6px 8px;border-radius:7px;border:1px dashed var(--line-2);animation:chipflash 6s infinite}
+.order-blob .chip:nth-child(2){animation-delay:.0s}
+.order-blob .chip:nth-child(3){animation-delay:.7s}
+.order-blob .chip:nth-child(4){animation-delay:1.4s}
+@keyframes chipflash{0%,4%{background:transparent;border-color:var(--line-2)}8%,18%{background:rgba(94,240,200,.18);border-color:var(--mint)}26%,100%{background:transparent;border-color:var(--line-2)}}
+.flatten-arrow{text-align:center;font-family:var(--f-mono);font-size:.74rem;color:var(--mint)}
+.flatten-arrow svg{margin:6px auto;min-width:0}
+table{border-collapse:collapse;width:100%;font-size:.86rem}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-family:var(--f-mono);font-weight:400;font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);background:rgba(255,255,255,.02)}
+.rows td{font-family:var(--f-mono);font-size:.76rem}
+.rows tbody tr{animation:rowin 6s infinite both}
+.rows tbody tr:nth-child(1){animation-delay:.25s}
+.rows tbody tr:nth-child(2){animation-delay:.95s}
+.rows tbody tr:nth-child(3){animation-delay:1.65s}
+@keyframes rowin{0%{opacity:0;transform:translateX(-70px)}10%,80%{opacity:1;transform:none}92%,100%{opacity:0;transform:none}}
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:rgba(8,12,17,.7)}
+
+/* compare table */
+.compare td:first-child{font-family:var(--f-mono);font-size:.8rem;white-space:nowrap}
+.compare tr.pick td{background:rgba(41,181,232,.04)}
+
+/* bad records */
+.bad{border:1px solid var(--line);border-radius:12px;padding:14px;background:rgba(10,14,20,.85);font-size:.88rem}
+.bad pre{margin:8px 0;padding:8px 10px;background:var(--code-bg);border-radius:8px;font-size:.72rem;white-space:pre-wrap;word-break:break-all;color:#b7c3cf;border:1px solid var(--line)}
+.bad .verdict{font-family:var(--f-mono);font-size:.74rem}
+
+/* idempotency */
+.ledger td{font-family:var(--f-mono);font-size:.76rem}
+.runs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.run{border:1px solid var(--line);border-radius:12px;padding:14px;background:rgba(10,14,20,.85);position:relative;overflow:hidden}
+.run .big{font-family:var(--f-head);font-weight:800;font-size:2.6rem;line-height:1}
+.run .big small{font-weight:200;font-size:1rem;color:var(--muted)}
+.run::after{content:"";position:absolute;inset:auto 0 0 0;height:3px;background:var(--c,var(--sf))}
+
+/* timeline */
+.tl{display:grid;grid-template-columns:150px repeat(3,minmax(0,1fr));gap:0;border:1px solid var(--line);border-radius:14px;overflow:hidden;background:rgba(8,12,17,.75)}
+.tl>div{padding:12px;border-bottom:1px solid var(--line);border-right:1px solid var(--line);font-size:.84rem;min-width:0}
+.tl .lane{font-family:var(--f-mono);font-size:.72rem;color:var(--muted);background:rgba(255,255,255,.02);display:flex;align-items:center}
+.tl .when{font-family:var(--f-head);font-weight:800;font-size:1rem;background:rgba(255,255,255,.03)}
+.tl .when small{display:block;font-family:var(--f-mono);font-weight:400;font-size:.7rem;color:var(--muted)}
+.mini{font-family:var(--f-mono);font-size:.72rem;display:block;padding:4px 7px;border-radius:6px;margin:3px 0;border:1px solid var(--line-2);background:rgba(255,255,255,.02);overflow-wrap:anywhere}
+.mini.new{border-color:rgba(94,240,200,.5);background:rgba(94,240,200,.07)}
+.mini.upd{border-color:rgba(255,210,95,.6);background:rgba(255,210,95,.08);animation:pulse 2.6s ease-in-out infinite}
+.mini.old{opacity:.55;text-decoration:line-through}
+
+/* cheat sheet */
+.meter{height:30px;border-radius:8px;display:flex;overflow:hidden;border:1px solid var(--line);font-family:var(--f-mono);font-size:.68rem}
+.meter div{display:flex;align-items:center;justify-content:center;text-align:center;padding:0 4px}
+.ladder{display:flex;align-items:flex-end;gap:8px;height:120px}
+.ladder div{flex:1;border-radius:6px 6px 0 0;background:linear-gradient(180deg,var(--sf),rgba(41,181,232,.2));display:flex;align-items:flex-start;justify-content:center;font-family:var(--f-mono);font-size:.68rem;color:#061018;font-weight:700;padding-top:4px}
+.kv{font-family:var(--f-mono);font-size:.78rem;color:var(--muted)}
+.cheat ul{margin:8px 0 0;padding-left:18px;font-size:.88rem}
+.cheat li{margin:3px 0}
+
+/* whiteboard */
+.wb{background:
+   linear-gradient(rgba(255,255,255,.03) 1px,transparent 1px) 0 0/24px 24px,
+   linear-gradient(90deg,rgba(255,255,255,.03) 1px,transparent 1px) 0 0/24px 24px,
+   #0c1117;border:2px solid #263342;border-radius:16px;padding:18px}
+.wb svg text{font-family:var(--f-mono)}
+.steps{counter-reset:k;list-style:none;padding:0;margin:0}
+.steps li{counter-increment:k;position:relative;padding:8px 0 8px 44px;border-bottom:1px dashed var(--line);font-size:.92rem}
+.steps li::before{content:counter(k,decimal-leading-zero);position:absolute;left:0;top:7px;font-family:var(--f-mono);font-size:.78rem;color:var(--sf);border:1px solid var(--sf-line);border-radius:6px;padding:1px 6px}
+.mistakes li{margin:6px 0;font-size:.9rem}
+.mistakes li::marker{color:var(--err)}
+
+/* lab */
+.lab{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+.lab .card{align-items:flex-start}
+.lab .card h3{font-size:1.25rem}
+footer{margin:50px 0 0;font-family:var(--f-mono);font-size:.72rem;color:var(--dim)}
+
+/* ---------- responsive ---------- */
+@media (max-width:1100px){
+  .g4,.lab{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .g3,.answer{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .explode{grid-template-columns:1fr}
+}
+@media (max-width:860px){
+  nav.side{transform:translateX(-100%);transition:transform .25s}
+  nav.side.open{transform:none}
+  .navtoggle{display:block;position:fixed;right:14px;top:12px;z-index:70;font-family:var(--f-mono);font-size:.78rem;background:var(--panel-2);color:var(--text);border:1px solid var(--line-2);border-radius:8px;padding:6px 12px}
+  main{margin-left:0}
+  .g2,.g3,.g4,.answer,.runs,.lab{grid-template-columns:1fr}
+  .tl{grid-template-columns:110px repeat(3,minmax(160px,1fr));overflow-x:auto}
+  .maprow{grid-template-columns:1fr;gap:4px}
+  .maprow .arr{display:none}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation:none!important;transition:none!important}
+  .js .reveal{opacity:1;transform:none}
+  .rows tbody tr{opacity:1}
+}
+
+/* ---------- print ---------- */
+@media print{
+  @page{margin:14mm}
+  :root{--text:#111;--muted:#444;--dim:#666;--line:#ccc;--line-2:#bbb;--code-bg:#f6f7f9;--sf-2:#0b6e99;--aws-2:#9a5200}
+  body{background:#fff!important;color:#111;font-size:11pt}
+  nav.side,.progress,.navtoggle,.copy{display:none!important}
+  main{margin:0;padding:0;max-width:none}
+  section{padding:24px 0;page-break-inside:auto;border-bottom:1px solid #ccc}
+  .sh .num{-webkit-text-stroke:1px #999}
+  .panel,.card,.diagram,.code,.bad,.run,.tl,.tablewrap,.wb,.problem,.answer li{background:#fff!important;border-color:#bbb!important;box-shadow:none!important;break-inside:avoid}
+  .diagram,.wb{background:#0b1016!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .code pre,.json{color:#111;white-space:pre-wrap;word-break:break-word}
+  .tk-kw{color:#0b6e99}.tk-str{color:#9a5200}.tk-com{color:#666}.tk-num{color:#127a5a}.tk-fn{color:#a3195b}
+  *,*::before,*::after{animation:none!important;transition:none!important}
+  .js .reveal{opacity:1!important;transform:none!important}
+  .rows tbody tr{opacity:1!important;transform:none!important}
+  a{color:#111;text-decoration:none}
+  .hero h1{font-size:40pt}
+}
+</style>
+
+<style id="sf-lt">
+[data-theme="light"]{
+  --bg-0:#f0f5fa; --bg-1:#e6ecf4; --bg-2:#dce5ef; --panel:#ffffff; --panel-2:#f4f7fc;
+  --line:#c8d6e3; --line-2:#b0c3d4;
+  --text:#1a2638; --muted:#4a6070; --dim:#6a8090;
+  --sf:#0a86c2; --sf-2:#085e8a; --sf-bg:rgba(10,134,194,.09); --sf-line:rgba(10,134,194,.4);
+  --aws:#b35800; --aws-2:#9a4c00; --aws-bg:rgba(179,88,0,.09); --aws-line:rgba(179,88,0,.4);
+  --ok:#0d7a4e; --err:#c0392b; --warn:#9a6e00; --code-bg:#eef3f8;
+  --pink:#c0186a; --mint:#0a7a60; --coral:#c04020;
+}
+[data-theme="light"] body{
+  background:#f0f5fa!important; background-image:none!important;
+  background-color:#f0f5fa!important; background-attachment:initial!important;
+  color:#1a2638!important;
+}
+/* Sidebar / nav */
+[data-theme="light"] nav,
+[data-theme="light"] .nav-side,
+[data-theme="light"] aside,
+[data-theme="light"] .sidebar{
+  background:rgba(224,234,244,.97)!important; border-color:#c8d6e3!important;
+}
+[data-theme="light"] .toc a,
+[data-theme="light"] .nav a{ color:#3a5570!important; }
+[data-theme="light"] .toc a.active,
+[data-theme="light"] .nav a.active{
+  background:rgba(10,134,194,.12)!important;
+  border-left-color:#0a86c2!important; color:#0d1a2e!important;
+}
+/* Section / panel cards */
+[data-theme="light"] section,
+[data-theme="light"] .section-card,
+[data-theme="light"] .card,
+[data-theme="light"] .pane,
+[data-theme="light"] .panel-box{
+  background:#ffffff!important; border-color:#c8d6e3!important;
+}
+/* Headers */
+[data-theme="light"] h1,
+[data-theme="light"] h2,
+[data-theme="light"] h3,
+[data-theme="light"] h4{ color:#1a2638!important; }
+[data-theme="light"] b,
+[data-theme="light"] strong{ color:#1a2638!important; }
+/* Code */
+[data-theme="light"] code{
+  background:#1e2d3c!important; color:#d0dce8!important; border:none!important;
+}
+[data-theme="light"] pre{ background:#1e2d3c!important; color:#d0dce8!important; }
+/* SVG / diagram — keep dark */
+[data-theme="light"] .diagram-bg,
+[data-theme="light"] .arch-bg{ background:#0b1320!important; }
+/* Text */
+[data-theme="light"] p,
+[data-theme="light"] li{ color:#1a2638!important; }
+[data-theme="light"] .muted-text,
+[data-theme="light"] .caption{ color:#4a6070!important; }
+/* Badges / pills */
+[data-theme="light"] .badge,
+[data-theme="light"] .pill,
+[data-theme="light"] .tag{
+  background:#e0eaf4!important; border-color:#c8d6e3!important; color:#1a2638!important;
+}
+/* Tables */
+[data-theme="light"] table th{
+  background:#dce8f4!important; color:#1a2638!important; border-color:#c0d0e0!important;
+}
+[data-theme="light"] table td{
+  color:#1a2638!important; border-color:#d0dce8!important;
+}
+</style>
+</head>
+<body>
+<style id="sf-home-style">
+#sf-home-btn{
+  position:fixed;bottom:22px;right:22px;z-index:9998;
+  display:inline-flex;align-items:center;gap:7px;
+  padding:8px 18px 8px 14px;border-radius:999px;
+  background:rgba(255,255,255,.13);
+  border:1px solid rgba(255,255,255,.26);
+  color:#e5edf5;
+  font-family:system-ui,-apple-system,"Segoe UI",sans-serif;
+  font-size:12px;font-weight:600;letter-spacing:.04em;
+  text-decoration:none;cursor:pointer;
+  backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+  box-shadow:0 2px 12px rgba(0,0,0,.25);
+  transition:background .18s,border-color .18s,transform .18s,box-shadow .18s,color .18s;
+  white-space:nowrap;
+}
+#sf-home-btn::before{
+  content:"⌂";
+  font-size:14px;line-height:1;
+}
+#sf-home-btn:hover{
+  background:rgba(255,255,255,.24);
+  border-color:rgba(255,255,255,.46);
+  color:#fff;
+  transform:translateY(-2px);
+  box-shadow:0 6px 22px rgba(0,0,0,.35);
+  text-decoration:none;
+}
+/* Light theme — fires for all files that use data-theme="light" toggle */
+[data-theme="light"] #sf-home-btn{
+  background:rgba(11,27,43,.08);
+  border-color:rgba(11,27,43,.20);
+  color:#0b1b2b;
+  box-shadow:0 2px 12px rgba(0,0,0,.10);
+}
+[data-theme="light"] #sf-home-btn:hover{
+  background:rgba(10,134,194,.13);
+  border-color:rgba(10,134,194,.38);
+  color:#0a86c2;
+  box-shadow:0 6px 22px rgba(10,134,194,.18);
+}
+/* Interview QA files start in light mode via :root (paper theme) */
+body[style*="--paper"] #sf-home-btn,
+.mast ~ #sf-home-btn{
+  background:rgba(11,27,43,.07);
+  border-color:rgba(11,27,43,.18);
+  color:#15120f;
+}
+</style>
+<a id="sf-home-btn" href="index.html" title="Back to Course Home">Course Home</a>
+
+<button id="sf-thm" title="Toggle light / dark" onclick="sfThm()" style="position:fixed;top:10px;right:14px;z-index:9999;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.26);color:inherit;padding:5px 14px;border-radius:999px;font-size:12px;font-weight:600;cursor:pointer;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);letter-spacing:.04em;transition:all .2s;font-family:system-ui,sans-serif;white-space:nowrap">&#9728;&#xFE0F;&nbsp;Light</button>
+<div class="progress" aria-hidden="true"><i></i></div>
+<button class="navtoggle" type="button" aria-controls="sidenav" aria-expanded="false">Sections</button>
+
+<nav class="side" id="sidenav" aria-label="Sections">
+  <div class="brand">JSON→S3→<br>Snowflake <span>guide</span></div>
+  <div class="brand-sub">ShopStream · interview kit</div>
+  <div class="navprog" aria-hidden="true"><i></i></div>
+  <div class="navpct" aria-live="off">0% read</div>
+  <ol>
+    <li><a href="#hero"><b>00</b>The 30-second answer</a></li>
+    <li><a href="#architecture"><b>01</b>Big-picture architecture</a></li>
+    <li><a href="#security"><b>02</b>Security handshake</a></li>
+    <li><a href="#objects"><b>03</b>Every object, one card</a></li>
+    <li><a href="#variant"><b>04</b>JSON → VARIANT → rows</a></li>
+    <li><a href="#ndjson"><b>05</b>NDJSON vs. JSON array</a></li>
+    <li><a href="#modes"><b>06</b>Batch vs. continuous</a></li>
+    <li><a href="#errors"><b>07</b>Error-handling tree</a></li>
+    <li><a href="#idempotency"><b>08</b>Load metadata &amp; idempotency</a></li>
+    <li><a href="#upsert"><b>09</b>Incremental upsert</a></li>
+    <li><a href="#perf"><b>10</b>Performance &amp; cost</a></li>
+    <li><a href="#whiteboard"><b>11</b>Whiteboard version</a></li>
+    <li><a href="#lab"><b>12</b>Practice lab</a></li>
+  </ol>
+</nav>
+
+<main>
+
+<!-- ======================================================= 0 HERO -->
+<header class="hero" id="hero">
+  <div class="eyebrow reveal">Data-engineering interview · visual guide · fictional store “ShopStream”</div>
+  <h1 class="reveal" style="--d:1"><span class="a">JSON</span> <span class="arrow">→</span> <span class="a">S3</span> <span class="arrow">→</span> <span class="s">Snowflake</span></h1>
+  <p class="subtitle reveal" style="--d:2">The whole pipeline end to end, mostly as diagrams.</p>
+
+  <div class="problem reveal" style="--d:3">
+    <div class="q">Q</div>
+    <p>“You have data in <b>JSON</b>. Load it into <b>Snowflake</b> using <b>S3</b>. Walk me through it end to end.”</p>
+  </div>
+
+  <div class="answer-head reveal" style="--d:4">
+    <h3>The 30-second answer <span class="thin">(say it out loud)</span></h3>
+    <span><span class="pill aws">AWS side</span> <span class="pill sf">Snowflake side</span></span>
+  </div>
+  <ol class="answer">
+    <li class="reveal" style="--d:5"><strong>Land it in S3</strong>The producer writes NDJSON (gzip) to <code>s3://shopstream-raw-landing/landing/</code> under clear prefixes, aiming for 100–250 MB files.</li>
+    <li class="reveal" style="--d:6"><strong>Grant access without keys</strong>Create an IAM role and a storage integration, then lock the trust policy to Snowflake’s IAM user and external ID.</li>
+    <li class="reveal" style="--d:7"><strong>Point at it</strong>Create a JSON <em>file format</em> and an <em>external stage</em> on the prefix, then <code>LIST</code> it to prove access works.</li>
+    <li class="reveal" style="--d:8"><strong>Load raw</strong>Use <code>COPY INTO</code> a <b>VARIANT</b> table for the backfill, and <b>Snowpipe</b> (S3 event → SQS) for new files.</li>
+    <li class="reveal" style="--d:9"><strong>Model it</strong>Cast paths (<code>raw:customer.address.city::STRING</code>), <code>LATERAL FLATTEN</code> the items, and keep it incremental with a <b>stream + task MERGE</b>.</li>
+    <li class="reveal" style="--d:10"><strong>Make it safe</strong>Validate first, use <code>ON_ERROR</code> plus a quarantine table, rely on idempotent load metadata, and monitor <code>COPY_HISTORY</code>.</li>
+  </ol>
+</header>
+
+<!-- ======================================================= 1 ARCHITECTURE -->
+<section id="architecture">
+  <div class="sh reveal"><div class="num">01</div><h2><span class="kicker">Big picture</span>Architecture, end to end</h2></div>
+  <p class="lede reveal" style="--d:1">Amber is AWS and ice-blue is Snowflake. The moving dashes show where data flows, and the double arrow is the trust relationship.</p>
+
+  <div class="diagram reveal" style="--d:2">
+  <svg viewBox="0 0 1200 700" role="img" aria-labelledby="archT">
+    <title id="archT">Architecture: producer to S3, IAM trust, storage integration, stage, COPY or Snowpipe, raw VARIANT table, stream, task MERGE, curated tables, BI.</title>
+    <defs>
+      <marker id="mA" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#ff9a1f"/></marker>
+      <marker id="mS" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#29b5e8"/></marker>
+      <marker id="mM" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#5ef0c8"/></marker>
+      <linearGradient id="gA" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#2a1a06"/><stop offset="1" stop-color="#160f06"/></linearGradient>
+      <linearGradient id="gS" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#062231"/><stop offset="1" stop-color="#05141d"/></linearGradient>
+    </defs>
+    <!-- lanes -->
+    <rect x="6" y="10" width="1188" height="190" rx="16" fill="rgba(255,154,31,.05)" stroke="rgba(255,154,31,.35)" stroke-dasharray="4 6"/>
+    <text x="22" y="34" fill="#ff9a1f" font-size="13" font-weight="700">AWS · us-east-1</text>
+    <rect x="6" y="215" width="1188" height="478" rx="16" fill="rgba(41,181,232,.04)" stroke="rgba(41,181,232,.35)" stroke-dasharray="4 6"/>
+    <text x="22" y="240" fill="#29b5e8" font-size="13" font-weight="700">SNOWFLAKE · SHOPSTREAM_LAB</text>
+
+    <!-- AWS nodes -->
+    <g class="node glow-aws"><rect x="22" y="62" width="150" height="80" rx="12" fill="url(#gA)" stroke="#ff9a1f"/>
+      <text x="97" y="92" fill="#ffc061" font-size="13" text-anchor="middle" font-weight="700">Producer</text>
+      <text x="97" y="112" fill="#c9b79c" font-size="11" text-anchor="middle">ShopStream</text>
+      <text x="97" y="127" fill="#c9b79c" font-size="11" text-anchor="middle">order service</text></g>
+    <g class="node glow-aws"><rect x="230" y="44" width="270" height="140" rx="12" fill="url(#gA)" stroke="#ff9a1f"/>
+      <text x="246" y="66" fill="#ffc061" font-size="12.5" font-weight="700">S3 · shopstream-raw-landing</text>
+      <text x="252" y="92" fill="#e9d7bd" font-size="11">landing/orders/</text>
+      <text x="252" y="112" fill="#e9d7bd" font-size="11">landing/orders_array/</text>
+      <text x="252" y="132" fill="#e9d7bd" font-size="11">landing/orders_bad/</text>
+      <text x="252" y="152" fill="#ffc061" font-size="11">landing/orders_incremental/ ★</text>
+      <text x="252" y="172" fill="#8a7a63" font-size="10">★ watched by S3 event</text></g>
+    <g class="node glow-aws"><rect x="570" y="60" width="200" height="80" rx="12" fill="url(#gA)" stroke="#ff9a1f"/>
+      <text x="670" y="90" fill="#ffc061" font-size="13" text-anchor="middle" font-weight="700">SQS queue</text>
+      <text x="670" y="110" fill="#c9b79c" font-size="10.5" text-anchor="middle">Snowflake-owned ARN</text>
+      <text x="670" y="125" fill="#c9b79c" font-size="10.5" text-anchor="middle">(pipe notification_channel)</text></g>
+    <g class="node glow-aws"><rect x="860" y="44" width="240" height="110" rx="12" fill="url(#gA)" stroke="#ff9a1f"/>
+      <text x="980" y="70" fill="#ffc061" font-size="13" text-anchor="middle" font-weight="700">IAM role + trust policy</text>
+      <text x="980" y="92" fill="#e9d7bd" font-size="10.5" text-anchor="middle">snowflake-s3-access-role</text>
+      <text x="980" y="110" fill="#c9b79c" font-size="10.5" text-anchor="middle">policy: shopstream-snowflake-s3-read</text>
+      <text x="980" y="128" fill="#c9b79c" font-size="10.5" text-anchor="middle">Get · GetVersion · List · Location</text></g>
+
+    <!-- Snowflake nodes -->
+    <g class="node glow-sf"><rect x="230" y="262" width="270" height="92" rx="12" fill="url(#gS)" stroke="#29b5e8"/>
+      <text x="365" y="288" fill="#9be7ff" font-size="13" text-anchor="middle" font-weight="700">External stage + file format</text>
+      <text x="365" y="310" fill="#cfe9f3" font-size="11" text-anchor="middle">RAW.STG_S3_LANDING</text>
+      <text x="365" y="328" fill="#8fb6c6" font-size="10.5" text-anchor="middle">RAW.FF_JSON_NDJSON · RAW.FF_JSON_ARRAY</text></g>
+    <g class="node glow-sf"><rect x="860" y="262" width="240" height="80" rx="12" fill="url(#gS)" stroke="#29b5e8"/>
+      <text x="980" y="292" fill="#9be7ff" font-size="13" text-anchor="middle" font-weight="700">Storage integration</text>
+      <text x="980" y="314" fill="#cfe9f3" font-size="11" text-anchor="middle">S3_LANDING_INT</text>
+      <text x="980" y="330" fill="#8fb6c6" font-size="10" text-anchor="middle">holds role ARN · no keys</text></g>
+
+    <g class="node glow-sf"><rect x="560" y="376" width="200" height="58" rx="12" fill="url(#gS)" stroke="#29b5e8"/>
+      <text x="660" y="400" fill="#9be7ff" font-size="12.5" text-anchor="middle" font-weight="700">Snowpipe (continuous)</text>
+      <text x="660" y="420" fill="#8fb6c6" font-size="10.5" text-anchor="middle">RAW.PIPE_ORDERS_INCREMENTAL</text></g>
+    <g class="node glow-sf"><rect x="560" y="452" width="200" height="58" rx="12" fill="url(#gS)" stroke="#29b5e8"/>
+      <text x="660" y="476" fill="#9be7ff" font-size="12.5" text-anchor="middle" font-weight="700">COPY INTO (batch)</text>
+      <text x="660" y="496" fill="#8fb6c6" font-size="10.5" text-anchor="middle">LAB_WH · backfill / ad-hoc</text></g>
+
+    <g class="node glow-sf"><rect x="820" y="390" width="200" height="104" rx="12" fill="url(#gS)" stroke="#29b5e8" stroke-width="1.8"/>
+      <text x="920" y="416" fill="#9be7ff" font-size="13" text-anchor="middle" font-weight="700">RAW.ORDERS_RAW</text>
+      <text x="920" y="438" fill="#cfe9f3" font-size="10.5" text-anchor="middle">raw VARIANT</text>
+      <text x="920" y="454" fill="#8fb6c6" font-size="10.5" text-anchor="middle">src_file · src_row</text>
+      <text x="920" y="470" fill="#8fb6c6" font-size="10.5" text-anchor="middle">loaded_at</text>
+      <text x="920" y="486" fill="#5ef0c8" font-size="9.5" text-anchor="middle">append-only history</text></g>
+
+    <g class="node glow-sf"><rect x="1000" y="570" width="180" height="76" rx="12" fill="url(#gS)" stroke="#5ef0c8"/>
+      <text x="1090" y="598" fill="#5ef0c8" font-size="13" text-anchor="middle" font-weight="700">Stream</text>
+      <text x="1090" y="618" fill="#cfe9f3" font-size="10.5" text-anchor="middle">RAW.STRM_ORDERS_RAW</text>
+      <text x="1090" y="634" fill="#8fb6c6" font-size="10" text-anchor="middle">APPEND_ONLY · CDC offset</text></g>
+    <g class="node glow-sf"><rect x="740" y="570" width="200" height="76" rx="12" fill="url(#gS)" stroke="#5ef0c8"/>
+      <text x="840" y="598" fill="#5ef0c8" font-size="13" text-anchor="middle" font-weight="700">Task · MERGE</text>
+      <text x="840" y="618" fill="#cfe9f3" font-size="10.5" text-anchor="middle">CURATED.TSK_MERGE_ORDERS</text>
+      <text x="840" y="634" fill="#8fb6c6" font-size="10" text-anchor="middle">5 min · WHEN stream has data</text></g>
+    <g class="node glow-sf"><rect x="440" y="560" width="240" height="96" rx="12" fill="url(#gS)" stroke="#29b5e8" stroke-width="1.8"/>
+      <text x="560" y="586" fill="#9be7ff" font-size="13" text-anchor="middle" font-weight="700">CURATED (typed)</text>
+      <text x="560" y="610" fill="#cfe9f3" font-size="11" text-anchor="middle">CURATED.ORDERS</text>
+      <text x="560" y="628" fill="#cfe9f3" font-size="11" text-anchor="middle">CURATED.ORDER_ITEMS</text>
+      <text x="560" y="645" fill="#8fb6c6" font-size="9.5" text-anchor="middle">1 row/order · 1 row/line</text></g>
+    <g class="node"><rect x="150" y="570" width="220" height="76" rx="12" fill="#0d1520" stroke="#5d6c7d"/>
+      <text x="260" y="600" fill="#d9e1ea" font-size="13" text-anchor="middle" font-weight="700">BI / analytics</text>
+      <text x="260" y="620" fill="#8696a8" font-size="10.5" text-anchor="middle">dashboards · ML · ad-hoc SQL</text></g>
+
+    <!-- legend -->
+    <g transform="translate(36,392)">
+      <rect width="300" height="130" rx="10" fill="rgba(255,255,255,.02)" stroke="#1f2b38"/>
+      <text x="14" y="24" fill="#8696a8" font-size="11">LEGEND</text>
+      <path d="M14 46 H70" class="flow aws"/><text x="82" y="50" fill="#d9e1ea" font-size="11">bytes moving inside AWS</text>
+      <path d="M14 72 H70" class="flow sf"/><text x="82" y="76" fill="#d9e1ea" font-size="11">loads inside Snowflake</text>
+      <path d="M14 98 H70" class="flow mint"/><text x="82" y="102" fill="#d9e1ea" font-size="11">change data (CDC)</text>
+      <path d="M14 118 H70" stroke="#ffd25f" stroke-width="2" marker-start="url(#mA)" marker-end="url(#mS)" fill="none"/><text x="82" y="122" fill="#d9e1ea" font-size="11">trust / AssumeRole</text>
+    </g>
+
+    <!-- flows -->
+    <path d="M172 102 H226" class="flow aws" marker-end="url(#mA)"/>
+    <text x="178" y="94" fill="#c9b79c" font-size="10">PUT</text>
+    <path d="M500 100 H566" class="flow aws" marker-end="url(#mA)"/>
+    <text x="504" y="92" fill="#c9b79c" font-size="9.5">ObjectCreated</text>
+    <path d="M365 184 V258" class="flow aws" marker-end="url(#mA)"/>
+    <text x="374" y="226" fill="#c9b79c" font-size="10">LIST / GET</text>
+    <path d="M980 154 V258" stroke="#ffd25f" stroke-width="2.2" fill="none" marker-start="url(#mA)" marker-end="url(#mS)"/>
+    <text x="990" y="200" fill="#ffd25f" font-size="10.5">sts:AssumeRole</text>
+    <text x="990" y="215" fill="#ffd25f" font-size="10.5">+ ExternalId</text>
+    <path d="M860 302 H504" class="flow sf slow" marker-end="url(#mS)"/>
+    <text x="780" y="294" fill="#8fb6c6" font-size="10">authorizes</text>
+    <path d="M670 140 V372" class="flow aws" marker-end="url(#mA)"/>
+    <text x="678" y="250" fill="#c9b79c" font-size="10">notify</text>
+    <path d="M470 354 V405 H556" class="flow sf" marker-end="url(#mS)"/>
+    <path d="M430 354 V481 H556" class="flow sf" marker-end="url(#mS)"/>
+    <path d="M760 405 H816" class="flow sf" marker-end="url(#mS)"/>
+    <path d="M760 481 H816" class="flow sf" marker-end="url(#mS)"/>
+    <path d="M1020 442 H1090 V566" class="flow mint" marker-end="url(#mM)"/>
+    <path d="M1000 608 H944" class="flow mint" marker-end="url(#mM)"/>
+    <path d="M740 608 H684" class="flow sf" marker-end="url(#mS)"/>
+    <path d="M440 608 H374" class="flow sf" marker-end="url(#mS)"/>
+    <circle cx="670" cy="372" r="5" fill="#ff9a1f" class="pulse"/>
+  </svg>
+  </div>
+  <p class="caption">Two loaders feed the same RAW table: COPY for history and backfill, Snowpipe for new files. Everything downstream of RAW stays the same either way.</p>
+</section>
+
+<!-- ======================================================= 2 SECURITY -->
+<section id="security">
+  <div class="sh reveal"><div class="num">02</div><h2><span class="kicker">Security handshake</span>Snowflake IAM user ↔ AWS IAM role</h2></div>
+  <p class="lede reveal" style="--d:1">You never paste an access key into Snowflake. Snowflake has its own AWS IAM user, and your role lets that user in only when the request carries <b>your</b> external ID.</p>
+
+  <div class="diagram reveal" style="--d:2">
+  <svg viewBox="0 0 1200 640" role="img" aria-labelledby="secT">
+    <title id="secT">Sequence diagram of the storage integration trust setup and the runtime AssumeRole flow.</title>
+    <defs>
+      <marker id="sA" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#ff9a1f"/></marker>
+      <marker id="sS" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#29b5e8"/></marker>
+      <marker id="sW" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#d9e1ea"/></marker>
+      <marker id="sY" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#ffd25f"/></marker>
+    </defs>
+    <!-- actors -->
+    <g font-size="12" text-anchor="middle" font-weight="700">
+      <rect x="40" y="18" width="140" height="50" rx="10" fill="#141c26" stroke="#8696a8"/><text x="110" y="40" fill="#d9e1ea">You</text><text x="110" y="57" fill="#8696a8" font-size="10" font-weight="400">data engineer</text>
+      <rect x="270" y="18" width="160" height="50" rx="10" fill="#241707" stroke="#ff9a1f"/><text x="350" y="40" fill="#ffc061">AWS IAM role</text><text x="350" y="57" fill="#c9b79c" font-size="10" font-weight="400">+ trust policy</text>
+      <rect x="520" y="18" width="160" height="50" rx="10" fill="#06202d" stroke="#29b5e8"/><text x="600" y="40" fill="#9be7ff">S3_LANDING_INT</text><text x="600" y="57" fill="#8fb6c6" font-size="10" font-weight="400">storage integration</text>
+      <rect x="770" y="18" width="170" height="50" rx="10" fill="#06202d" stroke="#29b5e8"/><text x="855" y="40" fill="#9be7ff">Snowflake IAM user</text><text x="855" y="57" fill="#8fb6c6" font-size="10" font-weight="400">AWS identity, owned by Snowflake</text>
+      <rect x="1030" y="18" width="140" height="50" rx="10" fill="#241707" stroke="#ff9a1f"/><text x="1100" y="40" fill="#ffc061">S3 bucket</text><text x="1100" y="57" fill="#c9b79c" font-size="10" font-weight="400">shopstream-raw-landing</text>
+    </g>
+    <g stroke-dasharray="3 6" stroke-width="1.4">
+      <line x1="110" y1="68" x2="110" y2="625" stroke="#5d6c7d"/>
+      <line x1="350" y1="68" x2="350" y2="625" stroke="rgba(255,154,31,.5)"/>
+      <line x1="600" y1="68" x2="600" y2="625" stroke="rgba(41,181,232,.5)"/>
+      <line x1="855" y1="68" x2="855" y2="625" stroke="rgba(41,181,232,.5)"/>
+      <line x1="1100" y1="68" x2="1100" y2="625" stroke="rgba(255,154,31,.5)"/>
+    </g>
+    <text x="20" y="100" fill="#8696a8" font-size="11">SETUP (one time, in this order)</text>
+    <!-- 1 -->
+    <g font-size="11.5">
+      <circle cx="80" cy="128" r="11" fill="#ff9a1f"/><text x="80" y="132" fill="#111" text-anchor="middle" font-weight="700">1</text>
+      <path d="M110 128 H344" stroke="#ff9a1f" stroke-width="2" marker-end="url(#sA)" fill="none"/>
+      <text x="120" y="120" fill="#ffc061">create policy + role (placeholder trust)</text>
+      <!-- 2 -->
+      <circle cx="80" cy="178" r="11" fill="#29b5e8"/><text x="80" y="182" fill="#111" text-anchor="middle" font-weight="700">2</text>
+      <path d="M110 178 H594" stroke="#29b5e8" stroke-width="2" marker-end="url(#sS)" fill="none"/>
+      <text x="370" y="170" fill="#9be7ff">CREATE STORAGE INTEGRATION (role ARN, allowed locations)</text>
+      <!-- 3 -->
+      <circle cx="80" cy="228" r="11" fill="#29b5e8"/><text x="80" y="232" fill="#111" text-anchor="middle" font-weight="700">3</text>
+      <path d="M600 228 H116" stroke="#9be7ff" stroke-width="2" stroke-dasharray="6 5" marker-end="url(#sS)" fill="none"/>
+      <text x="300" y="220" fill="#9be7ff">DESC INTEGRATION → STORAGE_AWS_IAM_USER_ARN + STORAGE_AWS_EXTERNAL_ID</text>
+      <!-- 4 -->
+      <circle cx="80" cy="278" r="11" fill="#ff9a1f"/><text x="80" y="282" fill="#111" text-anchor="middle" font-weight="700">4</text>
+      <path d="M110 278 H344" stroke="#ff9a1f" stroke-width="2" marker-end="url(#sA)" fill="none"/>
+      <text x="120" y="270" fill="#ffc061">update trust: Principal = user ARN</text>
+      <text x="370" y="282" fill="#ffd25f">Condition sts:ExternalId = &lt;external id&gt;</text>
+      <!-- 5 -->
+      <circle cx="80" cy="328" r="11" fill="#29b5e8"/><text x="80" y="332" fill="#111" text-anchor="middle" font-weight="700">5</text>
+      <path d="M110 328 H594" stroke="#29b5e8" stroke-width="2" marker-end="url(#sS)" fill="none"/>
+      <text x="200" y="320" fill="#9be7ff">CREATE STAGE … STORAGE_INTEGRATION = S3_LANDING_INT; LIST @stage</text>
+    </g>
+    <line x1="20" y1="370" x2="1180" y2="370" stroke="#2a3a4b"/>
+    <text x="20" y="394" fill="#8696a8" font-size="11">RUNTIME (every LIST / COPY / Snowpipe load)</text>
+    <g font-size="11.5">
+      <circle cx="80" cy="428" r="11" fill="#ffd25f"/><text x="80" y="432" fill="#111" text-anchor="middle" font-weight="700">6</text>
+      <path d="M855 428 H356" stroke="#ffd25f" stroke-width="2.2" marker-end="url(#sY)" fill="none" class="flow" style="stroke:#ffd25f"/>
+      <text x="470" y="420" fill="#ffd25f">sts:AssumeRole(role ARN, ExternalId)</text>
+      <circle cx="80" cy="478" r="11" fill="#ff9a1f"/><text x="80" y="482" fill="#111" text-anchor="middle" font-weight="700">7</text>
+      <path d="M350 478 H849" stroke="#ff9a1f" stroke-width="2" stroke-dasharray="6 5" marker-end="url(#sA)" fill="none"/>
+      <text x="420" y="470" fill="#ffc061">trust checks out → short-lived STS credentials</text>
+      <circle cx="80" cy="528" r="11" fill="#29b5e8"/><text x="80" y="532" fill="#111" text-anchor="middle" font-weight="700">8</text>
+      <path d="M855 528 H1094" class="flow sf" marker-end="url(#sS)"/>
+      <text x="880" y="520" fill="#9be7ff">ListBucket / GetObject</text>
+      <circle cx="80" cy="578" r="11" fill="#ff9a1f"/><text x="80" y="582" fill="#111" text-anchor="middle" font-weight="700">9</text>
+      <path d="M1100 578 H861" class="flow aws" marker-end="url(#sA)"/>
+      <text x="890" y="570" fill="#ffc061">JSON bytes → stage → COPY</text>
+    </g>
+    <rect x="130" y="440" width="190" height="150" rx="10" fill="rgba(255,97,112,.06)" stroke="rgba(255,97,112,.5)" stroke-dasharray="4 4"/>
+    <text x="225" y="466" fill="#ff6170" font-size="11" text-anchor="middle" font-weight="700">Never in Snowflake:</text>
+    <text x="225" y="490" fill="#d9e1ea" font-size="10.5" text-anchor="middle">AWS_KEY_ID</text>
+    <text x="225" y="508" fill="#d9e1ea" font-size="10.5" text-anchor="middle">AWS_SECRET_KEY</text>
+    <text x="225" y="534" fill="#8696a8" font-size="10" text-anchor="middle">no long-lived secret</text>
+    <text x="225" y="550" fill="#8696a8" font-size="10" text-anchor="middle">to leak, rotate, or</text>
+    <text x="225" y="566" fill="#8696a8" font-size="10" text-anchor="middle">hard-code in SQL</text>
+  </svg>
+  </div>
+
+  <div class="grid g3" style="margin-top:18px">
+    <div class="panel aws-edge reveal" style="--d:1">
+      <h3 class="aws">Why no access keys?</h3>
+      <p style="margin:0;font-size:.92rem">The integration stores only a <b>role ARN</b>. AWS issues temporary credentials on each assume, so you have nothing to rotate. Revoking access means editing the trust policy and nothing else. Admins create the integration once and grant <code>USAGE</code> to engineers.</p>
+    </div>
+    <div class="panel reveal" style="--d:2;border-color:rgba(255,210,95,.45)">
+      <h3 class="warn">External ID = confused-deputy guard</h3>
+      <p style="margin:0;font-size:.92rem">Many Snowflake customers can share the same Snowflake IAM user. The external ID is unique to <b>your</b> integration, so another account can’t point its integration at your role ARN and read your bucket.</p>
+    </div>
+    <div class="panel sf-edge reveal" style="--d:3">
+      <h3 class="sf">Classic gotcha</h3>
+      <p style="margin:0;font-size:.92rem">Running <code>CREATE OR REPLACE</code> on the integration <b>can generate a new external ID</b>, which breaks the trust and gives you “access denied” on the next LIST. Prefer <code>ALTER</code>, and run <code>DESC</code> again whenever you recreate it.</p>
+    </div>
+  </div>
+
+  <div class="grid g2" style="margin-top:6px">
+    <div class="code reveal"><div class="code-h"><span>SQL · steps 2, 3, 5</span><button class="copy" type="button">Copy</button></div><pre><code class="sql">USE ROLE ACCOUNTADMIN;  -- or a role with CREATE INTEGRATION
+
+CREATE STORAGE INTEGRATION S3_LANDING_INT
+  TYPE = EXTERNAL_STAGE
+  STORAGE_PROVIDER = 'S3'
+  ENABLED = TRUE
+  STORAGE_AWS_ROLE_ARN = 'arn:aws:iam::111122223333:role/snowflake-s3-access-role'
+  STORAGE_ALLOWED_LOCATIONS = ('s3://shopstream-raw-landing/landing/');
+
+DESC INTEGRATION S3_LANDING_INT;
+-- copy STORAGE_AWS_IAM_USER_ARN and STORAGE_AWS_EXTERNAL_ID into the trust policy
+
+GRANT USAGE ON INTEGRATION S3_LANDING_INT TO ROLE LAB_ENGINEER;
+
+USE ROLE LAB_ENGINEER;
+CREATE STAGE SHOPSTREAM_LAB.RAW.STG_S3_LANDING
+  URL = 's3://shopstream-raw-landing/landing/'
+  STORAGE_INTEGRATION = S3_LANDING_INT
+  FILE_FORMAT = SHOPSTREAM_LAB.RAW.FF_JSON_NDJSON;
+
+LIST @SHOPSTREAM_LAB.RAW.STG_S3_LANDING;   -- proves the handshake works</code></pre></div>
+    <div class="code reveal" style="--d:1"><div class="code-h"><span>JSON · IAM trust policy (step 4)</span><button class="copy" type="button">Copy</button></div><pre><code class="json">{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": {
+        "AWS": "&lt;STORAGE_AWS_IAM_USER_ARN from DESC INTEGRATION&gt;"
+      },
+      "Action": "sts:AssumeRole",
+      "Condition": {
+        "StringEquals": {
+          "sts:ExternalId": "&lt;STORAGE_AWS_EXTERNAL_ID from DESC INTEGRATION&gt;"
+        }
+      }
+    }
+  ]
+}</code></pre></div>
+  </div>
+</section>
+
+<!-- ======================================================= 3 OBJECTS -->
+<section id="objects">
+  <div class="sh reveal"><div class="num">03</div><h2><span class="kicker">Building blocks</span>Every object, one card each</h2></div>
+  <p class="lede reveal" style="--d:1">There are seven Snowflake objects, each with one job. If you can explain each one in a sentence, you’ve covered most of the interview.</p>
+
+  <div class="grid g3">
+    <!-- integration -->
+    <article class="card reveal" style="--d:1">
+      <div class="top"><svg class="ico" viewBox="0 0 42 42"><rect x="3" y="3" width="36" height="36" rx="9" fill="rgba(255,154,31,.12)" stroke="#ff9a1f"/><path d="M14 22a7 7 0 1 1 7 7" stroke="#ffc061" stroke-width="2.2" fill="none"/><circle cx="21" cy="22" r="2.6" fill="#29b5e8"/><path d="M21 29v6" stroke="#29b5e8" stroke-width="2.2"/></svg>
+        <div><h3>Storage integration</h3><div class="name">S3_LANDING_INT</div></div></div>
+      <p class="what">An account-level object that holds the IAM role ARN and the allowed S3 locations. It’s Snowflake’s half of the trust.</p>
+      <p class="analogy">A building keycard registered with security. You get a badge, not a copy of the master key.</p>
+      <div class="code"><div class="code-h"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code class="sql">CREATE STORAGE INTEGRATION S3_LANDING_INT
+  TYPE = EXTERNAL_STAGE
+  STORAGE_PROVIDER = 'S3'
+  ENABLED = TRUE
+  STORAGE_AWS_ROLE_ARN = 'arn:aws:iam::111122223333:role/snowflake-s3-access-role'
+  STORAGE_ALLOWED_LOCATIONS = ('s3://shopstream-raw-landing/landing/');</code></pre></div>
+    </article>
+    <!-- file format -->
+    <article class="card reveal" style="--d:2">
+      <div class="top"><svg class="ico" viewBox="0 0 42 42"><rect x="3" y="3" width="36" height="36" rx="9" fill="rgba(41,181,232,.12)" stroke="#29b5e8"/><text x="21" y="27" font-size="13" text-anchor="middle" fill="#9be7ff" font-family="JetBrains Mono,monospace">{ }</text></svg>
+        <div><h3>File format</h3><div class="name">RAW.FF_JSON_NDJSON · RAW.FF_JSON_ARRAY</div></div></div>
+      <p class="what">A named set of parsing rules: type, compression, and whether to strip the outer <code>[ ]</code>. You can reuse it across stages, COPY, and pipes.</p>
+      <p class="analogy">A reading-glasses prescription. The same file reads differently depending on the lens.</p>
+      <div class="code"><div class="code-h"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code class="sql">CREATE FILE FORMAT RAW.FF_JSON_NDJSON
+  TYPE = JSON
+  STRIP_OUTER_ARRAY = FALSE
+  COMPRESSION = AUTO;
+
+CREATE FILE FORMAT RAW.FF_JSON_ARRAY
+  TYPE = JSON
+  STRIP_OUTER_ARRAY = TRUE;</code></pre></div>
+    </article>
+    <!-- stage -->
+    <article class="card reveal" style="--d:3">
+      <div class="top"><svg class="ico" viewBox="0 0 42 42"><rect x="3" y="3" width="36" height="36" rx="9" fill="rgba(41,181,232,.12)" stroke="#29b5e8"/><path d="M11 15h20l-3 14H14z" fill="none" stroke="#9be7ff" stroke-width="2"/><path d="M11 15l4-5h12l4 5" fill="none" stroke="#ff9a1f" stroke-width="2"/></svg>
+        <div><h3>External stage</h3><div class="name">RAW.STG_S3_LANDING</div></div></div>
+      <p class="what">A named pointer to an S3 URL that uses the integration and a default file format. COPY and Snowpipe read from <code>@stage/prefix/</code>.</p>
+      <p class="analogy">A loading dock door that opens onto the S3 warehouse. You can browse it with <code>LIST</code> and query it before you load anything.</p>
+      <div class="code"><div class="code-h"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code class="sql">CREATE STAGE RAW.STG_S3_LANDING
+  URL = 's3://shopstream-raw-landing/landing/'
+  STORAGE_INTEGRATION = S3_LANDING_INT
+  FILE_FORMAT = RAW.FF_JSON_NDJSON;
+
+LIST @RAW.STG_S3_LANDING/orders/;</code></pre></div>
+    </article>
+    <!-- table -->
+    <article class="card reveal" style="--d:4">
+      <div class="top"><svg class="ico" viewBox="0 0 42 42"><rect x="3" y="3" width="36" height="36" rx="9" fill="rgba(41,181,232,.12)" stroke="#29b5e8"/><rect x="10" y="11" width="22" height="20" rx="3" fill="none" stroke="#9be7ff" stroke-width="2"/><path d="M10 18h22M18 18v13" stroke="#9be7ff" stroke-width="2"/></svg>
+        <div><h3>Raw table (VARIANT)</h3><div class="name">RAW.ORDERS_RAW</div></div></div>
+      <p class="what">One VARIANT column holds each whole order, plus lineage columns for which file, which line, and when. It’s schema-on-read, so new fields never break the load.</p>
+      <p class="analogy">An evidence locker. You store exactly what arrived, labeled, and interpret it later.</p>
+      <div class="code"><div class="code-h"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code class="sql">CREATE TABLE RAW.ORDERS_RAW (
+  raw       VARIANT,
+  src_file  STRING,
+  src_row   NUMBER,
+  loaded_at TIMESTAMP_LTZ DEFAULT CURRENT_TIMESTAMP()
+);
+
+COPY INTO RAW.ORDERS_RAW (raw, src_file, src_row)
+  FROM (SELECT $1, METADATA$FILENAME, METADATA$FILE_ROW_NUMBER
+        FROM @RAW.STG_S3_LANDING/orders/)
+  FILE_FORMAT = (FORMAT_NAME = 'RAW.FF_JSON_NDJSON')
+  ON_ERROR = 'ABORT_STATEMENT';</code></pre></div>
+    </article>
+    <!-- pipe -->
+    <article class="card reveal" style="--d:5">
+      <div class="top"><svg class="ico" viewBox="0 0 42 42"><rect x="3" y="3" width="36" height="36" rx="9" fill="rgba(41,181,232,.12)" stroke="#29b5e8"/><path d="M8 21h26" stroke="#9be7ff" stroke-width="5" stroke-linecap="round"/><path d="M8 21h26" stroke="#061018" stroke-width="1.6" stroke-dasharray="3 3" class="flow" style="stroke:#ff9a1f"/></svg>
+        <div><h3>Pipe (Snowpipe)</h3><div class="name">RAW.PIPE_ORDERS_INCREMENTAL</div></div></div>
+      <p class="what">A COPY statement wrapped in serverless auto-ingest. S3 ObjectCreated events go to the pipe’s SQS queue, and new files load within about a minute.</p>
+      <p class="analogy">A doorbell on the loading dock. Each delivery rings it, and someone unloads right away.</p>
+      <div class="code"><div class="code-h"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code class="sql">CREATE PIPE RAW.PIPE_ORDERS_INCREMENTAL
+  AUTO_INGEST = TRUE
+AS
+COPY INTO RAW.ORDERS_RAW (raw, src_file, src_row)
+  FROM (SELECT $1, METADATA$FILENAME, METADATA$FILE_ROW_NUMBER
+        FROM @RAW.STG_S3_LANDING/orders_incremental/)
+  FILE_FORMAT = (FORMAT_NAME = 'RAW.FF_JSON_NDJSON');
+
+SHOW PIPES LIKE 'PIPE_ORDERS_INCREMENTAL' IN SCHEMA RAW;
+-- notification_channel = SQS ARN for the S3 event</code></pre></div>
+    </article>
+    <!-- stream -->
+    <article class="card reveal" style="--d:6">
+      <div class="top"><svg class="ico" viewBox="0 0 42 42"><rect x="3" y="3" width="36" height="36" rx="9" fill="rgba(94,240,200,.1)" stroke="#5ef0c8"/><path d="M9 16c4-4 8 4 12 0s8 4 12 0M9 26c4-4 8 4 12 0s8 4 12 0" fill="none" stroke="#5ef0c8" stroke-width="2"/></svg>
+        <div><h3>Stream</h3><div class="name">RAW.STRM_ORDERS_RAW</div></div></div>
+      <p class="what">A change-tracking offset on ORDERS_RAW that returns only rows added since the last time it was consumed. <code>APPEND_ONLY</code> fits an insert-only raw table.</p>
+      <p class="analogy">A bookmark in a log book. It shows only the new pages since you last read.</p>
+      <div class="code"><div class="code-h"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code class="sql">CREATE STREAM RAW.STRM_ORDERS_RAW
+  ON TABLE RAW.ORDERS_RAW
+  APPEND_ONLY = TRUE;
+
+SELECT SYSTEM$STREAM_HAS_DATA('RAW.STRM_ORDERS_RAW');</code></pre></div>
+    </article>
+    <!-- task -->
+    <article class="card reveal" style="--d:7">
+      <div class="top"><svg class="ico" viewBox="0 0 42 42"><rect x="3" y="3" width="36" height="36" rx="9" fill="rgba(94,240,200,.1)" stroke="#5ef0c8"/><circle cx="21" cy="21" r="10" fill="none" stroke="#5ef0c8" stroke-width="2"/><path d="M21 14v7l5 3" stroke="#5ef0c8" stroke-width="2" fill="none"/></svg>
+        <div><h3>Task</h3><div class="name">CURATED.TSK_MERGE_ORDERS</div></div></div>
+      <p class="what">A scheduled SQL job. It runs every 5 minutes but skips the run (and uses no warehouse) unless the stream has data.</p>
+      <p class="analogy">A cron job with a “nothing new? stay asleep” check built in.</p>
+      <div class="code"><div class="code-h"><span>SQL</span><button class="copy" type="button">Copy</button></div><pre><code class="sql">CREATE TASK CURATED.TSK_MERGE_ORDERS
+  WAREHOUSE = LAB_WH
+  SCHEDULE = '5 MINUTE'
+  WHEN SYSTEM$STREAM_HAS_DATA('RAW.STRM_ORDERS_RAW')
+AS
+MERGE INTO CURATED.ORDERS t
+USING (SELECT raw:order_id::STRING AS order_id, raw:status::STRING AS status
+       FROM RAW.STRM_ORDERS_RAW
+       WHERE raw:order_id IS NOT NULL
+       QUALIFY ROW_NUMBER() OVER (PARTITION BY raw:order_id::STRING
+                                  ORDER BY loaded_at DESC) = 1) s
+ON t.order_id = s.order_id
+WHEN MATCHED THEN UPDATE SET t.status = s.status
+WHEN NOT MATCHED THEN INSERT (order_id, status) VALUES (s.order_id, s.status);
+-- minimal version; the full two-table task is in section 09
+
+ALTER TASK CURATED.TSK_MERGE_ORDERS RESUME;  -- tasks start suspended</code></pre></div>
+    </article>
+    <!-- summary tile -->
+    <article class="card reveal" style="--d:8;border-style:dashed">
+      <h3>How they snap together</h3>
+      <svg viewBox="0 0 320 250" style="min-width:0">
+        <g font-size="11" font-family="JetBrains Mono,monospace">
+          <rect x="10" y="10" width="140" height="34" rx="8" fill="#241707" stroke="#ff9a1f"/><text x="80" y="31" text-anchor="middle" fill="#ffc061">IAM role</text>
+          <rect x="170" y="10" width="140" height="34" rx="8" fill="#06202d" stroke="#29b5e8"/><text x="240" y="31" text-anchor="middle" fill="#9be7ff">integration</text>
+          <path d="M150 27 H170" stroke="#ffd25f" stroke-width="2"/>
+          <rect x="170" y="70" width="140" height="34" rx="8" fill="#06202d" stroke="#29b5e8"/><text x="240" y="91" text-anchor="middle" fill="#9be7ff">stage</text>
+          <rect x="10" y="70" width="140" height="34" rx="8" fill="#06202d" stroke="#29b5e8"/><text x="80" y="91" text-anchor="middle" fill="#9be7ff">file format</text>
+          <path d="M240 44 V70 M150 87 H170" stroke="#29b5e8" stroke-width="2"/>
+          <rect x="170" y="130" width="140" height="34" rx="8" fill="#06202d" stroke="#29b5e8"/><text x="240" y="151" text-anchor="middle" fill="#9be7ff">pipe / COPY</text>
+          <path d="M240 104 V130" class="flow sf"/>
+          <rect x="10" y="130" width="140" height="34" rx="8" fill="#06202d" stroke="#29b5e8"/><text x="80" y="151" text-anchor="middle" fill="#9be7ff">raw table</text>
+          <path d="M170 147 H150" class="flow sf"/>
+          <rect x="10" y="196" width="140" height="34" rx="8" fill="#062a24" stroke="#5ef0c8"/><text x="80" y="217" text-anchor="middle" fill="#5ef0c8">stream</text>
+          <rect x="170" y="196" width="140" height="34" rx="8" fill="#062a24" stroke="#5ef0c8"/><text x="240" y="217" text-anchor="middle" fill="#5ef0c8">task → curated</text>
+          <path d="M80 164 V196 M150 213 H170" class="flow mint"/>
+        </g>
+      </svg>
+    </article>
+  </div>
+</section>
+
+<!-- ======================================================= 4 VARIANT -->
+<section id="variant">
+  <div class="sh reveal"><div class="num">04</div><h2><span class="kicker">Schema-on-read</span>JSON → VARIANT → relational</h2></div>
+  <p class="lede reveal" style="--d:1">Here is a real record, <b>ORD-100001</b>, from the lab data. Each colored box in the JSON maps to one path expression in SQL. A path that doesn’t exist returns <b>NULL</b> instead of an error.</p>
+
+  <div class="grid g2">
+    <div class="reveal" style="--d:1">
+      <div class="json"><span class="muted">raw =</span> {
+  "order_id": <span class="hl c1">"ORD-100001"</span>,
+  "order_ts": <span class="hl c2">"2026-11-18T01:28:46Z"</span>,
+  "status": "PLACED",
+  "channel": "web",
+  "customer": {
+    "customer_id": "C-5015",
+    "name": <span class="hl c3">"Skyler Garcia"</span>,
+    "email": "skyler.garcia@example.com",
+    "address": {
+      "city": <span class="hl c4">"Seattle"</span>, "state": "WA",
+      "zip": "98101", "country": "US"
+    }
+  },
+  "items": <span class="hl c5">[ {SKU-1002 …}, {SKU-3001 …}, {SKU-4002 …} ]</span>,
+  "payment": {
+    "method": "paypal",
+    "amount": <span class="hl c6">344.09</span>,
+    "currency": "USD"
+  }
+  <span class="hl c7">/* no "shipping" key: status is PLACED */</span>
+}</div>
+    </div>
+    <div class="reveal" style="--d:2">
+      <div class="maprow"><span class="expr hl c1">raw:order_id::STRING</span><span class="arr">→</span><span class="val">ORD-100001</span></div>
+      <div class="maprow"><span class="expr hl c2">raw:order_ts::TIMESTAMP_TZ</span><span class="arr">→</span><span class="val">2026-11-18 01:28:46 Z</span></div>
+      <div class="maprow"><span class="expr hl c3">raw:customer.name::STRING</span><span class="arr">→</span><span class="val">Skyler Garcia</span></div>
+      <div class="maprow"><span class="expr hl c4">raw:customer.address.city::STRING</span><span class="arr">→</span><span class="val">Seattle</span></div>
+      <div class="maprow"><span class="expr hl c5">LATERAL FLATTEN(input =&gt; raw:items)</span><span class="arr">→</span><span class="val">3 rows ↓</span></div>
+      <div class="maprow"><span class="expr hl c6">TRY_TO_NUMBER(raw:payment.amount::STRING, 12, 2)</span><span class="arr">→</span><span class="val">344.09</span></div>
+      <div class="maprow"><span class="expr hl c7">raw:shipping.carrier::STRING</span><span class="arr">→</span><span class="val">NULL <span class="muted">(no error)</span></span></div>
+      <div class="callout sf" style="margin-top:14px"><b>Three rules:</b> <code>:</code> enters the VARIANT, <code>.</code> walks into nested objects, and <code>::</code> casts. Keys are <b>case-sensitive</b>, so <code>raw:Order_ID</code> is NULL. Without <code>::STRING</code> you get <code>"Seattle"</code> with the JSON quotes still on.</div>
+    </div>
+  </div>
+
+  <h3 style="margin-top:34px" class="reveal">The LATERAL FLATTEN “explode”: 1 order, 3 items, 3 rows</h3>
+  <div class="explode panel reveal" style="--d:1">
+    <div class="order-blob">
+      <div class="sf" style="font-weight:700;margin-bottom:4px">1 row in RAW.ORDERS_RAW</div>
+      <span class="chip">[0] SKU-1002 · USB-C Cable 2m · ×3 · 12.49</span>
+      <span class="chip">[1] SKU-3001 · Running Shoes · ×3 · 89.95</span>
+      <span class="chip">[2] SKU-4002 · Resistance Bands Set · ×3 · 22.50</span>
+      <div class="muted" style="font-size:.7rem;margin-top:6px">order_id = ORD-100001 · raw:items is an ARRAY</div>
+    </div>
+    <div class="flatten-arrow">
+      LATERAL FLATTEN
+      <svg viewBox="0 0 150 80" width="150"><path d="M6 40 H120" class="flow mint" stroke-width="3"/><path d="M118 26 L140 40 L118 54" fill="none" stroke="#5ef0c8" stroke-width="3"/><path d="M40 40 L120 14 M40 40 L120 66" class="flow mint slow"/></svg>
+      one output row per array element
+    </div>
+    <div class="tablewrap rows">
+      <table>
+        <thead><tr><th>order_id</th><th>f.index</th><th>sku</th><th>product_name</th><th>qty</th><th>unit_price</th><th>discount</th></tr></thead>
+        <tbody>
+          <tr><td>ORD-100001</td><td>0</td><td>SKU-1002</td><td>USB-C Cable 2m</td><td>3</td><td>12.49</td><td>0.10</td></tr>
+          <tr><td>ORD-100001</td><td>1</td><td>SKU-3001</td><td>Running Shoes</td><td>3</td><td>89.95</td><td>0.10</td></tr>
+          <tr><td>ORD-100001</td><td>2</td><td>SKU-4002</td><td>Resistance Bands Set</td><td>3</td><td>22.50</td><td>0.00</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div class="grid g2" style="margin-top:6px">
+    <div class="code reveal"><div class="code-h"><span>SQL · one row per order</span><button class="copy" type="button">Copy</button></div><pre><code class="sql">SELECT
+  raw:order_id::STRING                     AS order_id,
+  raw:order_ts::TIMESTAMP_TZ               AS order_ts,
+  raw:status::STRING                       AS status,
+  raw:customer.customer_id::STRING         AS customer_id,
+  raw:customer.address.city::STRING        AS city,
+  TRY_TO_NUMBER(raw:payment.amount::STRING, 12, 2) AS amount,
+  raw:shipping.carrier::STRING             AS carrier   -- NULL if absent
+FROM RAW.ORDERS_RAW
+WHERE raw:order_id IS NOT NULL;</code></pre></div>
+    <div class="code reveal" style="--d:1"><div class="code-h"><span>SQL · one row per order line</span><button class="copy" type="button">Copy</button></div><pre><code class="sql">SELECT
+  r.raw:order_id::STRING          AS order_id,
+  f.index + 1                     AS line_no,
+  f.value:sku::STRING             AS sku,
+  f.value:product_name::STRING    AS product_name,
+  f.value:qty::NUMBER             AS qty,
+  f.value:unit_price::NUMBER(10,2) AS unit_price,
+  f.value:discount::NUMBER(4,2)   AS discount
+FROM RAW.ORDERS_RAW r,
+     LATERAL FLATTEN(input =&gt; r.raw:items) f
+WHERE r.raw:order_id::STRING = 'ORD-100001';   -- returns 3 rows</code></pre></div>
+  </div>
+  <p class="caption">Across the full lab: 50 orders in the two NDJSON files flatten to 91 item rows, and adding the array file gives 60 orders and 111 items.</p>
+</section>
+
+<!-- ======================================================= 5 NDJSON -->
+<section id="ndjson">
+  <div class="sh reveal"><div class="num">05</div><h2><span class="kicker">File shape</span>NDJSON vs. one big JSON array</h2></div>
+  <p class="lede reveal" style="--d:1">The same orders can arrive in two shapes. The file format decides whether you get one row per order or a single giant row.</p>
+
+  <div class="diagram reveal" style="--d:2">
+  <svg viewBox="0 0 1200 520" role="img" aria-labelledby="ndT">
+    <title id="ndT">NDJSON produces one row per line. A JSON array produces one huge row unless STRIP_OUTER_ARRAY is TRUE.</title>
+    <defs><marker id="nS" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#29b5e8"/></marker>
+          <marker id="nR" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#ff6170"/></marker></defs>
+    <line x1="600" y1="20" x2="600" y2="500" stroke="#2a3a4b" stroke-dasharray="4 6"/>
+    <!-- left -->
+    <text x="30" y="40" fill="#9be7ff" font-size="16" font-weight="700">NDJSON · newline-delimited</text>
+    <text x="30" y="60" fill="#8696a8" font-size="11">orders_2026-11-18_part1.json · 25 lines</text>
+    <rect x="30" y="80" width="300" height="190" rx="10" fill="#0a0f15" stroke="#ff9a1f"/>
+    <g font-size="10.5" fill="#e9d7bd">
+      <text x="44" y="108">{"order_id":"ORD-100001",…}</text>
+      <text x="44" y="134">{"order_id":"ORD-100002",…}</text>
+      <text x="44" y="160">{"order_id":"ORD-100003",…}</text>
+      <text x="44" y="186" fill="#8a7a63">   ⋮</text>
+      <text x="44" y="212">{"order_id":"ORD-100025",…}</text>
+      <text x="44" y="248" fill="#8a7a63" font-size="10">no commas · no brackets · 1 line = 1 doc</text>
+    </g>
+    <path d="M330 104 H410" class="flow sf" marker-end="url(#nS)"/>
+    <path d="M330 130 H410" class="flow sf" marker-end="url(#nS)"/>
+    <path d="M330 156 H410" class="flow sf" marker-end="url(#nS)"/>
+    <path d="M330 208 H410" class="flow sf" marker-end="url(#nS)"/>
+    <rect x="414" y="80" width="160" height="190" rx="10" fill="#06202d" stroke="#29b5e8"/>
+    <text x="494" y="100" fill="#9be7ff" font-size="11" text-anchor="middle">ORDERS_RAW</text>
+    <g fill="rgba(41,181,232,.18)" stroke="#29b5e8"><rect x="426" y="94" width="136" height="0" /><rect x="426" y="108" width="136" height="18" rx="3"/><rect x="426" y="132" width="136" height="18" rx="3"/><rect x="426" y="156" width="136" height="18" rx="3"/><rect x="426" y="204" width="136" height="18" rx="3"/></g>
+    <text x="494" y="250" fill="#5ef0c8" font-size="12" text-anchor="middle" font-weight="700">25 rows ✓</text>
+    <rect x="30" y="300" width="544" height="96" rx="10" fill="rgba(41,181,232,.06)" stroke="rgba(41,181,232,.4)"/>
+    <text x="46" y="326" fill="#9be7ff" font-size="12" font-weight="700">FF_JSON_NDJSON · STRIP_OUTER_ARRAY = FALSE</text>
+    <text x="46" y="350" fill="#d9e1ea" font-size="11">• Streams line by line, and large files split for parallel loads</text>
+    <text x="46" y="370" fill="#d9e1ea" font-size="11">• A corrupt line only costs that line (ON_ERROR = CONTINUE)</text>
+    <text x="46" y="388" fill="#5ef0c8" font-size="11">• Preferred shape for pipelines</text>
+
+    <!-- right -->
+    <text x="630" y="40" fill="#ffc061" font-size="16" font-weight="700">One outer JSON array</text>
+    <text x="630" y="60" fill="#8696a8" font-size="11">orders_bulk_export_2026-11-17.json · 10 orders, pretty-printed</text>
+    <rect x="630" y="80" width="230" height="190" rx="10" fill="#0a0f15" stroke="#ff9a1f"/>
+    <g font-size="10.5" fill="#e9d7bd">
+      <text x="644" y="106" fill="#ff9a1f" font-size="16">[</text>
+      <text x="660" y="130">{"order_id":"ORD-100051",…},</text>
+      <text x="660" y="154">{"order_id":"ORD-100052",…},</text>
+      <text x="660" y="178" fill="#8a7a63">   ⋮</text>
+      <text x="660" y="202">{"order_id":"ORD-100060",…}</text>
+      <text x="644" y="230" fill="#ff9a1f" font-size="16">]</text>
+    </g>
+    <!-- branch A -->
+    <path d="M860 130 C900 130 900 110 930 110" stroke="#ff6170" stroke-width="2" fill="none" stroke-dasharray="6 6" marker-end="url(#nR)" class="flow" style="stroke:#ff6170"/>
+    <rect x="934" y="84" width="240" height="64" rx="10" fill="rgba(255,97,112,.07)" stroke="#ff6170"/>
+    <text x="946" y="104" fill="#ff6170" font-size="11" font-weight="700">STRIP_OUTER_ARRAY = FALSE</text>
+    <text x="946" y="122" fill="#d9e1ea" font-size="11">→ 1 row holding the whole array</text>
+    <text x="946" y="139" fill="#8696a8" font-size="10">hits the VARIANT size limit as exports grow</text>
+    <!-- branch B -->
+    <path d="M860 200 C900 200 900 220 930 220" class="flow sf" marker-end="url(#nS)"/>
+    <rect x="934" y="176" width="240" height="94" rx="10" fill="rgba(41,181,232,.07)" stroke="#29b5e8"/>
+    <text x="946" y="196" fill="#9be7ff" font-size="11" font-weight="700">STRIP_OUTER_ARRAY = TRUE</text>
+    <text x="946" y="214" fill="#d9e1ea" font-size="11">→ drops [ ], so each element</text>
+    <text x="946" y="230" fill="#d9e1ea" font-size="11">  becomes its own row</text>
+    <text x="946" y="256" fill="#5ef0c8" font-size="12" font-weight="700">10 rows ✓ (FF_JSON_ARRAY)</text>
+
+    <!-- 16 MB gauge -->
+    <text x="630" y="318" fill="#ffd25f" font-size="13" font-weight="700">The VARIANT row-size limit, to scale</text>
+    <rect x="630" y="332" width="544" height="26" rx="6" fill="#0a0f15" stroke="#2a3a4b"/>
+    <rect x="630" y="332" width="3" height="26" fill="#5ef0c8"/>
+    <rect x="630" y="332" width="544" height="26" rx="6" fill="none" stroke="#ffd25f"/>
+    <text x="640" y="349" fill="#5ef0c8" font-size="10">▲ one order ≈ 0.75 KB</text>
+    <text x="1164" y="349" fill="#ffd25f" font-size="10" text-anchor="end">16 MB per VARIANT value</text>
+    <text x="630" y="380" fill="#d9e1ea" font-size="11">One array ≈ 20,000 orders of this size fills one row. A 2 GB nightly export</text>
+    <text x="630" y="396" fill="#d9e1ea" font-size="11">as a single array fails unless you strip the outer array.</text>
+    <text x="630" y="420" fill="#8696a8" font-size="10">Note: newer Snowflake releases raise the max value size (up to 128 MB),</text>
+    <text x="630" y="434" fill="#8696a8" font-size="10">but “16 MB” is still the number interviewers expect, and you should design for small rows.</text>
+    <text x="30" y="440" fill="#8696a8" font-size="11">Rule of thumb: ask the producer for NDJSON. If you can’t, use STRIP_OUTER_ARRAY = TRUE.</text>
+    <text x="30" y="458" fill="#8696a8" font-size="11">If a single <tspan fill="#ffd25f">element</tspan> exceeds the limit, preprocess it upstream (split or flatten in Lambda/Glue).</text>
+  </svg>
+  </div>
+  <div class="code reveal"><div class="code-h"><span>SQL · same stage, different lens</span><button class="copy" type="button">Copy</button></div><pre><code class="sql">COPY INTO RAW.ORDERS_RAW (raw, src_file, src_row)
+  FROM (SELECT $1, METADATA$FILENAME, METADATA$FILE_ROW_NUMBER
+        FROM @RAW.STG_S3_LANDING/orders_array/)
+  FILE_FORMAT = (FORMAT_NAME = 'RAW.FF_JSON_ARRAY');   -- STRIP_OUTER_ARRAY = TRUE → 10 rows</code></pre></div>
+</section>
+
+<!-- ======================================================= 6 MODES -->
+<section id="modes">
+  <div class="sh reveal"><div class="num">06</div><h2><span class="kicker">Ingestion modes</span>Batch vs. continuous</h2></div>
+  <p class="lede reveal" style="--d:1">There are four ways to get S3 data into Snowflake, ordered here from slowest to freshest. Pick based on latency, file pattern, and who pays for compute.</p>
+
+  <div class="diagram reveal" style="--d:2">
+  <svg viewBox="0 0 1200 250" role="img" aria-labelledby="mdT">
+    <title id="mdT">Latency spectrum: COPY INTO hours, Snowpipe about a minute, Snowpipe Streaming seconds; external and Iceberg tables query data in place.</title>
+    <defs><linearGradient id="spec" x1="0" x2="1"><stop offset="0" stop-color="#ff9a1f"/><stop offset=".55" stop-color="#29b5e8"/><stop offset="1" stop-color="#5ef0c8"/></linearGradient></defs>
+    <rect x="40" y="110" width="820" height="10" rx="5" fill="url(#spec)"/>
+    <text x="40" y="150" fill="#8696a8" font-size="11">hours / scheduled</text>
+    <text x="860" y="150" fill="#8696a8" font-size="11" text-anchor="end">seconds</text>
+    <text x="450" y="176" fill="#5d6c7d" font-size="11" text-anchor="middle">data latency →</text>
+    <g font-size="12" text-anchor="middle">
+      <circle cx="120" cy="115" r="13" fill="#0b1016" stroke="#ff9a1f" stroke-width="3"/>
+      <text x="120" y="60" fill="#ffc061" font-weight="700">COPY INTO</text><text x="120" y="78" fill="#8696a8" font-size="10.5">your warehouse · batch</text>
+      <circle cx="520" cy="115" r="13" fill="#0b1016" stroke="#29b5e8" stroke-width="3"/><circle cx="520" cy="115" r="22" fill="none" stroke="#29b5e8" class="pulse"/>
+      <text x="520" y="60" fill="#9be7ff" font-weight="700">Snowpipe</text><text x="520" y="78" fill="#8696a8" font-size="10.5">S3 event → SQS · ~1 min</text>
+      <circle cx="800" cy="115" r="13" fill="#0b1016" stroke="#5ef0c8" stroke-width="3"/>
+      <text x="800" y="60" fill="#5ef0c8" font-weight="700">Snowpipe Streaming</text><text x="800" y="78" fill="#8696a8" font-size="10.5">rows via SDK/Kafka · no files</text>
+    </g>
+    <rect x="920" y="40" width="250" height="150" rx="12" fill="rgba(255,154,31,.06)" stroke="rgba(255,154,31,.5)" stroke-dasharray="5 5"/>
+    <text x="1045" y="66" fill="#ffc061" font-size="12" text-anchor="middle" font-weight="700">External / Iceberg tables</text>
+    <text x="1045" y="90" fill="#d9e1ea" font-size="11" text-anchor="middle">data stays in S3</text>
+    <text x="1045" y="108" fill="#d9e1ea" font-size="11" text-anchor="middle">query in place (no load)</text>
+    <text x="1045" y="132" fill="#8696a8" font-size="10.5" text-anchor="middle">a different axis:</text>
+    <text x="1045" y="148" fill="#8696a8" font-size="10.5" text-anchor="middle">“where does data live?”</text>
+    <text x="1045" y="172" fill="#8696a8" font-size="10.5" text-anchor="middle">open format · multi-engine</text>
+    <text x="40" y="225" fill="#8696a8" font-size="11">ShopStream uses COPY for the 11-18 backfill and Snowpipe for orders_incremental/. Both land in the same RAW table.</text>
+  </svg>
+  </div>
+
+  <div class="tablewrap reveal" style="--d:3;margin-top:16px">
+    <table class="compare">
+      <thead><tr><th>Option</th><th>Trigger</th><th>Latency</th><th>Compute / cost</th><th>Pick it when…</th></tr></thead>
+      <tbody>
+        <tr><td class="aws">COPY INTO</td><td>You (or a task / Airflow) run it</td><td>Minutes to hours</td><td>Your virtual warehouse, billed per second while running</td><td>Backfills, daily batches, one-off loads, and cases where you want full control and simple ops.</td></tr>
+        <tr class="pick"><td class="sf">Snowpipe (auto-ingest)</td><td>S3 ObjectCreated → SQS → pipe</td><td>About a minute</td><td>Serverless, billed by Snowflake for what you ingest, with no warehouse to manage</td><td>Files arrive continuously or unpredictably and you want them loaded hands-off. This is the default for “keep it loading.”</td></tr>
+        <tr><td style="color:var(--mint)">Snowpipe Streaming</td><td>Client SDK / Kafka connector pushes rows</td><td>Seconds</td><td>Serverless, and no files means no per-file overhead</td><td>The source is an event stream (Kafka, Kinesis via connector) and you need sub-minute freshness. Skip writing files to S3 at all.</td></tr>
+        <tr><td class="aws">External tables / Iceberg</td><td>Query reads S3 directly (refresh metadata via events)</td><td>Query-time</td><td>Warehouse at query time. Slower than native storage unless you use Iceberg with Snowflake-managed metadata.</td><td>Data must stay in S3 (data lake, shared with Spark/Athena), you query it rarely, or it’s exploratory. Choose Iceberg for an open table format with good performance.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="callout reveal"><b>Interview line:</b> “Use COPY for the backfill and Snowpipe for the steady state. If they need seconds-level latency from Kafka, use Snowpipe Streaming. If the data has to stay in the lake, use an Iceberg or external table.”</div>
+</section>
+
+<!-- ======================================================= 7 ERRORS -->
+<section id="errors">
+  <div class="sh reveal"><div class="num">07</div><h2><span class="kicker">When files are dirty</span>Error-handling decision tree</h2></div>
+  <p class="lede reveal" style="--d:1">COPY only catches <b>parse</b> errors. <b>Data-quality</b> problems in valid JSON load fine and have to be caught later, in the curated layer.</p>
+
+  <div class="diagram reveal" style="--d:2">
+  <svg viewBox="0 0 1200 640" role="img" aria-labelledby="erT">
+    <title id="erT">Decision tree: dry run with VALIDATION_MODE, pick ON_ERROR, inspect with VALIDATE, quarantine in an error table.</title>
+    <defs><marker id="eW" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#8696a8"/></marker></defs>
+    <g font-size="12" text-anchor="middle">
+      <!-- start -->
+      <path d="M600 20 L720 60 L600 100 L480 60 Z" fill="#141c26" stroke="#ffd25f"/>
+      <text x="600" y="56" fill="#ffd25f" font-weight="700">New / untrusted</text><text x="600" y="72" fill="#ffd25f" font-weight="700">files?</text>
+      <!-- yes -->
+      <path d="M480 60 H260 V128" stroke="#8696a8" stroke-width="1.6" fill="none" marker-end="url(#eW)"/><text x="380" y="52" fill="#5ef0c8">yes</text>
+      <rect x="110" y="132" width="300" height="70" rx="10" fill="#06202d" stroke="#29b5e8"/>
+      <text x="260" y="156" fill="#9be7ff" font-weight="700">① Dry run</text>
+      <text x="260" y="174" fill="#d9e1ea" font-size="11">VALIDATION_MODE = RETURN_ERRORS</text>
+      <text x="260" y="191" fill="#8696a8" font-size="10.5">loads nothing · lists parse errors</text>
+      <!-- no -->
+      <path d="M720 60 H940 V128" stroke="#8696a8" stroke-width="1.6" fill="none" marker-end="url(#eW)"/><text x="820" y="52" fill="#ff6170">no · trusted</text>
+      <rect x="790" y="132" width="300" height="70" rx="10" fill="#06202d" stroke="#29b5e8"/>
+      <text x="940" y="156" fill="#9be7ff" font-weight="700">COPY · ON_ERROR = ABORT_STATEMENT</text>
+      <text x="940" y="176" fill="#8696a8" font-size="10.5">the default for COPY: all or nothing</text>
+      <text x="940" y="192" fill="#8696a8" font-size="10.5">(Snowpipe defaults to SKIP_FILE)</text>
+      <!-- errors found? -->
+      <path d="M260 202 V236" stroke="#8696a8" stroke-width="1.6" fill="none" marker-end="url(#eW)"/>
+      <path d="M260 240 L360 275 L260 310 L160 275 Z" fill="#141c26" stroke="#ffd25f"/>
+      <text x="260" y="280" fill="#ffd25f" font-weight="700">errors?</text>
+      <path d="M360 275 H940 V206" stroke="#8696a8" stroke-width="1.6" fill="none" marker-end="url(#eW)" stroke-dasharray="5 5"/><text x="640" y="268" fill="#5ef0c8">none → load normally</text>
+      <path d="M260 310 V345 H600 V360" stroke="#8696a8" stroke-width="1.6" fill="none" marker-end="url(#eW)"/><text x="300" y="336" fill="#ff6170">yes → ② choose ON_ERROR</text>
+      <!-- choices -->
+      <path d="M600 364 V372 M210 372 H990 M210 372 V384 M600 372 V384 M990 372 V384" stroke="#8696a8" stroke-width="1.6" fill="none"/>
+      <rect x="60" y="388" width="300" height="92" rx="10" fill="rgba(255,97,112,.07)" stroke="#ff6170"/>
+      <text x="210" y="412" fill="#ff6170" font-weight="700">ABORT_STATEMENT</text>
+      <text x="210" y="432" fill="#d9e1ea" font-size="11">loads 0 rows if anything fails</text>
+      <text x="210" y="450" fill="#8696a8" font-size="10.5">finance-grade, all-or-nothing:</text>
+      <text x="210" y="466" fill="#8696a8" font-size="10.5">fix the file, then reload</text>
+      <rect x="450" y="388" width="300" height="92" rx="10" fill="rgba(255,210,95,.07)" stroke="#ffd25f"/>
+      <text x="600" y="412" fill="#ffd25f" font-weight="700">SKIP_FILE · SKIP_FILE_n · 'n%'</text>
+      <text x="600" y="432" fill="#d9e1ea" font-size="11">skips the whole bad file</text>
+      <text x="600" y="450" fill="#8696a8" font-size="10.5">other files still load;</text>
+      <text x="600" y="466" fill="#8696a8" font-size="10.5">use when a file is a unit of truth</text>
+      <rect x="840" y="388" width="300" height="92" rx="10" fill="rgba(94,240,200,.07)" stroke="#5ef0c8"/>
+      <text x="990" y="412" fill="#5ef0c8" font-weight="700">CONTINUE</text>
+      <text x="990" y="432" fill="#d9e1ea" font-size="11">loads good rows, rejects bad ones</text>
+      <text x="990" y="450" fill="#8696a8" font-size="10.5">lab: 11 lines → 9 loaded,</text>
+      <text x="990" y="466" fill="#8696a8" font-size="10.5">2 rejected</text>
+      <!-- validate -->
+      <path d="M210 480 V505 H600 M600 480 V520 M990 480 V505 H600" stroke="#8696a8" stroke-width="1.6" fill="none"/>
+      <path d="M600 505 V522" stroke="#8696a8" stroke-width="1.6" fill="none" marker-end="url(#eW)"/>
+      <rect x="400" y="526" width="400" height="44" rx="10" fill="#06202d" stroke="#29b5e8"/>
+      <text x="600" y="545" fill="#9be7ff" font-weight="700">③ SELECT * FROM TABLE(VALIDATE(…, JOB_ID =&gt; '_last'))</text>
+      <text x="600" y="561" fill="#8696a8" font-size="10.5">returns error · file · line · rejected_record</text>
+      <path d="M600 570 V590" stroke="#8696a8" stroke-width="1.6" fill="none" marker-end="url(#eW)"/>
+      <rect x="380" y="594" width="440" height="40" rx="10" fill="rgba(255,97,112,.08)" stroke="#ff6170"/>
+      <text x="600" y="619" fill="#ff6170" font-weight="700">④ INSERT INTO RAW.ORDERS_LOAD_ERRORS → alert → fix → reload</text>
+    </g>
+  </svg>
+  </div>
+
+  <h3 class="reveal" style="margin-top:26px">The 4 kinds of bad record in <span class="mono" style="font-weight:400;font-size:.95rem">orders_2026-11-19_corrupt.json</span></h3>
+  <div class="grid g4">
+    <div class="bad reveal" style="--d:1"><span class="pill err">parse error</span><h3 style="margin-top:8px">Truncated JSON</h3>
+      <pre>{"order_id": "ORD-BROKEN-1", "order_ts": "2026-11-19T10:00:00Z", "status": "PLACED", </pre>
+      <div class="verdict err">✗ rejected by COPY</div><div class="muted" style="font-size:.82rem">The writer crashed mid-line. VALIDATION_MODE catches this one.</div></div>
+    <div class="bad reveal" style="--d:2"><span class="pill err">parse error</span><h3 style="margin-top:8px">Unquoted keys</h3>
+      <pre>{order_id: ORD-BROKEN-2, status: PLACED}</pre>
+      <div class="verdict err">✗ rejected by COPY</div><div class="muted" style="font-size:.82rem">JavaScript-style, not JSON. A strict parser refuses it.</div></div>
+    <div class="bad reveal" style="--d:3"><span class="pill">valid JSON · bad data</span><h3 style="margin-top:8px">Missing order_id</h3>
+      <pre>{"order_ts": "2026-11-19T19:16:13Z", "status": "SHIPPED", "channel": "marketplace", "customer": {"customer_id": "C-5003", …}</pre>
+      <div class="verdict warn">✓ loads into RAW</div><div class="muted" style="font-size:.82rem">It’s filtered at the curated layer with <code>WHERE raw:order_id IS NOT NULL</code>, and you should count and alert on it.</div></div>
+    <div class="bad reveal" style="--d:4"><span class="pill">valid JSON · bad data</span><h3 style="margin-top:8px">Wrong type</h3>
+      <pre>"order_id": "ORD-100069", … "payment": {"method": "bank_transfer", "amount": "forty-two", …}</pre>
+      <div class="verdict warn">✓ loads into RAW</div><div class="muted" style="font-size:.82rem"><code>TRY_TO_NUMBER</code> turns it into NULL, where <code>::NUMBER</code> would fail the whole query. Flag it with a DQ check.</div></div>
+  </div>
+
+  <div class="grid g2" style="margin-top:6px">
+    <div class="code reveal"><div class="code-h"><span>SQL · ① dry run + ② real load</span><button class="copy" type="button">Copy</button></div><pre><code class="sql">-- VALIDATION_MODE and VALIDATE() don't support COPY with a SELECT
+-- transform, so run the dry run against a 1-column probe table.
+CREATE TEMPORARY TABLE RAW.ORDERS_PROBE (raw VARIANT);
+
+COPY INTO RAW.ORDERS_PROBE
+  FROM @RAW.STG_S3_LANDING/orders_bad/
+  FILE_FORMAT = (FORMAT_NAME = 'RAW.FF_JSON_NDJSON')
+  VALIDATION_MODE = RETURN_ERRORS;        -- shows the 2 parse errors, loads 0
+
+-- Real load: keep the good 9, reject the bad 2
+COPY INTO RAW.ORDERS_RAW (raw, src_file, src_row)
+  FROM (SELECT $1, METADATA$FILENAME, METADATA$FILE_ROW_NUMBER
+        FROM @RAW.STG_S3_LANDING/orders_bad/)
+  FILE_FORMAT = (FORMAT_NAME = 'RAW.FF_JSON_NDJSON')
+  ON_ERROR = 'CONTINUE';</code></pre></div>
+    <div class="code reveal" style="--d:1"><div class="code-h"><span>SQL · ③ inspect + ④ quarantine</span><button class="copy" type="button">Copy</button></div><pre><code class="sql">CREATE TABLE IF NOT EXISTS RAW.ORDERS_LOAD_ERRORS (
+  error STRING, file STRING, line NUMBER,
+  rejected_record STRING,
+  captured_at TIMESTAMP_LTZ DEFAULT CURRENT_TIMESTAMP()
+);
+
+-- Plain (non-transform) COPY into the probe, then VALIDATE that job
+COPY INTO RAW.ORDERS_PROBE
+  FROM @RAW.STG_S3_LANDING/orders_bad/
+  FILE_FORMAT = (FORMAT_NAME = 'RAW.FF_JSON_NDJSON')
+  ON_ERROR = 'CONTINUE';
+
+INSERT INTO RAW.ORDERS_LOAD_ERRORS (error, file, line, rejected_record)
+  SELECT error, file, line, rejected_record
+  FROM TABLE(VALIDATE(RAW.ORDERS_PROBE, JOB_ID =&gt; '_last'));
+
+-- Data-quality checks for the valid-but-wrong rows
+SELECT COUNT_IF(raw:order_id IS NULL)                          AS missing_id,
+       COUNT_IF(raw:payment.amount IS NOT NULL
+                AND TRY_TO_NUMBER(raw:payment.amount::STRING) IS NULL) AS bad_amount
+FROM RAW.ORDERS_RAW;</code></pre></div>
+  </div>
+</section>
+
+<!-- ======================================================= 8 IDEMPOTENCY -->
+<section id="idempotency">
+  <div class="sh reveal"><div class="num">08</div><h2><span class="kicker">Run it twice, safely</span>Load metadata and idempotency</h2></div>
+  <p class="lede reveal" style="--d:1">Every table keeps a ledger of which files it has already loaded. That’s why re-running the same COPY is safe and boring.</p>
+
+  <div class="grid g2">
+    <div class="panel sf-edge reveal" style="--d:1">
+      <h3 class="sf">The table’s load ledger <span class="thin">(kept 64 days)</span></h3>
+      <div class="tablewrap ledger" style="margin-top:10px">
+        <table>
+          <thead><tr><th>file (stage-relative)</th><th>ETag / checksum</th><th>status</th></tr></thead>
+          <tbody>
+            <tr><td>orders/orders_2026-11-18_part1.json</td><td>9f3c…a1</td><td class="ok">LOADED · 25 rows</td></tr>
+            <tr><td>orders/orders_2026-11-18_part2.json</td><td>41be…7d</td><td class="ok">LOADED · 25 rows</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="muted" style="font-size:.86rem;margin:10px 0 0">The key is the file <b>path plus content checksum</b>. Snowpipe keeps its own ledger on the pipe for <b>14 days</b>.</p>
+    </div>
+    <div class="panel reveal" style="--d:2">
+      <h3>Why a re-run loads 0 files</h3>
+      <svg viewBox="0 0 520 190" style="min-width:0">
+        <defs><marker id="iW" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#8696a8"/></marker></defs>
+        <g font-size="11">
+          <rect x="10" y="70" width="110" height="50" rx="8" fill="#06202d" stroke="#29b5e8"/><text x="65" y="92" fill="#9be7ff" text-anchor="middle">COPY INTO</text><text x="65" y="108" fill="#8696a8" text-anchor="middle" font-size="10">run #2</text>
+          <path d="M120 95 H170" stroke="#8696a8" stroke-width="1.6" marker-end="url(#iW)"/>
+          <path d="M240 50 L310 95 L240 140 L170 95 Z" fill="#141c26" stroke="#ffd25f"/><text x="240" y="92" fill="#ffd25f" text-anchor="middle">in the</text><text x="240" y="106" fill="#ffd25f" text-anchor="middle">ledger?</text>
+          <path d="M310 95 H360" stroke="#8696a8" stroke-width="1.6" marker-end="url(#iW)"/><text x="318" y="86" fill="#5ef0c8" font-size="10">yes</text>
+          <rect x="364" y="62" width="146" height="66" rx="8" fill="rgba(94,240,200,.07)" stroke="#5ef0c8"/>
+          <text x="437" y="86" fill="#5ef0c8" text-anchor="middle" font-weight="700">skip</text>
+          <text x="437" y="104" fill="#d9e1ea" text-anchor="middle" font-size="10">“Copy executed with</text>
+          <text x="437" y="118" fill="#d9e1ea" text-anchor="middle" font-size="10">0 files processed.”</text>
+          <path d="M240 140 V170 H360" stroke="#8696a8" stroke-width="1.6" fill="none" marker-end="url(#iW)"/><text x="250" y="162" fill="#ff6170" font-size="10">no → load it</text>
+        </g>
+      </svg>
+    </div>
+  </div>
+
+  <div class="runs" style="margin-top:18px">
+    <div class="run reveal" style="--d:1;--c:var(--ok)"><span class="pill ok">safe</span><div class="big" style="margin-top:8px">0 <small>files on re-run</small></div><p style="font-size:.88rem;margin:8px 0 0">Run the same COPY again (or a retry after a timeout) and nothing gets duplicated. The table stays at <b>50</b> rows.</p></div>
+    <div class="run reveal" style="--d:2;--c:var(--err)"><span class="pill err">duplicates</span><div class="big" style="margin-top:8px">100 <small>rows with FORCE</small></div><p style="font-size:.88rem;margin:8px 0 0"><code>FORCE = TRUE</code> ignores the ledger and reloads everything, so you end up with every order twice. Only use it after <code>TRUNCATE</code> or for deliberate reprocessing.</p></div>
+    <div class="run reveal" style="--d:3;--c:var(--warn)"><span class="pill" style="color:var(--warn);border-color:rgba(255,210,95,.5)">sneaky</span><div class="big" style="margin-top:8px">+25 <small>after a rename</small></div><p style="font-size:.88rem;margin:8px 0 0">Renaming or re-uploading a file gives it a new path or new ETag, so it counts as a new file and loads again. The same happens when a producer rewrites a file in place.</p></div>
+  </div>
+  <div class="grid g2" style="margin-top:6px">
+    <div class="callout reveal"><b>After 64 days</b> the ledger forgets. If a file’s <code>LAST_MODIFIED</code> is older than 64 days and its status is unknown, COPY skips it by default. Set <code>LOAD_UNCERTAIN_FILES = TRUE</code> to include it, and then you own deduplication.</div>
+    <div class="callout sf reveal" style="--d:1"><b>Belt and braces:</b> the downstream <code>MERGE … ON order_id</code> deduplicates anyway, so even a FORCE accident doesn’t double-count curated orders.</div>
+  </div>
+  <div class="code reveal"><div class="code-h"><span>SQL · see the ledger</span><button class="copy" type="button">Copy</button></div><pre><code class="sql">SELECT file_name, status, row_count, row_parsed, first_error_message, last_load_time
+FROM TABLE(SHOPSTREAM_LAB.INFORMATION_SCHEMA.COPY_HISTORY(
+       TABLE_NAME =&gt; 'RAW.ORDERS_RAW',
+       START_TIME =&gt; DATEADD(DAY, -7, CURRENT_TIMESTAMP())))
+ORDER BY last_load_time DESC;</code></pre></div>
+</section>
+
+<!-- ======================================================= 9 UPSERT -->
+<section id="upsert">
+  <div class="sh reveal"><div class="num">09</div><h2><span class="kicker">Keep curated fresh</span>Incremental upsert with stream + task</h2></div>
+  <p class="lede reveal" style="--d:1">RAW is append-only, so it keeps every version. CURATED holds only the latest. Follow <b>ORD-100003</b> from SHIPPED to DELIVERED, and watch <b>loyalty_tier</b> show up without any DDL on RAW.</p>
+
+  <div class="tl reveal" style="--d:2">
+    <div class="lane"></div>
+    <div class="when">T1 · 11-18 batch<small>COPY INTO (backfill)</small></div>
+    <div class="when">T2 · 11-20 09:00<small>Snowpipe auto-ingest</small></div>
+    <div class="when">T3 · 11-20 10:00<small>Snowpipe auto-ingest</small></div>
+
+    <div class="lane">S3 file lands</div>
+    <div><span class="mini">orders_2026-11-18_part1.json</span><span class="mini">orders_2026-11-18_part2.json</span></div>
+    <div><span class="mini aws" style="border-color:var(--aws-line)">orders_2026-11-20_0900.json</span><span class="muted" style="font-size:.74rem">→ ObjectCreated → SQS → pipe</span></div>
+    <div><span class="mini aws" style="border-color:var(--aws-line)">orders_2026-11-20_1000.json</span><span class="muted" style="font-size:.74rem">→ ObjectCreated → SQS → pipe</span></div>
+
+    <div class="lane">RAW.ORDERS_RAW<br>(append)</div>
+    <div><b>+50 rows</b><span class="mini">ORD-100003 · SHIPPED</span></div>
+    <div><b>+5 rows</b><span class="mini">ORD-100003 · SHIPPED <span class="muted">(kept)</span></span><span class="mini new">ORD-100003 · DELIVERED + delivered_ts</span><span class="mini new">ORD-100070 … 100073</span></div>
+    <div><b>+5 rows</b><span class="mini new">ORD-100074 · customer.loyalty_tier = "PLATINUM"</span><span class="mini new">ORD-100075 … 100078 · "GOLD"</span><span class="muted" style="font-size:.74rem">VARIANT absorbs the new key, no ALTER needed</span></div>
+
+    <div class="lane">RAW.STRM_ORDERS_RAW</div>
+    <div><span class="mini">50 new rows</span><span class="muted" style="font-size:.74rem">consumed by MERGE → offset moves</span></div>
+    <div><span class="mini">5 new rows</span><span class="muted" style="font-size:.74rem">HAS_DATA = TRUE → task runs</span></div>
+    <div><span class="mini">5 new rows</span><span class="muted" style="font-size:.74rem">HAS_DATA = TRUE → task runs</span></div>
+
+    <div class="lane">TSK_MERGE_ORDERS</div>
+    <div><span class="mini new">INSERT ×50</span></div>
+    <div><span class="mini upd">UPDATE ×1 (ORD-100003 matched)</span><span class="mini new">INSERT ×4</span></div>
+    <div><span class="mini new">INSERT ×5</span></div>
+
+    <div class="lane">CURATED.ORDERS<br>ORD-100003</div>
+    <div><span class="mini">status = SHIPPED<br>carrier = DHL</span></div>
+    <div><span class="mini old">status = SHIPPED</span><span class="mini upd">status = DELIVERED<br>delivered_ts = 2026-11-20 08:42</span></div>
+    <div><span class="mini">unchanged · loyalty_tier = NULL</span><span class="mini new">ORD-100074 · loyalty_tier = PLATINUM</span></div>
+  </div>
+
+  <div class="grid g2" style="margin-top:18px">
+    <div class="panel reveal">
+      <h3>Schema drift, visualized</h3>
+      <svg viewBox="0 0 520 210" style="min-width:0">
+        <defs><marker id="dM" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#5ef0c8"/></marker></defs>
+        <g font-size="10.5">
+          <rect x="10" y="10" width="220" height="130" rx="10" fill="#0a0f15" stroke="#ff9a1f"/>
+          <text x="22" y="32" fill="#e9d7bd">"customer": {</text>
+          <text x="34" y="52" fill="#e9d7bd">"customer_id": "C-5018",</text>
+          <text x="34" y="72" fill="#e9d7bd">"name": "Hayden Nguyen",</text>
+          <text x="34" y="92" fill="#e9d7bd">"address": {…},</text>
+          <rect x="30" y="100" width="190" height="20" rx="4" fill="rgba(94,240,200,.15)" stroke="#5ef0c8"/>
+          <text x="34" y="114" fill="#5ef0c8">"loyalty_tier": "PLATINUM"</text>
+          <text x="22" y="134" fill="#e9d7bd">}</text>
+          <path d="M230 75 H280" class="flow mint" marker-end="url(#dM)"/>
+          <rect x="284" y="20" width="226" height="56" rx="10" fill="#06202d" stroke="#29b5e8"/>
+          <text x="397" y="42" fill="#9be7ff" text-anchor="middle" font-weight="700">RAW: raw VARIANT</text>
+          <text x="397" y="62" fill="#5ef0c8" text-anchor="middle">stored as-is · 0 DDL · 0 failures</text>
+          <rect x="284" y="90" width="226" height="56" rx="10" fill="#06202d" stroke="#29b5e8"/>
+          <text x="397" y="112" fill="#9be7ff" text-anchor="middle" font-weight="700">CURATED: loyalty_tier STRING</text>
+          <text x="397" y="132" fill="#d9e1ea" text-anchor="middle">NULL for old rows, value for new</text>
+          <text x="10" y="176" fill="#8696a8">Tip: map raw:customer.loyalty_tier in the MERGE ahead of time.</text>
+          <text x="10" y="194" fill="#8696a8">A missing path is just NULL, so the column fills in once producers send it.</text>
+        </g>
+      </svg>
+    </div>
+    <div class="panel reveal" style="--d:1">
+      <h3>Two gotchas that catch everyone</h3>
+      <ul class="mistakes" style="padding-left:18px;margin:6px 0 0">
+        <li><b>Two MERGEs, one stream:</b> the first committed DML <em>consumes</em> the stream, so the second MERGE sees nothing. Wrap both in <code>BEGIN TRANSACTION … COMMIT</code>.</li>
+        <li><b>Duplicate keys in one batch:</b> if the old and new versions of ORD-100003 land in the same stream batch, MERGE fails as nondeterministic. Deduplicate with <code>QUALIFY ROW_NUMBER() … = 1</code>.</li>
+        <li><b>Tasks start suspended.</b> Run <code>ALTER TASK … RESUME</code>, and check <code>TASK_HISTORY()</code>.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="code reveal"><div class="code-h"><span>SQL · CURATED.TSK_MERGE_ORDERS (full)</span><button class="copy" type="button">Copy</button></div><pre><code class="sql">CREATE TABLE IF NOT EXISTS CURATED.ORDERS (
+  order_id STRING PRIMARY KEY, order_ts TIMESTAMP_TZ, status STRING, channel STRING,
+  customer_id STRING, city STRING, loyalty_tier STRING, amount NUMBER(12,2),
+  carrier STRING, delivered_ts TIMESTAMP_TZ
+);
+CREATE TABLE IF NOT EXISTS CURATED.ORDER_ITEMS (
+  order_id STRING, line_no NUMBER, sku STRING, qty NUMBER,
+  unit_price NUMBER(10,2), discount NUMBER(4,2),
+  PRIMARY KEY (order_id, line_no)
+);
+
+CREATE OR REPLACE TASK CURATED.TSK_MERGE_ORDERS
+  WAREHOUSE = LAB_WH
+  SCHEDULE = '5 MINUTE'
+  WHEN SYSTEM$STREAM_HAS_DATA('RAW.STRM_ORDERS_RAW')
+AS
+EXECUTE IMMEDIATE
+$$
+BEGIN
+  BEGIN TRANSACTION;   -- both MERGEs read the same stream snapshot
+
+  MERGE INTO CURATED.ORDERS t
+  USING (
+    SELECT raw:order_id::STRING                      AS order_id,
+           raw:order_ts::TIMESTAMP_TZ                AS order_ts,
+           raw:status::STRING                        AS status,
+           raw:channel::STRING                       AS channel,
+           raw:customer.customer_id::STRING          AS customer_id,
+           raw:customer.address.city::STRING         AS city,
+           raw:customer.loyalty_tier::STRING         AS loyalty_tier,
+           TRY_TO_NUMBER(raw:payment.amount::STRING, 12, 2) AS amount,
+           raw:shipping.carrier::STRING              AS carrier,
+           raw:delivered_ts::TIMESTAMP_TZ            AS delivered_ts
+    FROM RAW.STRM_ORDERS_RAW
+    WHERE raw:order_id IS NOT NULL
+    QUALIFY ROW_NUMBER() OVER (PARTITION BY raw:order_id::STRING
+                               ORDER BY loaded_at DESC, src_row DESC) = 1
+  ) s
+  ON t.order_id = s.order_id
+  WHEN MATCHED THEN UPDATE SET
+    t.status = s.status, t.carrier = s.carrier, t.delivered_ts = s.delivered_ts,
+    t.loyalty_tier = s.loyalty_tier, t.amount = s.amount
+  WHEN NOT MATCHED THEN INSERT
+    (order_id, order_ts, status, channel, customer_id, city, loyalty_tier, amount, carrier, delivered_ts)
+    VALUES (s.order_id, s.order_ts, s.status, s.channel, s.customer_id, s.city,
+            s.loyalty_tier, s.amount, s.carrier, s.delivered_ts);
+
+  MERGE INTO CURATED.ORDER_ITEMS t
+  USING (
+    SELECT r.raw:order_id::STRING           AS order_id,
+           f.index + 1                      AS line_no,
+           f.value:sku::STRING              AS sku,
+           f.value:qty::NUMBER              AS qty,
+           f.value:unit_price::NUMBER(10,2) AS unit_price,
+           f.value:discount::NUMBER(4,2)    AS discount
+    FROM RAW.STRM_ORDERS_RAW r,
+         LATERAL FLATTEN(input =&gt; r.raw:items) f
+    WHERE r.raw:order_id IS NOT NULL
+    QUALIFY ROW_NUMBER() OVER (PARTITION BY r.raw:order_id::STRING, f.index
+                               ORDER BY r.loaded_at DESC, r.src_row DESC) = 1
+  ) s
+  ON t.order_id = s.order_id AND t.line_no = s.line_no
+  WHEN MATCHED THEN UPDATE SET
+    t.sku = s.sku, t.qty = s.qty, t.unit_price = s.unit_price, t.discount = s.discount
+  WHEN NOT MATCHED THEN INSERT (order_id, line_no, sku, qty, unit_price, discount)
+    VALUES (s.order_id, s.line_no, s.sku, s.qty, s.unit_price, s.discount);
+
+  COMMIT;
+END;
+$$;
+
+ALTER TASK CURATED.TSK_MERGE_ORDERS RESUME;</code></pre></div>
+</section>
+
+<!-- ======================================================= 10 PERF -->
+<section id="perf">
+  <div class="sh reveal"><div class="num">10</div><h2><span class="kicker">Make it fast &amp; cheap</span>Performance and cost cheat-sheet</h2></div>
+  <p class="lede reveal" style="--d:1">Five levers. Most real-world cost problems come down to file size and leaving warehouses running.</p>
+
+  <div class="grid g2 cheat">
+    <div class="panel reveal" style="--d:1">
+      <h3>1 · File sizing</h3>
+      <div class="meter" style="margin-top:10px">
+        <div style="flex:1.2;background:rgba(255,97,112,.18);color:var(--err)">&lt; 10 MB<br>overhead</div>
+        <div style="flex:1;background:rgba(255,210,95,.14);color:var(--warn)">10–100</div>
+        <div style="flex:1.6;background:rgba(94,240,200,.22);color:var(--mint);font-weight:700">100–250 MB gz ✓</div>
+        <div style="flex:1;background:rgba(255,210,95,.14);color:var(--warn)">≤ 5 GB</div>
+        <div style="flex:.9;background:rgba(255,97,112,.18);color:var(--err)">huge<br>single</div>
+      </div>
+      <ul><li>Aim for <b>100–250 MB compressed</b> per file. Thousands of tiny files mean per-file overhead, and one giant file can’t be loaded in parallel.</li>
+          <li>Batch small events upstream (Firehose buffering, or a compaction job).</li>
+          <li>Use date-partitioned prefixes (<code>orders/2026/11/18/</code>) so you can scope COPY with <code>PATTERN</code> and avoid long LISTs.</li></ul>
+    </div>
+    <div class="panel reveal" style="--d:2">
+      <h3>2 · Warehouse sizing</h3>
+      <div class="ladder" style="margin-top:10px">
+        <div style="height:20%">XS</div><div style="height:34%">S</div><div style="height:52%">M</div><div style="height:74%">L</div><div style="height:100%">XL</div>
+      </div>
+      <div class="kv" style="margin-top:6px">each size up = 2× credits/hour = ~2× files loaded in parallel</div>
+      <ul><li>Load throughput scales with <b>file count</b>, not with the size of one file. Upsizing doesn’t help a load of 3 files.</li>
+          <li><code>LAB_WH</code> is XSMALL with <code>AUTO_SUSPEND = 60</code>, so it sleeps a minute after the load.</li>
+          <li>Use a dedicated loading warehouse so loads don’t compete with BI queries.</li></ul>
+    </div>
+    <div class="panel reveal" style="--d:3">
+      <h3>3 · Snowpipe cost model</h3>
+      <svg viewBox="0 0 480 110" style="min-width:0;margin-top:6px">
+        <g font-size="11">
+          <rect x="10" y="20" width="140" height="60" rx="8" fill="#06202d" stroke="#29b5e8"/><text x="80" y="46" fill="#9be7ff" text-anchor="middle">serverless</text><text x="80" y="64" fill="#8696a8" text-anchor="middle" font-size="10">no warehouse</text>
+          <text x="170" y="56" fill="#d9e1ea">+</text>
+          <rect x="190" y="20" width="130" height="60" rx="8" fill="rgba(255,210,95,.07)" stroke="#ffd25f"/><text x="255" y="46" fill="#ffd25f" text-anchor="middle">volume billed</text><text x="255" y="64" fill="#8696a8" text-anchor="middle" font-size="10">by Snowflake</text>
+          <text x="340" y="56" fill="#d9e1ea">≠</text>
+          <rect x="360" y="20" width="110" height="60" rx="8" fill="rgba(255,97,112,.07)" stroke="#ff6170"/><text x="415" y="46" fill="#ff6170" text-anchor="middle">tiny files</text><text x="415" y="64" fill="#8696a8" text-anchor="middle" font-size="10">waste</text>
+        </g>
+      </svg>
+      <ul><li>Snowpipe uses serverless compute, so no warehouse sits idle. Billing has historically been compute-seconds plus a per-file overhead, and newer pricing moves toward a flat <b>per-GB</b> rate. Check the current price list.</li>
+          <li>Either way, <b>fewer, well-sized files</b> are cheaper. Watch spend with <code>PIPE_USAGE_HISTORY</code>.</li>
+          <li>If files only arrive once a day, a scheduled COPY is usually cheaper and simpler.</li></ul>
+    </div>
+    <div class="panel reveal" style="--d:4">
+      <h3>4 · Materialize hot JSON paths</h3>
+      <svg viewBox="0 0 480 100" style="min-width:0;margin-top:6px">
+        <g font-size="10.5">
+          <rect x="10" y="15" width="170" height="70" rx="8" fill="#06202d" stroke="#29b5e8"/><text x="95" y="40" fill="#9be7ff" text-anchor="middle">raw:customer.address</text><text x="95" y="56" fill="#9be7ff" text-anchor="middle">.city on every query</text><text x="95" y="74" fill="#8696a8" text-anchor="middle">parse + cast at read</text>
+          <path d="M180 50 H290" class="flow mint"/>
+          <rect x="294" y="15" width="176" height="70" rx="8" fill="rgba(94,240,200,.07)" stroke="#5ef0c8"/><text x="382" y="40" fill="#5ef0c8" text-anchor="middle">city STRING column</text><text x="382" y="58" fill="#d9e1ea" text-anchor="middle">pruning + stats</text><text x="382" y="74" fill="#8696a8" text-anchor="middle">in CURATED.ORDERS</text>
+        </g>
+      </svg>
+      <ul><li>Snowflake already columnarizes many VARIANT sub-paths, but mixed types and very sparse keys defeat that.</li>
+          <li>Promote fields you filter or join on (order_ts, status, customer_id) to typed columns, and consider clustering by order date on very large tables.</li>
+          <li>Keep RAW for replay and audit, and point BI at CURATED.</li></ul>
+    </div>
+    <div class="panel reveal" style="--d:5">
+      <h3>5 · Compression</h3>
+      <div class="meter" style="margin-top:10px">
+        <div style="flex:1;background:rgba(255,154,31,.16);color:var(--aws-2)">NDJSON raw · 100%</div>
+      </div>
+      <div class="meter" style="margin-top:6px;width:22%">
+        <div style="flex:1;background:rgba(94,240,200,.22);color:var(--mint)">gzip</div>
+      </div>
+      <div class="kv" style="margin-top:4px">JSON is very repetitive (the same keys on every line), so gzip often shrinks it 5–10×.</div>
+      <ul><li><code>COMPRESSION = AUTO</code> detects gzip/bz2/zstd/brotli. Snowflake also supports zstd, and gzip is the safe default.</li>
+          <li>Smaller files mean less S3 GET traffic and faster transfer. Inside Snowflake, the data is recompressed into its own columnar format anyway.</li></ul>
+    </div>
+    <div class="panel reveal" style="--d:6;border-style:dashed">
+      <h3>Quick numbers to remember</h3>
+      <div class="tablewrap" style="margin-top:8px"><table>
+        <tbody>
+          <tr><td>Ideal file size</td><td class="mono">100–250 MB gz</td></tr>
+          <tr><td>VARIANT value limit</td><td class="mono">16 MB (classic)</td></tr>
+          <tr><td>COPY load metadata</td><td class="mono">64 days</td></tr>
+          <tr><td>Snowpipe load history</td><td class="mono">14 days</td></tr>
+          <tr><td>ALTER PIPE … REFRESH looks back</td><td class="mono">7 days</td></tr>
+          <tr><td>Snowpipe typical latency</td><td class="mono">~1 minute</td></tr>
+          <tr><td>LAB_WH auto-suspend</td><td class="mono">60 s</td></tr>
+        </tbody>
+      </table></div>
+    </div>
+  </div>
+</section>
+
+<!-- ======================================================= 11 WHITEBOARD -->
+<section id="whiteboard">
+  <div class="sh reveal"><div class="num">11</div><h2><span class="kicker">60-second redraw</span>The interview whiteboard version</h2></div>
+  <p class="lede reveal" style="--d:1">Eight boxes and one trust arrow. Practice drawing this from memory until it takes under a minute.</p>
+
+  <div class="wb reveal" style="--d:2">
+  <svg viewBox="0 0 1100 330" role="img" aria-labelledby="wbT">
+    <title id="wbT">Whiteboard diagram: JSON to S3, IAM role and integration, stage, COPY or Snowpipe, RAW VARIANT, stream and task, CURATED, BI.</title>
+    <defs><marker id="wM" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0,0 L10,5 L0,10" fill="none" stroke="#e8edf2" stroke-width="2"/></marker></defs>
+    <g fill="none" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" font-size="14">
+      <path d="M22 62 Q20 40 44 40 H132 Q150 42 150 60 V100 Q148 120 130 120 H42 Q22 118 22 98 Z" stroke="#ff9a1f"/>
+      <text x="86" y="78" fill="#ffc061" stroke="none" text-anchor="middle">JSON</text><text x="86" y="98" fill="#c9b79c" stroke="none" text-anchor="middle" font-size="11">app</text>
+      <path d="M150 80 H200" stroke="#e8edf2" marker-end="url(#wM)"/>
+      <path d="M210 52 Q206 40 222 40 H318 Q332 41 330 56 L322 112 Q320 122 308 122 H232 Q220 122 218 110 Z" stroke="#ff9a1f"/>
+      <text x="270" y="78" fill="#ffc061" stroke="none" text-anchor="middle">S3</text><text x="270" y="98" fill="#c9b79c" stroke="none" text-anchor="middle" font-size="11">prefixes</text>
+      <path d="M232 230 Q230 212 250 212 H330 Q348 214 346 232 V262 Q344 280 326 280 H250 Q232 278 232 262 Z" stroke="#ff9a1f"/>
+      <text x="289" y="242" fill="#ffc061" stroke="none" text-anchor="middle">IAM role</text><text x="289" y="262" fill="#c9b79c" stroke="none" text-anchor="middle" font-size="11">trust+extID</text>
+      <path d="M346 246 H400" stroke="#ffd25f" stroke-dasharray="6 6" marker-end="url(#wM)"/>
+      <path d="M404 230 Q402 212 422 212 H520 Q538 214 536 232 V262 Q534 280 516 280 H422 Q404 278 404 262 Z" stroke="#29b5e8"/>
+      <text x="470" y="242" fill="#9be7ff" stroke="none" text-anchor="middle">integration</text><text x="470" y="262" fill="#8fb6c6" stroke="none" text-anchor="middle" font-size="11">no keys</text>
+      <path d="M330 80 H380" stroke="#e8edf2" marker-end="url(#wM)"/>
+      <path d="M392 58 Q390 40 410 40 H516 Q534 42 532 60 V100 Q530 120 512 120 H410 Q392 118 392 100 Z" stroke="#29b5e8"/>
+      <text x="462" y="78" fill="#9be7ff" stroke="none" text-anchor="middle">stage</text><text x="462" y="98" fill="#8fb6c6" stroke="none" text-anchor="middle" font-size="11">+ file format</text>
+      <path d="M470 212 V128" stroke="#29b5e8" stroke-dasharray="4 6" marker-end="url(#wM)"/>
+      <path d="M532 80 H582" stroke="#e8edf2" marker-end="url(#wM)"/>
+      <path d="M594 58 Q592 40 612 40 H720 Q738 42 736 60 V100 Q734 120 716 120 H612 Q594 118 594 100 Z" stroke="#29b5e8"/>
+      <text x="665" y="78" fill="#9be7ff" stroke="none" text-anchor="middle">COPY</text><text x="665" y="98" fill="#8fb6c6" stroke="none" text-anchor="middle" font-size="11">/ Snowpipe</text>
+      <path d="M270 40 Q270 6 470 6 Q665 6 665 34" stroke="#ff9a1f" stroke-dasharray="3 6" marker-end="url(#wM)"/>
+      <text x="470" y="22" fill="#ff9a1f" stroke="none" text-anchor="middle" font-size="11">S3 event → SQS</text>
+      <path d="M736 80 H786" stroke="#e8edf2" marker-end="url(#wM)"/>
+      <path d="M798 58 Q796 40 816 40 H936 Q954 42 952 60 V100 Q950 120 932 120 H816 Q798 118 798 100 Z" stroke="#29b5e8" stroke-width="3"/>
+      <text x="875" y="78" fill="#9be7ff" stroke="none" text-anchor="middle">RAW</text><text x="875" y="98" fill="#8fb6c6" stroke="none" text-anchor="middle" font-size="11">VARIANT</text>
+      <path d="M875 120 V200" stroke="#5ef0c8" marker-end="url(#wM)"/>
+      <path d="M800 228 Q798 210 818 210 H932 Q950 212 948 230 V262 Q946 280 928 280 H818 Q800 278 800 262 Z" stroke="#5ef0c8"/>
+      <text x="874" y="240" fill="#5ef0c8" stroke="none" text-anchor="middle">stream</text><text x="874" y="260" fill="#5ef0c8" stroke="none" text-anchor="middle" font-size="11">+ task MERGE</text>
+      <path d="M948 246 H990" stroke="#e8edf2" marker-end="url(#wM)"/>
+      <path d="M996 214 Q994 200 1010 200 H1070 Q1086 202 1084 218 V272 Q1082 290 1066 290 H1012 Q996 288 996 272 Z" stroke="#29b5e8" stroke-width="3"/>
+      <text x="1040" y="236" fill="#9be7ff" stroke="none" text-anchor="middle">CURATED</text><text x="1040" y="256" fill="#8fb6c6" stroke="none" text-anchor="middle" font-size="11">ORDERS</text><text x="1040" y="272" fill="#8fb6c6" stroke="none" text-anchor="middle" font-size="11">ITEMS</text>
+      <path d="M1040 200 V150" stroke="#e8edf2" marker-end="url(#wM)"/>
+      <text x="1040" y="138" fill="#e8edf2" stroke="none" text-anchor="middle">BI</text>
+      <text x="22" y="318" fill="#5d6c7d" stroke="none" font-size="11">amber = AWS · blue = Snowflake · green = incremental CDC · dashed = control plane, not data</text>
+    </g>
+  </svg>
+  </div>
+
+  <div class="grid g2" style="margin-top:18px">
+    <div class="panel reveal" style="--d:1">
+      <h3>How to talk through it</h3>
+      <ol class="steps">
+        <li><b>Clarify first:</b> volume, latency SLA, NDJSON or array, does the schema change, are there updates (upserts)?</li>
+        <li><b>Landing:</b> S3 bucket with dated prefixes, NDJSON gzip, 100–250 MB files.</li>
+        <li><b>Access:</b> IAM role + storage integration, trust tied to the external ID, no keys.</li>
+        <li><b>Plumbing:</b> JSON file format + external stage, then <code>LIST</code> to test it.</li>
+        <li><b>Raw load:</b> COPY into VARIANT with file name and row lineage, then Snowpipe for new files.</li>
+        <li><b>Model:</b> paths, casts, and FLATTEN into CURATED, kept incremental with a stream + task MERGE.</li>
+        <li><b>Quality:</b> VALIDATION_MODE, ON_ERROR, VALIDATE() into a quarantine table, and DQ checks.</li>
+        <li><b>Operate:</b> idempotent load metadata, COPY_HISTORY / PIPE_STATUS monitoring, alerts, and cost controls.</li>
+      </ol>
+    </div>
+    <div class="panel reveal" style="--d:2;border-color:rgba(255,97,112,.4)">
+      <h3 class="err">Common mistakes</h3>
+      <ul class="mistakes">
+        <li>Putting AWS access keys in the stage definition instead of using a storage integration.</li>
+        <li>Recreating the integration and forgetting the external ID changed (access denied).</li>
+        <li>Loading a JSON array without <code>STRIP_OUTER_ARRAY = TRUE</code>, which gives one giant row or a size error.</li>
+        <li>Casting with <code>::NUMBER</code> on dirty data, so one bad value fails the query. Use <code>TRY_TO_NUMBER</code>.</li>
+        <li>Forgetting <code>::STRING</code>, so values keep their JSON quotes and joins silently miss.</li>
+        <li>Using <code>FORCE = TRUE</code> “to make it work”, which duplicates rows.</li>
+        <li>Two MERGEs on one stream without an explicit transaction.</li>
+        <li>Creating the pipe but never adding the S3 event notification to the SQS ARN.</li>
+        <li>Thousands of KB-sized files feeding Snowpipe, which means overhead-dominated cost.</li>
+        <li>Skipping the clarifying questions and going straight to SQL.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ======================================================= 12 LAB -->
+<section id="lab">
+  <div class="sh reveal"><div class="num">12</div><h2><span class="kicker">Hands-on</span>Practice lab</h2></div>
+  <p class="lede reveal" style="--d:1">Reading builds recognition, but you need practice to recall it under pressure. This guide comes with a hands-on kit that uses the same ShopStream names, records, and expected counts as the diagrams above.</p>
+  <div class="lab">
+    <div class="card reveal" style="--d:1">
+      <svg class="ico" viewBox="0 0 42 42"><rect x="3" y="3" width="36" height="36" rx="9" fill="rgba(41,181,232,.12)" stroke="#29b5e8"/><path d="M14 13l14 8-14 8z" fill="#9be7ff"/></svg>
+      <h3>Lab Simulator</h3><p class="what">An interactive simulator file. Click through the pipeline, trigger loads, break things, and watch the counts change, all without an AWS or Snowflake account.</p>
+    </div>
+    <div class="card reveal" style="--d:2">
+      <svg class="ico" viewBox="0 0 42 42"><rect x="3" y="3" width="36" height="36" rx="9" fill="rgba(41,181,232,.12)" stroke="#29b5e8"/><text x="21" y="26" text-anchor="middle" font-size="11" fill="#9be7ff" font-family="JetBrains Mono,monospace">SQL</text></svg>
+      <h3>SQL scripts</h3><p class="what">Runnable scripts in order: setup, integration and stage, COPY, errors, Snowpipe, stream + task, and checks. There’s an internal-stage fallback if you don’t have an AWS account.</p>
+    </div>
+    <div class="card reveal" style="--d:3">
+      <svg class="ico" viewBox="0 0 42 42"><rect x="3" y="3" width="36" height="36" rx="9" fill="rgba(255,154,31,.12)" stroke="#ff9a1f"/><text x="21" y="27" text-anchor="middle" font-size="13" fill="#ffc061" font-family="JetBrains Mono,monospace">{ }</text></svg>
+      <h3>Sample data</h3><p class="what">Fictional ShopStream orders: happy-path NDJSON, an outer-array export, a corrupt file with the 4 bad-record types, and incremental files for the upsert and schema-drift demos.</p>
+    </div>
+    <div class="card reveal" style="--d:4">
+      <svg class="ico" viewBox="0 0 42 42"><rect x="3" y="3" width="36" height="36" rx="9" fill="rgba(94,240,200,.1)" stroke="#5ef0c8"/><text x="21" y="27" text-anchor="middle" font-size="14" fill="#5ef0c8" font-family="JetBrains Mono,monospace">Q&amp;A</text></svg>
+      <h3>Interview Q&amp;A</h3><p class="what">Likely follow-up questions with crisp model answers, from “why VARIANT?” to “how do you guarantee exactly-once?”</p>
+    </div>
+  </div>
+  <div class="callout sf reveal" style="margin-top:20px"><b>Suggested loop:</b> read a section here, do the same step in the SQL scripts or Lab Simulator, then answer the matching questions in the Interview Q&amp;A out loud. Expected lab counts: 50 orders / 91 items from the two NDJSON files, then 60 / 111 with the array file, and 9 loaded / 2 rejected from the corrupt file.</div>
+  <footer>ShopStream is fictional. All names, accounts, and ARNs are made-up examples. Check limits and pricing against current Snowflake and AWS documentation before production use.</footer>
+</section>
+
+</main>
+
+<script>
+(function () {
+  "use strict";
+  var root = document.documentElement;
+  root.classList.add("js");
+
+  /* ---------- tiny syntax highlighter ---------- */
+  function esc(s) {
+    return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  }
+  var KW = "SELECT|FROM|WHERE|CREATE|OR|REPLACE|TABLE|STAGE|FILE|FORMAT|TYPE|JSON|INTO|COPY|PIPE|AS|STREAM|TASK|ON|MERGE|USING|WHEN|MATCHED|NOT|THEN|UPDATE|SET|INSERT|VALUES|AND|IS|NULL|TRUE|FALSE|LATERAL|STORAGE|INTEGRATION|ENABLED|DESC|ALTER|RESUME|BEGIN|END|COMMIT|TRANSACTION|SCHEDULE|WAREHOUSE|QUALIFY|OVER|PARTITION|BY|ORDER|DEFAULT|IF|EXISTS|TEMPORARY|LIST|SHOW|PIPES|LIKE|IN|SCHEMA|USE|ROLE|GRANT|USAGE|TO|CALL|VARIANT|STRING|NUMBER|TIMESTAMP_LTZ|TIMESTAMP_TZ|AUTO_INGEST|APPEND_ONLY|AUTO|EXTERNAL_STAGE|RETURN_ERRORS|DAY|PRIMARY|KEY|EXECUTE|IMMEDIATE";
+  var FN = "FLATTEN|VALIDATE|TRY_TO_NUMBER|ROW_NUMBER|COUNT_IF|CURRENT_TIMESTAMP|DATEADD|COPY_HISTORY";
+  var sqlRe = new RegExp(
+    "(--[^\\n]*)|('(?:[^']|'')*')|((?:METADATA|SYSTEM)\\$\\w+|\\$\\d+)|\\b(" + FN + ")\\b|\\b(" + KW + ")\\b|(\\b\\d+(?:\\.\\d+)?\\b)",
+    "g"
+  );
+  var jsonRe = /("(?:[^"\\]|\\.)*")(\s*:)?|\b(true|false|null)\b|(-?\b\d+(?:\.\d+)?\b)/g;
+
+  function highlight(src, re, fn) {
+    var out = "", last = 0, m;
+    re.lastIndex = 0;
+    while ((m = re.exec(src)) !== null) {
+      out += esc(src.slice(last, m.index)) + fn(m);
+      last = re.lastIndex;
+      if (m[0].length === 0) { re.lastIndex++; }
+    }
+    return out + esc(src.slice(last));
+  }
+  function wrap(cls, s) { return '<span class="' + cls + '">' + esc(s) + "</span>"; }
+
+  Array.prototype.forEach.call(document.querySelectorAll("pre code.sql"), function (el) {
+    el.innerHTML = highlight(el.textContent, sqlRe, function (m) {
+      if (m[1]) return wrap("tk-com", m[1]);
+      if (m[2]) return wrap("tk-str", m[2]);
+      if (m[3]) return wrap("tk-fn", m[3]);
+      if (m[4]) return wrap("tk-fn", m[4]);
+      if (m[5]) return wrap("tk-kw", m[5]);
+      return wrap("tk-num", m[6]);
+    });
+  });
+  Array.prototype.forEach.call(document.querySelectorAll("pre code.json"), function (el) {
+    el.innerHTML = highlight(el.textContent, jsonRe, function (m) {
+      if (m[1]) return m[2] ? wrap("tk-key", m[1]) + esc(m[2]) : wrap("tk-str", m[1]);
+      if (m[3]) return wrap("tk-kw", m[3]);
+      return wrap("tk-num", m[4]);
+    });
+  });
+
+  /* ---------- copy buttons ---------- */
+  function fallbackCopy(text) {
+    var ta = document.createElement("textarea");
+    ta.value = text;
+    ta.setAttribute("readonly", "");
+    ta.style.position = "fixed";
+    ta.style.opacity = "0";
+    document.body.appendChild(ta);
+    ta.select();
+    var ok = false;
+    try { ok = document.execCommand("copy"); } catch (e) { ok = false; }
+    document.body.removeChild(ta);
+    return ok;
+  }
+  function flash(btn, label) {
+    btn.textContent = label;
+    btn.classList.add("done");
+    setTimeout(function () { btn.textContent = "Copy"; btn.classList.remove("done"); }, 1600);
+  }
+  document.addEventListener("click", function (ev) {
+    var btn = ev.target.closest ? ev.target.closest(".copy") : null;
+    if (!btn) return;
+    var box = btn.closest(".code");
+    var code = box ? box.querySelector("pre") : null;
+    if (!code) return;
+    var text = code.textContent;
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(text).then(
+        function () { flash(btn, "Copied ✓"); },
+        function () { flash(btn, fallbackCopy(text) ? "Copied ✓" : "Select & copy"); }
+      );
+    } else {
+      flash(btn, fallbackCopy(text) ? "Copied ✓" : "Select & copy");
+    }
+  });
+
+  /* ---------- scroll progress + active nav ---------- */
+  var bars = document.querySelectorAll(".progress i, .navprog i");
+  var pct = document.querySelector(".navpct");
+  var ticking = false;
+  function onScroll() {
+    var h = document.documentElement;
+    var max = h.scrollHeight - h.clientHeight;
+    var p = max > 0 ? Math.min(100, Math.max(0, (h.scrollTop || document.body.scrollTop) / max * 100)) : 0;
+    for (var i = 0; i < bars.length; i++) bars[i].style.setProperty("--p", p.toFixed(1) + "%");
+    if (pct) pct.textContent = Math.round(p) + "% read";
+    ticking = false;
+  }
+  window.addEventListener("scroll", function () {
+    if (!ticking) { ticking = true; window.requestAnimationFrame(onScroll); }
+  }, { passive: true });
+  onScroll();
+
+  var links = {};
+  Array.prototype.forEach.call(document.querySelectorAll("nav.side a[href^='#']"), function (a) {
+    links[a.getAttribute("href").slice(1)] = a;
+  });
+  function setActive(id) {
+    Object.keys(links).forEach(function (k) { links[k].classList.toggle("active", k === id); });
+  }
+
+  var nav = document.getElementById("sidenav");
+  var toggle = document.querySelector(".navtoggle");
+  if (toggle && nav) {
+    toggle.addEventListener("click", function () {
+      var open = nav.classList.toggle("open");
+      toggle.setAttribute("aria-expanded", open ? "true" : "false");
+    });
+    nav.addEventListener("click", function (e) {
+      if (e.target.closest && e.target.closest("a")) {
+        nav.classList.remove("open");
+        toggle.setAttribute("aria-expanded", "false");
+      }
+    });
+  }
+
+  /* ---------- IntersectionObserver: reveals + section tracking ---------- */
+  var reveals = document.querySelectorAll(".reveal");
+  if ("IntersectionObserver" in window) {
+    var ro = new IntersectionObserver(function (entries) {
+      entries.forEach(function (en) {
+        if (en.isIntersecting) { en.target.classList.add("in"); ro.unobserve(en.target); }
+      });
+    }, { rootMargin: "0px 0px -8% 0px", threshold: 0.08 });
+    Array.prototype.forEach.call(reveals, function (el) { ro.observe(el); });
+
+    var so = new IntersectionObserver(function (entries) {
+      entries.forEach(function (en) { if (en.isIntersecting) setActive(en.target.id); });
+    }, { rootMargin: "-45% 0px -50% 0px", threshold: 0 });
+    Array.prototype.forEach.call(document.querySelectorAll("header[id], section[id]"), function (s) { so.observe(s); });
+  } else {
+    Array.prototype.forEach.call(reveals, function (el) { el.classList.add("in"); });
+  }
+  window.addEventListener("beforeprint", function () {
+    Array.prototype.forEach.call(reveals, function (el) { el.classList.add("in"); });
+  });
+})();
+</script>
+<script>
+function sfThm(){
+  var d=document.documentElement, b=document.getElementById('sf-thm');
+  if(d.dataset.theme==='light'){
+    d.removeAttribute('data-theme');
+    if(b){b.innerHTML='&#9728;&#xFE0F;&nbsp;Light';b.style.background='rgba(255,255,255,.14)';b.style.borderColor='rgba(255,255,255,.26)';}
+    try{localStorage.setItem('sf-theme','dark');}catch(e){}
+  } else {
+    d.dataset.theme='light';
+    if(b){b.innerHTML='&#127769;&nbsp;Dark';b.style.background='rgba(0,0,0,.07)';b.style.borderColor='rgba(0,0,0,.16)';}
+    try{localStorage.setItem('sf-theme','light');}catch(e){}
+  }
+}
+(function(){
+  try{
+    if(localStorage.getItem('sf-theme')==='light'){
+      document.documentElement.dataset.theme='light';
+      document.addEventListener('DOMContentLoaded',function(){
+        var b=document.getElementById('sf-thm');
+        if(b){b.innerHTML='&#127769;&nbsp;Dark';b.style.background='rgba(0,0,0,.07)';b.style.borderColor='rgba(0,0,0,.16)';}
+      });
+    }
+  }catch(e){}
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,1064 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Snowflake Interview Lab · Module 14 · Enterprise Architecture &amp; Governance</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/space-grotesk@5/300.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/space-grotesk@5/700.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/ibm-plex-sans@5/400.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/ibm-plex-sans@5/600.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/jetbrains-mono@5/400.css">
+<style>
+:root{
+  --bg:#F2F6FA;--card:#FFFFFF;--card2:#E9EFF5;--ink:#0B1B2B;--ink2:#46596B;--ink3:#7F90A2;
+  --line:rgba(11,27,43,.12);--line2:rgba(11,27,43,.22);
+  --ice:#0A86C2;--ice-s:#DCEFF9;--amber:#B86F00;--amber-s:#FFF0D4;--teal:#0B8A6A;--teal-s:#DAF3EB;
+  --red:#C93C3C;--red-s:#FCE4E4;
+  --f-head:"Space Grotesk",sans-serif;--f-body:"IBM Plex Sans",sans-serif;--f-mono:"JetBrains Mono",monospace;
+  --r:10px;
+}
+[data-theme="dark"]{
+  --bg:#08121D;--card:#0F1D2C;--card2:#16293B;--ink:#E5EDF5;--ink2:#9DB0C3;--ink3:#687D91;
+  --line:rgba(229,237,245,.10);--line2:rgba(229,237,245,.22);
+  --ice:#4CC3F0;--ice-s:rgba(76,195,240,.13);--amber:#FFB938;--amber-s:rgba(255,185,56,.13);
+  --teal:#3FD3A8;--teal-s:rgba(63,211,168,.13);--red:#FF7070;--red-s:rgba(255,112,112,.14);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:var(--f-body);background:var(--bg);color:var(--ink);line-height:1.7;font-size:15px}
+h1,h2,h3,h4{font-family:var(--f-head);line-height:1.2}
+a{color:var(--ice);text-decoration:none}
+code,pre{font-family:var(--f-mono);font-size:13px}
+pre{background:var(--card2);border:1px solid var(--line);border-radius:var(--r);padding:16px 18px;overflow-x:auto;line-height:1.55}
+.kw{color:#0A86C2}.cm{color:var(--ink3);font-style:italic}.st{color:#0B8A6A}.nm{color:#B86F00}
+
+/* Layout */
+.wrap{max-width:860px;margin:0 auto;padding:0 20px 80px}
+
+/* Top bar */
+.topbar{background:var(--card);border-bottom:1px solid var(--line);padding:12px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50}
+.topbar .badge{font-family:var(--f-head);font-size:11px;font-weight:700;letter-spacing:.08em;color:var(--ice);text-transform:uppercase}
+.topbar .title{font-family:var(--f-head);font-size:14px;font-weight:700;color:var(--ink)}
+button.theme{background:none;border:1px solid var(--line);border-radius:6px;padding:5px 11px;font-size:12px;color:var(--ink2);cursor:pointer}
+
+/* Chapter nav */
+.chapnav{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:18px 20px;margin:28px 0}
+.chapnav h4{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink3);margin-bottom:12px}
+.chapnav ul{list-style:none;display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:6px}
+.chapnav li a{display:block;padding:6px 10px;border-radius:6px;font-size:13px;color:var(--ink2);border:1px solid transparent;transition:all .15s}
+.chapnav li a:hover{background:var(--ice-s);border-color:var(--ice);color:var(--ice)}
+
+/* Hero */
+.hero{padding:48px 0 32px}
+.hero .mod{font-family:var(--f-head);font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--ice);margin-bottom:8px}
+.hero h1{font-size:clamp(28px,5vw,46px);font-weight:700;margin-bottom:14px}
+.hero p{font-size:16px;color:var(--ink2);max-width:640px}
+
+/* Sections */
+.section{margin:48px 0}
+.section-label{font-family:var(--f-head);font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--ice);margin-bottom:8px}
+.section h2{font-size:26px;font-weight:700;margin-bottom:18px}
+.section h3{font-size:17px;font-weight:700;color:var(--ink);margin:24px 0 10px}
+
+/* Cards */
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:20px 22px;margin:16px 0}
+.card.ice{border-left:4px solid var(--ice);background:var(--ice-s)}
+.card.amber{border-left:4px solid var(--amber);background:var(--amber-s)}
+.card.teal{border-left:4px solid var(--teal);background:var(--teal-s)}
+.card.red{border-left:4px solid var(--red);background:var(--red-s)}
+.card h4{font-family:var(--f-head);font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px}
+
+/* What/Why/How blocks */
+.trio{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin:18px 0}
+.trio-item{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:16px}
+.trio-item .num{font-family:var(--f-head);font-size:28px;font-weight:700;color:var(--ice);opacity:.4;margin-bottom:4px}
+.trio-item h4{font-size:13px;font-weight:700;margin-bottom:6px;color:var(--ink)}
+.trio-item p{font-size:13px;color:var(--ink2)}
+
+/* Lab steps */
+.lab-step{display:flex;gap:16px;margin:20px 0}
+.lab-step .step-num{flex-shrink:0;width:32px;height:32px;border-radius:50%;background:var(--ice);color:#fff;font-family:var(--f-head);font-weight:700;font-size:14px;display:flex;align-items:center;justify-content:center}
+.lab-step .step-body h4{font-size:14px;font-weight:700;margin-bottom:6px}
+.lab-step .step-body p{font-size:14px;color:var(--ink2);margin-bottom:8px}
+.checkpoint{background:var(--teal-s);border:1px solid var(--teal);border-radius:var(--r);padding:10px 14px;font-size:13px;margin-top:8px}
+.checkpoint::before{content:"✓ Checkpoint: ";font-weight:600;color:var(--teal)}
+.pitfall{background:var(--amber-s);border:1px solid var(--amber);border-radius:var(--r);padding:10px 14px;font-size:13px;margin-top:8px}
+.pitfall::before{content:"⚠ Pitfall: ";font-weight:600;color:var(--amber)}
+
+/* Q&A */
+details{border:1px solid var(--line);border-radius:var(--r);margin:10px 0;overflow:hidden}
+details summary{padding:14px 18px;cursor:pointer;font-weight:600;font-size:14px;list-style:none;display:flex;align-items:center;gap:10px;background:var(--card)}
+details summary::-webkit-details-marker{display:none}
+details summary::before{content:"▶";font-size:10px;color:var(--ice);transition:transform .2s;flex-shrink:0}
+details[open] summary::before{transform:rotate(90deg)}
+details[open] summary{border-bottom:1px solid var(--line)}
+.qa-body{padding:16px 18px;background:var(--card);font-size:14px;color:var(--ink2);line-height:1.7}
+.qa-tag{font-size:10px;font-family:var(--f-head);font-weight:700;text-transform:uppercase;letter-spacing:.06em;padding:2px 7px;border-radius:4px;margin-left:auto}
+.tag-fund{background:var(--ice-s);color:var(--ice)}
+.tag-tricky{background:var(--amber-s);color:var(--amber)}
+.tag-scenario{background:var(--teal-s);color:var(--teal)}
+
+/* Quiz */
+.quiz-q{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:18px 20px;margin:14px 0}
+.quiz-q p{font-weight:600;margin-bottom:12px}
+.quiz-opt{display:flex;flex-direction:column;gap:7px}
+.quiz-opt label{display:flex;align-items:center;gap:10px;cursor:pointer;font-size:14px;padding:8px 10px;border-radius:6px;border:1px solid var(--line);transition:all .15s}
+.quiz-opt label:hover{background:var(--ice-s);border-color:var(--ice)}
+.quiz-opt input{accent-color:var(--ice)}
+.quiz-answer{display:none;margin-top:10px;padding:10px 14px;border-radius:6px;font-size:13px;font-weight:600}
+.quiz-answer.correct{background:var(--teal-s);color:var(--teal)}
+.quiz-answer.wrong{background:var(--red-s);color:var(--red)}
+
+/* Table */
+table{width:100%;border-collapse:collapse;margin:16px 0;font-size:13px}
+th{background:var(--card2);font-family:var(--f-head);font-size:11px;text-transform:uppercase;letter-spacing:.06em;padding:9px 12px;text-align:left;border-bottom:1px solid var(--line2)}
+td{padding:9px 12px;border-bottom:1px solid var(--line)}
+tr:last-child td{border-bottom:none}
+
+/* Cheat sheet */
+.cheat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin:18px 0}
+.cheat-item{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px}
+.cheat-item .label{font-family:var(--f-head);font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--ice);margin-bottom:5px}
+.cheat-item p{font-size:13px;color:var(--ink2)}
+
+/* Divider */
+hr{border:none;border-top:1px solid var(--line);margin:48px 0}
+
+/* ── COURSE ROADMAP ──────────────────────────────────── */
+.road{margin-top:12px;padding-top:12px;border-top:1px solid var(--line)}
+.road h4{font-family:var(--f-mono);font-size:10px;letter-spacing:.14em;color:var(--ink3);
+  text-transform:uppercase;margin-bottom:8px;cursor:pointer}
+.road h4::after{content:" ▼";font-size:9px}
+.road a{display:none;padding:5px 10px;border-radius:6px;font-size:12px;
+  color:var(--ink2);text-decoration:none;margin:2px 0;transition:background .15s}
+.road a:hover{background:var(--ice-s);color:var(--ice)}
+.road a em{font-family:var(--f-mono);font-size:10px;font-style:normal;
+  color:var(--ink3);min-width:20px;display:inline-block}
+.road a i{float:right;font-style:normal;font-family:var(--f-mono);
+  font-size:10px;color:var(--ink3)}
+.road a.rm.now{color:var(--ice);background:var(--ice-s)}
+.road a.rm.now i{color:var(--ice)}
+.road.open a{display:flex;align-items:center;gap:8px}
+/* ─────────────────────────────────────────────────────── */
+</style>
+</head>
+<body>
+<style id="sf-home-style">
+#sf-home-btn{
+  position:fixed;bottom:22px;right:22px;z-index:9998;
+  display:inline-flex;align-items:center;gap:7px;
+  padding:8px 18px 8px 14px;border-radius:999px;
+  background:rgba(255,255,255,.13);
+  border:1px solid rgba(255,255,255,.26);
+  color:#e5edf5;
+  font-family:system-ui,-apple-system,"Segoe UI",sans-serif;
+  font-size:12px;font-weight:600;letter-spacing:.04em;
+  text-decoration:none;cursor:pointer;
+  backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+  box-shadow:0 2px 12px rgba(0,0,0,.25);
+  transition:background .18s,border-color .18s,transform .18s,box-shadow .18s,color .18s;
+  white-space:nowrap;
+}
+#sf-home-btn::before{
+  content:"⌂";
+  font-size:14px;line-height:1;
+}
+#sf-home-btn:hover{
+  background:rgba(255,255,255,.24);
+  border-color:rgba(255,255,255,.46);
+  color:#fff;
+  transform:translateY(-2px);
+  box-shadow:0 6px 22px rgba(0,0,0,.35);
+  text-decoration:none;
+}
+/* Light theme — fires for all files that use data-theme="light" toggle */
+[data-theme="light"] #sf-home-btn{
+  background:rgba(11,27,43,.08);
+  border-color:rgba(11,27,43,.20);
+  color:#0b1b2b;
+  box-shadow:0 2px 12px rgba(0,0,0,.10);
+}
+[data-theme="light"] #sf-home-btn:hover{
+  background:rgba(10,134,194,.13);
+  border-color:rgba(10,134,194,.38);
+  color:#0a86c2;
+  box-shadow:0 6px 22px rgba(10,134,194,.18);
+}
+/* Interview QA files start in light mode via :root (paper theme) */
+body[style*="--paper"] #sf-home-btn,
+.mast ~ #sf-home-btn{
+  background:rgba(11,27,43,.07);
+  border-color:rgba(11,27,43,.18);
+  color:#15120f;
+}
+</style>
+<a id="sf-home-btn" href="../" title="Back to Course Home">Course Home</a>
+
+
+<div class="topbar">
+  <div>
+    <div class="badge">Snowflake Interview Lab</div>
+    <div class="title">Module 14 · Enterprise Architecture &amp; Governance</div>
+  </div>
+  <button class="theme" onclick="toggleTheme()">Dark / Light</button>
+</div>
+  <div class="road">
+    <h4>COURSE ROADMAP · CLICK TO OPEN</h4>
+    <a class="rm ready" href="../module01/"><em>01</em>Architecture<i>open</i></a>
+    <a class="rm ready" href="../module02/"><em>02</em>SnowSQL · unstructured · streams, tasks &amp; procedures<i>open</i></a>
+    <a class="rm ready" href="../module03/"><em>03</em>Performance tuning<i>open</i></a>
+    <a class="rm ready" href="../module04/"><em>04</em>Data ingestion (Snowpipe)<i>open</i></a>
+    <a class="rm ready" href="../module05/"><em>05</em>Dynamic tables &amp; transforms<i>open</i></a>
+    <a class="rm ready" href="../module06/"><em>06</em>Semi-structured data<i>open</i></a>
+    <a class="rm ready" href="../module07/"><em>07</em>Data protection<i>open</i></a>
+    <a class="rm ready" href="../module08/"><em>08</em>Security &amp; governance<i>open</i></a>
+    <a class="rm ready" href="../module09/"><em>09</em>Cost optimization<i>open</i></a>
+    <a class="rm ready" href="../module10/"><em>10</em>Data sharing<i>open</i></a>
+    <a class="rm ready" href="../module11/"><em>11</em>Snowpark &amp; Cortex AI<i>open</i></a>
+    <a class="rm ready" href="../module12/"><em>12</em>Advanced SQL<i>open</i></a>
+    <a class="rm ready" href="../module13/"><em>13</em>Modeling &amp; tooling<i>open</i></a>
+    <a class="rm now"   href="../module14/"><em>14</em>Enterprise Architecture &amp; Governance<i>you are here</i></a>
+    <a class="rm ready" href="../module15/"><em>15</em>External Integrations<i>open</i></a>
+    <a class="rm ready" href="../module16/"><em>16</em>IaC, CI/CD &amp; Orchestration<i>open</i></a>
+  </div>
+
+<div class="wrap">
+
+  <div class="chapnav">
+    <h4>MODULE 14 · CHAPTERS</h4>
+    <ul>
+      <li><a href="#ch01">01 · Late-arriving data</a></li>
+      <li><a href="#ch02">02 · Multi-account strategy</a></li>
+      <li><a href="#ch03">03 · Private Link</a></li>
+      <li><a href="#ch04">04 · Tri-secret Compose</a></li>
+      <li><a href="#ch05">05 · Snowflake Horizon</a></li>
+      <li><a href="#ch06">06 · Object Tagging</a></li>
+      <li><a href="#ch07">07 · SYSTEM$CLASSIFY</a></li>
+      <li><a href="#ch08">08 · Compliance certifications</a></li>
+      <li><a href="#lab">09 · SQL Lab</a></li>
+      <li><a href="#qa">10 · Interview Q&amp;A</a></li>
+      <li><a href="#quiz">11 · Quiz</a></li>
+      <li><a href="#cheat">12 · Cheat sheet</a></li>
+    </ul>
+  </div>
+
+  <div class="hero">
+    <div class="mod">Module 14</div>
+    <h1>Enterprise Architecture<br>&amp; Governance</h1>
+    <p>The topics that separate senior engineers from staff engineers: how Snowflake fits into an enterprise security model, how to govern data at scale across accounts and clouds, and how to handle real-world data quality challenges like late-arriving events.</p>
+  </div>
+
+  <!-- CHAPTER 01 -->
+  <div class="section" id="ch01">
+    <div class="section-label">Chapter 01</div>
+    <h2>Late-arriving &amp; out-of-order data</h2>
+
+    <div class="trio">
+      <div class="trio-item"><div class="num">01</div><h4>What is it</h4><p>Events that arrive in Snowflake after the time window in which they logically belong — e.g., a mobile click event from 11:50 PM that lands in the pipeline at 12:15 AM the next day.</p></div>
+      <div class="trio-item"><div class="num">02</div><h4>Why it matters</h4><p>Without handling this, daily aggregations are wrong, SCD Type 2 effective dates overlap, and deduplication logic silently drops real records or keeps phantom duplicates.</p></div>
+      <div class="trio-item"><div class="num">03</div><h4>Core patterns</h4><p>Watermark window in MERGE, INSERT OVERWRITE for partitioned slices, QUALIFY dedup on streams, and downstream alerts on late-arrival rate via TASK_HISTORY.</p></div>
+    </div>
+
+    <h3>Pattern 1 — Watermark-window MERGE</h3>
+    <p style="color:var(--ink2);margin-bottom:10px">Only process source rows within a rolling window (e.g., 72 hours back). The MERGE upserts late arrivals and corrects existing rows if the late record is newer.</p>
+    <pre><span class="cm">-- events_raw receives late events; events_curated is the clean layer</span>
+<span class="kw">MERGE INTO</span> events_curated tgt
+<span class="kw">USING</span> (
+  <span class="kw">SELECT</span>
+    event_id,
+    event_ts,
+    user_id,
+    event_type,
+    <span class="kw">ROW_NUMBER() OVER</span> (<span class="kw">PARTITION BY</span> event_id <span class="kw">ORDER BY</span> loaded_at <span class="kw">DESC</span>) AS rn
+  <span class="kw">FROM</span> events_raw
+  <span class="kw">WHERE</span> event_ts &gt;= <span class="kw">DATEADD</span>(<span class="st">'hour'</span>, <span class="nm">-72</span>, <span class="kw">CURRENT_TIMESTAMP</span>())
+  <span class="kw">QUALIFY</span> rn = <span class="nm">1</span>                      <span class="cm">-- deduplicate within the window</span>
+) src <span class="kw">ON</span> tgt.event_id = src.event_id
+<span class="kw">WHEN MATCHED AND</span> src.event_ts &gt; tgt.event_ts <span class="kw">THEN</span>
+  <span class="kw">UPDATE SET</span>
+    event_ts   = src.event_ts,
+    event_type = src.event_type,
+    updated_at = <span class="kw">CURRENT_TIMESTAMP</span>()
+<span class="kw">WHEN NOT MATCHED THEN</span>
+  <span class="kw">INSERT</span> (event_id, event_ts, user_id, event_type)
+  <span class="kw">VALUES</span> (src.event_id, src.event_ts, src.user_id, src.event_type);</pre>
+
+    <h3>Pattern 2 — INSERT OVERWRITE for date-partitioned tables</h3>
+    <p style="color:var(--ink2);margin-bottom:10px">When a whole date slice may need to be recomputed (e.g., a backfill), overwrite just that partition rather than running a full table MERGE.</p>
+    <pre><span class="cm">-- Recompute one date slice atomically</span>
+<span class="kw">INSERT OVERWRITE INTO</span> daily_sales_summary
+  <span class="kw">SELECT</span>
+    <span class="kw">DATE</span>(event_ts)  <span class="kw">AS</span> sale_date,
+    region,
+    <span class="kw">SUM</span>(amount)    <span class="kw">AS</span> total_amount,
+    <span class="kw">COUNT</span>(*)       <span class="kw">AS</span> order_count
+  <span class="kw">FROM</span> events_raw
+  <span class="kw">WHERE DATE</span>(event_ts) = <span class="st">'2024-03-15'</span>  <span class="cm">-- the date being recomputed</span>
+  <span class="kw">GROUP BY</span> <span class="nm">1</span>, <span class="nm">2</span>;</pre>
+
+    <h3>Pattern 3 — Stream staleness guard</h3>
+    <p style="color:var(--ink2);margin-bottom:10px">A stream becomes stale if its offset is not consumed before the table's data retention period expires. Monitor this proactively.</p>
+    <pre><span class="cm">-- Alert on streams approaching staleness</span>
+<span class="kw">SELECT</span>
+  stream_name,
+  stale,
+  stale_after,
+  <span class="kw">DATEDIFF</span>(<span class="st">'hour'</span>, <span class="kw">CURRENT_TIMESTAMP</span>(), stale_after) <span class="kw">AS</span> hours_until_stale
+<span class="kw">FROM</span> INFORMATION_SCHEMA.STREAMS
+<span class="kw">WHERE</span> stale_after &lt; <span class="kw">DATEADD</span>(<span class="st">'hour'</span>, <span class="nm">24</span>, <span class="kw">CURRENT_TIMESTAMP</span>())
+<span class="kw">ORDER BY</span> hours_until_stale;</pre>
+
+    <div class="card amber">
+      <h4>Interview trap</h4>
+      <p>"Can a Dynamic Table handle late arrivals?" — Yes, but only within its LAG window. If a late record arrives after the last refresh and outside the LAG, it may not be reflected until the next full refresh. For guaranteed late-arrival correctness, Streams + Tasks with a watermark MERGE give more control.</p>
+    </div>
+    <div class="card ice">
+      <h4>Senior angle</h4>
+      <p>Agree on a <strong>late-arrival SLA</strong> with upstream teams before building pipelines: "we accept events up to 48 hours late." Model this as a Snowflake <strong>dynamic table with a lag of 1 hour</strong> plus a nightly <strong>MERGE task</strong> that re-processes the past 48 hours. Document the boundary in your data contract.</p>
+    </div>
+  </div>
+
+  <hr>
+
+  <!-- CHAPTER 02 -->
+  <div class="section" id="ch02">
+    <div class="section-label">Chapter 02</div>
+    <h2>Multi-account enterprise strategy</h2>
+
+    <div class="trio">
+      <div class="trio-item"><div class="num">01</div><h4>What is it</h4><p>Running multiple separate Snowflake accounts — typically one per environment (dev/test/prod) and sometimes one per business unit or regulatory boundary — connected by replication or data sharing.</p></div>
+      <div class="trio-item"><div class="num">02</div><h4>Why it matters</h4><p>A single account for all environments risks production data leaks, uncontrolled cost from dev workloads, and can violate data residency requirements. Separate accounts provide hard blast-radius boundaries.</p></div>
+      <div class="trio-item"><div class="num">03</div><h4>How it works</h4><p>Snowflake's <strong>Organization</strong> layer manages multiple accounts under one contract. Accounts can share data via Snowflake Data Sharing or replicate databases via DATABASE REPLICATION GROUPS.</p></div>
+    </div>
+
+    <h3>Account topology patterns</h3>
+    <table>
+      <thead><tr><th>Pattern</th><th>When to use</th><th>Data movement</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Single account, multiple databases</strong></td><td>Startup / small team, tight budget</td><td>None — same account</td></tr>
+        <tr><td><strong>Dev / Test / Prod accounts</strong></td><td>Standard enterprise; separate cost and access</td><td>Zero-copy clone promotion or replication</td></tr>
+        <tr><td><strong>Per-BU accounts + central sharing</strong></td><td>Large enterprise; different data owners</td><td>Secure Data Sharing (read-only)</td></tr>
+        <tr><td><strong>Per-region accounts</strong></td><td>Data residency / GDPR requirements</td><td>Replication with region pinning</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Promoting code from dev → test → prod</h3>
+    <pre><span class="cm">-- Step 1: Clone prod database into test (zero-copy, instant)</span>
+<span class="kw">CREATE DATABASE</span> TEST_DB <span class="kw">CLONE</span> PROD_DB;
+
+<span class="cm">-- Step 2: Run regression tests against TEST_DB</span>
+<span class="cm">-- Step 3: Once approved, promote via schema swap (atomic rename)</span>
+<span class="kw">ALTER DATABASE</span> PROD_DB <span class="kw">RENAME TO</span> PROD_DB_OLD;
+<span class="kw">ALTER DATABASE</span> TEST_DB  <span class="kw">RENAME TO</span> PROD_DB;
+<span class="cm">-- If problems: reverse the rename (rollback in seconds)</span></pre>
+
+    <h3>Cross-account replication</h3>
+    <pre><span class="cm">-- On the PRIMARY account: enable replication</span>
+<span class="kw">ALTER DATABASE</span> PROD_DB <span class="kw">ENABLE REPLICATION TO ACCOUNTS</span>
+  my_org.prod_replica_account;
+
+<span class="cm">-- On the SECONDARY account: create replica and refresh</span>
+<span class="kw">CREATE DATABASE</span> PROD_DB_REPLICA
+  <span class="kw">AS REPLICA OF</span> my_org.primary_account.PROD_DB
+  DATA_RETENTION_TIME_IN_DAYS = <span class="nm">1</span>;
+
+<span class="kw">ALTER DATABASE</span> PROD_DB_REPLICA <span class="kw">REFRESH</span>;  <span class="cm">-- or schedule via Task</span></pre>
+
+    <div class="card ice">
+      <h4>Senior angle — cost attribution across accounts</h4>
+      <p>Use Snowflake's <strong>Organization Usage</strong> views (<code>SNOWFLAKE.ORGANIZATION_USAGE.USAGE_IN_CURRENCY_DAILY</code>) to aggregate credit consumption across all accounts under one contract. Set up <strong>resource monitors at the account level</strong> in each environment, with stricter quotas on dev/test than prod.</p>
+    </div>
+    <div class="card amber">
+      <h4>Interview trap</h4>
+      <p>"Can you share data between accounts in real time?" — Secure Data Sharing is <em>not</em> a copy: the consumer account queries your objects directly in near-real time with no data movement cost. Replication IS a copy and incurs storage and compute. Know when to use each.</p>
+    </div>
+  </div>
+
+  <hr>
+
+  <!-- CHAPTER 03 -->
+  <div class="section" id="ch03">
+    <div class="section-label">Chapter 03</div>
+    <h2>Private Link / Private Endpoints</h2>
+
+    <div class="trio">
+      <div class="trio-item"><div class="num">01</div><h4>What is it</h4><p>A mechanism to route traffic between your VPC and Snowflake over the cloud provider's private backbone — never crossing the public internet. AWS PrivateLink, Azure Private Link, and GCP Private Service Connect.</p></div>
+      <div class="trio-item"><div class="num">02</div><h4>Why it matters</h4><p>Required for PCI-DSS and HIPAA workloads. Eliminates public internet exposure for Snowflake traffic. Combined with Network Policies, it restricts connection sources to your corporate network only.</p></div>
+      <div class="trio-item"><div class="num">03</div><h4>How it works</h4><p>Snowflake provides a VPC endpoint service. You create an interface endpoint in your VPC that gets a private DNS hostname. All Snowflake traffic from your VPC resolves to that private IP.</p></div>
+    </div>
+
+    <h3>Setup steps (AWS PrivateLink)</h3>
+    <table>
+      <thead><tr><th>Step</th><th>Actor</th><th>Action</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td>Snowflake Admin</td><td>Run <code>SELECT SYSTEM$GET_PRIVATELINK_CONFIG();</code> — get the endpoint service name and allowed principals.</td></tr>
+        <tr><td>2</td><td>AWS Admin</td><td>Create a VPC Interface Endpoint using the service name from Step 1. Enable private DNS.</td></tr>
+        <tr><td>3</td><td>Snowflake Admin</td><td>Authorize the endpoint: <code>SYSTEM$AUTHORIZE_PRIVATELINK('vpce-0abc...')</code></td></tr>
+        <tr><td>4</td><td>DNS Admin</td><td>Update internal DNS to resolve <code>&lt;account&gt;.snowflakecomputing.com</code> to the VPC endpoint IP.</td></tr>
+        <tr><td>5</td><td>Snowflake Admin</td><td>Create a network rule + policy to <em>block</em> all public internet access, forcing PrivateLink-only connections.</td></tr>
+      </tbody>
+    </table>
+
+    <pre><span class="cm">-- Step 1: Get PrivateLink config (run as ACCOUNTADMIN)</span>
+<span class="kw">SELECT</span> <span class="kw">SYSTEM$GET_PRIVATELINK_CONFIG</span>();
+<span class="cm">-- Returns JSON: {"privatelink-account-name":"...", "privatelink-vpce-id":"...", ...}</span>
+
+<span class="cm">-- Step 3: Authorize the VPC endpoint</span>
+<span class="kw">SELECT</span> <span class="kw">SYSTEM$AUTHORIZE_PRIVATELINK</span>(
+  <span class="st">'vpce-0abc123def456789a'</span>,  <span class="cm">-- your VPC endpoint ID</span>
+  <span class="st">'arn:aws:iam::123456789:root'</span>  <span class="cm">-- AWS account ARN</span>
+);
+
+<span class="cm">-- Step 5: Lock down to PrivateLink only via network policy</span>
+<span class="kw">CREATE OR REPLACE NETWORK RULE</span> block_public
+  <span class="kw">TYPE</span> = HOST_PORT
+  <span class="kw">MODE</span> = INGRESS
+  <span class="kw">VALUE_LIST</span> = (<span class="st">'0.0.0.0/0'</span>);  <span class="cm">-- match everything public</span>
+
+<span class="kw">CREATE OR REPLACE NETWORK POLICY</span> privatelink_only
+  <span class="kw">ALLOWED_NETWORK_RULE_LIST</span> = ()        <span class="cm">-- nothing allowed by default</span>
+  <span class="kw">BLOCKED_NETWORK_RULE_LIST</span> = (block_public);
+
+<span class="kw">ALTER ACCOUNT SET</span> NETWORK_POLICY = privatelink_only;</pre>
+
+    <div class="card amber">
+      <h4>Interview trap</h4>
+      <p>PrivateLink secures the <em>connection</em> from your VPC to Snowflake, but it does <em>not</em> secure data inside Snowflake. You still need RBAC, masking policies, and network policies to control <em>who</em> can access <em>what</em> once connected.</p>
+    </div>
+  </div>
+
+  <hr>
+
+  <!-- CHAPTER 04 -->
+  <div class="section" id="ch04">
+    <div class="section-label">Chapter 04</div>
+    <h2>Tri-secret Compose &amp; Customer-Managed Keys</h2>
+
+    <div class="trio">
+      <div class="trio-item"><div class="num">01</div><h4>What is it</h4><p>An encryption architecture where data at rest requires <em>both</em> a Snowflake-managed key AND a customer-managed key (CMK) held in your own KMS (AWS KMS, Azure Key Vault, or GCP Cloud KMS) to decrypt.</p></div>
+      <div class="trio-item"><div class="num">02</div><h4>Why it matters</h4><p>By default, Snowflake holds all encryption keys. Tri-secret Compose ensures that even Snowflake cannot decrypt your data without your CMK — giving you unilateral ability to revoke access instantly by rotating or deleting your KMS key.</p></div>
+      <div class="trio-item"><div class="num">03</div><h4>How it works</h4><p>Three keys compose to form the final data encryption key: (1) Snowflake root key, (2) account key derived from it, (3) customer CMK from your KMS. All three must be present to decrypt. Available on Business Critical edition only.</p></div>
+    </div>
+
+    <h3>Key hierarchy</h3>
+    <table>
+      <thead><tr><th>Level</th><th>Key type</th><th>Held by</th><th>Rotated by</th></tr></thead>
+      <tbody>
+        <tr><td>1 — Root</td><td>Snowflake Root Key</td><td>Snowflake HSM</td><td>Snowflake (auto, yearly)</td></tr>
+        <tr><td>2 — Account</td><td>Account Master Key</td><td>Snowflake</td><td>Snowflake (auto, 30 days)</td></tr>
+        <tr><td>3 — Table</td><td>Table Master Key</td><td>Snowflake</td><td>Snowflake (auto)</td></tr>
+        <tr><td>4 — CMK</td><td>Customer-Managed Key</td><td><strong>Your KMS</strong></td><td><strong>You</strong> (manual or scheduled)</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Setup overview (AWS KMS)</h3>
+    <pre><span class="cm">-- Step 1: Create a symmetric KMS key in AWS with this key policy</span>
+<span class="cm">-- (allow Snowflake's IAM role to use the key)</span>
+
+<span class="cm">-- Step 2: In Snowflake (ACCOUNTADMIN), configure the KMS key ARN</span>
+<span class="kw">ALTER ACCOUNT SET</span>
+  CUSTOMER_MANAGED_KEY = <span class="st">'arn:aws:kms:us-east-1:123456789:key/abc-def-123'</span>;
+
+<span class="cm">-- Step 3: Snowflake performs a "wrap" of your account key with your CMK</span>
+<span class="cm">-- From this point on, every I/O requires a KMS call to unwrap the key</span>
+
+<span class="cm">-- To verify CMK is active:</span>
+<span class="kw">SELECT</span> current_account(), encryption_key_type
+<span class="kw">FROM</span> SNOWFLAKE.ACCOUNT_USAGE.ACCOUNTS;</pre>
+
+    <div class="card red">
+      <h4>Critical operational note</h4>
+      <p>If you <strong>disable or delete your CMK</strong> in AWS KMS, Snowflake <em>cannot access your data</em> — this is intentional for compliance scenarios. It also means you cannot run any queries. Always implement CMK rotation through key versioning (not deletion) to avoid accidental outages. Set up CloudWatch alarms on KMS key usage and rotation status.</p>
+    </div>
+    <div class="card ice">
+      <h4>Senior angle — Business Continuity Key (BCK)</h4>
+      <p>Snowflake's Business Critical edition supports a <strong>BCK</strong>: a Snowflake-managed fallback key that lets Snowflake decrypt data for a limited time window in a disaster scenario (e.g., your KMS becomes unavailable). You can enable or disable the BCK. For maximum security (pure Tri-secret), disable the BCK and accept the operational risk of KMS unavailability.</p>
+    </div>
+  </div>
+
+  <hr>
+
+  <!-- CHAPTER 05 -->
+  <div class="section" id="ch05">
+    <div class="section-label">Chapter 05</div>
+    <h2>Snowflake Horizon</h2>
+
+    <div class="trio">
+      <div class="trio-item"><div class="num">01</div><h4>What is it</h4><p>Snowflake's built-in unified governance layer — a set of features and tools for discovering, classifying, protecting, and monitoring all data, apps, and AI models across accounts and clouds from one place.</p></div>
+      <div class="trio-item"><div class="num">02</div><h4>Why it matters</h4><p>Enterprises need governance at scale — thousands of tables, hundreds of roles, dozens of teams. Horizon makes policy enforcement declarative (apply a tag once, masking follows everywhere) rather than column-by-column.</p></div>
+      <div class="trio-item"><div class="num">03</div><h4>Key components</h4><p>Trust Center (security posture), Compliance Center (audit reports), Data Quality Monitoring, Universal Search, Object Tagging, Data Classification, Access History, and Lineage.</p></div>
+    </div>
+
+    <h3>Horizon pillars</h3>
+    <table>
+      <thead><tr><th>Pillar</th><th>Feature</th><th>What it does</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Discover</strong></td><td>Universal Search, Lineage</td><td>Find any object; trace data from source to report</td></tr>
+        <tr><td><strong>Classify</strong></td><td>SYSTEM$CLASSIFY, Data Classification</td><td>Auto-detect PII/PHI columns using ML</td></tr>
+        <tr><td><strong>Protect</strong></td><td>Object Tagging, Masking Policies, Row Access Policies, Tag-based policies</td><td>Apply policies declaratively via tags</td></tr>
+        <tr><td><strong>Monitor</strong></td><td>Trust Center, Access History, Data Quality Monitoring</td><td>Security posture, audit trail, freshness/completeness</td></tr>
+        <tr><td><strong>Comply</strong></td><td>Compliance Center</td><td>SOC 2, HIPAA, PCI-DSS readiness reports</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Trust Center</h3>
+    <p style="color:var(--ink2);margin-bottom:10px">The Trust Center runs automated security checks against your account and surfaces findings. Access it via Snowsight → Admin → Trust Center.</p>
+    <pre><span class="cm">-- Query Trust Center findings programmatically</span>
+<span class="kw">SELECT</span> check_name, severity, finding, recommendation
+<span class="kw">FROM</span> SNOWFLAKE.TRUST_CENTER.FINDINGS
+<span class="kw">WHERE</span> severity <span class="kw">IN</span> (<span class="st">'CRITICAL'</span>, <span class="st">'HIGH'</span>)
+<span class="kw">ORDER BY</span> severity, check_name;</pre>
+
+    <div class="card teal">
+      <h4>Data Quality Monitoring (Metric Functions)</h4>
+      <p>Snowflake Horizon includes <strong>Data Metric Functions (DMFs)</strong> — scheduled checks on table freshness, completeness, and validity that run on a schedule and write results to <code>SNOWFLAKE.LOCAL.DATA_QUALITY_MONITORING_RESULTS</code>. Built-in DMFs include <code>FRESHNESS</code>, <code>NULL_COUNT</code>, <code>DUPLICATE_COUNT</code>, and <code>ROW_COUNT</code>. You can also write custom DMFs.</p>
+    </div>
+  </div>
+
+  <hr>
+
+  <!-- CHAPTER 06 -->
+  <div class="section" id="ch06">
+    <div class="section-label">Chapter 06</div>
+    <h2>Object Tagging &amp; Tag-based Policies</h2>
+
+    <div class="trio">
+      <div class="trio-item"><div class="num">01</div><h4>What is it</h4><p>A metadata labelling system: you create a TAG object, apply it to any Snowflake object (database, schema, table, column, warehouse), and then policies can be driven automatically by those tags.</p></div>
+      <div class="trio-item"><div class="num">02</div><h4>Why it matters</h4><p>Without tags, masking policies must be applied column by column — dozens of <code>ALTER TABLE</code> statements that drift over time. With tag-based masking, applying one tag to a column enforces the right policy automatically, even as new tables are added.</p></div>
+      <div class="trio-item"><div class="num">03</div><h4>How it works</h4><p>Tags propagate from table → columns (lineage propagation). A masking policy is associated with a tag+type combination. When Snowflake encounters a query, it checks tags on queried columns and applies any associated masking policy.</p></div>
+    </div>
+
+    <h3>Tag lifecycle — full example</h3>
+    <pre><span class="cm">-- 1. Create the tag (ACCOUNTADMIN or SYSADMIN + CREATE TAG privilege)</span>
+<span class="kw">USE ROLE</span> ACCOUNTADMIN;
+
+<span class="kw">CREATE OR REPLACE TAG</span> pii_level
+  <span class="kw">ALLOWED_VALUES</span> <span class="st">'HIGH'</span>, <span class="st">'MEDIUM'</span>, <span class="st">'LOW'</span>
+  <span class="kw">COMMENT</span> = <span class="st">'PII sensitivity classification'</span>;
+
+<span class="kw">CREATE OR REPLACE TAG</span> data_domain
+  <span class="kw">ALLOWED_VALUES</span> <span class="st">'IDENTITY'</span>, <span class="st">'CONTACT'</span>, <span class="st">'FINANCIAL'</span>, <span class="st">'BEHAVIORAL'</span>;
+
+<span class="cm">-- 2. Apply tags to columns</span>
+<span class="kw">ALTER TABLE</span> customers
+  <span class="kw">MODIFY COLUMN</span> email
+    <span class="kw">SET TAG</span> pii_level = <span class="st">'HIGH'</span>, data_domain = <span class="st">'CONTACT'</span>;
+
+<span class="kw">ALTER TABLE</span> customers
+  <span class="kw">MODIFY COLUMN</span> ssn
+    <span class="kw">SET TAG</span> pii_level = <span class="st">'HIGH'</span>, data_domain = <span class="st">'IDENTITY'</span>;
+
+<span class="cm">-- 3. Create a masking policy</span>
+<span class="kw">CREATE OR REPLACE MASKING POLICY</span> mask_high_pii
+  <span class="kw">AS</span> (val <span class="kw">VARCHAR</span>) <span class="kw">RETURNS VARCHAR</span> -&gt;
+  <span class="kw">CASE</span>
+    <span class="kw">WHEN CURRENT_ROLE()</span> <span class="kw">IN</span> (<span class="st">'SYSADMIN'</span>,<span class="st">'ACCOUNTADMIN'</span>,<span class="st">'PII_READER_ROLE'</span>) <span class="kw">THEN</span> val
+    <span class="kw">ELSE</span> <span class="st">'*** REDACTED ***'</span>
+  <span class="kw">END</span>;
+
+<span class="cm">-- 4. Associate policy with the tag (tag-based masking)</span>
+<span class="kw">ALTER TAG</span> pii_level
+  <span class="kw">SET MASKING POLICY</span> mask_high_pii
+  <span class="kw">USING</span> (<span class="st">'HIGH'</span>);  <span class="cm">-- only applies when tag value = 'HIGH'</span>
+
+<span class="cm">-- 5. Inspect: what tags are on this table?</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM TABLE</span>(
+  INFORMATION_SCHEMA.TAG_REFERENCES_ALL_COLUMNS(
+    <span class="st">'MYDB.PUBLIC.CUSTOMERS'</span>, <span class="st">'table'</span>
+  )
+);
+
+<span class="cm">-- 6. Inspect: which columns have pii_level = 'HIGH'?</span>
+<span class="kw">SELECT</span> object_name, column_name, tag_value
+<span class="kw">FROM</span> SNOWFLAKE.ACCOUNT_USAGE.TAG_REFERENCES
+<span class="kw">WHERE</span> tag_name = <span class="st">'PII_LEVEL'</span>
+  <span class="kw">AND</span> tag_value = <span class="st">'HIGH'</span>
+<span class="kw">ORDER BY</span> object_name, column_name;</pre>
+
+    <div class="card amber">
+      <h4>Interview trap — tag propagation</h4>
+      <p>Tags applied to a <strong>table</strong> propagate to its columns <em>only</em> if the tag was created with <code>ALLOWED_VALUES</code> and propagation is configured. Tags applied directly to a column override table-level tags for that column. Test this with <code>TAG_REFERENCES_ALL_COLUMNS</code> to avoid surprises.</p>
+    </div>
+  </div>
+
+  <hr>
+
+  <!-- CHAPTER 07 -->
+  <div class="section" id="ch07">
+    <div class="section-label">Chapter 07</div>
+    <h2>SYSTEM$CLASSIFY — Automatic PII Detection</h2>
+
+    <div class="trio">
+      <div class="trio-item"><div class="num">01</div><h4>What is it</h4><p>A Snowflake system function that uses ML models to analyze column names, data types, and sample values to automatically classify columns as containing personal data (PII/PHI) and suggest classification tags.</p></div>
+      <div class="trio-item"><div class="num">02</div><h4>Why it matters</h4><p>In a large enterprise with thousands of tables, manual PII discovery is infeasible. SYSTEM$CLASSIFY accelerates the discovery phase of a governance programme and surfaces columns engineers might have missed.</p></div>
+      <div class="trio-item"><div class="num">03</div><h4>How it works</h4><p>Runs sampling queries against the table, applies ML classifiers, returns a JSON result with suggested tags and confidence scores. You review and accept/reject. Can auto-apply tags with <code>'auto_tag': true</code>.</p></div>
+    </div>
+
+    <pre><span class="cm">-- Classify a single table (review-only, no auto-tagging)</span>
+<span class="kw">SELECT</span> <span class="kw">SYSTEM$CLASSIFY</span>(
+  <span class="st">'MYDB.PUBLIC.CUSTOMERS'</span>,
+  {<span class="st">'auto_tag'</span>: <span class="kw">false</span>}
+);
+
+<span class="cm">-- Classify and automatically apply Snowflake system tags</span>
+<span class="kw">SELECT</span> <span class="kw">SYSTEM$CLASSIFY</span>(
+  <span class="st">'MYDB.PUBLIC.CUSTOMERS'</span>,
+  {<span class="st">'auto_tag'</span>: <span class="kw">true</span>}
+);
+
+<span class="cm">-- Classify all tables in a schema</span>
+<span class="kw">SELECT</span> <span class="kw">SYSTEM$CLASSIFY_SCHEMA</span>(
+  <span class="st">'MYDB.PUBLIC'</span>,
+  {<span class="st">'auto_tag'</span>: <span class="kw">true</span>}
+);
+
+<span class="cm">-- Review what classifications were applied</span>
+<span class="kw">SELECT</span>
+  object_name,
+  column_name,
+  tag_name,
+  tag_value
+<span class="kw">FROM</span> SNOWFLAKE.ACCOUNT_USAGE.TAG_REFERENCES
+<span class="kw">WHERE</span> tag_database = <span class="st">'SNOWFLAKE'</span>  <span class="cm">-- system tags live in SNOWFLAKE database</span>
+<span class="kw">ORDER BY</span> object_name, column_name;</pre>
+
+    <h3>Classification categories</h3>
+    <table>
+      <thead><tr><th>Category</th><th>Examples detected</th><th>Default system tag applied</th></tr></thead>
+      <tbody>
+        <tr><td>IDENTIFIER</td><td>SSN, passport number, credit card, email, phone</td><td><code>SNOWFLAKE.CORE.PRIVACY_CATEGORY = 'IDENTIFIER'</code></td></tr>
+        <tr><td>QUASI_IDENTIFIER</td><td>Date of birth, ZIP code, gender, age, race</td><td><code>SNOWFLAKE.CORE.PRIVACY_CATEGORY = 'QUASI_IDENTIFIER'</code></td></tr>
+        <tr><td>SENSITIVE</td><td>Salary, medical condition, religion, political opinion</td><td><code>SNOWFLAKE.CORE.SEMANTIC_CATEGORY = 'SALARY'</code> etc.</td></tr>
+      </tbody>
+    </table>
+
+    <div class="card ice">
+      <h4>Senior workflow — classify → review → enforce</h4>
+      <p>1. Run <code>SYSTEM$CLASSIFY_SCHEMA</code> with <code>auto_tag: false</code>. 2. Review results in a Snowsight worksheet. 3. Reject false positives (e.g., <em>product_code</em> misclassified as IDENTIFIER). 4. Re-run with <code>auto_tag: true</code>. 5. Attach masking policies to the system tags via <code>ALTER TAG ... SET MASKING POLICY</code>. This two-pass approach avoids masking columns incorrectly.</p>
+    </div>
+  </div>
+
+  <hr>
+
+  <!-- CHAPTER 08 -->
+  <div class="section" id="ch08">
+    <div class="section-label">Chapter 08</div>
+    <h2>Compliance Certifications</h2>
+
+    <div class="trio">
+      <div class="trio-item"><div class="num">01</div><h4>What Snowflake provides</h4><p>Snowflake holds SOC 2 Type II, ISO 27001, PCI-DSS (Level 1), HIPAA BAA, FedRAMP (Gov), and HITRUST certifications at the platform level. You inherit these controls but must still configure your side correctly.</p></div>
+      <div class="trio-item"><div class="num">02</div><h4>Shared responsibility</h4><p>Snowflake secures <em>the platform</em> (physical infrastructure, encryption at rest/in transit, platform availability). <em>You</em> are responsible for access control, data classification, audit logging, network policies, and incident response.</p></div>
+      <div class="trio-item"><div class="num">03</div><h4>What you must configure</h4><p>Role-based access (least privilege), column masking for PII, row access policies, network policies, MFA enforcement, audit log retention (ACCESS_HISTORY), and incident runbooks.</p></div>
+    </div>
+
+    <h3>Certification quick reference</h3>
+    <table>
+      <thead><tr><th>Certification</th><th>What it covers</th><th>Edition required</th><th>Key Snowflake feature</th></tr></thead>
+      <tbody>
+        <tr><td><strong>SOC 2 Type II</strong></td><td>Security, availability, confidentiality of your Snowflake environment</td><td>All editions</td><td>ACCESS_HISTORY, MFA, network policies</td></tr>
+        <tr><td><strong>HIPAA</strong></td><td>Protected Health Information (PHI) handling</td><td>Business Critical + BAA</td><td>Column masking, PHI classification, audit logs, PrivateLink</td></tr>
+        <tr><td><strong>PCI-DSS Level 1</strong></td><td>Cardholder data (credit card numbers, CVVs)</td><td>Business Critical</td><td>Tri-secret Compose, PrivateLink, Tokenization, Masking</td></tr>
+        <tr><td><strong>ISO 27001</strong></td><td>Information security management system</td><td>All editions</td><td>RBAC, audit trails, encryption key management</td></tr>
+        <tr><td><strong>FedRAMP</strong></td><td>US government cloud security</td><td>Snowflake Gov (separate)</td><td>Dedicated Gov cloud deployment</td></tr>
+      </tbody>
+    </table>
+
+    <h3>HIPAA — what you must configure in Snowflake</h3>
+    <pre><span class="cm">-- 1. Sign a BAA with Snowflake (contractual, not SQL)</span>
+
+<span class="cm">-- 2. Classify and tag PHI columns</span>
+<span class="kw">ALTER TABLE</span> patient_records
+  <span class="kw">MODIFY COLUMN</span> diagnosis <span class="kw">SET TAG</span> pii_level = <span class="st">'HIGH'</span>;
+
+<span class="cm">-- 3. Enable column masking on PHI</span>
+<span class="kw">ALTER TABLE</span> patient_records
+  <span class="kw">MODIFY COLUMN</span> diagnosis
+  <span class="kw">SET MASKING POLICY</span> phi_mask;
+
+<span class="cm">-- 4. Enable ACCESS_HISTORY for audit trail</span>
+<span class="cm">-- (enabled by default on Business Critical; verify via:)</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> SNOWFLAKE.ACCOUNT_USAGE.ACCESS_HISTORY
+<span class="kw">WHERE</span> query_start_time &gt;= <span class="kw">DATEADD</span>(<span class="st">'day'</span>, -<span class="nm">7</span>, <span class="kw">CURRENT_DATE</span>())
+  <span class="kw">AND</span> objects_modified IS NOT NULL
+<span class="kw">ORDER BY</span> query_start_time <span class="kw">DESC</span>
+<span class="kw">LIMIT</span> <span class="nm">100</span>;
+
+<span class="cm">-- 5. Enforce MFA via account policy (Business Critical)</span>
+<span class="kw">ALTER ACCOUNT SET</span> MULTI_FACTOR_AUTHENTICATION_ENROLLMENT_STATUS = <span class="st">'REQUIRED'</span>;</pre>
+
+    <div class="card ice">
+      <h4>Senior angle — compliance as code</h4>
+      <p>Treat compliance controls as infrastructure: define masking policies, row access policies, tags, and network rules in Terraform or via dbt post-hooks, so they are version-controlled, peer-reviewed, and re-applied automatically when environments are promoted. A manual compliance checklist breaks down at scale.</p>
+    </div>
+  </div>
+
+  <hr>
+
+  <!-- LAB -->
+  <div class="section" id="lab">
+    <div class="section-label">Chapter 09 · SQL Lab</div>
+    <h2>Hands-on: Governance from scratch</h2>
+    <p style="color:var(--ink2);margin-bottom:24px">This lab implements Object Tagging, tag-based masking, SYSTEM$CLASSIFY, and a late-arriving data MERGE on a single demo schema. You need ACCOUNTADMIN or a role with CREATE TAG, CREATE MASKING POLICY, and CREATE TABLE privileges.</p>
+
+    <div class="lab-step">
+      <div class="step-num">1</div>
+      <div class="step-body">
+        <h4>Set up the environment</h4>
+        <p>Create an isolated database, schema, and warehouse for the lab.</p>
+        <pre><span class="kw">USE ROLE</span> ACCOUNTADMIN;
+<span class="kw">CREATE DATABASE IF NOT EXISTS</span> GOVERNANCE_LAB;
+<span class="kw">CREATE SCHEMA IF NOT EXISTS</span>   GOVERNANCE_LAB.PII_DEMO;
+<span class="kw">CREATE WAREHOUSE IF NOT EXISTS</span> GOVERNANCE_WH
+  WAREHOUSE_SIZE = <span class="st">'XSMALL'</span>  AUTO_SUSPEND = <span class="nm">60</span>  AUTO_RESUME = <span class="kw">TRUE</span>;
+<span class="kw">USE</span> GOVERNANCE_LAB.PII_DEMO;
+<span class="kw">USE WAREHOUSE</span> GOVERNANCE_WH;</pre>
+        <div class="checkpoint">SHOW DATABASES includes GOVERNANCE_LAB.</div>
+      </div>
+    </div>
+
+    <div class="lab-step">
+      <div class="step-num">2</div>
+      <div class="step-body">
+        <h4>Create a demo table with PII columns</h4>
+        <pre><span class="kw">CREATE OR REPLACE TABLE</span> customers (
+  customer_id     <span class="kw">NUMBER</span> AUTOINCREMENT <span class="kw">PRIMARY KEY</span>,
+  full_name       <span class="kw">VARCHAR</span>(<span class="nm">100</span>),
+  email           <span class="kw">VARCHAR</span>(<span class="nm">200</span>),
+  phone           <span class="kw">VARCHAR</span>(<span class="nm">20</span>),
+  date_of_birth   <span class="kw">DATE</span>,
+  ssn             <span class="kw">VARCHAR</span>(<span class="nm">11</span>),
+  zip_code        <span class="kw">VARCHAR</span>(<span class="nm">10</span>),
+  account_balance <span class="kw">DECIMAL</span>(<span class="nm">12</span>,<span class="nm">2</span>)
+);
+<span class="kw">INSERT INTO</span> customers <span class="kw">VALUES</span>
+  (<span class="kw">DEFAULT</span>,<span class="st">'Asha Mehta'</span>,<span class="st">'asha@example.com'</span>,<span class="st">'555-100-2000'</span>,<span class="st">'1988-04-12'</span>,<span class="st">'123-45-6789'</span>,<span class="st">'10001'</span>,<span class="nm">5420.50</span>),
+  (<span class="kw">DEFAULT</span>,<span class="st">'Ben Torres'</span>,<span class="st">'ben@example.com'</span>,<span class="st">'555-200-3000'</span>,<span class="st">'1992-07-22'</span>,<span class="st">'987-65-4321'</span>,<span class="st">'90210'</span>,<span class="nm">12300.00</span>),
+  (<span class="kw">DEFAULT</span>,<span class="st">'Chen Li'</span>,<span class="st">'chen@example.com'</span>,<span class="st">'555-300-4000'</span>,<span class="st">'1980-01-05'</span>,<span class="st">'456-78-9012'</span>,<span class="st">'60601'</span>,<span class="nm">890.75</span>);</pre>
+        <div class="checkpoint">SELECT COUNT(*) FROM customers = 3.</div>
+      </div>
+    </div>
+
+    <div class="lab-step">
+      <div class="step-num">3</div>
+      <div class="step-body">
+        <h4>Create custom tags</h4>
+        <pre><span class="kw">CREATE OR REPLACE TAG</span> pii_level
+  <span class="kw">ALLOWED_VALUES</span> <span class="st">'HIGH'</span>, <span class="st">'MEDIUM'</span>, <span class="st">'LOW'</span>
+  <span class="kw">COMMENT</span> = <span class="st">'PII sensitivity level'</span>;
+
+<span class="kw">CREATE OR REPLACE TAG</span> data_domain
+  <span class="kw">ALLOWED_VALUES</span> <span class="st">'IDENTITY'</span>, <span class="st">'CONTACT'</span>, <span class="st">'FINANCIAL'</span>;</pre>
+        <div class="checkpoint">SHOW TAGS shows both new tags.</div>
+      </div>
+    </div>
+
+    <div class="lab-step">
+      <div class="step-num">4</div>
+      <div class="step-body">
+        <h4>Apply tags to columns</h4>
+        <pre><span class="kw">ALTER TABLE</span> customers <span class="kw">MODIFY COLUMN</span> email
+  <span class="kw">SET TAG</span> pii_level = <span class="st">'HIGH'</span>, data_domain = <span class="st">'CONTACT'</span>;
+<span class="kw">ALTER TABLE</span> customers <span class="kw">MODIFY COLUMN</span> phone
+  <span class="kw">SET TAG</span> pii_level = <span class="st">'HIGH'</span>, data_domain = <span class="st">'CONTACT'</span>;
+<span class="kw">ALTER TABLE</span> customers <span class="kw">MODIFY COLUMN</span> ssn
+  <span class="kw">SET TAG</span> pii_level = <span class="st">'HIGH'</span>, data_domain = <span class="st">'IDENTITY'</span>;
+<span class="kw">ALTER TABLE</span> customers <span class="kw">MODIFY COLUMN</span> full_name
+  <span class="kw">SET TAG</span> pii_level = <span class="st">'MEDIUM'</span>, data_domain = <span class="st">'IDENTITY'</span>;
+<span class="kw">ALTER TABLE</span> customers <span class="kw">MODIFY COLUMN</span> account_balance
+  <span class="kw">SET TAG</span> pii_level = <span class="st">'HIGH'</span>, data_domain = <span class="st">'FINANCIAL'</span>;</pre>
+        <div class="checkpoint">SELECT * FROM TABLE(INFORMATION_SCHEMA.TAG_REFERENCES_ALL_COLUMNS('GOVERNANCE_LAB.PII_DEMO.CUSTOMERS','table')) — returns 7 rows (5 columns × tag combinations).</div>
+      </div>
+    </div>
+
+    <div class="lab-step">
+      <div class="step-num">5</div>
+      <div class="step-body">
+        <h4>Create masking policies and attach to columns</h4>
+        <pre><span class="kw">CREATE OR REPLACE MASKING POLICY</span> mask_email
+  <span class="kw">AS</span> (val <span class="kw">VARCHAR</span>) <span class="kw">RETURNS VARCHAR</span> -&gt;
+  <span class="kw">CASE WHEN CURRENT_ROLE()</span> <span class="kw">IN</span> (<span class="st">'SYSADMIN'</span>,<span class="st">'ACCOUNTADMIN'</span>) <span class="kw">THEN</span> val
+       <span class="kw">ELSE REGEXP_REPLACE</span>(val, <span class="st">'.+@'</span>, <span class="st">'***@'</span>)
+  <span class="kw">END</span>;
+
+<span class="kw">CREATE OR REPLACE MASKING POLICY</span> mask_ssn
+  <span class="kw">AS</span> (val <span class="kw">VARCHAR</span>) <span class="kw">RETURNS VARCHAR</span> -&gt;
+  <span class="kw">CASE WHEN CURRENT_ROLE()</span> <span class="kw">IN</span> (<span class="st">'SYSADMIN'</span>,<span class="st">'ACCOUNTADMIN'</span>) <span class="kw">THEN</span> val
+       <span class="kw">ELSE</span> <span class="st">'XXX-XX-'</span> || <span class="kw">RIGHT</span>(val, <span class="nm">4</span>)
+  <span class="kw">END</span>;
+
+<span class="kw">ALTER TABLE</span> customers <span class="kw">MODIFY COLUMN</span> email
+  <span class="kw">SET MASKING POLICY</span> mask_email;
+<span class="kw">ALTER TABLE</span> customers <span class="kw">MODIFY COLUMN</span> ssn
+  <span class="kw">SET MASKING POLICY</span> mask_ssn;</pre>
+        <div class="checkpoint">As SYSADMIN: SELECT email, ssn FROM customers — full values. USE ROLE PUBLIC; SELECT email, ssn FROM customers — masked values appear.</div>
+        <div class="pitfall">PUBLIC role may not have SELECT on the table. Grant it temporarily for testing: GRANT SELECT ON TABLE customers TO ROLE PUBLIC;</div>
+      </div>
+    </div>
+
+    <div class="lab-step">
+      <div class="step-num">6</div>
+      <div class="step-body">
+        <h4>Run SYSTEM$CLASSIFY and review results</h4>
+        <pre><span class="cm">-- Review-only pass first</span>
+<span class="kw">SELECT</span> <span class="kw">SYSTEM$CLASSIFY</span>(
+  <span class="st">'GOVERNANCE_LAB.PII_DEMO.CUSTOMERS'</span>,
+  {<span class="st">'auto_tag'</span>: <span class="kw">false</span>}
+);
+<span class="cm">-- Returns JSON with suggested categories per column</span>
+
+<span class="cm">-- Apply Snowflake system tags automatically</span>
+<span class="kw">SELECT</span> <span class="kw">SYSTEM$CLASSIFY</span>(
+  <span class="st">'GOVERNANCE_LAB.PII_DEMO.CUSTOMERS'</span>,
+  {<span class="st">'auto_tag'</span>: <span class="kw">true</span>}
+);
+
+<span class="cm">-- Confirm system tags were applied</span>
+<span class="kw">SELECT</span> column_name, tag_name, tag_value
+<span class="kw">FROM TABLE</span>(
+  INFORMATION_SCHEMA.TAG_REFERENCES_ALL_COLUMNS(
+    <span class="st">'GOVERNANCE_LAB.PII_DEMO.CUSTOMERS'</span>, <span class="st">'table'</span>
+  )
+)
+<span class="kw">ORDER BY</span> column_name;</pre>
+        <div class="checkpoint">email, phone, ssn columns show SNOWFLAKE.CORE.PRIVACY_CATEGORY = 'IDENTIFIER' in the results.</div>
+      </div>
+    </div>
+
+    <div class="lab-step">
+      <div class="step-num">7</div>
+      <div class="step-body">
+        <h4>Simulate late-arriving events with watermark MERGE</h4>
+        <pre><span class="kw">CREATE OR REPLACE TABLE</span> events_raw (
+  event_id   <span class="kw">VARCHAR</span>,
+  event_ts   <span class="kw">TIMESTAMP_NTZ</span>,
+  user_id    <span class="kw">NUMBER</span>,
+  event_type <span class="kw">VARCHAR</span>,
+  loaded_at  <span class="kw">TIMESTAMP_NTZ DEFAULT CURRENT_TIMESTAMP</span>()
+);
+
+<span class="kw">CREATE OR REPLACE TABLE</span> events_curated (
+  event_id   <span class="kw">VARCHAR PRIMARY KEY</span>,
+  event_ts   <span class="kw">TIMESTAMP_NTZ</span>,
+  user_id    <span class="kw">NUMBER</span>,
+  event_type <span class="kw">VARCHAR</span>,
+  updated_at <span class="kw">TIMESTAMP_NTZ</span>
+);
+
+<span class="cm">-- Load initial batch</span>
+<span class="kw">INSERT INTO</span> events_raw <span class="kw">VALUES</span>
+  (<span class="st">'E001'</span>, <span class="st">'2024-03-01 10:00:00'</span>, <span class="nm">1</span>, <span class="st">'PAGE_VIEW'</span>,  <span class="kw">CURRENT_TIMESTAMP</span>()),
+  (<span class="st">'E002'</span>, <span class="st">'2024-03-01 10:05:00'</span>, <span class="nm">2</span>, <span class="st">'CLICK'</span>,      <span class="kw">CURRENT_TIMESTAMP</span>()),
+  (<span class="st">'E003'</span>, <span class="st">'2024-03-01 10:10:00'</span>, <span class="nm">1</span>, <span class="st">'PURCHASE'</span>,   <span class="kw">CURRENT_TIMESTAMP</span>());
+
+<span class="cm">-- Run the watermark MERGE</span>
+<span class="kw">MERGE INTO</span> events_curated tgt
+<span class="kw">USING</span> (
+  <span class="kw">SELECT</span> event_id, event_ts, user_id, event_type,
+         <span class="kw">ROW_NUMBER() OVER</span>(<span class="kw">PARTITION BY</span> event_id <span class="kw">ORDER BY</span> loaded_at <span class="kw">DESC</span>) rn
+  <span class="kw">FROM</span>   events_raw
+  <span class="kw">WHERE</span>  event_ts &gt;= <span class="kw">DATEADD</span>(<span class="st">'hour'</span>, -<span class="nm">72</span>, <span class="kw">CURRENT_TIMESTAMP</span>())
+  <span class="kw">QUALIFY</span> rn = <span class="nm">1</span>
+) src <span class="kw">ON</span> tgt.event_id = src.event_id
+<span class="kw">WHEN MATCHED AND</span> src.event_ts &gt; tgt.event_ts <span class="kw">THEN</span>
+  <span class="kw">UPDATE SET</span> event_ts = src.event_ts, event_type = src.event_type,
+             updated_at = <span class="kw">CURRENT_TIMESTAMP</span>()
+<span class="kw">WHEN NOT MATCHED THEN</span>
+  <span class="kw">INSERT</span> (event_id,event_ts,user_id,event_type,updated_at)
+  <span class="kw">VALUES</span> (src.event_id,src.event_ts,src.user_id,src.event_type,<span class="kw">CURRENT_TIMESTAMP</span>());</pre>
+        <div class="checkpoint">SELECT COUNT(*) FROM events_curated = 3. Now INSERT a "late" duplicate of E001 with a corrected event_type, re-run the MERGE, and verify the curated table reflects the correction.</div>
+      </div>
+    </div>
+
+    <div class="lab-step">
+      <div class="step-num">8</div>
+      <div class="step-body">
+        <h4>Audit: query ACCESS_HISTORY</h4>
+        <pre><span class="cm">-- See what was accessed in the last hour (latency ~3h on Enterprise)</span>
+<span class="kw">SELECT</span>
+  query_start_time,
+  user_name,
+  query_text,
+  direct_objects_accessed
+<span class="kw">FROM</span> SNOWFLAKE.ACCOUNT_USAGE.ACCESS_HISTORY
+<span class="kw">WHERE</span> query_start_time &gt;= <span class="kw">DATEADD</span>(<span class="st">'hour'</span>, -<span class="nm">1</span>, <span class="kw">CURRENT_TIMESTAMP</span>())
+<span class="kw">ORDER BY</span> query_start_time <span class="kw">DESC</span>
+<span class="kw">LIMIT</span> <span class="nm">20</span>;</pre>
+        <div class="checkpoint">Your MERGE and SELECT queries appear in ACCESS_HISTORY with the objects accessed listed in the VARIANT column.</div>
+        <div class="pitfall">ACCESS_HISTORY has up to 3 hours of latency on Enterprise edition. Use QUERY_HISTORY for real-time audit; ACCESS_HISTORY is the compliance-grade record for column-level access.</div>
+      </div>
+    </div>
+
+    <div class="lab-step">
+      <div class="step-num">9</div>
+      <div class="step-body">
+        <h4>Cleanup</h4>
+        <pre><span class="kw">DROP DATABASE IF EXISTS</span> GOVERNANCE_LAB;
+<span class="kw">DROP WAREHOUSE IF EXISTS</span> GOVERNANCE_WH;</pre>
+      </div>
+    </div>
+  </div>
+
+  <hr>
+
+  <!-- Q&A -->
+  <div class="section" id="qa">
+    <div class="section-label">Chapter 10</div>
+    <h2>Interview Q&amp;A</h2>
+
+    <details>
+      <summary>What is Tri-secret Compose and when is it required? <span class="qa-tag tag-tricky">TRICKY</span></summary>
+      <div class="qa-body">An encryption architecture where data at rest requires both a Snowflake-managed key and a customer-managed key (CMK) in your own KMS to decrypt. Neither party alone can read your data. Required for PCI-DSS Level 1 and HIPAA workloads, and available only on Business Critical edition. The key operational risk: if your KMS key is unavailable, Snowflake cannot process queries. Always version-rotate rather than delete CMK keys.</div>
+    </details>
+    <details>
+      <summary>Explain the difference between Object Tagging and column masking policies. <span class="qa-tag tag-fund">FUNDAMENTAL</span></summary>
+      <div class="qa-body">Tags are metadata labels; masking policies are the enforcement rules. You can apply a masking policy directly to a column (column-level masking), or you can associate a masking policy with a tag so that any column with that tag automatically gets the policy applied (tag-based masking). Tag-based masking is preferred at scale because adding a new PII column just needs a tag — no separate ALTER TABLE to attach a policy.</div>
+    </details>
+    <details>
+      <summary>A new table with 200 columns lands in production. How do you govern it? <span class="qa-tag tag-scenario">SCENARIO</span></summary>
+      <div class="qa-body">1. Run SYSTEM$CLASSIFY with auto_tag: false — review the JSON output for false positives. 2. Accept correct classifications (re-run with auto_tag: true) or apply custom tags manually for edge cases. 3. Verify tag-based masking policies already attached to those system tags are now enforced automatically — no additional ALTER TABLE needed. 4. Add the table to a row access policy if the data is multi-tenant. 5. Update TASK_HISTORY / data quality DMFs for the new table's freshness SLA.</div>
+    </details>
+    <details>
+      <summary>How does PrivateLink interact with network policies in Snowflake? <span class="qa-tag tag-tricky">TRICKY</span></summary>
+      <div class="qa-body">They work at different layers. PrivateLink controls <em>how</em> traffic reaches Snowflake — it removes the public internet path. Network policies control <em>who</em> can connect once traffic arrives — by IP range. You typically use PrivateLink AND a network policy together: PrivateLink forces all traffic to come via your VPC, and the network policy allows only the VPC's private IP range, blocking any connection that somehow bypasses PrivateLink.</div>
+    </details>
+    <details>
+      <summary>What is Snowflake Horizon and how does it differ from just using RBAC? <span class="qa-tag tag-fund">FUNDAMENTAL</span></summary>
+      <div class="qa-body">RBAC controls <em>who</em> can access objects. Horizon adds <em>what</em> within those objects is visible (masking), <em>which rows</em> (row access policies), <em>what it is</em> (classification), <em>where it flows</em> (lineage), and <em>how healthy it is</em> (data quality monitoring). Horizon is the governance layer on top of access control — you need both.</div>
+    </details>
+    <details>
+      <summary>A mobile app sends events that can arrive up to 6 hours late. How do you design the pipeline? <span class="qa-tag tag-scenario">SCENARIO</span></summary>
+      <div class="qa-body">1. Land all events in a raw table (append-only). 2. Run a MERGE task every 15 minutes that processes events from the past 8 hours (6-hour SLA + 2-hour buffer) using QUALIFY ROW_NUMBER()=1 to dedup. 3. Use WHEN MATCHED AND src.event_ts &gt; tgt.event_ts THEN UPDATE so a corrected late arrival overwrites. 4. For daily aggregations, schedule a nightly INSERT OVERWRITE for yesterday AND the day before (to catch 6-hour-late events that cross midnight). 5. Alert if the late-arrival rate exceeds the SLA threshold using a Task that queries loaded_at vs event_ts gaps.</div>
+    </details>
+    <details>
+      <summary>What does SYSTEM$CLASSIFY return and how do you reject false positives? <span class="qa-tag tag-tricky">TRICKY</span></summary>
+      <div class="qa-body">It returns a VARIANT JSON with an array of classification results per column: column name, suggested privacy_category (IDENTIFIER / QUASI_IDENTIFIER), semantic_category (EMAIL, PHONE, etc.), and a confidence score. To reject false positives: run with auto_tag: false first, parse the JSON output, identify columns with wrong classifications (e.g., "product_code" classified as IDENTIFIER), then run a selective auto_tag: true or manually apply tags only to correct columns. You can also unset a system tag: ALTER TABLE t MODIFY COLUMN c UNSET TAG SNOWFLAKE.CORE.PRIVACY_CATEGORY.</div>
+    </details>
+    <details>
+      <summary>Explain the multi-account promotion strategy for a dbt project. <span class="qa-tag tag-scenario">SCENARIO</span></summary>
+      <div class="qa-body">Dev, Test, and Prod are three separate Snowflake accounts. The dbt project uses profiles targeting each account. Promotion flow: (1) Developer merges PR to main — GitHub Actions runs dbt build --target dev (cloned from prod on PR open). (2) On merge, pipeline runs dbt build --target test against a zero-copy clone of prod, runs all dbt tests. (3) On manual approval, pipeline runs dbt build --target prod. Terraform manages the warehouse, role, and database objects in each account, ensuring parity. Secrets (account identifiers, passwords) are stored in GitHub/HashiCorp Vault and injected at runtime.</div>
+    </details>
+    <details>
+      <summary>What is ACCESS_HISTORY and how does it differ from QUERY_HISTORY? <span class="qa-tag tag-tricky">TRICKY</span></summary>
+      <div class="qa-body">QUERY_HISTORY records every SQL statement executed — it is the operational log (real-time, 365-day retention in ACCOUNT_USAGE). ACCESS_HISTORY records which specific columns were accessed or modified in each query — it is the compliance-grade audit trail required for HIPAA/PCI. ACCESS_HISTORY has up to 3 hours of latency and 365-day retention. Only Business Critical and above record column-level detail in ACCESS_HISTORY. Use QUERY_HISTORY for debugging; ACCESS_HISTORY for audits.</div>
+    </details>
+    <details>
+      <summary>What is the shared responsibility model for HIPAA in Snowflake? <span class="qa-tag tag-fund">FUNDAMENTAL</span></summary>
+      <div class="qa-body">Snowflake's responsibility: physical infrastructure security, encryption at rest (AES-256) and in transit (TLS 1.2+), platform availability, disaster recovery at the infrastructure level, and passing the HIPAA BAA. Your responsibility: signing the BAA, classifying PHI columns, applying masking policies to PHI, enforcing least-privilege RBAC, enabling MFA, configuring network policies (preferably PrivateLink), retaining ACCESS_HISTORY for audit, and having an incident response plan.</div>
+    </details>
+  </div>
+
+  <hr>
+
+  <!-- QUIZ -->
+  <div class="section" id="quiz">
+    <div class="section-label">Chapter 11</div>
+    <h2>Quiz</h2>
+
+    <div class="quiz-q">
+      <p>1. Tri-secret Compose is available on which Snowflake edition?</p>
+      <div class="quiz-opt">
+        <label><input type="radio" name="q1" value="a"> Standard</label>
+        <label><input type="radio" name="q1" value="b"> Enterprise</label>
+        <label><input type="radio" name="q1" value="c"> Business Critical</label>
+        <label><input type="radio" name="q1" value="d"> All editions</label>
+      </div>
+      <div class="quiz-answer correct" id="q1-c">✓ Business Critical. Tri-secret Compose (customer-managed keys) requires the Business Critical edition and a signed agreement with Snowflake.</div>
+    </div>
+
+    <div class="quiz-q">
+      <p>2. You run SYSTEM$CLASSIFY with auto_tag: true. What risk must you manage?</p>
+      <div class="quiz-opt">
+        <label><input type="radio" name="q2" value="a"> It deletes existing tags on the table</label>
+        <label><input type="radio" name="q2" value="b"> False positives — non-PII columns may get PII tags, activating masking</label>
+        <label><input type="radio" name="q2" value="c"> It only works on tables with more than 1000 rows</label>
+        <label><input type="radio" name="q2" value="d"> It disables RBAC on the table</label>
+      </div>
+      <div class="quiz-answer correct" id="q2-c">✓ False positives. Always run with auto_tag: false first to review suggestions before applying. A false positive that activates masking can break downstream reports.</div>
+    </div>
+
+    <div class="quiz-q">
+      <p>3. What is the main difference between Secure Data Sharing and Database Replication?</p>
+      <div class="quiz-opt">
+        <label><input type="radio" name="q3" value="a"> Sharing is a full copy; Replication is not</label>
+        <label><input type="radio" name="q3" value="b"> Replication is a full copy; Sharing is a live read with no data movement</label>
+        <label><input type="radio" name="q3" value="c"> Both create a physical copy</label>
+        <label><input type="radio" name="q3" value="d"> Sharing requires Business Critical</label>
+      </div>
+      <div class="quiz-answer correct" id="q3-c">✓ Replication creates a physical copy (storage cost). Sharing is a live reference — the consumer queries the provider's data with zero storage cost and near-real-time freshness.</div>
+    </div>
+
+    <div class="quiz-q">
+      <p>4. You apply a masking policy to a tag. A new column is added to a table with that tag. What happens automatically?</p>
+      <div class="quiz-opt">
+        <label><input type="radio" name="q4" value="a"> Nothing — you must ALTER TABLE again</label>
+        <label><input type="radio" name="q4" value="b"> The masking policy is enforced on that column automatically</label>
+        <label><input type="radio" name="q4" value="c"> The column is dropped from the table</label>
+        <label><input type="radio" name="q4" value="d"> The tag is removed from the new column</label>
+      </div>
+      <div class="quiz-answer correct" id="q4-c">✓ Tag-based masking automatically applies the associated policy to any column carrying that tag, including new columns — this is the key benefit over column-level masking.</div>
+    </div>
+
+    <div class="quiz-q">
+      <p>5. What does SYSTEM$GET_PRIVATELINK_CONFIG() return?</p>
+      <div class="quiz-opt">
+        <label><input type="radio" name="q5" value="a"> Current network policy rules</label>
+        <label><input type="radio" name="q5" value="b"> The VPC endpoint service name and account hostname needed to configure PrivateLink</label>
+        <label><input type="radio" name="q5" value="c"> A list of authorized IP addresses</label>
+        <label><input type="radio" name="q5" value="d"> The KMS key ARN used for Tri-secret Compose</label>
+      </div>
+      <div class="quiz-answer correct" id="q5-c">✓ It returns a JSON object containing the privatelink-account-name, privatelink-vpce-id (the endpoint service name), and related DNS information needed by your cloud admin to create the VPC interface endpoint.</div>
+    </div>
+  </div>
+
+  <hr>
+
+  <!-- CHEAT SHEET -->
+  <div class="section" id="cheat">
+    <div class="section-label">Chapter 12</div>
+    <h2>Cheat sheet</h2>
+    <div class="cheat-grid">
+      <div class="cheat-item"><div class="label">Late-arriving data</div><p>MERGE with QUALIFY ROW_NUMBER()=1 and a watermark WHERE clause (event_ts >= DATEADD('hour',-72,...)). WHEN MATCHED AND src.ts > tgt.ts THEN UPDATE to handle corrections.</p></div>
+      <div class="cheat-item"><div class="label">Multi-account</div><p>Dev/Test/Prod = separate accounts. Promote via zero-copy clone + rename (atomic swap). Replicate via DATABASE REPLICATION GROUPS. Share live data via Secure Data Sharing (no copy).</p></div>
+      <div class="cheat-item"><div class="label">PrivateLink</div><p>SYSTEM$GET_PRIVATELINK_CONFIG() → give to AWS/Azure admin → create endpoint → SYSTEM$AUTHORIZE_PRIVATELINK() → update DNS → lock down with network policy.</p></div>
+      <div class="cheat-item"><div class="label">Tri-secret Compose</div><p>Business Critical only. Data requires Snowflake key + your CMK. Disabling your KMS key = no data access. Rotate via versioning, never delete. BCK is a Snowflake fallback key (can disable).</p></div>
+      <div class="cheat-item"><div class="label">Snowflake Horizon</div><p>Governance platform: Trust Center (posture), Classify (SYSTEM$CLASSIFY), Protect (tags + policies), Monitor (ACCESS_HISTORY, DMFs), Comply (Compliance Center).</p></div>
+      <div class="cheat-item"><div class="label">Object Tagging</div><p>CREATE TAG ... ALLOWED_VALUES. ALTER TABLE MODIFY COLUMN ... SET TAG. ALTER TAG ... SET MASKING POLICY. TAG_REFERENCES_ALL_COLUMNS() to audit.</p></div>
+      <div class="cheat-item"><div class="label">SYSTEM$CLASSIFY</div><p>auto_tag:false first (review). auto_tag:true to apply. Returns IDENTIFIER, QUASI_IDENTIFIER, SENSITIVE. Use ACCOUNT_USAGE.TAG_REFERENCES to audit applied system tags.</p></div>
+      <div class="cheat-item"><div class="label">Compliance</div><p>SOC2=all editions. HIPAA/PCI=Business Critical+BAA. Your job: classify, mask, RBAC, MFA, network policy, ACCESS_HISTORY retention, incident plan.</p></div>
+    </div>
+  </div>
+
+  <p style="color:var(--ink3);font-size:12px;text-align:center;margin-top:48px">Snowflake Interview Lab · Module 14 · Enterprise Architecture &amp; Governance · Prepared for Saurav Patel</p>
+
+</div>
+
+<script>
+function toggleTheme(){
+  const d=document.documentElement;
+  d.dataset.theme=d.dataset.theme==='dark'?'':'dark';
+}
+// Quiz check
+document.querySelectorAll('.quiz-opt input').forEach(inp=>{
+  inp.addEventListener('change',function(){
+    const qn=this.name;
+    const correct={q1:'c',q2:'b',q3:'b',q4:'b',q5:'b'}[qn];
+    const ans=document.getElementById(qn+'-c');
+    if(ans){ans.style.display='block';}
+    this.closest('.quiz-opt').querySelectorAll('label').forEach(l=>{
+      const v=l.querySelector('input').value;
+      l.style.background=v===correct?'var(--teal-s)':v===this.value&&v!==correct?'var(--red-s)':'';
+      l.style.borderColor=v===correct?'var(--teal)':v===this.value&&v!==correct?'var(--red)':'var(--line)';
+    });
+  });
+});
+
+// COURSE ROADMAP toggle
+document.querySelectorAll('.road h4').forEach(function(h){
+  h.addEventListener('click', function(){
+    this.closest('.road').classList.toggle('open');
+  });
+});
+</script>
+</body>
+</html>
