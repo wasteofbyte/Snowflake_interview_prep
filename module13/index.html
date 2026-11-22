@@ -372,22 +372,22 @@ footer{padding:40px 0;color:var(--ink3);font-size:13px;font-family:var(--f-mono)
   <a href="#cheat"><span>11</span>Cheat sheet</a>
   <div class="road">
     <h4>COURSE ROADMAP · CLICK TO OPEN</h4>
-    <a class="rm ready" href="../module01/"><em>01</em>Architecture<i>open</i></a>
-    <a class="rm ready" href="../module02/"><em>02</em>SnowSQL · unstructured · streams, tasks &amp; procedures<i>open</i></a>
-    <a class="rm ready" href="../module03/"><em>03</em>Performance tuning<i>open</i></a>
-    <a class="rm ready" href="../module04/"><em>04</em>Data ingestion (Snowpipe)<i>open</i></a>
-    <a class="rm ready" href="../module05/"><em>05</em>Dynamic tables &amp; transforms<i>open</i></a>
-    <a class="rm ready" href="../module06/"><em>06</em>Semi-structured data<i>open</i></a>
-    <a class="rm ready" href="../module07/"><em>07</em>Data protection<i>open</i></a>
-    <a class="rm ready" href="../module08/"><em>08</em>Security &amp; governance<i>open</i></a>
-    <a class="rm ready" href="../module09/"><em>09</em>Cost optimization<i>open</i></a>
-    <a class="rm ready" href="../module10/"><em>10</em>Data sharing<i>open</i></a>
-    <a class="rm ready" href="../module11/"><em>11</em>Snowpark &amp; Cortex AI<i>open</i></a>
-    <a class="rm ready" href="../module12/"><em>12</em>Advanced SQL<i>open</i></a>
-    <a class="rm now" href="../module13/"><em>13</em>Modeling &amp; tooling<i>you are here</i></a>
-    <a class="rm ready" href="../module14/"><em>14</em>Enterprise Architecture &amp; Governance<i>open</i></a>
-    <a class="rm ready" href="../module15/"><em>15</em>External Integrations<i>open</i></a>
-    <a class="rm ready" href="../module16/"><em>16</em>IaC, CI/CD &amp; Orchestration<i>open</i></a>
+    <a class="rm ready" href="../module01/index.html"><em>01</em>Architecture<i>open</i></a>
+    <a class="rm ready" href="../module02/index.html"><em>02</em>SnowSQL · unstructured · streams, tasks &amp; procedures<i>open</i></a>
+    <a class="rm ready" href="../module03/index.html"><em>03</em>Performance tuning<i>open</i></a>
+    <a class="rm ready" href="../module04/index.html"><em>04</em>Data ingestion (Snowpipe)<i>open</i></a>
+    <a class="rm ready" href="../module05/index.html"><em>05</em>Dynamic tables &amp; transforms<i>open</i></a>
+    <a class="rm ready" href="../module06/index.html"><em>06</em>Semi-structured data<i>open</i></a>
+    <a class="rm ready" href="../module07/index.html"><em>07</em>Data protection<i>open</i></a>
+    <a class="rm ready" href="../module08/index.html"><em>08</em>Security &amp; governance<i>open</i></a>
+    <a class="rm ready" href="../module09/index.html"><em>09</em>Cost optimization<i>open</i></a>
+    <a class="rm ready" href="../module10/index.html"><em>10</em>Data sharing<i>open</i></a>
+    <a class="rm ready" href="../module11/index.html"><em>11</em>Snowpark &amp; Cortex AI<i>open</i></a>
+    <a class="rm ready" href="../module12/index.html"><em>12</em>Advanced SQL<i>open</i></a>
+    <a class="rm now" href="../module13/index.html"><em>13</em>Modeling &amp; tooling<i>you are here</i></a>
+    <a class="rm ready" href="../module14/index.html"><em>14</em>Enterprise Architecture &amp; Governance<i>open</i></a>
+    <a class="rm ready" href="../module15/index.html"><em>15</em>External Integrations<i>open</i></a>
+    <a class="rm ready" href="../module16/index.html"><em>16</em>IaC, CI/CD &amp; Orchestration<i>open</i></a>
   </div>
 </nav>
 <main>
@@ -509,7 +509,7 @@ footer{padding:40px 0;color:var(--ink3);font-size:13px;font-family:var(--f-mono)
         <tr><td>Type 4</td><td>Keep current values in the main dimension and move history to a separate history table (Kimball also uses "type 4" for a <b>mini-dimension</b> of fast-changing attributes)</td><td>In another table</td><td>Very large or fast-changing dimensions</td></tr>
         <tr><td>Type 6</td><td>Hybrid 1 + 2 + 3: Type 2 rows plus a <code>current_city</code> column overwritten on every row</td><td>Full + current</td><td>Report both "as was" and "as is" without self-joins</td></tr>
       </table>
-      <p style="margin-top:10px">Type 2 is the one interviews focus on. The full <b>SCD2 MERGE pattern with streams</b> (and the dbt snapshot equivalent) is built step by step in <a href="../module05/">Module 05 · Dynamic tables &amp; transforms</a>; in this module we'll see dbt snapshots in chapter 06.</p>
+      <p style="margin-top:10px">Type 2 is the one interviews focus on. The full <b>SCD2 MERGE pattern with streams</b> (and the dbt snapshot equivalent) is built step by step in <a href="../module05/index.html">Module 05 · Dynamic tables &amp; transforms</a>; in this module we'll see dbt snapshots in chapter 06.</p>
     </div>
   </div>
   <div class="call trap"><b class="k">INTERVIEW TRAP</b><div>"With Type 2, which key does the fact table store?" The <b>surrogate key of the dimension row that was current when the event happened</b>, looked up by business key and event date between valid_from and valid_to. Joining on the business key instead returns every historical version and multiplies rows.</div></div>
@@ -867,7 +867,7 @@ ALTER DATABASE analytics SWAP WITH analytics_green;</div>
     <div><em>ref() = DAG</em>dbt resolves names per target and orders the build. <code>model+</code> downstream, <code>+model</code> upstream; build tests before children.</div>
     <div><em>Clone → test → SWAP</em>Zero-copy clone for CI, schemachange V__ / R__ / A__ scripts, ALTER DATABASE … SWAP WITH for blue/green and rollback.</div>
   </div>
-  <div class="call analogy" style="margin-top:20px"><b class="k">NEXT MODULE</b><div><b><a href="../module14/">Module 14: System design &amp; behavioral</a>.</b> Put every module together: end-to-end architecture whiteboards, trade-off discussions, and how to tell your six years of experience as crisp STAR stories.</div></div>
+  <div class="call analogy" style="margin-top:20px"><b class="k">NEXT MODULE</b><div><b><a href="../module14/index.html">Module 14: System design &amp; behavioral</a>.</b> Put every module together: end-to-end architecture whiteboards, trade-off discussions, and how to tell your six years of experience as crisp STAR stories.</div></div>
 </section>
 <footer>Snowflake Interview Lab · Module 13 · Data Modeling &amp; Tooling · Prepared for Saurav Patel</footer>
 </main>
