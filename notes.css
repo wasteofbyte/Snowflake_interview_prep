@@ -1,0 +1,980 @@
+/* ==========================================================================
+   Snowflake Interview Lab · Topic Notes & Google Spreadsheet Integration
+   ========================================================================== */
+
+/* Layout for title row in course cards */
+.card-title-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 4px;
+}
+
+.card-title-row .card-title {
+  margin-bottom: 0 !important;
+  flex: 1;
+}
+
+/* Topic Note Button placed right next to each topic */
+.topic-note-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--f-mono, "JetBrains Mono", monospace);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: var(--card2, #E9EFF5);
+  color: var(--ice, #0A86C2);
+  border: 1px solid var(--line2, rgba(11,27,43,.22));
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: all 0.18s ease;
+  z-index: 5;
+  position: relative;
+  text-decoration: none;
+}
+
+.topic-note-btn:hover {
+  background: var(--ice, #0A86C2);
+  color: #FFFFFF;
+  border-color: var(--ice, #0A86C2);
+  box-shadow: 0 2px 8px rgba(10,134,194, 0.25);
+  transform: translateY(-1px);
+}
+
+.topic-note-btn .note-count-badge {
+  display: inline-block;
+  background: var(--ice, #0A86C2);
+  color: #FFFFFF;
+  font-size: 9.5px;
+  padding: 1px 5px;
+  border-radius: 99px;
+  margin-left: 2px;
+  font-weight: 700;
+}
+
+.topic-note-btn:hover .note-count-badge {
+  background: #FFFFFF;
+  color: var(--ice, #0A86C2);
+}
+
+/* Header buttons in top nav */
+.top-notes-nav-btn {
+  border: 1px solid var(--line2, rgba(11,27,43,.22));
+  background: var(--card, #FFFFFF);
+  color: var(--ink, #0B1B2B);
+  border-radius: 8px;
+  padding: 5px 12px;
+  font-size: 13px;
+  cursor: pointer;
+  font-family: var(--f-body, "IBM Plex Sans", sans-serif);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.15s ease;
+}
+
+.top-notes-nav-btn:hover {
+  border-color: var(--ice, #0A86C2);
+  color: var(--ice, #0A86C2);
+  background: var(--card2, #E9EFF5);
+}
+
+.top-notes-nav-btn.has-sync {
+  border-color: var(--teal, #0B8A6A);
+}
+
+.top-notes-nav-btn.sf-master-lock-btn.locked {
+  border-color: var(--amber, #B86F00);
+  color: var(--amber, #B86F00);
+  background: var(--amber-s, #FFF0D4);
+  font-weight: 600;
+}
+
+.top-notes-nav-btn.sf-master-lock-btn.locked:hover {
+  background: var(--amber, #B86F00);
+  color: #FFFFFF;
+}
+
+.top-notes-nav-btn.sf-master-lock-btn.unlocked {
+  border-color: var(--teal, #0B8A6A);
+  color: var(--teal, #0B8A6A);
+  background: var(--teal-s, #DAF3EB);
+  font-weight: 600;
+}
+
+.top-notes-nav-btn.sf-master-lock-btn.unlocked:hover {
+  background: var(--teal, #0B8A6A);
+  color: #FFFFFF;
+}
+
+/* Master Notes Unlock Modal & Menu */
+.sf-master-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 100001;
+  background: rgba(8, 18, 29, 0.7);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+
+.sf-master-modal-backdrop.is-open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.sf-master-modal-dialog {
+  background: var(--card, #FFFFFF);
+  color: var(--ink, #0B1B2B);
+  border: 1px solid var(--line2, rgba(11,27,43,.22));
+  border-radius: 16px;
+  width: 100%;
+  max-width: 480px;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.4);
+  padding: 28px 24px 24px;
+  text-align: center;
+  position: relative;
+  transform: translateY(14px) scale(0.98);
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.sf-master-modal-backdrop.is-open .sf-master-modal-dialog {
+  transform: translateY(0) scale(1);
+}
+
+.sf-master-modal-icon {
+  font-size: 42px;
+  display: block;
+  margin-bottom: 12px;
+}
+
+.sf-master-modal-dialog h3 {
+  font-family: var(--f-head, "Space Grotesk", sans-serif);
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 8px;
+  color: var(--ink, #0B1B2B);
+}
+
+.sf-master-modal-dialog p {
+  font-size: 14px;
+  color: var(--ink2, #46596B);
+  line-height: 1.5;
+  margin-bottom: 20px;
+}
+
+/* Master Menu for Unlocked State */
+.sf-master-menu-dialog {
+  max-width: 440px;
+  text-align: left;
+}
+
+.sf-master-menu-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--line, rgba(11,27,43,.12));
+}
+
+.sf-master-menu-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.sf-master-menu-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 11px 14px;
+  border-radius: 10px;
+  background: var(--card2, #E9EFF5);
+  border: 1px solid var(--line, rgba(11,27,43,.12));
+  color: var(--ink, #0B1B2B);
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  width: 100%;
+}
+
+.sf-master-menu-item:hover {
+  border-color: var(--ice, #0A86C2);
+  background: var(--card, #FFFFFF);
+  color: var(--ice, #0A86C2);
+  transform: translateY(-1px);
+}
+
+.sf-master-menu-item.danger {
+  color: var(--red, #C93C3C);
+}
+
+.sf-master-menu-item.danger:hover {
+  background: var(--red-s, #FCE4E4);
+  border-color: var(--red, #C93C3C);
+}
+
+/* Inline Topic Note Button (placed right next to 01 · WHAT IS IT etc.) */
+.inline-topic-note-btn {
+  margin-left: 8px;
+  vertical-align: middle;
+  font-family: var(--f-mono, "JetBrains Mono", monospace);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  padding: 2px 8px;
+  border-radius: 5px;
+  background: var(--card2, #E9EFF5);
+  color: var(--ice, #0A86C2);
+  border: 1px solid var(--line2, rgba(11,27,43,.22));
+  cursor: pointer;
+  transition: all 0.16s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.inline-topic-note-btn:hover {
+  background: var(--ice, #0A86C2);
+  color: #FFFFFF;
+  border-color: var(--ice, #0A86C2);
+  box-shadow: 0 2px 6px rgba(10,134,194,0.25);
+  transform: translateY(-1px);
+}
+
+.inline-topic-note-btn.has-notes {
+  border-color: var(--teal, #0B8A6A);
+  color: var(--teal, #0B8A6A);
+  background: var(--teal-s, #DAF3EB);
+}
+
+.inline-topic-note-btn.has-notes:hover {
+  background: var(--teal, #0B8A6A);
+  color: #FFFFFF;
+}
+
+/* Inline Note Reminder Card */
+.inline-note-card {
+  margin: 10px 0 12px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 13.5px;
+  line-height: 1.55;
+  border-left: 3px solid var(--ice, #0A86C2);
+  background: var(--card2, #E9EFF5);
+  color: var(--ink, #0B1B2B);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  transition: all 0.2s ease;
+}
+
+.inline-note-card.unlocked {
+  background: color-mix(in srgb, var(--ice-s, #DCEFF9) 45%, var(--card, #FFFFFF));
+  border-left-color: var(--ice, #0A86C2);
+}
+
+.inline-note-card.locked {
+  background: var(--card2, #E9EFF5);
+  border-left-color: var(--amber, #B86F00);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.inline-note-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 6px;
+  font-family: var(--f-mono, "JetBrains Mono", monospace);
+  font-size: 11px;
+  color: var(--ink2, #46596B);
+}
+
+.inline-note-head .pin-label {
+  font-weight: 700;
+  color: var(--ice, #0A86C2);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.inline-note-body {
+  white-space: pre-wrap;
+  word-break: break-word;
+  color: var(--ink, #0B1B2B);
+  font-size: 13.5px;
+}
+
+.inline-note-actions-row {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.inline-note-action-btn {
+  background: var(--card, #FFFFFF);
+  border: 1px solid var(--line2, rgba(11,27,43,.22));
+  border-radius: 4px;
+  padding: 1px 7px;
+  font-size: 10.5px;
+  font-family: var(--f-mono, "JetBrains Mono", monospace);
+  cursor: pointer;
+  color: var(--ink2, #46596B);
+  transition: all 0.15s ease;
+}
+
+.inline-note-action-btn:hover {
+  background: var(--ice, #0A86C2);
+  color: #FFFFFF;
+  border-color: var(--ice, #0A86C2);
+}
+
+/* Inline Note Editor Form */
+.inline-note-editor {
+  margin: 10px 0 12px;
+  padding: 12px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--ice, #0A86C2);
+  background: var(--card, #FFFFFF);
+  box-shadow: 0 4px 16px rgba(10,134,194,0.14);
+}
+
+.inline-note-editor textarea {
+  width: 100%;
+  min-height: 85px;
+  padding: 9px 11px;
+  border-radius: 6px;
+  border: 1px solid var(--line2, rgba(11,27,43,.22));
+  background: var(--bg, #F2F6FA);
+  color: var(--ink, #0B1B2B);
+  font-family: var(--f-body, "IBM Plex Sans", sans-serif);
+  font-size: 13.5px;
+  line-height: 1.5;
+  resize: vertical;
+  box-sizing: border-box;
+  margin-bottom: 8px;
+}
+
+.inline-note-editor textarea:focus {
+  outline: none;
+  border-color: var(--ice, #0A86C2);
+  box-shadow: 0 0 0 2px rgba(10,134,194,0.15);
+}
+
+.inline-note-editor-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* ==========================================================================
+   Notes Modal & Backdrop
+   ========================================================================== */
+.sf-notes-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  background: rgba(8, 18, 29, 0.65);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.sf-notes-backdrop.is-open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.sf-notes-modal {
+  background: var(--card, #FFFFFF);
+  color: var(--ink, #0B1B2B);
+  border: 1px solid var(--line2, rgba(11,27,43,.22));
+  border-radius: 16px;
+  width: 100%;
+  max-width: 680px;
+  max-height: 88vh;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.35);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transform: translateY(16px) scale(0.98);
+  transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.sf-notes-backdrop.is-open .sf-notes-modal {
+  transform: translateY(0) scale(1);
+}
+
+/* Modal Header */
+.sf-notes-header {
+  padding: 16px 22px;
+  border-bottom: 1px solid var(--line, rgba(11,27,43,.12));
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--card2, #E9EFF5);
+}
+
+.sf-notes-title-group h3 {
+  font-family: var(--f-head, "Space Grotesk", sans-serif);
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--ink, #0B1B2B);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sf-notes-title-group p {
+  font-size: 12.5px;
+  color: var(--ink2, #46596B);
+  margin-top: 2px;
+  font-family: var(--f-mono, "JetBrains Mono", monospace);
+}
+
+.sf-notes-close-btn {
+  background: transparent;
+  border: 1px solid var(--line2, rgba(11,27,43,.22));
+  color: var(--ink2, #46596B);
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.sf-notes-close-btn:hover {
+  background: var(--red-s, #FCE4E4);
+  color: var(--red, #C93C3C);
+  border-color: var(--red, #C93C3C);
+}
+
+/* Navigation Tabs */
+.sf-notes-tabs {
+  display: flex;
+  padding: 8px 22px 0;
+  gap: 8px;
+  border-bottom: 1px solid var(--line, rgba(11,27,43,.12));
+  background: var(--card, #FFFFFF);
+  overflow-x: auto;
+}
+
+.sf-notes-tab {
+  font-family: var(--f-body, "IBM Plex Sans", sans-serif);
+  font-size: 13px;
+  font-weight: 600;
+  padding: 8px 14px;
+  border: none;
+  background: transparent;
+  color: var(--ink2, #46596B);
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.sf-notes-tab:hover {
+  color: var(--ink, #0B1B2B);
+}
+
+.sf-notes-tab.is-active {
+  color: var(--ice, #0A86C2);
+  border-bottom-color: var(--ice, #0A86C2);
+}
+
+/* Modal Body */
+.sf-notes-body {
+  padding: 20px 22px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+/* Panes */
+.sf-pane {
+  display: none;
+}
+
+.sf-pane.is-active {
+  display: block;
+}
+
+/* ==========================================================================
+   Add Note Section
+   ========================================================================== */
+.sf-form-group {
+  margin-bottom: 14px;
+}
+
+.sf-form-label {
+  display: block;
+  font-family: var(--f-mono, "JetBrains Mono", monospace);
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--ink2, #46596B);
+  margin-bottom: 6px;
+}
+
+.sf-topic-select,
+.sf-input,
+.sf-textarea {
+  width: 100%;
+  padding: 9px 12px;
+  border: 1px solid var(--line2, rgba(11,27,43,.22));
+  border-radius: 8px;
+  background: var(--bg, #F2F6FA);
+  color: var(--ink, #0B1B2B);
+  font-family: var(--f-body, "IBM Plex Sans", sans-serif);
+  font-size: 14px;
+  line-height: 1.5;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.sf-topic-select:focus,
+.sf-input:focus,
+.sf-textarea:focus {
+  outline: none;
+  border-color: var(--ice, #0A86C2);
+  box-shadow: 0 0 0 3px rgba(10, 134, 194, 0.15);
+}
+
+.sf-textarea {
+  min-height: 120px;
+  resize: vertical;
+  font-family: var(--f-body, "IBM Plex Sans", sans-serif);
+}
+
+.sf-form-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 14px;
+}
+
+.sf-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-family: var(--f-body, "IBM Plex Sans", sans-serif);
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid var(--line2, rgba(11,27,43,.22));
+  background: var(--card, #FFFFFF);
+  color: var(--ink, #0B1B2B);
+  transition: all 0.15s ease;
+}
+
+.sf-btn:hover {
+  border-color: var(--ice, #0A86C2);
+  color: var(--ice, #0A86C2);
+}
+
+.sf-btn.sf-btn-primary {
+  background: var(--ice, #0A86C2);
+  color: #FFFFFF;
+  border-color: var(--ice, #0A86C2);
+}
+
+.sf-btn.sf-btn-primary:hover {
+  filter: brightness(1.1);
+  box-shadow: 0 3px 10px rgba(10, 134, 194, 0.3);
+}
+
+.sf-btn.sf-btn-sm {
+  padding: 4px 10px;
+  font-size: 12px;
+  border-radius: 6px;
+}
+
+.sf-status-badge {
+  font-family: var(--f-mono, "JetBrains Mono", monospace);
+  font-size: 11px;
+  padding: 3px 8px;
+  border-radius: 99px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.sf-status-badge.synced {
+  background: var(--teal-s, #DAF3EB);
+  color: var(--teal, #0B8A6A);
+  border: 1px solid rgba(11, 138, 106, 0.3);
+}
+
+.sf-status-badge.local {
+  background: var(--amber-s, #FFF0D4);
+  color: var(--amber, #B86F00);
+  border: 1px solid rgba(184, 111, 0, 0.3);
+}
+
+/* ==========================================================================
+   Password Lock Screen
+   ========================================================================== */
+.sf-locked-box {
+  background: var(--card2, #E9EFF5);
+  border: 1px dashed var(--line2, rgba(11,27,43,.22));
+  border-radius: 12px;
+  padding: 36px 24px;
+  text-align: center;
+  margin: 10px 0;
+}
+
+.sf-lock-icon {
+  font-size: 40px;
+  margin-bottom: 12px;
+  display: block;
+}
+
+.sf-locked-box h4 {
+  font-family: var(--f-head, "Space Grotesk", sans-serif);
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 6px;
+  color: var(--ink, #0B1B2B);
+}
+
+.sf-locked-box p {
+  font-size: 14px;
+  color: var(--ink2, #46596B);
+  max-width: 440px;
+  margin: 0 auto 20px;
+  line-height: 1.5;
+}
+
+.sf-pw-input-wrapper {
+  display: flex;
+  max-width: 360px;
+  margin: 0 auto 12px;
+  gap: 8px;
+}
+
+.sf-pw-input-wrapper input {
+  flex: 1;
+}
+
+.sf-pw-hint {
+  font-family: var(--f-mono, "JetBrains Mono", monospace);
+  font-size: 11.5px;
+  color: var(--ink3, #7F90A2);
+  margin-top: 10px;
+}
+
+.sf-pw-hint code {
+  background: var(--card, #FFFFFF);
+  padding: 1px 6px;
+  border-radius: 4px;
+  color: var(--ice, #0A86C2);
+  border: 1px solid var(--line2, rgba(11,27,43,.22));
+}
+
+.sf-pw-error {
+  color: var(--red, #C93C3C);
+  font-size: 12.5px;
+  font-weight: 600;
+  margin-top: 8px;
+  min-height: 18px;
+}
+
+.shake {
+  animation: sf-shake 0.35s ease;
+}
+
+@keyframes sf-shake {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-6px); }
+  40%, 80% { transform: translateX(6px); }
+}
+
+/* ==========================================================================
+   Unlocked Notes View
+   ========================================================================== */
+.sf-unlocked-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding-bottom: 14px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid var(--line, rgba(11,27,43,.12));
+}
+
+.sf-filter-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sf-pill-btn {
+  font-family: var(--f-mono, "JetBrains Mono", monospace);
+  font-size: 11.5px;
+  padding: 3px 10px;
+  border-radius: 99px;
+  border: 1px solid var(--line2, rgba(11,27,43,.22));
+  background: var(--card2, #E9EFF5);
+  color: var(--ink2, #46596B);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.sf-pill-btn.is-active {
+  background: var(--ice, #0A86C2);
+  color: #FFFFFF;
+  border-color: var(--ice, #0A86C2);
+}
+
+.sf-notes-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-height: 380px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.sf-note-card {
+  background: var(--card2, #E9EFF5);
+  border: 1px solid var(--line, rgba(11,27,43,.12));
+  border-radius: 10px;
+  padding: 14px 16px;
+  position: relative;
+  transition: border-color 0.15s ease;
+}
+
+.sf-note-card:hover {
+  border-color: var(--line2, rgba(11,27,43,.22));
+}
+
+.sf-note-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+
+.sf-note-topic-tag {
+  font-family: var(--f-mono, "JetBrains Mono", monospace);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: var(--card, #FFFFFF);
+  color: var(--ice, #0A86C2);
+  border: 1px solid var(--line2, rgba(11,27,43,.22));
+}
+
+.sf-note-date {
+  font-family: var(--f-mono, "JetBrains Mono", monospace);
+  font-size: 10.5px;
+  color: var(--ink3, #7F90A2);
+}
+
+.sf-note-content {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--ink, #0B1B2B);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.sf-note-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid var(--line, rgba(11,27,43,.12));
+}
+
+.sf-note-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.sf-icon-btn {
+  background: none;
+  border: none;
+  color: var(--ink3, #7F90A2);
+  font-size: 12px;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 4px;
+  transition: all 0.15s ease;
+  font-family: var(--f-mono, "JetBrains Mono", monospace);
+}
+
+.sf-icon-btn:hover {
+  color: var(--ink, #0B1B2B);
+  background: var(--card, #FFFFFF);
+}
+
+.sf-icon-btn.danger:hover {
+  color: var(--red, #C93C3C);
+  background: var(--red-s, #FCE4E4);
+}
+
+.sf-empty-notes {
+  text-align: center;
+  padding: 36px 16px;
+  color: var(--ink3, #7F90A2);
+  font-style: italic;
+  font-size: 14px;
+}
+
+/* ==========================================================================
+   Google Sheet Setup Panel
+   ========================================================================== */
+.sf-sheet-step {
+  margin-bottom: 16px;
+  background: var(--card2, #E9EFF5);
+  border: 1px solid var(--line, rgba(11,27,43,.12));
+  border-radius: 10px;
+  padding: 14px 16px;
+}
+
+.sf-sheet-step h5 {
+  font-family: var(--f-head, "Space Grotesk", sans-serif);
+  font-size: 14px;
+  font-weight: 700;
+  margin-bottom: 6px;
+  color: var(--ink, #0B1B2B);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.sf-sheet-step p {
+  font-size: 13px;
+  color: var(--ink2, #46596B);
+  line-height: 1.5;
+  margin-bottom: 8px;
+}
+
+.sf-code-container {
+  position: relative;
+  margin: 10px 0;
+}
+
+.sf-code-box {
+  background: #08121D;
+  color: #E5EDF5;
+  font-family: var(--f-mono, "JetBrains Mono", monospace);
+  font-size: 11.5px;
+  padding: 12px 14px;
+  border-radius: 8px;
+  max-height: 160px;
+  overflow-y: auto;
+  white-space: pre;
+  line-height: 1.45;
+  border: 1px solid rgba(255,255,255,0.1);
+}
+
+.sf-copy-code-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: rgba(255,255,255,0.15);
+  color: #FFFFFF;
+  border: 1px solid rgba(255,255,255,0.25);
+  border-radius: 6px;
+  padding: 3px 8px;
+  font-size: 11px;
+  cursor: pointer;
+  font-family: var(--f-mono, "JetBrains Mono", monospace);
+  backdrop-filter: blur(4px);
+}
+
+.sf-copy-code-btn:hover {
+  background: rgba(255,255,255,0.3);
+}
+
+/* ==========================================================================
+   Toast Notifications
+   ========================================================================== */
+.sf-toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translate(-50%, 20px);
+  background: var(--ink, #0B1B2B);
+  color: var(--bg, #F2F6FA);
+  padding: 10px 18px;
+  border-radius: 10px;
+  font-family: var(--f-body, "IBM Plex Sans", sans-serif);
+  font-size: 13.5px;
+  font-weight: 500;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  z-index: 100000;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sf-toast.is-visible {
+  opacity: 1;
+  transform: translate(-50%, 0);
+  pointer-events: auto;
+}
+
+/* Responsive adjustments */
+@media (max-width: 600px) {
+  .sf-notes-modal {
+    max-height: 94vh;
+  }
+  .sf-notes-header {
+    padding: 12px 16px;
+  }
+  .sf-notes-body {
+    padding: 16px;
+  }
+  .sf-pw-input-wrapper {
+    flex-direction: column;
+  }
+  .card-title-row {
+    flex-direction: row;
+    align-items: flex-start;
+  }
+}

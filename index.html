@@ -11,6 +11,7 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/ibm-plex-sans@5/600.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/jetbrains-mono@5/400.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/jetbrains-mono@5/700.css">
+<link rel="stylesheet" href="notes.css">
 <style>
 :root{
   --bg:#F2F6FA;--card:#FFFFFF;--card2:#E9EFF5;--ink:#0B1B2B;--ink2:#46596B;--ink3:#7F90A2;
@@ -146,7 +147,9 @@ footer{padding:32px 28px;text-align:center;color:var(--ink3);font-size:13px;font
 <body>
 <div class="top">
   <div class="brand">SNOWFLAKE<b>//</b>INTERVIEW LAB</div>
-  <button class="theme" id="themeBtn">Dark / light</button>
+  <button class="top-notes-nav-btn" style="margin-left:auto;" onclick="openTopicNotes('Module 01: Architecture')">📝 Notes</button>
+  <button class="top-notes-nav-btn" onclick="openTopicNotes('Module 01: Architecture'); setTimeout(() => { const tab = document.querySelector('[data-tab=sheet]'); if (tab) tab.click(); }, 120);">⚙️ Google Sheet</button>
+  <button class="theme" id="themeBtn" style="margin-left:0;">Dark / light</button>
 </div>
 
 <div class="hero">
@@ -170,7 +173,10 @@ footer{padding:32px 28px;text-align:center;color:var(--ink3);font-size:13px;font
 
   <a class="card arch" href="module01/">
     <div class="card-num">MODULE 01</div>
-    <div class="card-title">Architecture</div>
+    <div class="card-title-row">
+      <div class="card-title">Architecture</div>
+      <button class="topic-note-btn" type="button" data-topic="Module 01: Architecture" title="Notes on Architecture">📝 Notes</button>
+    </div>
     <div class="card-sub">Three-layer design, micro-partitions, pruning, warehouses, multi-cluster, caches, billing and editions.</div>
     <div class="card-meta"><span class="tag s">12 simulators</span><span class="tag q">16 Q&amp;As</span><span class="tag">12 quiz</span></div>
     <div class="cta">Start here</div>
@@ -178,7 +184,10 @@ footer{padding:32px 28px;text-align:center;color:var(--ink3);font-size:13px;font
 
   <a class="card load" href="module02/">
     <div class="card-num">MODULE 02</div>
-    <div class="card-title">Load &amp; Automate</div>
+    <div class="card-title-row">
+      <div class="card-title">Load &amp; Automate</div>
+      <button class="topic-note-btn" type="button" data-topic="Module 02: Load &amp; Automate" title="Notes on Load &amp; Automate">📝 Notes</button>
+    </div>
     <div class="card-sub">SnowSQL, PUT/COPY deep dive, unstructured data &amp; AI parsing, streams, tasks, stored procedures.</div>
     <div class="card-meta"><span class="tag s">10 simulators</span><span class="tag q">26 Q&amp;As</span><span class="tag">14 quiz</span></div>
     <div class="cta">Open module</div>
@@ -186,7 +195,10 @@ footer{padding:32px 28px;text-align:center;color:var(--ink3);font-size:13px;font
 
   <a class="card perf" href="module03/">
     <div class="card-num">MODULE 03</div>
-    <div class="card-title">Performance Tuning</div>
+    <div class="card-title-row">
+      <div class="card-title">Performance Tuning</div>
+      <button class="topic-note-btn" type="button" data-topic="Module 03: Performance Tuning" title="Notes on Performance Tuning">📝 Notes</button>
+    </div>
     <div class="card-sub">Query Profile mastery, clustering keys, Search Optimization, Query Acceleration, MVs, SQL anti-patterns, warehouse debugging.</div>
     <div class="card-meta"><span class="tag s">9 simulators</span><span class="tag q">19 Q&amp;As</span><span class="tag">14 quiz</span></div>
     <div class="cta">Open module</div>
@@ -194,7 +206,10 @@ footer{padding:32px 28px;text-align:center;color:var(--ink3);font-size:13px;font
 
   <a class="card ing" href="module04/">
     <div class="card-num">MODULE 04</div>
-    <div class="card-title">Data Ingestion</div>
+    <div class="card-title-row">
+      <div class="card-title">Data Ingestion</div>
+      <button class="topic-note-btn" type="button" data-topic="Module 04: Data Ingestion" title="Notes on Data Ingestion">📝 Notes</button>
+    </div>
     <div class="card-sub">Stages &amp; storage integrations, COPY deep dive, file sizing, Snowpipe auto-ingest, Snowpipe Streaming, External &amp; Iceberg tables, schema evolution.</div>
     <div class="card-meta"><span class="tag s">9 simulators</span><span class="tag q">20 Q&amp;As</span><span class="tag">14 quiz</span></div>
     <div class="cta">Open module</div>
@@ -202,7 +217,10 @@ footer{padding:32px 28px;text-align:center;color:var(--ink3);font-size:13px;font
 
   <a class="card dyn" href="module05/">
     <div class="card-num">MODULE 05</div>
-    <div class="card-title">Dynamic Tables &amp; Transforms</div>
+    <div class="card-title-row">
+      <div class="card-title">Dynamic Tables &amp; Transforms</div>
+      <button class="topic-note-btn" type="button" data-topic="Module 05: Dynamic Tables &amp; Transforms" title="Notes on Dynamic Tables &amp; Transforms">📝 Notes</button>
+    </div>
     <div class="card-sub">Declarative vs procedural pipelines, target lag, incremental vs full refresh, MERGE &amp; SCD, dedup, UDFs, transactions &amp; concurrency.</div>
     <div class="card-meta"><span class="tag s">10 simulators</span><span class="tag q">22 Q&amp;As</span><span class="tag">14 quiz</span></div>
     <div class="cta">Open module</div>
@@ -210,7 +228,10 @@ footer{padding:32px 28px;text-align:center;color:var(--ink3);font-size:13px;font
 
   <a class="card semi" href="module06/">
     <div class="card-num">MODULE 06</div>
-    <div class="card-title">Semi-structured Data</div>
+    <div class="card-title-row">
+      <div class="card-title">Semi-structured Data</div>
+      <button class="topic-note-btn" type="button" data-topic="Module 06: Semi-structured Data" title="Notes on Semi-structured Data">📝 Notes</button>
+    </div>
     <div class="card-sub">VARIANT/OBJECT/ARRAY internals, path notation, two kinds of null, FLATTEN &amp; LATERAL, building JSON, loading files, performance &amp; promotion decisions.</div>
     <div class="card-meta"><span class="tag s">7 simulators</span><span class="tag q">19 Q&amp;As</span><span class="tag">14 quiz</span></div>
     <div class="cta">Open module</div>
@@ -218,7 +239,10 @@ footer{padding:32px 28px;text-align:center;color:var(--ink3);font-size:13px;font
 
   <a class="card prot" href="module07/">
     <div class="card-num">MODULE 07</div>
-    <div class="card-title">Data Protection</div>
+    <div class="card-title-row">
+      <div class="card-title">Data Protection</div>
+      <button class="topic-note-btn" type="button" data-topic="Module 07: Data Protection" title="Notes on Data Protection">📝 Notes</button>
+    </div>
     <div class="card-sub">Micro-partition lifecycle, Time Travel (AT/BEFORE), Fail-safe, table types, zero-copy cloning, replication &amp; failover, backup strategy.</div>
     <div class="card-meta"><span class="tag s">7 simulators</span><span class="tag q">19 Q&amp;As</span><span class="tag">14 quiz</span></div>
     <div class="cta">Open module</div>
@@ -226,7 +250,10 @@ footer{padding:32px 28px;text-align:center;color:var(--ink3);font-size:13px;font
 
   <a class="card sec" href="module08/">
     <div class="card-num">MODULE 08</div>
-    <div class="card-title">Security &amp; Governance</div>
+    <div class="card-title-row">
+      <div class="card-title">Security &amp; Governance</div>
+      <button class="topic-note-btn" type="button" data-topic="Module 08: Security &amp; Governance" title="Notes on Security &amp; Governance">📝 Notes</button>
+    </div>
     <div class="card-sub">Defence in depth, RBAC + DAC, privilege chains, authentication &amp; network policies, dynamic masking, row access policies, tags &amp; classification, encryption.</div>
     <div class="card-meta"><span class="tag s">9 simulators</span><span class="tag q">19 Q&amp;As</span><span class="tag">14 quiz</span></div>
     <div class="cta">Open module</div>
@@ -234,7 +261,10 @@ footer{padding:32px 28px;text-align:center;color:var(--ink3);font-size:13px;font
 
   <a class="card cost" href="module09/">
     <div class="card-num">MODULE 09</div>
-    <div class="card-title">Cost Optimization</div>
+    <div class="card-title-row">
+      <div class="card-title">Cost Optimization</div>
+      <button class="topic-note-btn" type="button" data-topic="Module 09: Cost Optimization" title="Notes on Cost Optimization">📝 Notes</button>
+    </div>
     <div class="card-sub">Three cost buckets, warehouse fleet tuning, storage lifecycle, serverless &amp; cloud-services billing, resource monitors, visibility &amp; attribution, investigation playbook.</div>
     <div class="card-meta"><span class="tag s">7 simulators</span><span class="tag q">18 Q&amp;As</span><span class="tag">14 quiz</span></div>
     <div class="cta">Open module</div>
@@ -242,7 +272,10 @@ footer{padding:32px 28px;text-align:center;color:var(--ink3);font-size:13px;font
 
   <a class="card share" href="module10/">
     <div class="card-num">MODULE 10</div>
-    <div class="card-title">Data Sharing &amp; Collaboration</div>
+    <div class="card-title-row">
+      <div class="card-title">Data Sharing &amp; Collaboration</div>
+      <button class="topic-note-btn" type="button" data-topic="Module 10: Data Sharing &amp; Collaboration" title="Notes on Data Sharing &amp; Collaboration">📝 Notes</button>
+    </div>
     <div class="card-sub">Secure Data Sharing, reader accounts, cross-region &amp; cross-cloud sharing, listings &amp; Marketplace, Data Clean Rooms, Native Apps, governance in sharing.</div>
     <div class="card-meta"><span class="tag s">7 simulators</span><span class="tag q">19 Q&amp;As</span><span class="tag">14 quiz</span></div>
     <div class="cta">Open module</div>
@@ -250,7 +283,10 @@ footer{padding:32px 28px;text-align:center;color:var(--ink3);font-size:13px;font
 
   <a class="card ai" href="module11/">
     <div class="card-num">MODULE 11</div>
-    <div class="card-title">Snowpark &amp; Cortex AI</div>
+    <div class="card-title-row">
+      <div class="card-title">Snowpark &amp; Cortex AI</div>
+      <button class="topic-note-btn" type="button" data-topic="Module 11: Snowpark &amp; Cortex AI" title="Notes on Snowpark &amp; Cortex AI">📝 Notes</button>
+    </div>
     <div class="card-sub">DataFrames &amp; lazy evaluation, UDFs/UDTFs/vectorized, Container Services, Cortex AI SQL functions, Vectors &amp; RAG, Cortex Analyst, Snowflake ML.</div>
     <div class="card-meta"><span class="tag s">8 simulators</span><span class="tag q">19 Q&amp;As</span><span class="tag">13 quiz</span></div>
     <div class="cta">Open module</div>
@@ -258,7 +294,10 @@ footer{padding:32px 28px;text-align:center;color:var(--ink3);font-size:13px;font
 
   <a class="card sql" href="module12/">
     <div class="card-num">MODULE 12</div>
-    <div class="card-title">Advanced SQL</div>
+    <div class="card-title-row">
+      <div class="card-title">Advanced SQL</div>
+      <button class="topic-note-btn" type="button" data-topic="Module 12: Advanced SQL" title="Notes on Advanced SQL">📝 Notes</button>
+    </div>
     <div class="card-sub">Logical execution order, window functions deep dive, QUALIFY &amp; top-N, recursive CTEs, ROLLUP/CUBE/PIVOT, special joins (ASOF, anti), MATCH_RECOGNIZE, 11-problem bank.</div>
     <div class="card-meta"><span class="tag s">8 simulators</span><span class="tag q">21 Q&amp;As</span><span class="tag">14 quiz</span></div>
     <div class="cta">Open module</div>
@@ -266,7 +305,10 @@ footer{padding:32px 28px;text-align:center;color:var(--ink3);font-size:13px;font
 
   <a class="card mod" href="module13/">
     <div class="card-num">MODULE 13</div>
-    <div class="card-title">Modeling &amp; Tooling</div>
+    <div class="card-title-row">
+      <div class="card-title">Modeling &amp; Tooling</div>
+      <button class="topic-note-btn" type="button" data-topic="Module 13: Modeling &amp; Tooling" title="Notes on Modeling &amp; Tooling">📝 Notes</button>
+    </div>
     <div class="card-sub">Dimensional modeling, SCD types, Data Vault 2.0, medallion architecture, keys &amp; constraints, dbt with Snowflake, orchestration &amp; CI/CD blue-green deployments.</div>
     <div class="card-meta"><span class="tag s">8 simulators</span><span class="tag q">21 Q&amp;As</span><span class="tag">14 quiz</span></div>
     <div class="cta">Open module</div>
@@ -279,7 +321,10 @@ footer{padding:32px 28px;text-align:center;color:var(--ink3);font-size:13px;font
 
   <a class="card gov" href="module14/">
     <div class="card-num">MODULE 14 <span class="card-new">NEW</span></div>
-    <div class="card-title">Enterprise Architecture &amp; Governance</div>
+    <div class="card-title-row">
+      <div class="card-title">Enterprise Architecture &amp; Governance</div>
+      <button class="topic-note-btn" type="button" data-topic="Module 14: Enterprise Architecture &amp; Governance" title="Notes on Enterprise Architecture &amp; Governance">📝 Notes</button>
+    </div>
     <div class="card-sub">Late-arriving data patterns, multi-account strategy, AWS/Azure PrivateLink, Tri-secret Compose, Snowflake Horizon, Object Tagging, SYSTEM$CLASSIFY, compliance (SOC 2 / HIPAA / PCI-DSS).</div>
     <div class="card-meta"><span class="tag n">9 lab steps</span><span class="tag q">10 Q&amp;As</span><span class="tag">5 quiz</span></div>
     <div class="cta">Open module</div>
@@ -287,7 +332,10 @@ footer{padding:32px 28px;text-align:center;color:var(--ink3);font-size:13px;font
 
   <a class="card int" href="module15/">
     <div class="card-num">MODULE 15 <span class="card-new">NEW</span></div>
-    <div class="card-title">External Integrations</div>
+    <div class="card-title-row">
+      <div class="card-title">External Integrations</div>
+      <button class="topic-note-btn" type="button" data-topic="Module 15: External Integrations" title="Notes on External Integrations">📝 Notes</button>
+    </div>
     <div class="card-sub">Kafka Connector (RSA auth, buffer tuning, schema evolution), Spark Connector vs Snowpark, CDC end-to-end (Debezium → Kafka → Snowpipe Streaming), External Functions &amp; API Integration.</div>
     <div class="card-meta"><span class="tag n">6 lab steps</span><span class="tag q">7 Q&amp;As</span><span class="tag">5 quiz</span></div>
     <div class="cta">Open module</div>
@@ -295,7 +343,10 @@ footer{padding:32px 28px;text-align:center;color:var(--ink3);font-size:13px;font
 
   <a class="card iac" href="module16/">
     <div class="card-num">MODULE 16 <span class="card-new">NEW</span></div>
-    <div class="card-title">IaC, CI/CD &amp; Orchestration</div>
+    <div class="card-title-row">
+      <div class="card-title">IaC, CI/CD &amp; Orchestration</div>
+      <button class="topic-note-btn" type="button" data-topic="Module 16: IaC, CI/CD &amp; Orchestration" title="Notes on IaC, CI/CD &amp; Orchestration">📝 Notes</button>
+    </div>
     <div class="card-sub">Terraform for Snowflake (warehouses, roles, grants, resource monitors), native Git Integration, dbt + Airflow / Prefect / Dagster, GitHub Actions CI/CD, blue-green deployments.</div>
     <div class="card-meta"><span class="tag n">4 lab steps</span><span class="tag q">7 Q&amp;As</span><span class="tag">5 quiz</span></div>
     <div class="cta">Open module</div>
@@ -308,7 +359,10 @@ footer{padding:32px 28px;text-align:center;color:var(--ink3);font-size:13px;font
 
   <div class="card compound deep-sql">
     <div class="card-num">DEEP DIVE · 5 FILES</div>
-    <div class="card-title">SnowSQL, Streams &amp; Tasks</div>
+    <div class="card-title-row">
+      <div class="card-title">SnowSQL, Streams &amp; Tasks</div>
+      <button class="topic-note-btn" type="button" data-topic="Deep Dive: SnowSQL, Streams &amp; Tasks" title="Notes on SnowSQL, Streams &amp; Tasks">📝 Notes</button>
+    </div>
     <div class="card-sub">Internal staging with PUT, CSV COPY, standard &amp; append-only streams, Task DAGs, nightly MERGE pipelines, schema drift, monitoring. 44-step hands-on lab with batch CSV data.</div>
     <div class="card-meta"><span class="tag s">44 lab steps</span><span class="tag q">174 Q&amp;As</span><span class="tag">22 quiz</span></div>
     <div class="file-links">
@@ -332,7 +386,10 @@ footer{padding:32px 28px;text-align:center;color:var(--ink3);font-size:13px;font
 
   <div class="card compound deep-json">
     <div class="card-num">DEEP DIVE · 4 FILES</div>
-    <div class="card-title">JSON S3 → Snowflake</div>
+    <div class="card-title-row">
+      <div class="card-title">JSON S3 → Snowflake</div>
+      <button class="topic-note-btn" type="button" data-topic="Deep Dive: JSON S3 → Snowflake" title="Notes on JSON S3 → Snowflake">📝 Notes</button>
+    </div>
     <div class="card-sub">External S3 stage &amp; IAM trust, JSON file formats, COPY INTO VARIANT, STRIP_OUTER_ARRAY, FLATTEN, LATERAL, bad-data quarantine, Snowpipe auto-ingest, schema drift handling. 9-step lab.</div>
     <div class="card-meta"><span class="tag s">9 lab steps</span><span class="tag q">158 Q&amp;As</span><span class="tag">18 quiz</span></div>
     <div class="file-links">
@@ -367,5 +424,6 @@ document.getElementById('themeBtn').onclick = () => {
   try{ localStorage.setItem('sf-index-theme', next); }catch(e){}
 };
 </script>
+<script src="notes.js"></script>
 </body>
 </html>

@@ -149,6 +149,7 @@ nav.side{grid-column:1;grid-row:1 / span 30;position:sticky;top:76px;align-self:
 @media(max-width:900px){.wrap{grid-template-columns:220px minmax(0,1fr);gap:22px;padding:20px}.side a{font-size:13px}}
 @media(max-width:680px){.wrap{display:block;padding:16px}.side{position:static!important;max-height:none!important;display:flex;gap:4px;overflow-x:auto!important;white-space:nowrap;border-bottom:1px solid var(--line);margin-bottom:18px;padding-bottom:10px!important}.side h4{display:none}.side a{flex:0 0 auto}.hero,.section{width:100%}.hero h1{font-size:clamp(34px,10vw,56px)}}
 </style>
+<link rel="stylesheet" href="../notes.css">
 </head>
 <body>
 <style id="sf-home-style">
@@ -208,6 +209,7 @@ body[style*="--paper"] #sf-home-btn,
     <div class="badge">Snowflake Interview Lab</div>
     <div class="title">Module 15 · External Integrations: Kafka, Spark, CDC &amp; External Functions</div>
   </div>
+  <button class="top-notes-nav-btn" type="button" onclick="openTopicNotes('Module 15: External Integrations')" title="Notes for Module 15: External Integrations">📝 Notes</button>
   <button class="theme" onclick="toggleTheme()">Dark / Light</button>
 </div>
 <div class="wrap">
@@ -886,5 +888,6 @@ document.querySelectorAll('.road h4').forEach(function(h){
   });
 });
 </script>
+<script src="../notes.js"></script>
 </body>
 </html>
