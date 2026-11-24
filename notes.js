@@ -349,6 +349,10 @@ function doGet(e) {
           </p>
 
           <div class="sf-master-menu-list">
+            <button type="button" class="sf-master-menu-item" id="sf-menu-sync-sheet-now">
+              <span>↻ Sync / Pull Notes from Google Sheet</span>
+              <span>☁️</span>
+            </button>
             <button type="button" class="sf-master-menu-item" id="sf-menu-open-all-notes">
               <span>📝 View All Notes &amp; Summary</span>
               <span>→</span>
@@ -450,6 +454,7 @@ function doGet(e) {
         setGlobalUnlocked(true);
         closeUnlock();
         showToast('🔓 Notes enabled across all modules!');
+        autoSyncFromGoogleSheet(false);
 
         // Run pending action if user clicked an inline note
         if (typeof pendingUnlockCallback === 'function') {
@@ -472,6 +477,15 @@ function doGet(e) {
     });
 
     // Menu Actions
+    const syncCloudBtn = document.getElementById('sf-menu-sync-sheet-now');
+    if (syncCloudBtn) {
+      syncCloudBtn.addEventListener('click', async () => {
+        closeMenu();
+        showToast('↻ Pulling notes from Google Sheet...');
+        await autoSyncFromGoogleSheet(true);
+      });
+    }
+
     document.getElementById('sf-menu-open-all-notes').addEventListener('click', () => {
       closeMenu();
       openModal(currentTopic);
@@ -1174,6 +1188,52 @@ function doGet(e) {
     }
   }
 
+  // Automatic background pull & merge from Google Spreadsheet
+  async function autoSyncFromGoogleSheet(showFeedback = false) {
+    const sheetUrl = getGoogleSheetUrl();
+    if (!sheetUrl) return;
+
+    try {
+      const res = await fetchNotesFromGoogleSheet('');
+      if (res.success && Array.isArray(res.notes) && res.notes.length > 0) {
+        const localNotes = getStoredNotes();
+        let addedCount = 0;
+
+        res.notes.forEach((remote) => {
+          const exists = localNotes.some(
+            (l) => l.id === remote.id || (l.text === remote.note && l.topic === remote.topic)
+          );
+          if (!exists) {
+            localNotes.unshift({
+              id: remote.id || 'remote_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6),
+              topic: remote.topic || 'General',
+              text: remote.note,
+              timestamp: remote.timestamp || new Date().toISOString(),
+              author: remote.author || 'Saurav Patel',
+              synced: true
+            });
+            addedCount++;
+          }
+        });
+
+        if (addedCount > 0) {
+          saveStoredNotes(localNotes);
+          refreshAllInlineNotes();
+          updateNotesCountBadges();
+          if (showFeedback) {
+            showToast(`✅ Synced ${addedCount} notes from Google Sheet!`);
+          }
+        } else if (showFeedback) {
+          showToast('✅ Notes are already up to date with Google Sheet.');
+        }
+      }
+    } catch (e) {
+      if (showFeedback) {
+        showToast('⚠️ Cloud sync error: ' + e.message);
+      }
+    }
+  }
+
   function handleExportCSV() {
     const notes = getStoredNotes();
     if (notes.length === 0) {
@@ -1581,6 +1641,7 @@ function doGet(e) {
     initMasterTopNavButton();
     updateNotesCountBadges();
     initInlineTopicNotes();
+    autoSyncFromGoogleSheet(false);
 
     // Attach click listeners to any .topic-note-btn
     document.body.addEventListener('click', (e) => {
