@@ -1351,14 +1351,25 @@ function jsonResponse(obj) {
           }
         });
 
-        // 3. Purge any tombstoned deleted notes from local list
-        const filteredLocal = localNotes.filter((n) => !deletedIds.has(String(n.id).trim()));
-        if (filteredLocal.length !== localNotes.length) {
+        // 3. Purge notes from local storage that were deleted from Google Sheets by other windows
+        const remoteIds = new Set(Array.from(remoteMap.keys()).map((k) => String(k).trim()));
+        const cleanNotes = localNotes.filter((n) => {
+          const id = String(n.id).trim();
+          if (deletedIds.has(id)) return false;
+          // If note was synced to cloud, but cloud no longer contains it -> deleted elsewhere!
+          if (n.synced && !remoteIds.has(id)) {
+            addDeletedNoteId(id);
+            return false;
+          }
+          return true;
+        });
+
+        if (cleanNotes.length !== localNotes.length) {
           changed = true;
         }
 
         if (changed) {
-          saveStoredNotes(filteredLocal);
+          saveStoredNotes(cleanNotes);
           refreshAllInlineNotes();
           updateNotesCountBadges();
           if (document.getElementById('sf-pane-view') && document.getElementById('sf-pane-view').classList.contains('is-active')) {
@@ -1788,6 +1799,19 @@ function jsonResponse(obj) {
     updateNotesCountBadges();
     initInlineTopicNotes();
     autoSyncFromGoogleSheet(false);
+
+    // Listen for storage changes across tabs
+    window.addEventListener('storage', (e) => {
+      if (e.key === STORAGE_KEYS.NOTES || e.key === STORAGE_KEYS.DELETED || e.key === STORAGE_KEYS.GLOBAL_UNLOCKED) {
+        refreshAllInlineNotes();
+        updateNotesCountBadges();
+        updateMasterLockBtnUI();
+        const viewPane = document.getElementById('sf-pane-view');
+        if (viewPane && viewPane.classList.contains('is-active')) {
+          renderNotesList();
+        }
+      }
+    });
 
     // Attach click listeners to any .topic-note-btn
     document.body.addEventListener('click', (e) => {
