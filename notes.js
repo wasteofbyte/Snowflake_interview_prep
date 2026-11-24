@@ -20,7 +20,7 @@
     GLOBAL_UNLOCKED: 'sf_notes_global_unlocked'
   };
 
-  // Default password: "snowflake" (SHA-256)
+  // Master password hash (SHA-256)
   const DEFAULT_PW_HASH = 'de5a1adf4fedcce1533915edc60177547f1057b61b7119fd130e1f7428705f73';
 
   // Default Google Spreadsheet Apps Script Web App URL (Active & Deployed)
@@ -775,8 +775,8 @@ function jsonResponse(obj) {
             <button type="button" class="sf-btn" id="sf-master-unlock-cancel" style="padding:10px 18px;">Cancel</button>
           </div>
           
-          <div class="sf-pw-hint" style="font-size:12px;color:var(--ink3);">
-            Default password: <code style="font-weight:bold;color:var(--ice);">snowflake</code>
+          <div class="sf-pw-hint" style="font-size:12.5px;color:var(--ink3);margin-top:14px;border-top:1px solid var(--line, rgba(11,27,43,.12));padding-top:12px;">
+            Need access? <a href="https://100ravpatel.github.io/Portfolio/#contact" target="_blank" rel="noopener noreferrer" style="color:var(--ice, #0A86C2);text-decoration:underline;font-weight:600;">Ask for access</a>
           </div>
         </div>
       </div>
@@ -1133,6 +1133,9 @@ function jsonResponse(obj) {
                 <button type="button" class="sf-btn sf-btn-primary" id="sf-modal-unlock-trigger" style="margin-top:10px;padding:8px 20px;">
                   🔑 Enter Password to Enable Notes
                 </button>
+                <div style="font-size:12.5px;color:var(--ink3);margin-top:14px;border-top:1px solid var(--line, rgba(11,27,43,.12));padding-top:12px;">
+                  Need access? <a href="https://100ravpatel.github.io/Portfolio/#contact" target="_blank" rel="noopener noreferrer" style="color:var(--ice, #0A86C2);text-decoration:underline;font-weight:600;">Ask for access</a>
+                </div>
               </div>
 
               <!-- Unlocked State -->

@@ -705,6 +705,17 @@
   border: 1px solid var(--line2, rgba(11,27,43,.22));
 }
 
+.sf-pw-hint a {
+  color: var(--ice, #0A86C2);
+  text-decoration: underline;
+  font-weight: 600;
+  transition: opacity 0.15s ease;
+}
+
+.sf-pw-hint a:hover {
+  opacity: 0.8;
+}
+
 .sf-pw-error {
   color: var(--red, #C93C3C);
   font-size: 12.5px;
