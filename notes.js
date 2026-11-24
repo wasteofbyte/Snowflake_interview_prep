@@ -14,6 +14,7 @@
   // Constants & Storage Keys
   const STORAGE_KEYS = {
     NOTES: 'sf_notes_data',
+    DELETED: 'sf_deleted_note_ids',
     SHEET_URL: 'sf_google_sheet_url',
     PW_HASH: 'sf_notes_pw_hash',
     GLOBAL_UNLOCKED: 'sf_notes_global_unlocked'
@@ -50,11 +51,11 @@
   // Apps Script code template shown in Google Sheet Setup tab
   const APPS_SCRIPT_TEMPLATE = `// -------------------------------------------------------------
 // Snowflake Interview Lab · Google Spreadsheet Notes Backend
+// Supports: Add, Edit, Delete, and Get Notes
 // 1. In Google Sheets: Extensions > Apps Script
-// 2. Paste this code and click Save (💾)
-// 3. Click Deploy > New deployment > Select type: Web app
-// 4. Set: Execute as "Me", Who has access: "Anyone"
-// 5. Deploy & copy the Web app URL
+// 2. Replace all existing code with this script and Save (💾)
+// 3. Click Deploy > Manage deployments > Edit (pencil icon)
+// 4. Set Version: "New version", Access: "Anyone", then Deploy
 // -------------------------------------------------------------
 
 function doPost(e) {
@@ -62,30 +63,35 @@ function doPost(e) {
   lock.tryLock(10000);
   try {
     var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
-    if (sheet.getLastRow() === 0) {
-      sheet.appendRow(["Timestamp", "Topic", "Note", "Author", "ID"]);
-      sheet.getRange(1, 1, 1, 5).setBackground("#0A86C2").setFontColor("#FFFFFF").setFontWeight("bold");
-      sheet.setFrozenRows(1);
-    }
+    ensureHeader(sheet);
+
     var data = JSON.parse(e.postData.contents);
+    var action = (data.action || "add").toLowerCase();
+    var id = data.id || "";
     var timestamp = data.timestamp || new Date().toISOString();
     var topic = data.topic || "General";
     var note = data.note || "";
     var author = data.author || "Saurav Patel";
-    var id = data.id || Utilities.getUuid();
-    
-    sheet.appendRow([timestamp, topic, note, author, id]);
-    
-    return ContentService.createTextOutput(JSON.stringify({
-      status: "success",
-      message: "Note appended successfully",
-      id: id
-    })).setMimeType(ContentService.MimeType.JSON);
+
+    if (action === "delete") {
+      var deleted = deleteRowById(sheet, id);
+      return jsonResponse({ status: "success", message: deleted ? "Note deleted" : "Note not found", id: id });
+    }
+
+    if (action === "edit") {
+      var edited = editRowById(sheet, id, note, timestamp);
+      if (!edited) {
+        sheet.appendRow([timestamp, topic, note, author, id || Utilities.getUuid()]);
+      }
+      return jsonResponse({ status: "success", message: "Note updated", id: id });
+    }
+
+    // Default: add
+    var newId = id || Utilities.getUuid();
+    sheet.appendRow([timestamp, topic, note, author, newId]);
+    return jsonResponse({ status: "success", message: "Note appended successfully", id: newId });
   } catch (err) {
-    return ContentService.createTextOutput(JSON.stringify({
-      status: "error",
-      message: err.toString()
-    })).setMimeType(ContentService.MimeType.JSON);
+    return jsonResponse({ status: "error", message: err.toString() });
   } finally {
     lock.releaseLock();
   }
@@ -94,11 +100,28 @@ function doPost(e) {
 function doGet(e) {
   try {
     var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+    ensureHeader(sheet);
+
+    var action = (e.parameter.action || "get").toLowerCase();
+    var id = e.parameter.id || "";
+
+    if (action === "delete" && id) {
+      var lock = LockService.getScriptLock();
+      lock.tryLock(5000);
+      try {
+        deleteRowById(sheet, id);
+        return jsonResponse({ status: "success", message: "Note deleted via GET", id: id });
+      } finally {
+        lock.releaseLock();
+      }
+    }
+
+    // Default: get notes
     var rows = sheet.getDataRange().getValues();
     if (rows.length <= 1) {
-      return ContentService.createTextOutput(JSON.stringify({ status: "success", notes: [] }))
-        .setMimeType(ContentService.MimeType.JSON);
+      return jsonResponse({ status: "success", notes: [] });
     }
+
     var filterTopic = e.parameter.topic;
     var notes = [];
     for (var i = 1; i < rows.length; i++) {
@@ -113,12 +136,49 @@ function doGet(e) {
         });
       }
     }
-    return ContentService.createTextOutput(JSON.stringify({ status: "success", notes: notes }))
-      .setMimeType(ContentService.MimeType.JSON);
+    return jsonResponse({ status: "success", notes: notes });
   } catch (err) {
-    return ContentService.createTextOutput(JSON.stringify({ status: "error", message: err.toString() }))
-      .setMimeType(ContentService.MimeType.JSON);
+    return jsonResponse({ status: "error", message: err.toString() });
   }
+}
+
+function ensureHeader(sheet) {
+  if (sheet.getLastRow() === 0) {
+    sheet.appendRow(["Timestamp", "Topic", "Note", "Author", "ID"]);
+    sheet.getRange(1, 1, 1, 5).setBackground("#0A86C2").setFontColor("#FFFFFF").setFontWeight("bold");
+    sheet.setFrozenRows(1);
+  }
+}
+
+function deleteRowById(sheet, id) {
+  if (!id) return false;
+  var rows = sheet.getDataRange().getValues();
+  var deleted = false;
+  for (var i = rows.length - 1; i >= 1; i--) {
+    if (String(rows[i][4]).trim() === String(id).trim()) {
+      sheet.deleteRow(i + 1);
+      deleted = true;
+    }
+  }
+  return deleted;
+}
+
+function editRowById(sheet, id, newNote, newTimestamp) {
+  if (!id) return false;
+  var rows = sheet.getDataRange().getValues();
+  for (var i = 1; i < rows.length; i++) {
+    if (String(rows[i][4]).trim() === String(id).trim()) {
+      sheet.getRange(i + 1, 1).setValue(newTimestamp || new Date().toISOString());
+      sheet.getRange(i + 1, 3).setValue(newNote);
+      return true;
+    }
+  }
+  return false;
+}
+
+function jsonResponse(obj) {
+  return ContentService.createTextOutput(JSON.stringify(obj))
+    .setMimeType(ContentService.MimeType.JSON);
 }`;
 
   // Current active modal topic & pending unlock action
@@ -164,6 +224,24 @@ function doGet(e) {
     } catch (e) {
       console.error('Failed to save notes locally', e);
     }
+  }
+
+  function getDeletedNoteIds() {
+    try {
+      const data = localStorage.getItem(STORAGE_KEYS.DELETED);
+      return new Set(data ? JSON.parse(data) : []);
+    } catch (e) {
+      return new Set();
+    }
+  }
+
+  function addDeletedNoteId(id) {
+    if (!id) return;
+    try {
+      const set = getDeletedNoteIds();
+      set.add(String(id).trim());
+      localStorage.setItem(STORAGE_KEYS.DELETED, JSON.stringify(Array.from(set)));
+    } catch (e) {}
   }
 
   function getGoogleSheetUrl() {
@@ -213,14 +291,14 @@ function doGet(e) {
     localStorage.setItem(STORAGE_KEYS.PW_HASH, newHash);
   }
 
-  // Sync note to Google Apps Script Web App
-  async function syncNoteToGoogleSheet(note) {
+  // Sync note to Google Apps Script Web App (Supports 'add' and 'edit')
+  async function syncNoteToGoogleSheet(note, action = 'add') {
     const sheetUrl = getGoogleSheetUrl();
     if (!sheetUrl) return { success: false, reason: 'No sheet URL configured' };
 
     try {
       const payload = JSON.stringify({
-        action: 'add',
+        action: action,
         timestamp: note.timestamp,
         topic: note.topic,
         note: note.text,
@@ -247,7 +325,7 @@ function doGet(e) {
           mode: 'no-cors',
           headers: { 'Content-Type': 'text/plain;charset=utf-8' },
           body: JSON.stringify({
-            action: 'add',
+            action: action,
             timestamp: note.timestamp,
             topic: note.topic,
             note: note.text,
@@ -259,6 +337,30 @@ function doGet(e) {
       } catch (err2) {
         return { success: false, reason: err2.message };
       }
+    }
+  }
+
+  // Delete note from Google Apps Script Web App
+  async function syncDeleteToGoogleSheet(noteId) {
+    const sheetUrl = getGoogleSheetUrl();
+    if (!sheetUrl || !noteId) return;
+
+    try {
+      // 1. POST delete
+      fetch(sheetUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({
+          action: 'delete',
+          id: noteId
+        })
+      }).catch(() => {});
+
+      // 2. GET fallback (handles redirection cleanly without CORS preflight)
+      const getUrl = sheetUrl + (sheetUrl.includes('?') ? '&' : '?') + 'action=delete&id=' + encodeURIComponent(noteId);
+      fetch(getUrl, { mode: 'no-cors' }).catch(() => {});
+    } catch (e) {
+      // Ignore background errors
     }
   }
 
@@ -1039,11 +1141,22 @@ function doGet(e) {
   }
 
   function deleteNote(noteId) {
+    if (!noteId) return;
+
+    // 1. Mark as tombstoned so auto-sync never restores it
+    addDeletedNoteId(noteId);
+
+    // 2. Remove locally
     let notes = getStoredNotes();
     notes = notes.filter((n) => n.id !== noteId);
     saveStoredNotes(notes);
     renderNotesList();
+    refreshAllInlineNotes();
+    updateNotesCountBadges();
     showToast('🗑️ Note deleted.');
+
+    // 3. Sync deletion to Google Sheet
+    syncDeleteToGoogleSheet(noteId);
   }
 
   async function handleChangePasswordPrompt() {
@@ -1188,40 +1301,71 @@ function doGet(e) {
     }
   }
 
-  // Automatic background pull & merge from Google Spreadsheet
+  // Automatic background pull & merge from Google Spreadsheet (Handles Edits & Deletions)
   async function autoSyncFromGoogleSheet(showFeedback = false) {
     const sheetUrl = getGoogleSheetUrl();
     if (!sheetUrl) return;
 
     try {
       const res = await fetchNotesFromGoogleSheet('');
-      if (res.success && Array.isArray(res.notes) && res.notes.length > 0) {
+      if (res.success && Array.isArray(res.notes)) {
         const localNotes = getStoredNotes();
-        let addedCount = 0;
+        const deletedIds = getDeletedNoteIds();
+        let changed = false;
 
+        // 1. Group remote notes by ID keeping the newest version, skip blank/deleted
+        const remoteMap = new Map();
         res.notes.forEach((remote) => {
-          const exists = localNotes.some(
-            (l) => l.id === remote.id || (l.text === remote.note && l.topic === remote.topic)
-          );
-          if (!exists) {
+          if (!remote.id || deletedIds.has(String(remote.id).trim())) return;
+          if (!remote.note || !String(remote.note).trim()) return;
+
+          const existing = remoteMap.get(remote.id);
+          if (!existing || new Date(remote.timestamp) > new Date(existing.timestamp)) {
+            remoteMap.set(remote.id, remote);
+          }
+        });
+
+        // 2. Merge newest remote notes into local storage
+        remoteMap.forEach((remote, id) => {
+          const localIdx = localNotes.findIndex((l) => String(l.id).trim() === String(id).trim());
+          if (localIdx === -1) {
             localNotes.unshift({
-              id: remote.id || 'remote_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6),
+              id: id,
               topic: remote.topic || 'General',
               text: remote.note,
               timestamp: remote.timestamp || new Date().toISOString(),
               author: remote.author || 'Saurav Patel',
               synced: true
             });
-            addedCount++;
+            changed = true;
+          } else {
+            // Update if remote timestamp is newer than local or if text changed
+            const remoteTime = new Date(remote.timestamp).getTime();
+            const localTime = new Date(localNotes[localIdx].timestamp).getTime();
+            if (remoteTime >= localTime && localNotes[localIdx].text !== remote.note) {
+              localNotes[localIdx].text = remote.note;
+              localNotes[localIdx].timestamp = remote.timestamp;
+              localNotes[localIdx].synced = true;
+              changed = true;
+            }
           }
         });
 
-        if (addedCount > 0) {
-          saveStoredNotes(localNotes);
+        // 3. Purge any tombstoned deleted notes from local list
+        const filteredLocal = localNotes.filter((n) => !deletedIds.has(String(n.id).trim()));
+        if (filteredLocal.length !== localNotes.length) {
+          changed = true;
+        }
+
+        if (changed) {
+          saveStoredNotes(filteredLocal);
           refreshAllInlineNotes();
           updateNotesCountBadges();
+          if (document.getElementById('sf-pane-view') && document.getElementById('sf-pane-view').classList.contains('is-active')) {
+            renderNotesList();
+          }
           if (showFeedback) {
-            showToast(`✅ Synced ${addedCount} notes from Google Sheet!`);
+            showToast('✅ Notes updated and synced from Google Sheet!');
           }
         } else if (showFeedback) {
           showToast('✅ Notes are already up to date with Google Sheet.');
@@ -1565,6 +1709,7 @@ function doGet(e) {
 
       let notes = getStoredNotes();
       let targetNote = null;
+      let isEdit = false;
       if (existingId) {
         const noteIdx = notes.findIndex((n) => n.id === existingId);
         if (noteIdx !== -1) {
@@ -1572,6 +1717,7 @@ function doGet(e) {
           notes[noteIdx].timestamp = new Date().toISOString();
           notes[noteIdx].synced = false;
           targetNote = notes[noteIdx];
+          isEdit = true;
         }
       } else {
         targetNote = {
@@ -1587,14 +1733,14 @@ function doGet(e) {
 
       saveStoredNotes(notes);
 
-      // Attempt Google Sheet sync
+      // Attempt Google Sheet sync with action ('edit' or 'add')
       const sheetUrl = getGoogleSheetUrl();
       if (sheetUrl && targetNote) {
-        const syncRes = await syncNoteToGoogleSheet(targetNote);
+        const syncRes = await syncNoteToGoogleSheet(targetNote, isEdit ? 'edit' : 'add');
         if (syncRes.success) {
           targetNote.synced = true;
           saveStoredNotes(notes);
-          showToast('✅ Note saved and synced to Google Spreadsheet!');
+          showToast(isEdit ? '✅ Note updated and synced to Google Sheet!' : '✅ Note saved and synced to Google Spreadsheet!');
         } else {
           showToast('💾 Note saved locally (Google Sheet sync failed: check URL)');
         }
