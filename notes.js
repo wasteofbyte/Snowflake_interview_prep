@@ -776,7 +776,7 @@ function jsonResponse(obj) {
           </div>
           
           <div class="sf-pw-hint" style="font-size:12.5px;color:var(--ink3);margin-top:14px;border-top:1px solid var(--line, rgba(11,27,43,.12));padding-top:12px;">
-            Need access? <a href="https://100ravpatel.github.io/Portfolio/#contact" target="_blank" rel="noopener noreferrer" style="color:var(--ice, #0A86C2);text-decoration:underline;font-weight:600;">Ask for access</a> · <a href="mailto:sauravpateliit120@gmail.com?subject=Snowflake%20Interview%20Prep%20-%20Access%20Request" style="color:var(--ice, #0A86C2);text-decoration:underline;font-weight:600;">Email directly</a>
+            Need access? <a href="mailto:wasteofbyte@gmail.com?subject=Snowflake%20Interview%20Prep%20-%20Access%20Request&body=Hi,%0D%0A%0D%0AI%20would%20like%20to%20request%20access%20to%20the%20Snowflake%20Interview%20Prep%20notes.%0D%0A%0D%0AThank%20you!" style="color:var(--ice, #0A86C2);text-decoration:underline;font-weight:600;">Ask for access</a>
           </div>
         </div>
       </div>
@@ -1134,7 +1134,7 @@ function jsonResponse(obj) {
                   🔑 Enter Password to Enable Notes
                 </button>
                 <div style="font-size:12.5px;color:var(--ink3);margin-top:14px;border-top:1px solid var(--line, rgba(11,27,43,.12));padding-top:12px;">
-                  Need access? <a href="https://100ravpatel.github.io/Portfolio/#contact" target="_blank" rel="noopener noreferrer" style="color:var(--ice, #0A86C2);text-decoration:underline;font-weight:600;">Ask for access</a> · <a href="mailto:sauravpateliit120@gmail.com?subject=Snowflake%20Interview%20Prep%20-%20Access%20Request" style="color:var(--ice, #0A86C2);text-decoration:underline;font-weight:600;">Email directly</a>
+                  Need access? <a href="mailto:wasteofbyte@gmail.com?subject=Snowflake%20Interview%20Prep%20-%20Access%20Request&body=Hi,%0D%0A%0D%0AI%20would%20like%20to%20request%20access%20to%20the%20Snowflake%20Interview%20Prep%20notes.%0D%0A%0D%0AThank%20you!" style="color:var(--ice, #0A86C2);text-decoration:underline;font-weight:600;">Ask for access</a>
                 </div>
               </div>
 
