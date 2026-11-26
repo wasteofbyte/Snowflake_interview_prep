@@ -705,7 +705,7 @@ function jsonResponse(obj) {
             <button type="button" id="sf-copy-guard-submit" class="sf-btn sf-btn-primary">Unlock Copy</button>
           </div>
           <div style="margin-top:12px; font-size:11.5px; color:var(--ink3, #7F90A2);">
-            <a href="https://100ravpatel.github.io/Portfolio/" target="_blank" rel="noopener" style="color:var(--ice, #0A86C2); text-decoration:underline;">Request permission</a>
+            <a href="https://100ravpatel.github.io/Portfolio/#contact" target="_blank" rel="noopener" style="color:var(--ice, #0A86C2); text-decoration:underline;">Request permission</a>
           </div>
         </div>
       </div>`;
@@ -960,7 +960,7 @@ function jsonResponse(obj) {
           </div>
           
           <div class="sf-pw-hint" style="font-size:12.5px;color:var(--ink3);margin-top:14px;border-top:1px solid var(--line, rgba(11,27,43,.12));padding-top:12px;">
-            Need access? <a href="https://100ravpatel.github.io/Portfolio/" target="_blank" rel="noopener" style="color:var(--ice, #0A86C2);text-decoration:underline;font-weight:600;">Ask for access</a>
+            Need access? <a href="https://100ravpatel.github.io/Portfolio/#contact" target="_blank" rel="noopener" style="color:var(--ice, #0A86C2);text-decoration:underline;font-weight:600;">Ask for access</a>
           </div>
         </div>
       </div>
@@ -1318,7 +1318,7 @@ function jsonResponse(obj) {
                   🔑 Enter Password to Enable Notes
                 </button>
                 <div style="font-size:12.5px;color:var(--ink3);margin-top:14px;border-top:1px solid var(--line, rgba(11,27,43,.12));padding-top:12px;">
-                  Need access? <a href="https://100ravpatel.github.io/Portfolio/" target="_blank" rel="noopener" style="color:var(--ice, #0A86C2);text-decoration:underline;font-weight:600;">Ask for access</a>
+                  Need access? <a href="https://100ravpatel.github.io/Portfolio/#contact" target="_blank" rel="noopener" style="color:var(--ice, #0A86C2);text-decoration:underline;font-weight:600;">Ask for access</a>
                 </div>
               </div>
 
