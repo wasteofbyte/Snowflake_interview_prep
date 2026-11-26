@@ -128,6 +128,23 @@ h1 .thin{font-weight:300;color:var(--ink2)}
   background:var(--violet-s);color:var(--violet);border:1px solid rgba(109,40,217,.3);
   font-weight:700;letter-spacing:.06em;margin-left:8px;vertical-align:middle}
 .note{max-width:860px;margin:0 auto 48px;padding:0 28px;font-size:14px;color:var(--ink3);font-style:italic}
+/* content-type filter bar */
+.filter-bar{max-width:1200px;margin:0 auto 24px;padding:0 28px;display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+.filter-pills{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.filter-pill{font-family:var(--f-mono);font-size:12px;font-weight:600;padding:7px 14px;border-radius:99px;
+  border:1px solid var(--line2);background:var(--card);color:var(--ink2);cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:6px}
+.filter-pill:hover{border-color:var(--ice);color:var(--ice)}
+.filter-pill.is-active{background:var(--ice);border-color:var(--ice);color:#fff;box-shadow:0 4px 14px rgba(10,134,194,.25)}
+.filter-pill b{font-size:10px;opacity:.8;background:rgba(255,255,255,.18);padding:1px 6px;border-radius:99px}
+.filter-pill:not(.is-active) b{background:var(--card2);color:var(--ink3)}
+.filter-search{margin-left:auto;display:flex;align-items:center;gap:10px}
+.filter-input{font-family:var(--f-mono);font-size:12px;padding:7px 12px;border-radius:8px;border:1px solid var(--line2);
+  background:var(--card);color:var(--ink);outline:none;min-width:220px}
+.filter-input:focus{border-color:var(--ice)}
+.filter-count{font-family:var(--f-mono);font-size:11px;color:var(--ink3);white-space:nowrap}
+.is-hidden{display:none !important}
+.file-link.is-dim{opacity:.38}
+@media(max-width:720px){.filter-bar{padding:0 18px}.filter-search{margin-left:0;width:100%}.filter-input{flex:1}}
 footer{padding:32px 28px;text-align:center;color:var(--ink3);font-size:13px;font-family:var(--f-mono)}
 @media(max-width:600px){.hero{padding:40px 18px 32px}.grid,.grid.wide{padding:0 18px;grid-template-columns:1fr}.sec-div{padding:0 18px}}
 @media(prefers-reduced-motion:no-preference){
@@ -166,6 +183,20 @@ footer{padding:32px 28px;text-align:center;color:var(--ink3);font-size:13px;font
     <span class="pill new">51 backend query scenarios</span>
     <span class="pill new">S3 Console + Snowpipe sim</span>
     <span class="pill">Prepared for Saurav Patel</span>
+  </div>
+</div>
+
+<div class="filter-bar" id="contentFilterBar">
+  <div class="filter-pills" role="tablist" aria-label="Filter by content type">
+    <button class="filter-pill is-active" type="button" data-filter="all">All <b id="cnt-all">35</b></button>
+    <button class="filter-pill" type="button" data-filter="learning">📚 Learning Modules <b id="cnt-learning">16</b></button>
+    <button class="filter-pill" type="button" data-filter="lab">🧪 Hands-On Labs <b id="cnt-lab">17</b></button>
+    <button class="filter-pill" type="button" data-filter="simulator">⚡ Simulators &amp; Backend <b id="cnt-simulator">7</b></button>
+    <button class="filter-pill" type="button" data-filter="guide">📖 Guides &amp; Q&amp;A <b id="cnt-guide">2</b></button>
+  </div>
+  <div class="filter-search">
+    <input class="filter-input" id="cardFilterInput" type="search" placeholder="Filter cards (e.g. micro, s3, cortex)…" aria-label="Filter modules and labs">
+    <span class="filter-count" id="filterCountLabel">Showing 35 items</span>
   </div>
 </div>
 
@@ -355,96 +386,207 @@ footer{padding:32px 28px;text-align:center;color:var(--ink3);font-size:13px;font
 
 </div>
 
-<div class="sec-div"><h2>Interactive Hands-On Labs &amp; Simulators</h2><span>15 Snowsight SQL Labs · 51 Backend Scenarios · AWS S3 Console</span></div>
+<div class="sec-div"><h2>Hands-On Snowsight SQL Labs</h2><span>15 Labs · 216 Guided Steps · <a href="snowflake_learning_labs_FINAL.html" style="color:var(--ice);text-decoration:none;font-weight:700">Open Full Hub →</a></span></div>
+<div class="grid" id="labsGrid">
+
+  <a class="card arch" href="snowflake_learning_labs_FINAL.html#architecture_dev" data-types="lab">
+    <div class="card-num">LAB 01 · FOUNDATIONS <span class="card-new">REAL SQL</span></div>
+    <div class="card-title-row">
+      <div class="card-title">Architecture, Snowpark, UDFs &amp; Cortex</div>
+      <button class="topic-note-btn" type="button" data-topic="Lab 01: Architecture, Snowpark, UDFs and Cortex" title="Notes on Lab 01">📝 Notes</button>
+    </div>
+    <div class="card-sub">Query flow through cloud services, compute &amp; storage, plus Snowpark DataFrames, UDFs, stored procedures and Cortex AI.</div>
+    <div class="card-meta"><span class="tag s">16 steps</span><span class="tag">Snowpark</span><span class="tag">UDFs</span></div>
+    <div class="cta">Open lab</div>
+  </a>
+
+  <a class="card perf" href="snowflake_learning_labs_FINAL.html#micro_partitions" data-types="lab simulator">
+    <div class="card-num">LAB 02 · FOUNDATIONS <span class="card-new">SIMULATED</span></div>
+    <div class="card-title-row">
+      <div class="card-title">Micro-partitions, Pruning &amp; Transient Tables</div>
+      <button class="topic-note-btn" type="button" data-topic="Lab 02: Micro-partitions, pruning and transient tables" title="Notes on Lab 02">📝 Notes</button>
+    </div>
+    <div class="card-sub">Interactive explainer of micro-partition storage, pruning ranges, ORDER BY vs clustering keys, and transient tables.</div>
+    <div class="card-meta"><span class="tag n">Explainer</span><span class="tag">Pruning</span><span class="tag">Transient</span></div>
+    <div class="cta">Open explainer</div>
+  </a>
+
+  <a class="card perf" href="snowflake_learning_labs_FINAL.html#mp_lab" data-types="lab">
+    <div class="card-num">LAB 03 · FOUNDATIONS <span class="card-new">REAL SQL</span></div>
+    <div class="card-title-row">
+      <div class="card-title">Micro-partitions Lab: Loading &amp; Clustering</div>
+      <button class="topic-note-btn" type="button" data-topic="Lab 03: Micro-partitions lab: loading, pruning and clustering" title="Notes on Lab 03">📝 Notes</button>
+    </div>
+    <div class="card-sub">Watch tables split into micro-partitions by size, inspect Query Profile pruning, test MIN/MAX filters and clustering depth.</div>
+    <div class="card-meta"><span class="tag s">17 steps</span><span class="tag">Clustering</span><span class="tag">Pruning</span></div>
+    <div class="cta">Open lab</div>
+  </a>
+
+  <a class="card prot" href="snowflake_learning_labs_FINAL.html#table_types" data-types="lab">
+    <div class="card-num">LAB 04 · FOUNDATIONS <span class="card-new">REAL SQL</span></div>
+    <div class="card-title-row">
+      <div class="card-title">Table Types: Permanent, Transient, Iceberg &amp; More</div>
+      <button class="topic-note-btn" type="button" data-topic="Lab 04: Table types lab: permanent, transient, temporary, external, dynamic, hybrid, Iceberg and event" title="Notes on Lab 04">📝 Notes</button>
+    </div>
+    <div class="card-sub">Build &amp; compare Permanent, Transient, Temporary, External, Dynamic, Hybrid, Iceberg and Event tables in SQL.</div>
+    <div class="card-meta"><span class="tag s">16 steps</span><span class="tag">Iceberg</span><span class="tag">Hybrid</span></div>
+    <div class="cta">Open lab</div>
+  </a>
+
+  <a class="card perf" href="snowflake_learning_labs_FINAL.html#query_profile" data-types="lab simulator">
+    <div class="card-num">LAB 05 · PERFORMANCE &amp; COST <span class="card-new">SIMULATED</span></div>
+    <div class="card-title-row">
+      <div class="card-title">Query Profile &amp; Warehouse Sizing</div>
+      <button class="topic-note-btn" type="button" data-topic="Lab 05: Query Profile and warehouse sizing" title="Notes on Lab 05">📝 Notes</button>
+    </div>
+    <div class="card-sub">Simulated Snowsight Query Profile: pruning, spilling, caching, exploding joins, queuing, and scaling up vs out.</div>
+    <div class="card-meta"><span class="tag n">15 steps</span><span class="tag">Spilling</span><span class="tag">Queuing</span></div>
+    <div class="cta">Open lab</div>
+  </a>
+
+  <a class="card cost" href="snowflake_learning_labs_FINAL.html#caching_cost" data-types="lab">
+    <div class="card-num">LAB 06 · PERFORMANCE &amp; COST <span class="card-new">REAL SQL</span></div>
+    <div class="card-title-row">
+      <div class="card-title">Caching, Credits &amp; Cost Controls</div>
+      <button class="topic-note-btn" type="button" data-topic="Lab 06: Caching, credits and cost controls" title="Notes on Lab 06">📝 Notes</button>
+    </div>
+    <div class="card-sub">Result, warehouse &amp; metadata caches, 60-second credit billing, resource monitors, timeouts, and ACCOUNT_USAGE queries.</div>
+    <div class="card-meta"><span class="tag s">15 steps</span><span class="tag">Credits</span><span class="tag">Monitors</span></div>
+    <div class="cta">Open lab</div>
+  </a>
+
+  <a class="card perf" href="snowflake_learning_labs_FINAL.html#perf_features" data-types="lab simulator">
+    <div class="card-num">LAB 07 · PERFORMANCE &amp; COST <span class="card-new">SIMULATED</span></div>
+    <div class="card-title-row">
+      <div class="card-title">Clustering, Search Opt, MVs &amp; QAS</div>
+      <button class="topic-note-btn" type="button" data-topic="Lab 07: Clustering, search optimization, materialized views and query acceleration" title="Notes on Lab 07">📝 Notes</button>
+    </div>
+    <div class="card-sub">Compare clustering keys, Search Optimization Service, Materialized Views and Query Acceleration by query pattern &amp; cost.</div>
+    <div class="card-meta"><span class="tag n">15 steps</span><span class="tag">SOS</span><span class="tag">QAS</span></div>
+    <div class="cta">Open lab</div>
+  </a>
+
+  <a class="card prot" href="snowflake_learning_labs_FINAL.html#time_travel" data-types="lab">
+    <div class="card-num">LAB 08 · DATA PROTECTION <span class="card-new">REAL SQL</span></div>
+    <div class="card-title-row">
+      <div class="card-title">Time Travel, Fail-safe &amp; Zero-Copy Cloning</div>
+      <button class="topic-note-btn" type="button" data-topic="Lab 08: Time Travel, Fail-safe, cloning and table types" title="Notes on Lab 08">📝 Notes</button>
+    </div>
+    <div class="card-sub">Query the past with AT/BEFORE, UNDROP dropped tables, create zero-copy clones, and understand Fail-safe &amp; retention cost.</div>
+    <div class="card-meta"><span class="tag s">16 steps</span><span class="tag">UNDROP</span><span class="tag">Clone</span></div>
+    <div class="cta">Open lab</div>
+  </a>
+
+  <a class="card load" href="snowflake_learning_labs_FINAL.html#loading" data-types="lab">
+    <div class="card-num">LAB 09 · LOADING &amp; PIPELINES <span class="card-new">REAL SQL</span></div>
+    <div class="card-title-row">
+      <div class="card-title">Loading from S3: Stages, COPY &amp; Snowpipe</div>
+      <button class="topic-note-btn" type="button" data-topic="Lab 09: Loading data from S3: stages, COPY INTO, Snowpipe and JSON" title="Notes on Lab 09">📝 Notes</button>
+    </div>
+    <div class="card-sub">Connect S3 via storage integration, define file formats, run COPY INTO with ON_ERROR/VALIDATION_MODE, Snowpipe &amp; VARIANT.</div>
+    <div class="card-meta"><span class="tag s">13 steps</span><span class="tag">COPY INTO</span><span class="tag">JSON</span></div>
+    <div class="cta">Open lab</div>
+  </a>
+
+  <a class="card dyn" href="snowflake_learning_labs_FINAL.html#pipelines" data-types="lab">
+    <div class="card-num">LAB 10 · LOADING &amp; PIPELINES <span class="card-new">REAL SQL</span></div>
+    <div class="card-title-row">
+      <div class="card-title">Pipelines: Streams, Tasks, MERGE &amp; Dynamic Tables</div>
+      <button class="topic-note-btn" type="button" data-topic="Lab 10: Pipelines: streams, tasks, MERGE and dynamic tables" title="Notes on Lab 10">📝 Notes</button>
+    </div>
+    <div class="card-sub">Build incremental pipelines with Streams (METADATA$), Task DAGs, MERGE, SCD Type 2, and compare with Dynamic Tables.</div>
+    <div class="card-meta"><span class="tag s">15 steps</span><span class="tag">Streams</span><span class="tag">Tasks</span></div>
+    <div class="cta">Open lab</div>
+  </a>
+
+  <a class="card sql" href="snowflake_learning_labs_FINAL.html#sql_patterns" data-types="lab">
+    <div class="card-num">LAB 11 · MODELING &amp; SQL <span class="card-new">REAL SQL</span></div>
+    <div class="card-title-row">
+      <div class="card-title">SQL Patterns: QUALIFY, Windows &amp; Constraints</div>
+      <button class="topic-note-btn" type="button" data-topic="Lab 11: SQL patterns every Snowflake data engineer needs" title="Notes on Lab 11">📝 Notes</button>
+    </div>
+    <div class="card-sub">QUALIFY, window functions, NULL traps, sequences/IDENTITY, unenforced constraints, deduplication and Top-N exercises.</div>
+    <div class="card-meta"><span class="tag s">15 steps</span><span class="tag">QUALIFY</span><span class="tag">Dedup</span></div>
+    <div class="cta">Open lab</div>
+  </a>
+
+  <a class="card mod" href="snowflake_learning_labs_FINAL.html#star_schema" data-types="lab">
+    <div class="card-num">LAB 12 · MODELING &amp; SQL <span class="card-new">REAL SQL</span></div>
+    <div class="card-title-row">
+      <div class="card-title">Star Schema vs Snowflake, OBT, 3NF &amp; Data Vault</div>
+      <button class="topic-note-btn" type="button" data-topic="Lab 12: Star schema compared with snowflake, galaxy, OBT, 3NF and Data Vault" title="Notes on Lab 12">📝 Notes</button>
+    </div>
+    <div class="card-sub">Query the same retail dataset across six schemas, compare join cost, and handle SCD Type 1 and Type 2 history.</div>
+    <div class="card-meta"><span class="tag s">15 steps</span><span class="tag">Star</span><span class="tag">SCD2</span></div>
+    <div class="cta">Open lab</div>
+  </a>
+
+  <a class="card sec" href="snowflake_learning_labs_FINAL.html#security" data-types="lab">
+    <div class="card-num">LAB 13 · SECURITY &amp; SHARING <span class="card-new">REAL SQL</span></div>
+    <div class="card-title-row">
+      <div class="card-title">Access Control &amp; Data Governance</div>
+      <button class="topic-note-btn" type="button" data-topic="Lab 13: Access control and data governance" title="Notes on Lab 13">📝 Notes</button>
+    </div>
+    <div class="card-sub">RBAC, role hierarchy, future grants, masking policies, row access policies, tags, secure views and network policies.</div>
+    <div class="card-meta"><span class="tag s">15 steps</span><span class="tag">RBAC</span><span class="tag">Masking</span></div>
+    <div class="cta">Open lab</div>
+  </a>
+
+  <a class="card share" href="snowflake_learning_labs_FINAL.html#sharing" data-types="lab">
+    <div class="card-num">LAB 14 · SECURITY &amp; SHARING <span class="card-new">REAL SQL</span></div>
+    <div class="card-title-row">
+      <div class="card-title">Data Sharing &amp; Cross-Region Replication</div>
+      <button class="topic-note-btn" type="button" data-topic="Lab 14: Data sharing and replication" title="Notes on Lab 14">📝 Notes</button>
+    </div>
+    <div class="card-sub">Share live data without copying, create reader accounts, verify who pays compute, and run replication/failover drills.</div>
+    <div class="card-meta"><span class="tag s">15 steps</span><span class="tag">Shares</span><span class="tag">Failover</span></div>
+    <div class="cta">Open lab</div>
+  </a>
+
+  <a class="card ai" href="snowflake_learning_labs_FINAL.html#cortex_ai" data-types="lab">
+    <div class="card-num">LAB 15 · AI &amp; ML <span class="card-new">REAL SQL</span></div>
+    <div class="card-title-row">
+      <div class="card-title">Snowflake Cortex AI: AISQL, RAG, Analyst &amp; ML</div>
+      <button class="topic-note-btn" type="button" data-topic="Lab 15: Snowflake Cortex AI: AISQL functions, Search &amp; RAG, Analyst, Agents and ML" title="Notes on Lab 15">📝 Notes</button>
+    </div>
+    <div class="card-sub">AI_COMPLETE, AI_CLASSIFY, AI_FILTER, Cortex Search RAG, Cortex Analyst semantic YAML, Cortex Agents and ML forecasting.</div>
+    <div class="card-meta"><span class="tag s">18 steps</span><span class="tag">RAG</span><span class="tag">Agents</span></div>
+    <div class="cta">Open lab</div>
+  </a>
+
+</div>
+
+<div class="sec-div"><h2>Interactive Simulators &amp; Backend Labs</h2><span>Engine Execution · AWS S3 Console · CloudShell · boto3</span></div>
 <div class="grid wide">
 
-  <div class="card compound deep-sql">
-    <div class="card-num">HANDS-ON LABS · 15 LABS <span class="card-new">NEW</span></div>
+  <a class="card sql" href="snowflake_query_backend_lab_FINAL.html" data-types="simulator lab">
+    <div class="card-num">SIMULATOR + SQL PLAYGROUND <span class="card-new">51 SCENARIOS</span></div>
     <div class="card-title-row">
-      <div class="card-title">Snowflake Learning Labs Hub</div>
-      <button class="topic-note-btn" type="button" data-topic="Hands-On: Snowflake Learning Labs Hub" title="Notes on Snowflake Learning Labs Hub">📝 Notes</button>
+      <div class="card-title">Snowflake Query Backend Lab</div>
+      <button class="topic-note-btn" type="button" data-topic="Hands-On: Query Backend Lab &amp; S3 Simulator" title="Notes on Query Backend Lab">📝 Notes</button>
     </div>
-    <div class="card-sub">15 interactive Snowsight-style labs with step-by-step guides, real in-browser SQL (SQLite WASM + Snowflake dialect), Query Profile simulations, and Cortex AI.</div>
-    <div class="card-meta"><span class="tag s">15 labs</span><span class="tag n">216 guided steps</span><span class="tag q">12 Real SQL + 3 Sim</span></div>
-    <div class="file-links">
-      <a class="file-link" href="snowflake_learning_labs_FINAL.html">
-        <span class="fl-type fl-lab">HUB</span><span class="fl-name">Open All 15 Labs Hub — full curriculum &amp; progress tracker</span><span class="fl-arr">→</span>
-      </a>
-      <a class="file-link" href="snowflake_learning_labs_FINAL.html#architecture_dev">
-        <span class="fl-type fl-lab">01</span><span class="fl-name">Architecture, Snowpark, UDFs &amp; Cortex (16 steps)</span><span class="fl-arr">→</span>
-      </a>
-      <a class="file-link" href="snowflake_learning_labs_FINAL.html#micro_partitions">
-        <span class="fl-type fl-sim">02</span><span class="fl-name">Micro-partitions, Pruning &amp; Transient Tables (Explainer)</span><span class="fl-arr">→</span>
-      </a>
-      <a class="file-link" href="snowflake_learning_labs_FINAL.html#mp_lab">
-        <span class="fl-type fl-lab">03</span><span class="fl-name">Micro-partitions Lab: Loading, Pruning &amp; Clustering (17 steps)</span><span class="fl-arr">→</span>
-      </a>
-      <a class="file-link" href="snowflake_learning_labs_FINAL.html#table_types">
-        <span class="fl-type fl-lab">04</span><span class="fl-name">Table Types: Permanent, Transient, Temp, Dynamic, Hybrid, Iceberg (16 steps)</span><span class="fl-arr">→</span>
-      </a>
-      <a class="file-link" href="snowflake_learning_labs_FINAL.html#query_profile">
-        <span class="fl-type fl-sim">05</span><span class="fl-name">Query Profile &amp; Warehouse Sizing (15 steps)</span><span class="fl-arr">→</span>
-      </a>
-      <a class="file-link" href="snowflake_learning_labs_FINAL.html#caching_cost">
-        <span class="fl-type fl-lab">06</span><span class="fl-name">Caching, Credits &amp; Cost Controls (15 steps)</span><span class="fl-arr">→</span>
-      </a>
-      <a class="file-link" href="snowflake_learning_labs_FINAL.html#perf_features">
-        <span class="fl-type fl-sim">07</span><span class="fl-name">Clustering, Search Optimization, MVs &amp; QAS (15 steps)</span><span class="fl-arr">→</span>
-      </a>
-      <a class="file-link" href="snowflake_learning_labs_FINAL.html#time_travel">
-        <span class="fl-type fl-lab">08</span><span class="fl-name">Time Travel, Fail-safe, Cloning &amp; Table Types (16 steps)</span><span class="fl-arr">→</span>
-      </a>
-      <a class="file-link" href="snowflake_learning_labs_FINAL.html#loading">
-        <span class="fl-type fl-lab">09</span><span class="fl-name">Loading Data from S3: Stages, COPY INTO, Snowpipe &amp; JSON (13 steps)</span><span class="fl-arr">→</span>
-      </a>
-      <a class="file-link" href="snowflake_learning_labs_FINAL.html#pipelines">
-        <span class="fl-type fl-lab">10</span><span class="fl-name">Pipelines: Streams, Tasks, MERGE &amp; Dynamic Tables (15 steps)</span><span class="fl-arr">→</span>
-      </a>
-      <a class="file-link" href="snowflake_learning_labs_FINAL.html#sql_patterns">
-        <span class="fl-type fl-lab">11</span><span class="fl-name">SQL Patterns: QUALIFY, Windows, Constraints &amp; Sequences (15 steps)</span><span class="fl-arr">→</span>
-      </a>
-      <a class="file-link" href="snowflake_learning_labs_FINAL.html#star_schema">
-        <span class="fl-type fl-lab">12</span><span class="fl-name">Star Schema vs Snowflake, Galaxy, OBT, 3NF &amp; Data Vault (15 steps)</span><span class="fl-arr">→</span>
-      </a>
-      <a class="file-link" href="snowflake_learning_labs_FINAL.html#security">
-        <span class="fl-type fl-lab">13</span><span class="fl-name">Access Control &amp; Data Governance: RBAC, Masking, RAP (15 steps)</span><span class="fl-arr">→</span>
-      </a>
-      <a class="file-link" href="snowflake_learning_labs_FINAL.html#sharing">
-        <span class="fl-type fl-lab">14</span><span class="fl-name">Data Sharing &amp; Replication (15 steps)</span><span class="fl-arr">→</span>
-      </a>
-      <a class="file-link" href="snowflake_learning_labs_FINAL.html#cortex_ai">
-        <span class="fl-type fl-lab">15</span><span class="fl-name">Snowflake Cortex AI: AISQL, Search/RAG, Analyst, Agents &amp; ML (18 steps)</span><span class="fl-arr">→</span>
-      </a>
-    </div>
-  </div>
+    <div class="card-sub">Step through Cloud Services, Micro-partition pruning, Warehouse workers and Result Cache across 51 SQL scenarios (Q0–Q25, GROUP BY, Tricky JOINs, Bonus) with an interactive SQLite WASM Playground.</div>
+    <div class="card-meta"><span class="tag s">51 scenarios</span><span class="tag n">8 levels</span><span class="tag q">Live SQL Playground</span></div>
+    <div class="cta">Launch backend lab</div>
+  </a>
 
-  <div class="card compound deep-json">
-    <div class="card-num">BACKEND ENGINE &amp; AWS S3 · 2 LABS <span class="card-new">NEW</span></div>
+  <a class="card ing" href="S3_Simulator_FINAL.html" data-types="simulator lab">
+    <div class="card-num">AWS S3 CONSOLE SIMULATOR <span class="card-new">21 GUIDED LABS</span></div>
     <div class="card-title-row">
-      <div class="card-title">Query Backend Lab &amp; S3 Simulator</div>
-      <button class="topic-note-btn" type="button" data-topic="Hands-On: Query Backend Lab &amp; S3 Simulator" title="Notes on Query Backend Lab &amp; S3 Simulator">📝 Notes</button>
+      <div class="card-title">AWS S3 Console, CloudShell &amp; Snowpipe Lab</div>
+      <button class="topic-note-btn" type="button" data-topic="Hands-On: Query Backend Lab &amp; S3 Simulator" title="Notes on S3 Simulator">📝 Notes</button>
     </div>
-    <div class="card-sub">Step through Snowflake's Cloud Services, Micro-partition pruning, and Warehouse execution across 51 SQL scenarios, plus practice AWS S3, IAM, CloudShell, boto3, and S3 → Snowflake pipelines.</div>
-    <div class="card-meta"><span class="tag s">51 query scenarios</span><span class="tag n">21 S3 guided labs</span><span class="tag q">Live SQL + CLI</span></div>
-    <div class="file-links">
-      <a class="file-link" href="snowflake_query_backend_lab_FINAL.html">
-        <span class="fl-type fl-lab">SQL</span><span class="fl-name">Snowflake Query Backend Lab — 51 scenarios, 8 levels &amp; SQL Playground</span><span class="fl-arr">→</span>
-      </a>
-      <a class="file-link" href="S3_Simulator_FINAL.html">
-        <span class="fl-type fl-sim">AWS</span><span class="fl-name">S3 Management Console Simulator — buckets, IAM, CloudShell &amp; boto3</span><span class="fl-arr">→</span>
-      </a>
-      <a class="file-link" href="S3_Simulator_FINAL.html#/labs">
-        <span class="fl-type fl-guide">LABS</span><span class="fl-name">S3 Guided Labs (21 labs incl. S3 → Snowflake Data Lake &amp; Snowpipe)</span><span class="fl-arr">→</span>
-      </a>
-    </div>
-  </div>
+    <div class="card-sub">Practice S3 buckets, IAM &amp; bucket policies, Block Public Access, Time Machine, CloudShell CLI, Python boto3, and the S3 → Snowflake data lake + SQS Snowpipe auto-ingest lab.</div>
+    <div class="card-meta"><span class="tag s">21 guided labs</span><span class="tag n">CloudShell + boto3</span><span class="tag q">S3 → Snowflake</span></div>
+    <div class="cta">Launch S3 simulator</div>
+  </a>
 
 </div>
 
 <div class="sec-div"><h2>Deep-Dive Topic Labs</h2><span>Multi-file practice sets · Simulator · Step-by-step · Q&amp;A · Visual guide</span></div>
 <div class="grid wide">
 
-  <div class="card compound deep-sql">
+  <div class="card compound deep-sql" data-types="guide lab simulator">
     <div class="card-num">DEEP DIVE · 5 FILES</div>
     <div class="card-title-row">
       <div class="card-title">SnowSQL, Streams &amp; Tasks</div>
@@ -471,7 +613,7 @@ footer{padding:32px 28px;text-align:center;color:var(--ink3);font-size:13px;font
     </div>
   </div>
 
-  <div class="card compound deep-json">
+  <div class="card compound deep-json" data-types="guide lab simulator">
     <div class="card-num">DEEP DIVE · 4 FILES</div>
     <div class="card-title-row">
       <div class="card-title">JSON S3 → Snowflake</div>
@@ -510,6 +652,60 @@ document.getElementById('themeBtn').onclick = () => {
   root.dataset.theme = next;
   try{ localStorage.setItem('sf-index-theme', next); }catch(e){}
 };
+
+// Content-type & keyword filtering for Course Home cards
+(function initHomeFilters(){
+  document.querySelectorAll('a.card[href^="module"]').forEach(c => {
+    if (!c.dataset.types) c.dataset.types = 'learning';
+  });
+  const cards = Array.from(document.querySelectorAll('.grid .card'));
+  const grids = Array.from(document.querySelectorAll('.grid'));
+  const pills = Array.from(document.querySelectorAll('#contentFilterBar .filter-pill'));
+  const input = document.getElementById('cardFilterInput');
+  const countLabel = document.getElementById('filterCountLabel');
+  let activeType = 'all';
+
+  const countFor = t => cards.filter(c => t === 'all' || (c.dataset.types || '').split(/\s+/).includes(t)).length;
+  ['all','learning','lab','simulator','guide'].forEach(t => {
+    const el = document.getElementById('cnt-' + t);
+    if (el) el.textContent = countFor(t);
+  });
+
+  function applyFilters() {
+    const q = (input ? input.value : '').trim().toLowerCase();
+    let visible = 0;
+    cards.forEach(c => {
+      const types = (c.dataset.types || '').split(/\s+/);
+      const typeOk = activeType === 'all' || types.includes(activeType);
+      const textOk = !q || c.textContent.toLowerCase().includes(q);
+      const show = typeOk && textOk;
+      c.classList.toggle('is-hidden', !show);
+      if (show) visible++;
+      // Highlight/dim individual file links inside compound cards when filtering by type
+      c.querySelectorAll('.file-link').forEach(fl => {
+        const badge = (fl.querySelector('.fl-type')?.textContent || '').trim().toLowerCase();
+        const ftype = badge === 'sim' ? 'simulator' : badge === 'lab' ? 'lab' : 'guide';
+        fl.classList.toggle('is-dim', activeType !== 'all' && ftype !== activeType);
+      });
+    });
+    grids.forEach(g => {
+      const hasVisible = Array.from(g.querySelectorAll('.card')).some(c => !c.classList.contains('is-hidden'));
+      g.classList.toggle('is-hidden', !hasVisible);
+      const div = g.previousElementSibling;
+      if (div && div.classList.contains('sec-div')) div.classList.toggle('is-hidden', !hasVisible);
+    });
+    if (countLabel) countLabel.textContent = `Showing ${visible} of ${cards.length} items`;
+  }
+
+  pills.forEach(p => p.addEventListener('click', () => {
+    pills.forEach(x => x.classList.remove('is-active'));
+    p.classList.add('is-active');
+    activeType = p.dataset.filter || 'all';
+    applyFilters();
+  }));
+  if (input) input.addEventListener('input', applyFilters);
+  applyFilters();
+})();
 </script>
 <script src="notes.js"></script>
 </body>

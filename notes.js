@@ -185,8 +185,25 @@
   }
 
   let activeSearchCategory = 'All';
+  let activeSearchType = 'all';
   let currentSearchResults = [];
   let currentSearchSelectedIdx = 0;
+
+  function getItemContentType(item) {
+    if (!item || !item.m) return 'learning';
+    if (item.m.startsWith('module')) {
+      if (item.a === 'lab' || item.a === 'sql') return 'lab';
+      if (item.a === 'qa' || item.a === 'quiz' || item.a === 'cheat') return 'guide';
+      return 'learning';
+    }
+    if (item.m === 'snowflake_learning_labs_FINAL.html') {
+      return ['micro_partitions', 'query_profile', 'perf_features'].includes(item.a) ? 'simulator' : 'lab';
+    }
+    if (item.m === 'snowflake_query_backend_lab_FINAL.html' || item.m === 'S3_Simulator_FINAL.html') return 'simulator';
+    if (item.m.includes('Lab_Simulator')) return 'simulator';
+    if (item.m.includes('Lab_Step_by_Step')) return 'lab';
+    return 'guide';
+  }
 
   function injectMasterSearchHTML() {
     if (document.getElementById('sf-search-backdrop')) return;
@@ -208,6 +225,13 @@
               <button type="button" class="sf-search-pill" data-cat="Storage & Governance">Storage & Governance</button>
               <button type="button" class="sf-search-pill" data-cat="Snowpark & DevOps">Snowpark & DevOps</button>
             </div>
+            <div class="sf-search-categories" id="sf-search-types" style="margin-top:6px;">
+              <button type="button" class="sf-search-pill is-active" data-type="all">All Types</button>
+              <button type="button" class="sf-search-pill" data-type="learning">📚 Learning</button>
+              <button type="button" class="sf-search-pill" data-type="lab">🧪 Labs</button>
+              <button type="button" class="sf-search-pill" data-type="simulator">⚡ Simulators</button>
+              <button type="button" class="sf-search-pill" data-type="guide">📖 Guides & Q&amp;A</button>
+            </div>
           </div>
           <div class="sf-search-results-list" id="sf-search-results"></div>
           <div class="sf-search-footer">
@@ -226,6 +250,7 @@
     const input = document.getElementById('sf-search-input');
     const clearBtn = document.getElementById('sf-search-clear-btn');
     const catContainer = document.getElementById('sf-search-categories');
+    const typeContainer = document.getElementById('sf-search-types');
 
     backdrop.addEventListener('click', (e) => {
       if (e.target === backdrop) closeMasterSearchModal();
@@ -245,6 +270,17 @@
       activeSearchCategory = pill.dataset.cat || 'All';
       runCourseSearch(input.value.trim(), activeSearchCategory);
     });
+
+    if (typeContainer) {
+      typeContainer.addEventListener('click', (e) => {
+        const pill = e.target.closest('.sf-search-pill');
+        if (!pill) return;
+        typeContainer.querySelectorAll('.sf-search-pill').forEach(p => p.classList.remove('is-active'));
+        pill.classList.add('is-active');
+        activeSearchType = pill.dataset.type || 'all';
+        runCourseSearch(input.value.trim(), activeSearchCategory);
+      });
+    }
 
     input.addEventListener('input', () => {
       runCourseSearch(input.value.trim(), activeSearchCategory);
@@ -283,6 +319,9 @@
     let itemsToScore = COURSE_SEARCH_INDEX;
     if (category && category !== 'All') {
       itemsToScore = itemsToScore.filter(item => item.cat === category);
+    }
+    if (activeSearchType && activeSearchType !== 'all') {
+      itemsToScore = itemsToScore.filter(item => getItemContentType(item) === activeSearchType);
     }
 
     if (!query) {
