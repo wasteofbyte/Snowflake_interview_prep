@@ -672,6 +672,120 @@ function jsonResponse(obj) {
     return localStorage.getItem(STORAGE_KEYS.GLOBAL_UNLOCKED) === 'true';
   }
 
+  // Clipboard Copy Protection (Default: blocked; unlockable with special-permission password)
+  const COPY_UNLOCK_KEY = 'sf_copy_unlocked_v1';
+  const COPY_PASS_SHA = 'c67b76bacce3b722211897bca5db625c3a63cb3551b496cd968ccee85694babb';
+  const COPY_PASS_FNV = 'h_a8381aa5';
+
+  function isCopyUnlocked() {
+    try { return localStorage.getItem(COPY_UNLOCK_KEY) === 'true'; } catch (e) { return false; }
+  }
+
+  function setCopyUnlocked(unlocked) {
+    try {
+      if (unlocked) localStorage.setItem(COPY_UNLOCK_KEY, 'true');
+      else localStorage.removeItem(COPY_UNLOCK_KEY);
+    } catch (e) {}
+  }
+
+  function injectCopyGuardModalHTML() {
+    if (document.getElementById('sf-copy-guard-backdrop')) return;
+    const html = `
+      <div id="sf-copy-guard-backdrop" class="sf-master-modal-backdrop" aria-hidden="true">
+        <div class="sf-master-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="sf-copy-guard-title">
+          <div class="sf-master-modal-icon">🔒</div>
+          <h3 id="sf-copy-guard-title">Copy Protected</h3>
+          <p>This content is fully owned by <strong>Saurav Patel</strong> (&copy; 2026 All Rights Reserved). If you have special permission, enter the password to enable copying.</p>
+          <div class="sf-form-group" style="text-align:left;">
+            <input type="password" id="sf-copy-guard-input" class="sf-input" placeholder="Enter copy password..." autocomplete="off">
+          </div>
+          <div id="sf-copy-guard-err" class="sf-error-msg"></div>
+          <div class="sf-form-actions" style="justify-content:center; margin-top:14px;">
+            <button type="button" id="sf-copy-guard-cancel" class="sf-btn">Cancel</button>
+            <button type="button" id="sf-copy-guard-submit" class="sf-btn sf-btn-primary">Unlock Copy</button>
+          </div>
+          <div style="margin-top:12px; font-size:11.5px; color:var(--ink3, #7F90A2);">
+            <a href="mailto:wasteofbyte@gmail.com?subject=Snowflake%20Interview%20Lab%20-%20Copy%20Permission%20Request" style="color:var(--ice, #0A86C2); text-decoration:underline;">Request permission</a>
+          </div>
+        </div>
+      </div>`;
+    const wrap = document.createElement('div');
+    wrap.innerHTML = html;
+    document.body.appendChild(wrap.firstElementChild);
+
+    const bd = document.getElementById('sf-copy-guard-backdrop');
+    const inp = document.getElementById('sf-copy-guard-input');
+    const err = document.getElementById('sf-copy-guard-err');
+    const close = () => { bd.classList.remove('is-open'); bd.setAttribute('aria-hidden', 'true'); };
+
+    bd.addEventListener('click', (e) => { if (e.target === bd) close(); });
+    document.getElementById('sf-copy-guard-cancel').onclick = close;
+
+    async function verifyCopyUnlock() {
+      const val = (inp.value || '').trim();
+      const h = await hashPassword(val);
+      if (h === COPY_PASS_SHA || h === COPY_PASS_FNV) {
+        setCopyUnlocked(true);
+        close();
+        showToast('🔓 Copying enabled! You can now copy content.');
+      } else {
+        err.textContent = 'Incorrect password. Content is owned by Saurav Patel.';
+        inp.focus();
+      }
+    }
+
+    document.getElementById('sf-copy-guard-submit').onclick = verifyCopyUnlock;
+    inp.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') { e.preventDefault(); verifyCopyUnlock(); }
+      else if (e.key === 'Escape') { e.preventDefault(); close(); }
+    });
+  }
+
+  function openCopyGuardModal() {
+    injectCopyGuardModalHTML();
+    const bd = document.getElementById('sf-copy-guard-backdrop');
+    const inp = document.getElementById('sf-copy-guard-input');
+    const err = document.getElementById('sf-copy-guard-err');
+    if (err) err.textContent = '';
+    if (inp) inp.value = '';
+    bd.classList.add('is-open');
+    bd.setAttribute('aria-hidden', 'false');
+    setTimeout(() => inp && inp.focus(), 40);
+  }
+
+  function isEditableTarget(el) {
+    if (!el) return false;
+    const tag = (el.tagName || '').toLowerCase();
+    return tag === 'input' || tag === 'textarea' || !!el.isContentEditable;
+  }
+
+  function attachCopyGuard(doc) {
+    if (!doc || doc.__sfCopyGuardAttached) return;
+    doc.__sfCopyGuardAttached = true;
+
+    const blockIfLocked = (e) => {
+      if (isCopyUnlocked()) return;
+      if (isEditableTarget(e.target)) return;
+      e.preventDefault();
+      e.stopPropagation();
+      openCopyGuardModal();
+    };
+
+    doc.addEventListener('copy', blockIfLocked, true);
+    doc.addEventListener('cut', blockIfLocked, true);
+    doc.addEventListener('keydown', (e) => {
+      if (isCopyUnlocked()) return;
+      if ((e.metaKey || e.ctrlKey) && (e.key === 'c' || e.key === 'C' || e.key === 'x' || e.key === 'X')) {
+        if (isEditableTarget(e.target)) return;
+        e.preventDefault();
+        e.stopPropagation();
+        openCopyGuardModal();
+      }
+    }, true);
+  }
+
+  window.sfAttachCopyGuard = attachCopyGuard;
+
   function setGlobalUnlocked(unlocked) {
     if (unlocked) {
       localStorage.setItem(STORAGE_KEYS.GLOBAL_UNLOCKED, 'true');
@@ -2246,7 +2360,9 @@ function jsonResponse(obj) {
   function initAll() {
     injectMasterSearchHTML();
     injectMasterModalsHTML();
+    injectCopyGuardModalHTML();
     injectModalHTML();
+    attachCopyGuard(document);
     initMasterTopNavButton();
     updateNotesCountBadges();
     initInlineTopicNotes();

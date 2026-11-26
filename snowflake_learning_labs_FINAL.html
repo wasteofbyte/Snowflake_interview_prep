@@ -224,7 +224,10 @@ const LAB_HTML = {
       $('#loading').classList.add('on');
       const f = document.createElement('iframe');
       f.title = lab.title;
-      f.onload = () => $('#loading').classList.remove('on');
+      f.onload = () => {
+        $('#loading').classList.remove('on');
+        try { if (window.sfAttachCopyGuard && f.contentDocument) window.sfAttachCopyGuard(f.contentDocument); } catch (e) {}
+      };
       setTimeout(() => { f.srcdoc = htmlFor(id); }, 20);
       frames[id] = f;
       $('#frames').appendChild(f);
