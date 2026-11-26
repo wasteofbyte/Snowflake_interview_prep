@@ -6,12 +6,15 @@
 <title>Snowflake Learning Labs</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="notes.css">
 <style>
 :root {
   --bg: #f3f5f8; --panel: #ffffff; --panel-2: #f7f9fb; --line: #e1e6ed; --line-2: #cbd4df;
-  --ink: #17202b; --ink-2: #485667; --ink-3: #7b8796;
+  --card: #ffffff; --card2: #f7f9fb; --line2: #cbd4df; --ice: #1a6ce7;
+  --ink: #17202b; --ink-2: #485667; --ink-3: #7b8796; --ink2: #485667;
   --blue: #1a6ce7; --sky: #29b5e8; --navy: #0d2540; --ok: #138a5b; --warn: #b5650d;
   --sans: "IBM Plex Sans", "Source Sans 3", sans-serif; --mono: "JetBrains Mono", "Fira Code", monospace;
+  --f-body: var(--sans); --f-mono: var(--mono);
   --side: 286px;
 }
 @media (prefers-color-scheme: dark) {
@@ -114,6 +117,11 @@ main { position: relative; min-width: 0; min-height: 0; display: flex; flex-dire
 <div class="app" id="app">
   <aside class="side">
     <div class="brand"><span class="flake">❄</span><div><b>Snowflake Learning Labs</b><span>Hands-on, no account needed</span></div><button class="collapse" id="collapse" title="Collapse menu">⟨</button></div>
+    <div style="display:flex;flex-wrap:wrap;gap:6px;padding:8px 12px 4px;align-items:center;">
+      <a class="home-btn" href="index.html" style="text-decoration:none;margin:0;flex:1;min-width:110px;"><span class="num">←</span><span>Course Home</span></a>
+      <button class="topic-note-btn" id="labNoteBtn" type="button" data-topic="Hands-On: Snowflake Learning Labs Hub" onclick="openTopicNotes(window.__currentLabTopic || 'Hands-On: Snowflake Learning Labs Hub', event)" title="Notes for current lab">📝 Notes</button>
+    </div>
+    <div id="sfNotesMount" style="display:flex;flex-wrap:wrap;gap:6px;padding:4px 12px 6px;"></div>
     <button class="home-btn on" id="homeBtn"><span class="num">⌂</span><span>All labs</span></button>
     <nav class="nav" id="nav"></nav>
     <div class="side-foot">One offline file. Each lab keeps its own progress.</div>
@@ -200,6 +208,9 @@ const LAB_HTML = {
     const lab = LABS.find(l => l.id === id);
     if (!lab) return goHome();
     current = id;
+    window.__currentLabTopic = `Lab ${String(lab.n).padStart(2, '0')}: ${lab.title}`;
+    const nb = document.getElementById('labNoteBtn');
+    if (nb) { nb.setAttribute('data-topic', window.__currentLabTopic); if (window.updateNotesCountBadges) window.updateNotesCountBadges(); }
     seen.add(id); save();
     $('#home').classList.remove('on');
     $('#frames').classList.add('on');
@@ -224,6 +235,9 @@ const LAB_HTML = {
   }
   function goHome() {
     current = null;
+    window.__currentLabTopic = 'Hands-On: Snowflake Learning Labs Hub';
+    const nb = document.getElementById('labNoteBtn');
+    if (nb) { nb.setAttribute('data-topic', window.__currentLabTopic); if (window.updateNotesCountBadges) window.updateNotesCountBadges(); }
     Object.values(frames).forEach(f => f.classList.remove('on'));
     $('#loading').classList.remove('on');
     $('#bar').classList.remove('on');
@@ -243,5 +257,6 @@ const LAB_HTML = {
   if (h && LAB_HTML[h]) open(h);
 })();
 </script>
+<script src="notes.js"></script>
 </body>
 </html>

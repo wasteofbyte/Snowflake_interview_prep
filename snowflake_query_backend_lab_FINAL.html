@@ -1,18 +1,21 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Snowflake Query Backend Lab — Saurav</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,300;12..96,500;12..96,800&family=IBM+Plex+Sans:wght@300;400;600&family=JetBrains+Mono:wght@400;600;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="notes.css">
 <style>
 :root{
   --bg:#0b0f14; --bg2:#10161d; --panel:#131b24; --panel2:#18222d; --line:#223142; --line2:#2d4054;
+  --card:#131b24; --card2:#18222d; --ink:#d7e2ec; --ink2:#7d93a8;
   --tx:#d7e2ec; --mut:#7d93a8; --dim:#4f6377;
   --ice:#5fd4ff; --ice2:#1b8fbf; --amber:#ffb547; --green:#5ee39a; --red:#ff6b6b; --violet:#9aa7ff;
   --cs:#5fd4ff; --st:#ffb547; --wh:#5ee39a; --rs:#e9eef3;
   --mono:'JetBrains Mono',ui-monospace,Menlo,monospace; --disp:'Bricolage Grotesque',serif; --body:'IBM Plex Sans',sans-serif;
+  --f-mono:var(--mono); --f-body:var(--body); --f-head:var(--disp);
 }
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%}
@@ -258,7 +261,7 @@ body:not([data-mode="pg"]) #pg{display:none}
   <div id="nav"></div>
 </aside>
 <main>
-<div id="modebar"><button class="mode on" data-m="lab">◎ Guided Lab</button><button class="mode" data-m="pg">⌨ SQL Playground</button><span class="hint">Switch tabs: Alt+1 / Alt+2</span></div>
+<div id="modebar"><a class="mode" href="index.html" style="text-decoration:none">← Course Home</a><button class="mode on" data-m="lab">◎ Guided Lab</button><button class="mode" data-m="pg">⌨ SQL Playground</button><span class="hint">Switch tabs: Alt+1 / Alt+2</span><div id="sfNotesMount" style="display:inline-flex;gap:8px;align-items:center;margin-left:auto"></div><button class="topic-note-btn" id="qbNoteBtn" type="button" data-topic="Hands-On: Query Backend Lab &amp; S3 Simulator" onclick="openTopicNotes(this.getAttribute('data-topic'), event)">📝 Notes</button></div>
 <div id="stage">
   <div class="hero card" style="background:none;border:none;padding:0">
     <div id="qnum"></div>
@@ -3386,7 +3389,7 @@ function renderWs() {
   $('#wsadd').onclick = () => { newWs(PG.ws[PG.cur] ? PG.ws[PG.cur].ds : datasets()[0].i); switchWs(PG.cur); };
 }
 function switchWs(i) {
-  if (PG.ws[PG.cur] && $('#ed')) PG.ws[PG.cur].sql = $('#ed').value;
+  if (PG.cur !== i && PG.ws[PG.cur] && $('#ed')) PG.ws[PG.cur].sql = $('#ed').value;
   PG.cur = i; const w = PG.ws[i]; saveWs(); renderWs();
   $('#dssel').value = w.ds; if (PG.ds !== w.ds) loadDataset(w.ds); else fillVariants();
   setEditor(w.sql, true); PG.last = null; renderOut();
@@ -3420,15 +3423,18 @@ async function initPG() {
   } catch (e) { $('#pgout').innerHTML = `<div class="note bad">Could not start the SQL engine: ${fmt(e.message)}</div>`; return; }
   $('#dssel').innerHTML = datasets().map(d => `<option value="${d.i}">${d.s.num} · ${fmt(d.s.title)}</option>`).join('');
   let saved = null; try { saved = JSON.parse(localStorage.getItem('sfLabWs')); } catch (e) { }
-  if (saved && saved.ws && saved.ws.length && saved.ws.every(w => SC[w.ds] && SC[w.ds].data)) { PG.ws = saved.ws; PG.cur = Math.min(saved.cur || 0, PG.ws.length - 1); }
-  else { const d = SC[st.s].data ? st.s : datasets()[0].i; PG.ws = []; newWs(d); }
+  if (saved && saved.ws && saved.ws.length && saved.ws.every(w => SC[w.ds] && SC[w.ds].data && SC[w.ds].id !== 'q0')) { PG.ws = saved.ws; PG.cur = Math.min(saved.cur || 0, PG.ws.length - 1); }
+  else { const d = (SC[st.s].data && SC[st.s].id !== 'q0') ? st.s : datasets()[0].i; PG.ws = []; newWs(d); }
   if (PG.pending) { const p = PG.pending; PG.pending = null; newWs(p.ds, p.sql, p.name); }
   renderWs(); switchWs(PG.cur);
 }
 function openInPlayground() {
   const s = SC[st.s], v = s.variants[st.v];
-  const ds = s.data ? st.s : (PG.ws[PG.cur] ? PG.ws[PG.cur].ds : datasets()[0].i);
-  const sql = `-- ${s.num} · ${v.label}${s.data ? '' : '\n-- (this question has no lab tables; loaded on the previous dataset)'}\n${v.sql || ''}`;
+  const hasSqlDs = !!(s.data && s.id !== 'q0');
+  const ds = hasSqlDs ? st.s : (PG.ws[PG.cur] ? PG.ws[PG.cur].ds : datasets()[0].i);
+  const sql = hasSqlDs
+    ? `-- ${s.num} · ${v.label}\n${v.sql || ''}`
+    : `-- ${s.num} · ${v.label} (conceptual walkthrough; loaded ${SC[ds].num} dataset)\nSELECT * FROM ${tname(Object.keys(SC[ds].data)[0])};`;
   if (SQLLIB) { newWs(ds, sql, `${s.num} · ${v.label}`.slice(0, 28)); setMode('pg'); switchWs(PG.cur); }
   else { PG.pending = { ds, sql, name: `${s.num} · ${v.label}`.slice(0, 28) }; setMode('pg'); }
 }
@@ -3457,5 +3463,6 @@ window.addEventListener('DOMContentLoaded', () => {
 });
 
 </script>
+<script src="notes.js"></script>
 </body>
 </html>

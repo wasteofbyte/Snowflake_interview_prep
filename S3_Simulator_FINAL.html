@@ -7,6 +7,18 @@
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='3' fill='%23569a31'/%3E%3Cpath d='M3 4.5c0 1 2.2 1.7 5 1.7s5-.7 5-1.7-2.2-1.7-5-1.7-5 .7-5 1.7zM3 4.5l1.2 8c.2.8 1.8 1.2 3.8 1.2s3.6-.4 3.8-1.2l1.2-8' stroke='white' fill='none' stroke-width='1.2'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="notes.css">
+<style>
+#topnav { overflow-x: auto; scrollbar-width: none; }
+#topnav::-webkit-scrollbar { display: none; }
+#topnav .tn-search { min-width: 140px; flex: 1 1 180px; }
+#topnav #sfNotesMount { display: inline-flex; gap: 6px; align-items: center; flex-shrink: 0; }
+#topnav #sfNotesMount .top-notes-nav-btn { background: rgba(255,255,255,.08); color: #e2e8f0; border-color: #414d5c; padding: 4px 8px; font-size: 11.5px; white-space: nowrap; flex-shrink: 0; height: 28px; display: inline-flex; align-items: center; gap: 4px; }
+#topnav #sfNotesMount .top-notes-nav-btn kbd { display: none; }
+#topnav #sfNotesMount .top-notes-nav-btn:hover { background: rgba(255,255,255,.16); color: #fff; }
+#topnav .topic-note-btn { background: rgba(255,255,255,.08); color: #7fd3f2; border-color: #414d5c; padding: 4px 8px; font-size: 11.5px; white-space: nowrap; flex-shrink: 0; height: 28px; }
+#topnav .topic-note-btn:hover { background: #0972d3; color: #fff; border-color: #0972d3; }
+</style>
 <style>
 /* =====================================================================
  * S3 SIMULATOR — DESIGN SYSTEM (AWS Console / Cloudscape visual-refresh look)
@@ -2551,11 +2563,14 @@ pre.code.light { background: #f4f4f4; color: var(--text); border: 1px solid var(
       document.body.innerHTML = `
       <header id="topnav">
         <div class="aws-logo" onclick="Router.go('/buckets')" title="AWS Management Console home">${AWS_LOGO}</div>
+        <a class="tn-btn" href="index.html" style="text-decoration:none" title="Back to Snowflake Interview Lab Home">← Home</a>
         <button class="tn-btn" id="tn-services">${icon('menu')} <span>Services</span></button>
         <div class="tn-search"><span class="ic">${icon('search')}</span><input id="tn-search-input" placeholder="Search buckets, objects, features, docs" autocomplete="off"><kbd>[Alt+S]</kbd></div>
         <span class="sim-chip" title="Everything runs in your browser. No AWS account or credentials are used.">Simulator</span>
         <span class="clock-chip" id="tn-clock" style="display:none" title="Simulated time is ahead of real time (Time machine)"></span>
         <div class="tn-spacer"></div>
+        <div id="sfNotesMount" style="display:inline-flex;gap:6px;align-items:center"></div>
+        <button class="topic-note-btn" type="button" data-topic="Hands-On: Query Backend Lab &amp; S3 Simulator" onclick="openTopicNotes('Hands-On: Query Backend Lab & S3 Simulator', event)" title="Notes for S3 Simulator">📝 Notes</button>
         <button class="tn-btn" id="tn-cloudshell" title="CloudShell">${icon('terminal')}</button>
         <button class="tn-btn" id="tn-labs" title="Guided labs">${icon('school')} <span>Labs</span></button>
         <button class="tn-btn" id="tn-bell" title="Notifications">${icon('bell')}</button>
@@ -14401,13 +14416,16 @@ s3.put_object(Bucket="{bucket}", Key=f"raw/events/year={d.year}/month={d.month:0
 (function () {
   'use strict';
   Shell.mount();
-  if (!location.hash || location.hash === '#' || location.hash === '#/') history.replaceState(null, '', '#/buckets');
+  const openLabsOnBoot = location.hash === '#/labs';
+  if (!location.hash || location.hash === '#' || location.hash === '#/' || openLabsOnBoot) history.replaceState(null, '', '#/buckets');
   Router.render();
   if (window.CloudShell && CloudShell.init) CloudShell.init(document.getElementById('cloudshell-body'));
   if (window.Guide && Guide.init) Guide.init();
+  if (openLabsOnBoot && Shell.openGuide) Shell.openGuide();
 })();
 
 
 </script>
+<script src="notes.js"></script>
 </body>
 </html>

@@ -1021,7 +1021,7 @@ function jsonResponse(obj) {
   // Top Nav Master Lock/Unlock Button Management
   // =========================================================================
   function initMasterTopNavButton() {
-    const navContainer = document.querySelector('.top, .topbar');
+    const navContainer = document.querySelector('.top, .topbar, #sfNotesMount');
     if (!navContainer) return;
 
     const themeBtn = navContainer.querySelector('.theme, #themeBtn, [onclick*="toggleTheme"]');
