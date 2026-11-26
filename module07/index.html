@@ -272,44 +272,11 @@ table.t td.hl,table.t th.hl{background:var(--ice-s)}
   main,section,.panel,.wwh .box,.mini{min-width:0;max-width:100%}
 }
 </style>
-<link rel="stylesheet" href="../notes.css">
+<link rel="stylesheet" href="../notes.css?v=2">
 </head>
 <body>
-<style id="sf-home-style">
-#sf-home-btn{
-  position:fixed;bottom:22px;right:22px;z-index:9998;
-  display:inline-flex;align-items:center;gap:7px;
-  padding:8px 18px 8px 14px;border-radius:999px;
-  background:rgba(255,255,255,.13);
-  border:1px solid rgba(255,255,255,.26);
-  color:#e5edf5;
-  font-family:system-ui,-apple-system,"Segoe UI",sans-serif;
-  font-size:12px;font-weight:600;letter-spacing:.04em;
-  text-decoration:none;cursor:pointer;
-  backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
-  box-shadow:0 2px 12px rgba(0,0,0,.25);
-  transition:background .18s,border-color .18s,transform .18s,box-shadow .18s,color .18s;
-  white-space:nowrap;
-}
-#sf-home-btn::before{content:"⌂";font-size:14px;line-height:1;}
-#sf-home-btn:hover{
-  background:rgba(255,255,255,.24);border-color:rgba(255,255,255,.46);
-  color:#fff;transform:translateY(-2px);box-shadow:0 6px 22px rgba(0,0,0,.35);
-  text-decoration:none;
-}
-[data-theme="light"] #sf-home-btn{
-  background:rgba(11,27,43,.08);border-color:rgba(11,27,43,.20);
-  color:#0b1b2b;box-shadow:0 2px 12px rgba(0,0,0,.10);
-}
-[data-theme="light"] #sf-home-btn:hover{
-  background:rgba(10,134,194,.13);border-color:rgba(10,134,194,.38);
-  color:#0a86c2;box-shadow:0 6px 22px rgba(10,134,194,.18);
-}
-</style>
-<a id="sf-home-btn" href="../" title="Back to Course Home">⌂&nbsp;Course Home</a>
-
 <div class="top">
-  <div class="brand">SNOWFLAKE<b>//</b>INTERVIEW LAB</div>
+  <a class="sf-topbar-home-btn" href="../" title="Back to Course Home">← Course Home</a>
   <span class="pill">Module 07 · Data protection</span>
   <div class="prog"><i id="progBar"></i></div>
   <span class="prog-l" id="progLbl">0% explored</span>

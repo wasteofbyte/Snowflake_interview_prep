@@ -85,6 +85,31 @@
   background: var(--card2, #E9EFF5);
 }
 
+.sf-topbar-home-btn {
+  border: 1px solid var(--line2, rgba(11,27,43,.22));
+  background: var(--card, #FFFFFF);
+  color: var(--ink, #0B1B2B);
+  border-radius: 8px;
+  padding: 5px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: var(--f-body, "IBM Plex Sans", sans-serif);
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: all 0.15s ease;
+}
+
+.sf-topbar-home-btn:hover {
+  border-color: var(--ice, #0A86C2);
+  color: var(--ice, #0A86C2);
+  background: var(--card2, #E9EFF5);
+  text-decoration: none;
+}
+
 .top-notes-nav-btn.has-sync {
   border-color: var(--teal, #0B8A6A);
 }
