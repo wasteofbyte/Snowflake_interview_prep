@@ -144,7 +144,29 @@ h1 .thin{font-weight:300;color:var(--ink2)}
 .filter-count{font-family:var(--f-mono);font-size:11px;color:var(--ink3);white-space:nowrap}
 .is-hidden{display:none !important}
 .file-link.is-dim{opacity:.38}
-@media(max-width:720px){.filter-bar{padding:0 18px}.filter-search{margin-left:0;width:100%}.filter-input{flex:1}}
+/* book-style Table of Contents */
+.toc-wrap{max-width:1200px;margin:0 auto 32px;padding:0 28px}
+.toc-panel{background:var(--card);border:1px solid var(--line2);border-radius:16px;padding:28px 32px;box-shadow:0 10px 32px rgba(11,27,43,.06)}
+.toc-head{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:12px;border-bottom:2px solid var(--line);padding-bottom:14px;margin-bottom:22px}
+.toc-head h2{font-family:var(--f-head);font-size:22px;font-weight:700;letter-spacing:-.02em}
+.toc-head p{font-size:13px;color:var(--ink2);margin-top:2px}
+.toc-actions{display:flex;gap:8px;align-items:center}
+.toc-btn{font-family:var(--f-mono);font-size:11px;font-weight:600;padding:6px 12px;border-radius:8px;border:1px solid var(--line2);background:var(--card2);color:var(--ink);cursor:pointer;transition:all .15s}
+.toc-btn:hover{border-color:var(--ice);color:var(--ice)}
+.toc-cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(460px,1fr));gap:26px 36px}
+.toc-part{break-inside:avoid}
+.toc-part-title{font-family:var(--f-mono);font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--ice);border-bottom:1px solid var(--line);padding-bottom:6px;margin-bottom:10px;display:flex;justify-content:space-between}
+.toc-list{list-style:none;display:flex;flex-direction:column;gap:9px}
+.toc-item{display:flex;flex-direction:column;gap:2px}
+.toc-row{display:flex;align-items:baseline;gap:8px;text-decoration:none;color:var(--ink);font-size:14px;line-height:1.35}
+.toc-row:hover .toc-name{color:var(--ice);text-decoration:underline}
+.toc-num{font-family:var(--f-mono);font-size:11px;font-weight:700;color:var(--ink3);min-width:54px;flex-shrink:0}
+.toc-name{font-weight:600}
+.toc-dots{flex:1;border-bottom:1px dotted var(--line2);min-width:16px;transform:translateY(-3px)}
+.toc-meta{font-family:var(--f-mono);font-size:11px;color:var(--ink3);white-space:nowrap;flex-shrink:0}
+.toc-desc{font-size:12px;color:var(--ink2);padding-left:62px;line-height:1.45}
+@media(max-width:720px){.filter-bar,.toc-wrap{padding:0 18px}.toc-panel{padding:20px 18px}.toc-cols{grid-template-columns:1fr}.toc-desc{padding-left:0}.filter-search{margin-left:0;width:100%}.filter-input{flex:1}}
+@media print{.top,.filter-bar,.toc-actions{display:none !important}.toc-wrap{display:block !important}}
 footer{padding:32px 28px;text-align:center;color:var(--ink3);font-size:13px;font-family:var(--f-mono)}
 @media(max-width:600px){.hero{padding:40px 18px 32px}.grid,.grid.wide{padding:0 18px;grid-template-columns:1fr}.sec-div{padding:0 18px}}
 @media(prefers-reduced-motion:no-preference){
@@ -195,10 +217,90 @@ footer{padding:32px 28px;text-align:center;color:var(--ink3);font-size:13px;font
     <button class="filter-pill" type="button" data-filter="guide">📖 Guides &amp; Q&amp;A <b id="cnt-guide">2</b></button>
   </div>
   <div class="filter-search">
+    <button class="filter-pill" type="button" id="tocToggleBtn" aria-expanded="true" title="Show or hide the Book-Style Table of Contents">📖 Book Index</button>
     <input class="filter-input" id="cardFilterInput" type="search" placeholder="Filter cards (e.g. micro, s3, cortex)…" aria-label="Filter modules and labs">
     <span class="filter-count" id="filterCountLabel">Showing 35 items</span>
   </div>
 </div>
+
+<section class="toc-wrap" id="bookToc" aria-label="Course Table of Contents">
+  <div class="toc-panel">
+    <div class="toc-head">
+      <div>
+        <h2>📖 Course Index &amp; Table of Contents</h2>
+        <p>Complete chapter-by-chapter reference across all 16 learning modules, 15 Snowsight SQL labs, 2 simulators, and 2 deep-dive sets.</p>
+      </div>
+      <div class="toc-actions">
+        <button class="toc-btn" type="button" onclick="window.print()">🖨 Print / PDF</button>
+        <button class="toc-btn" type="button" id="tocCloseBtn">Hide Index</button>
+      </div>
+    </div>
+    <div class="toc-cols">
+
+      <div class="toc-part">
+        <div class="toc-part-title"><span>Part I · Core Learning Modules</span><span>Modules 01 – 13</span></div>
+        <ul class="toc-list">
+          <li class="toc-item"><a class="toc-row" href="module01/"><span class="toc-num">Ch. 01</span><span class="toc-name">Architecture</span><span class="toc-dots"></span><span class="toc-meta">12 sims · 16 Q&amp;A · 12 quiz</span></a><div class="toc-desc">Three-layer design, micro-partitions, pruning, warehouses, multi-cluster, caches, billing &amp; editions.</div></li>
+          <li class="toc-item"><a class="toc-row" href="module02/"><span class="toc-num">Ch. 02</span><span class="toc-name">Load &amp; Automate</span><span class="toc-dots"></span><span class="toc-meta">10 sims · 26 Q&amp;A · 14 quiz</span></a><div class="toc-desc">SnowSQL, PUT/COPY deep dive, unstructured data &amp; AI parsing, streams, tasks, stored procedures.</div></li>
+          <li class="toc-item"><a class="toc-row" href="module03/"><span class="toc-num">Ch. 03</span><span class="toc-name">Performance Tuning</span><span class="toc-dots"></span><span class="toc-meta">9 sims · 19 Q&amp;A · 14 quiz</span></a><div class="toc-desc">Query Profile mastery, clustering keys, Search Optimization, QAS, MVs, SQL anti-patterns.</div></li>
+          <li class="toc-item"><a class="toc-row" href="module04/"><span class="toc-num">Ch. 04</span><span class="toc-name">Data Ingestion</span><span class="toc-dots"></span><span class="toc-meta">9 sims · 20 Q&amp;A · 14 quiz</span></a><div class="toc-desc">Stages &amp; storage integrations, COPY, file sizing, Snowpipe, Snowpipe Streaming, Iceberg &amp; schema evolution.</div></li>
+          <li class="toc-item"><a class="toc-row" href="module05/"><span class="toc-num">Ch. 05</span><span class="toc-name">Dynamic Tables &amp; Transforms</span><span class="toc-dots"></span><span class="toc-meta">10 sims · 22 Q&amp;A · 14 quiz</span></a><div class="toc-desc">Declarative vs procedural pipelines, target lag, incremental refresh, MERGE, SCD, dedup, UDFs.</div></li>
+          <li class="toc-item"><a class="toc-row" href="module06/"><span class="toc-num">Ch. 06</span><span class="toc-name">Semi-structured Data</span><span class="toc-dots"></span><span class="toc-meta">7 sims · 19 Q&amp;A · 14 quiz</span></a><div class="toc-desc">VARIANT/OBJECT/ARRAY internals, path notation, two kinds of null, FLATTEN &amp; LATERAL, JSON loading.</div></li>
+          <li class="toc-item"><a class="toc-row" href="module07/"><span class="toc-num">Ch. 07</span><span class="toc-name">Data Protection</span><span class="toc-dots"></span><span class="toc-meta">7 sims · 19 Q&amp;A · 14 quiz</span></a><div class="toc-desc">Micro-partition lifecycle, Time Travel (AT/BEFORE), Fail-safe, table types, zero-copy cloning, replication.</div></li>
+          <li class="toc-item"><a class="toc-row" href="module08/"><span class="toc-num">Ch. 08</span><span class="toc-name">Security &amp; Governance</span><span class="toc-dots"></span><span class="toc-meta">9 sims · 19 Q&amp;A · 14 quiz</span></a><div class="toc-desc">RBAC + DAC, privilege chains, auth &amp; network policies, dynamic masking, row access policies, tags.</div></li>
+          <li class="toc-item"><a class="toc-row" href="module09/"><span class="toc-num">Ch. 09</span><span class="toc-name">Cost Optimization</span><span class="toc-dots"></span><span class="toc-meta">7 sims · 18 Q&amp;A · 14 quiz</span></a><div class="toc-desc">Three cost buckets, warehouse fleet tuning, storage lifecycle, serverless billing, resource monitors.</div></li>
+          <li class="toc-item"><a class="toc-row" href="module10/"><span class="toc-num">Ch. 10</span><span class="toc-name">Data Sharing &amp; Collaboration</span><span class="toc-dots"></span><span class="toc-meta">7 sims · 19 Q&amp;A · 14 quiz</span></a><div class="toc-desc">Secure Data Sharing, reader accounts, cross-region/cloud sharing, Marketplace, Clean Rooms, Native Apps.</div></li>
+          <li class="toc-item"><a class="toc-row" href="module11/"><span class="toc-num">Ch. 11</span><span class="toc-name">Snowpark &amp; Cortex AI</span><span class="toc-dots"></span><span class="toc-meta">8 sims · 19 Q&amp;A · 13 quiz</span></a><div class="toc-desc">DataFrames &amp; lazy eval, UDFs/UDTFs, Container Services, Cortex AI SQL, Vectors &amp; RAG, Analyst, ML.</div></li>
+          <li class="toc-item"><a class="toc-row" href="module12/"><span class="toc-num">Ch. 12</span><span class="toc-name">Advanced SQL</span><span class="toc-dots"></span><span class="toc-meta">8 sims · 21 Q&amp;A · 14 quiz</span></a><div class="toc-desc">Execution order, window functions, QUALIFY, recursive CTEs, ROLLUP/CUBE/PIVOT, ASOF, MATCH_RECOGNIZE.</div></li>
+          <li class="toc-item"><a class="toc-row" href="module13/"><span class="toc-num">Ch. 13</span><span class="toc-name">Modeling &amp; Tooling</span><span class="toc-dots"></span><span class="toc-meta">8 sims · 21 Q&amp;A · 14 quiz</span></a><div class="toc-desc">Dimensional modeling, SCD types, Data Vault 2.0, medallion, dbt, orchestration &amp; blue-green CI/CD.</div></li>
+        </ul>
+      </div>
+
+      <div class="toc-part">
+        <div class="toc-part-title"><span>Part II · Extended Architect Modules</span><span>Modules 14 – 16</span></div>
+        <ul class="toc-list">
+          <li class="toc-item"><a class="toc-row" href="module14/"><span class="toc-num">Ch. 14</span><span class="toc-name">Enterprise Architecture &amp; Governance</span><span class="toc-dots"></span><span class="toc-meta">9 steps · 10 Q&amp;A · 5 quiz</span></a><div class="toc-desc">Late-arriving data, multi-account strategy, PrivateLink, Tri-secret Compose, Horizon, compliance.</div></li>
+          <li class="toc-item"><a class="toc-row" href="module15/"><span class="toc-num">Ch. 15</span><span class="toc-name">External Integrations</span><span class="toc-dots"></span><span class="toc-meta">6 steps · 7 Q&amp;A · 5 quiz</span></a><div class="toc-desc">Kafka Connector, Spark vs Snowpark, Debezium CDC → Snowpipe Streaming, External Functions.</div></li>
+          <li class="toc-item"><a class="toc-row" href="module16/"><span class="toc-num">Ch. 16</span><span class="toc-name">IaC, CI/CD &amp; Orchestration</span><span class="toc-dots"></span><span class="toc-meta">4 steps · 7 Q&amp;A · 5 quiz</span></a><div class="toc-desc">Terraform for Snowflake, Native Git Integration, dbt + Airflow/Dagster, GitHub Actions CI/CD.</div></li>
+        </ul>
+
+        <div class="toc-part-title" style="margin-top:22px"><span>Part III · Interactive Simulators &amp; Deep Dives</span><span>Backend · S3 · Guides</span></div>
+        <ul class="toc-list">
+          <li class="toc-item"><a class="toc-row" href="snowflake_query_backend_lab_FINAL.html"><span class="toc-num">Sim 01</span><span class="toc-name">Snowflake Query Backend Lab</span><span class="toc-dots"></span><span class="toc-meta">51 scenarios · 8 levels</span></a><div class="toc-desc">Step-by-step Cloud Services, Micro-partitions, Warehouse &amp; Result Cache + live SQLite WASM Playground.</div></li>
+          <li class="toc-item"><a class="toc-row" href="S3_Simulator_FINAL.html"><span class="toc-num">Sim 02</span><span class="toc-name">AWS S3 Console, CloudShell &amp; boto3</span><span class="toc-dots"></span><span class="toc-meta">21 labs · Time Machine</span></a><div class="toc-desc">Buckets, IAM/bucket policies, Block Public Access, CLI, Python SDK, and S3 → Snowflake Snowpipe lab.</div></li>
+          <li class="toc-item"><a class="toc-row" href="SnowSQL_Streams_Tasks_Step_by_Step_Guide_FINAL.html"><span class="toc-num">Set 01</span><span class="toc-name">Deep Dive: SnowSQL, Streams &amp; Tasks</span><span class="toc-dots"></span><span class="toc-meta">5 files · 44 steps · 174 Q&amp;A</span></a><div class="toc-desc">Step-by-step guide, Lab guide, Terminal Simulator, Visual Guide, and 174-question Interview Q&amp;A.</div></li>
+          <li class="toc-item"><a class="toc-row" href="JSON_S3_to_Snowflake_Lab_Step_by_Step_Guide_FINAL.html"><span class="toc-num">Set 02</span><span class="toc-name">Deep Dive: JSON S3 → Snowflake</span><span class="toc-dots"></span><span class="toc-meta">4 files · 9 steps · 158 Q&amp;A</span></a><div class="toc-desc">Lab guide, Interactive Simulator, Visual Guide, and 158-question Interview Q&amp;A on VARIANT/FLATTEN.</div></li>
+        </ul>
+      </div>
+
+      <div class="toc-part" style="grid-column:1 / -1">
+        <div class="toc-part-title"><span>Part IV · Hands-On Snowsight SQL Labs (15 Labs · 216 Guided Steps)</span><span><a href="snowflake_learning_labs_FINAL.html" style="color:var(--ice);text-decoration:none">Open Full Hub →</a></span></div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(420px,1fr));gap:10px 36px">
+          <ul class="toc-list">
+            <li class="toc-item"><a class="toc-row" href="snowflake_learning_labs_FINAL.html#architecture_dev"><span class="toc-num">Lab 01</span><span class="toc-name">Architecture, Snowpark, UDFs &amp; Cortex</span><span class="toc-dots"></span><span class="toc-meta">Real SQL · 16 steps</span></a></li>
+            <li class="toc-item"><a class="toc-row" href="snowflake_learning_labs_FINAL.html#micro_partitions"><span class="toc-num">Lab 02</span><span class="toc-name">Micro-partitions, Pruning &amp; Transient Tables</span><span class="toc-dots"></span><span class="toc-meta">Simulated · Explainer</span></a></li>
+            <li class="toc-item"><a class="toc-row" href="snowflake_learning_labs_FINAL.html#mp_lab"><span class="toc-num">Lab 03</span><span class="toc-name">Micro-partitions Lab: Loading, Pruning &amp; Clustering</span><span class="toc-dots"></span><span class="toc-meta">Real SQL · 17 steps</span></a></li>
+            <li class="toc-item"><a class="toc-row" href="snowflake_learning_labs_FINAL.html#table_types"><span class="toc-num">Lab 04</span><span class="toc-name">Table Types (Permanent, Transient, Temp, Dynamic, Hybrid, Iceberg)</span><span class="toc-dots"></span><span class="toc-meta">Real SQL · 16 steps</span></a></li>
+            <li class="toc-item"><a class="toc-row" href="snowflake_learning_labs_FINAL.html#query_profile"><span class="toc-num">Lab 05</span><span class="toc-name">Query Profile &amp; Warehouse Sizing</span><span class="toc-dots"></span><span class="toc-meta">Simulated · 15 steps</span></a></li>
+            <li class="toc-item"><a class="toc-row" href="snowflake_learning_labs_FINAL.html#caching_cost"><span class="toc-num">Lab 06</span><span class="toc-name">Caching, Credits &amp; Cost Controls</span><span class="toc-dots"></span><span class="toc-meta">Real SQL · 15 steps</span></a></li>
+            <li class="toc-item"><a class="toc-row" href="snowflake_learning_labs_FINAL.html#perf_features"><span class="toc-num">Lab 07</span><span class="toc-name">Clustering, Search Optimization, MVs &amp; QAS</span><span class="toc-dots"></span><span class="toc-meta">Simulated · 15 steps</span></a></li>
+            <li class="toc-item"><a class="toc-row" href="snowflake_learning_labs_FINAL.html#time_travel"><span class="toc-num">Lab 08</span><span class="toc-name">Time Travel, Fail-safe, Cloning &amp; Table Types</span><span class="toc-dots"></span><span class="toc-meta">Real SQL · 16 steps</span></a></li>
+          </ul>
+          <ul class="toc-list">
+            <li class="toc-item"><a class="toc-row" href="snowflake_learning_labs_FINAL.html#loading"><span class="toc-num">Lab 09</span><span class="toc-name">Loading Data from S3: Stages, COPY INTO, Snowpipe &amp; JSON</span><span class="toc-dots"></span><span class="toc-meta">Real SQL · 13 steps</span></a></li>
+            <li class="toc-item"><a class="toc-row" href="snowflake_learning_labs_FINAL.html#pipelines"><span class="toc-num">Lab 10</span><span class="toc-name">Pipelines: Streams, Tasks, MERGE &amp; Dynamic Tables</span><span class="toc-dots"></span><span class="toc-meta">Real SQL · 15 steps</span></a></li>
+            <li class="toc-item"><a class="toc-row" href="snowflake_learning_labs_FINAL.html#sql_patterns"><span class="toc-num">Lab 11</span><span class="toc-name">SQL Patterns: QUALIFY, Windows, Constraints &amp; Sequences</span><span class="toc-dots"></span><span class="toc-meta">Real SQL · 15 steps</span></a></li>
+            <li class="toc-item"><a class="toc-row" href="snowflake_learning_labs_FINAL.html#star_schema"><span class="toc-num">Lab 12</span><span class="toc-name">Star Schema vs Snowflake, Galaxy, OBT, 3NF &amp; Data Vault</span><span class="toc-dots"></span><span class="toc-meta">Real SQL · 15 steps</span></a></li>
+            <li class="toc-item"><a class="toc-row" href="snowflake_learning_labs_FINAL.html#security"><span class="toc-num">Lab 13</span><span class="toc-name">Access Control &amp; Data Governance (RBAC, Masking, RAP)</span><span class="toc-dots"></span><span class="toc-meta">Real SQL · 15 steps</span></a></li>
+            <li class="toc-item"><a class="toc-row" href="snowflake_learning_labs_FINAL.html#sharing"><span class="toc-num">Lab 14</span><span class="toc-name">Data Sharing &amp; Cross-Region Replication</span><span class="toc-dots"></span><span class="toc-meta">Real SQL · 15 steps</span></a></li>
+            <li class="toc-item"><a class="toc-row" href="snowflake_learning_labs_FINAL.html#cortex_ai"><span class="toc-num">Lab 15</span><span class="toc-name">Snowflake Cortex AI: AISQL, Search/RAG, Analyst, Agents &amp; ML</span><span class="toc-dots"></span><span class="toc-meta">Real SQL · 18 steps</span></a></li>
+          </ul>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
 
 <div class="sec-div"><h2>Core Course</h2><span>Modules 01 – 13</span></div>
 <div class="grid">
@@ -705,6 +807,22 @@ document.getElementById('themeBtn').onclick = () => {
   }));
   if (input) input.addEventListener('input', applyFilters);
   applyFilters();
+
+  // Book Index / Table of Contents toggle
+  const toc = document.getElementById('bookToc');
+  const tocBtn = document.getElementById('tocToggleBtn');
+  const tocClose = document.getElementById('tocCloseBtn');
+  function setTocOpen(open) {
+    if (!toc) return;
+    toc.classList.toggle('is-hidden', !open);
+    if (tocBtn) { tocBtn.classList.toggle('is-active', open); tocBtn.setAttribute('aria-expanded', String(open)); }
+    try { localStorage.setItem('sf-toc-open', open ? '1' : '0'); } catch (e) {}
+  }
+  let tocOpen = true;
+  try { const saved = localStorage.getItem('sf-toc-open'); if (saved !== null) tocOpen = saved === '1'; } catch (e) {}
+  setTocOpen(tocOpen);
+  if (tocBtn) tocBtn.addEventListener('click', () => setTocOpen(toc.classList.contains('is-hidden')));
+  if (tocClose) tocClose.addEventListener('click', () => setTocOpen(false));
 })();
 </script>
 <script src="notes.js"></script>
