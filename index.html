@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Snowflake Interview Lab · Course Home</title>
+<title>SF Knowledge Base · Learn &amp; Ace the Interview</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/space-grotesk@5/300.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/space-grotesk@5/700.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/ibm-plex-sans@5/300.css">
@@ -11,173 +11,302 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/ibm-plex-sans@5/600.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/jetbrains-mono@5/400.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/jetbrains-mono@5/700.css">
-<link rel="stylesheet" href="notes.css">
+<link rel="stylesheet" href="notes.css?v=2">
 <style>
 :root{
-  --bg:#F2F6FA;--card:#FFFFFF;--card2:#E9EFF5;--ink:#0B1B2B;--ink2:#46596B;--ink3:#7F90A2;
-  --line:rgba(11,27,43,.12);--line2:rgba(11,27,43,.22);
-  --ice:#0A86C2;--ice-s:#DCEFF9;--amber:#B86F00;--amber-s:#FFF0D4;--teal:#0B8A6A;--teal-s:#DAF3EB;
-  --red:#C93C3C;--red-s:#FCE4E4;--grid:rgba(10,134,194,.06);
-  --violet:#6D28D9;--violet-s:rgba(109,40,217,.10);
-  --orange:#C2410C;--orange-s:rgba(194,65,12,.10);
-  --emerald:#065F46;--emerald-s:rgba(6,95,70,.10);
+  --bg:#F2F6FA;--card:rgba(255,255,255,.88);--card-solid:#FFFFFF;--card2:#E9EFF5;
+  --ink:#0B1B2B;--ink2:#46596B;--ink3:#7F90A2;
+  --line:rgba(11,27,43,.11);--line2:rgba(11,27,43,.22);
+  --ice:#0A86C2;--ice-s:#DCEFF9;--teal:#0B8A6A;--teal-s:#DAF3EB;
+  --amber:#B86F00;--amber-s:#FFF0D4;--violet:#6D28D9;--violet-s:rgba(109,40,217,.10);
+  --red:#C93C3C;--red-s:#FCE4E4;--emerald:#065F46;--orange:#C2410C;
+  --grid:rgba(10,134,194,.055);
   --f-head:"Space Grotesk",sans-serif;--f-body:"IBM Plex Sans",sans-serif;--f-mono:"JetBrains Mono",monospace;
 }
 [data-theme="dark"]{
-  --bg:#08121D;--card:#0F1D2C;--card2:#16293B;--ink:#E5EDF5;--ink2:#9DB0C3;--ink3:#687D91;
+  --bg:#07111C;--card:rgba(15,29,44,.86);--card-solid:#0F1D2C;--card2:#16293B;
+  --ink:#E5EDF5;--ink2:#9DB0C3;--ink3:#687D91;
   --line:rgba(229,237,245,.10);--line2:rgba(229,237,245,.22);
-  --ice:#4CC3F0;--ice-s:rgba(76,195,240,.13);--amber:#FFB938;--amber-s:rgba(255,185,56,.13);
-  --teal:#3FD3A8;--teal-s:rgba(63,211,168,.13);--red:#FF7070;--red-s:rgba(255,112,112,.14);
-  --grid:rgba(76,195,240,.05);
-  --violet:#A78BFA;--violet-s:rgba(167,139,250,.13);
-  --orange:#FB923C;--orange-s:rgba(251,146,60,.13);
-  --emerald:#34D399;--emerald-s:rgba(52,211,153,.13);
+  --ice:#4CC3F0;--ice-s:rgba(76,195,240,.13);--teal:#3FD3A8;--teal-s:rgba(63,211,168,.13);
+  --amber:#FFB938;--amber-s:rgba(255,185,56,.13);--violet:#A78BFA;--violet-s:rgba(167,139,250,.13);
+  --red:#FF7070;--red-s:rgba(255,112,112,.14);--emerald:#34D399;--orange:#FB923C;
+  --grid:rgba(76,195,240,.045);
 }
 *{box-sizing:border-box;margin:0;padding:0}
 html{scroll-behavior:smooth}
-body{font-family:var(--f-body);color:var(--ink);line-height:1.7;font-size:16px;
+section[id]{scroll-margin-top:76px;outline:none}
+section[id]:focus,section[id]:target{outline:none !important;box-shadow:none !important;animation:none !important}
+body{
+  font-family:var(--f-body);color:var(--ink);line-height:1.6;font-size:15.5px;
+  /* Single continuous scrollable canvas */
   background:
-    radial-gradient(1200px 600px at 85% -10%,var(--ice-s),transparent 60%),
-    radial-gradient(900px 500px at -10% 30%,var(--teal-s),transparent 60%),
-    linear-gradient(var(--grid) 1px,transparent 1px) 0 0/32px 32px,
-    linear-gradient(90deg,var(--grid) 1px,transparent 1px) 0 0/32px 32px,
+    radial-gradient(1100px 600px at 88% 4%, var(--ice-s), transparent 62%),
+    radial-gradient(950px 550px at 8% 35%, var(--teal-s), transparent 60%),
+    radial-gradient(1000px 600px at 80% 72%, var(--violet-s), transparent 60%),
+    linear-gradient(var(--grid) 1px, transparent 1px) 0 0 / 34px 34px,
+    linear-gradient(90deg, var(--grid) 1px, transparent 1px) 0 0 / 34px 34px,
     var(--bg);
-  background-attachment:fixed;min-height:100vh}
-.top{position:sticky;top:0;z-index:30;display:flex;align-items:center;gap:16px;padding:12px 28px;
-  border-bottom:1px solid var(--line);background:color-mix(in srgb,var(--bg) 82%,transparent);
-  backdrop-filter:saturate(1.4) blur(8px)}
-.brand{font-family:var(--f-mono);font-weight:700;letter-spacing:.06em;font-size:13px}
+  background-attachment:fixed;
+  min-height:100vh;
+}
+
+/* Sticky Top Navigation */
+#scroll-progress{
+  position:fixed;top:0;left:0;height:3px;width:0%;z-index:99;
+  background:linear-gradient(90deg,var(--ice),var(--teal),var(--violet));
+  box-shadow:0 0 10px var(--ice);pointer-events:none;transition:width .06s linear;
+}
+#scroll-canvas{
+  position:fixed;inset:0;width:100vw;height:100vh;z-index:0;pointer-events:none;
+}
+.topbar,main,footer{position:relative;z-index:2}
+.scroll-hud{
+  position:fixed;bottom:18px;left:20px;z-index:35;
+  display:inline-flex;align-items:center;gap:9px;padding:7px 14px;border-radius:99px;
+  background:color-mix(in srgb,var(--card-solid) 82%,transparent);
+  border:1px solid var(--line2);backdrop-filter:blur(10px);
+  font-family:var(--f-mono);font-size:11px;color:var(--ink2);
+  box-shadow:0 6px 20px rgba(11,27,43,.10);pointer-events:none;
+}
+.scroll-hud-dot{width:7px;height:7px;border-radius:50%;background:var(--ice);box-shadow:0 0 8px var(--ice)}
+.reveal{opacity:0;transform:translateY(22px) scale(.985);transition:opacity .65s cubic-bezier(.2,.8,.2,1),transform .65s cubic-bezier(.2,.8,.2,1)}
+.reveal.in{opacity:1;transform:none}
+.tw-text{color:var(--ice)}
+.tw-cursor{display:inline-block;color:var(--ice);font-weight:300;margin-left:2px;animation:twBlink .9s steps(2,start) infinite}
+@keyframes twBlink{to{opacity:0}}
+@media(prefers-reduced-motion:reduce){.reveal{opacity:1;transform:none;transition:none}.tw-cursor{animation:none}}
+@media(max-width:720px){.scroll-hud{display:none}}
+
+.topbar{
+  position:sticky;top:0;z-index:40;display:flex;align-items:center;gap:14px;padding:11px 28px;
+  border-bottom:1px solid var(--line);
+  background:color-mix(in srgb,var(--bg) 80%,transparent);
+  backdrop-filter:saturate(1.5) blur(12px);
+}
+.brand{font-family:var(--f-mono);font-weight:700;letter-spacing:.06em;font-size:13px;white-space:nowrap}
 .brand b{color:var(--ice)}
-.theme{margin-left:auto;border:1px solid var(--line2);background:var(--card);color:var(--ink);
-  border-radius:8px;padding:5px 10px;font-size:13px;cursor:pointer;font-family:var(--f-body)}
-.hero{max-width:900px;margin:0 auto;padding:56px 28px 32px}
-.eyebrow{font-family:var(--f-mono);font-size:12px;letter-spacing:.16em;color:var(--ice);margin-bottom:12px}
-h1{font-family:var(--f-head);font-weight:700;font-size:clamp(38px,6vw,76px);line-height:1;letter-spacing:-.03em;margin-bottom:16px}
-h1 .thin{font-weight:300;color:var(--ink2)}
-.lead{font-size:17px;font-weight:300;color:var(--ink2);max-width:640px;margin-bottom:28px}
-/* stat strip replaces pills row */
-.stat-strip{display:flex;flex-wrap:wrap;gap:0;border:1px solid var(--line2);border-radius:14px;overflow:hidden;background:var(--card);margin-bottom:4px;width:fit-content}
-.stat-item{display:flex;align-items:center;gap:8px;padding:10px 18px;border-right:1px solid var(--line);position:relative}
-.stat-item:last-child{border-right:none}
-.stat-icon{font-size:15px;line-height:1;flex-shrink:0}
-.stat-num{font-family:var(--f-head);font-weight:700;font-size:17px;color:var(--ink);line-height:1}
-.stat-label{font-family:var(--f-mono);font-size:10px;color:var(--ink3);letter-spacing:.04em;line-height:1.3;white-space:nowrap}
-@media(max-width:680px){.stat-strip{width:100%}.stat-item{flex:1;border-right:1px solid var(--line);border-bottom:none}}
-/* section divider */
-.sec-div{max-width:1200px;margin:40px auto 20px;padding:0 28px;display:flex;align-items:center;gap:14px}
-.sec-div h2{font-family:var(--f-head);font-size:20px;font-weight:700;white-space:nowrap;color:var(--ink);
-  display:flex;align-items:center;gap:10px}
-.sec-div h2::before{content:"";display:inline-block;width:4px;height:22px;border-radius:3px;background:var(--ice);flex-shrink:0}
-.sec-div span{font-family:var(--f-mono);font-size:10px;padding:3px 9px;border-radius:99px;
-  border:1px solid var(--line2);color:var(--ink3);white-space:nowrap;flex-shrink:0;background:var(--card)}
-.sec-div::after{content:"";flex:1;height:1px;background:linear-gradient(to right,var(--line),transparent)}
-/* grid */
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px;
-  max-width:1200px;margin:0 auto 16px;padding:0 28px}
-.grid.wide{grid-template-columns:repeat(auto-fill,minmax(360px,1fr))}
-/* plain module cards */
-.card{display:block;border:1px solid var(--line);border-radius:14px;padding:22px 24px;
-  background:var(--card);text-decoration:none;color:var(--ink);transition:all .2s;position:relative;overflow:hidden}
-.card:hover{border-color:var(--ice);transform:translateY(-3px);box-shadow:0 12px 36px rgba(10,134,194,.13)}
-.card::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;border-radius:3px 0 0 3px}
-.card::after{content:"";position:absolute;right:0;top:0;left:0;height:3px;opacity:0;transition:opacity .2s;border-radius:14px 14px 0 0}
-.card:hover::after{opacity:1}
-.card.arch::before{background:var(--amber)}
-.card.load::before{background:var(--teal)}
-.card.perf::before{background:var(--ice)}
-.card.ing::before{background:var(--violet)}
-.card.dyn::before{background:var(--emerald)}
-.card.semi::before{background:var(--orange)}
-.card.prot::before{background:var(--amber)}
-.card.sec::before{background:var(--red)}
-.card.cost::before{background:var(--teal)}
-.card.share::before{background:var(--ice)}
-.card.ai::before{background:var(--violet)}
-.card.sql::before{background:var(--emerald)}
-.card.mod::before{background:var(--orange)}
-.card.sys::before{background:var(--teal)}
-.card.gov::before{background:var(--violet)}
-.card.int::before{background:var(--orange)}
-.card.iac::before{background:var(--emerald)}
-.card.deep-sql::before{background:var(--teal)}
-.card.deep-json::before{background:var(--amber)}
-.card-num{font-family:var(--f-mono);font-size:10px;letter-spacing:.14em;color:var(--ink3);margin-bottom:10px;text-transform:uppercase}
-.card-title-row{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:4px}
-.card-title{font-family:var(--f-head);font-weight:700;font-size:17px;line-height:1.2}
-.card-sub{font-size:13px;color:var(--ink2);margin-bottom:14px;line-height:1.55}
-.card-meta{display:flex;flex-wrap:wrap;gap:6px}
-.tag{font-family:var(--f-mono);font-size:10px;padding:2px 8px;border-radius:99px;
-  border:1px solid var(--line2);color:var(--ink3)}
-.tag.q{border-color:var(--amber);color:var(--amber);background:var(--amber-s)}
-.tag.s{border-color:var(--ice);color:var(--ice);background:var(--ice-s)}
-.tag.n{border-color:var(--violet);color:var(--violet);background:var(--violet-s)}
-.cta{font-family:var(--f-mono);font-size:11px;color:var(--ice);margin-top:16px;display:flex;align-items:center;gap:6px;font-weight:600}
-.cta::after{content:"→";transition:transform .18s}
-.card:hover .cta::after{transform:translateX(5px)}
-/* compound card (deep-dive sets) */
-.card.compound{cursor:default}
-.card.compound:hover{transform:none;box-shadow:none;border-color:var(--line)}
-.file-links{display:flex;flex-direction:column;gap:7px;margin-top:14px}
-.file-link{display:flex;align-items:center;gap:9px;padding:8px 11px;border-radius:9px;
-  background:var(--card2);border:1px solid var(--line);font-size:13px;color:var(--ink2);
+.nav-links{display:flex;align-items:center;gap:4px;margin-left:10px}
+.nav-links a{
+  font-size:12.5px;font-weight:500;color:var(--ink2);text-decoration:none;padding:5px 8px;
+  border-radius:8px;transition:all .15s;white-space:nowrap;
+}
+.nav-links a:hover{color:var(--ice);background:var(--ice-s)}
+.top-right{margin-left:auto;display:flex;align-items:center;gap:7px;flex-shrink:0}
+.top-notes-nav-btn{white-space:nowrap;flex-shrink:0}
+.btn{
+  border:1px solid var(--line2);background:var(--card-solid);color:var(--ink);border-radius:9px;
+  padding:6px 13px;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--f-body);
+  display:inline-flex;align-items:center;gap:6px;transition:all .15s;text-decoration:none;white-space:nowrap;
+}
+.btn:hover{border-color:var(--ice);color:var(--ice);background:var(--card2)}
+.btn.primary{background:var(--ice);border-color:var(--ice);color:#fff;box-shadow:0 3px 12px rgba(10,134,194,.24)}
+.btn.primary:hover{filter:brightness(1.08);color:#fff}
+.btn.teal{background:var(--teal-s);border-color:var(--teal);color:var(--teal)}
+.user-pill{
+  display:inline-flex;align-items:center;gap:7px;padding:5px 12px;border-radius:99px;
+  border:1px solid var(--teal);background:var(--teal-s);color:var(--teal);
+  font-family:var(--f-mono);font-size:12px;font-weight:600;cursor:pointer;
+}
+
+.wrap{max-width:1200px;margin:0 auto;padding:0 28px}
+
+/* Hero Section */
+.hero{padding:68px 0 36px;text-align:center;max-width:960px;margin:0 auto}
+.eyebrow{
+  display:inline-flex;align-items:center;gap:8px;font-family:var(--f-mono);font-size:11px;
+  letter-spacing:.14em;color:var(--ice);background:var(--ice-s);border:1px solid rgba(10,134,194,.3);
+  padding:4px 12px;border-radius:99px;margin-bottom:18px;font-weight:700;
+}
+.hero h1{
+  font-family:var(--f-head);font-weight:700;font-size:clamp(34px,5.2vw,62px);
+  line-height:1.08;letter-spacing:-.03em;margin-bottom:18px;
+}
+.hero h1 .tw-line{display:block;min-height:1.12em}
+.hero h1 .thin{font-weight:300;color:var(--ink2)}
+.hero .lead{font-size:17.5px;font-weight:300;color:var(--ink2);max-width:680px;margin:0 auto 28px}
+.hero-cta{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:center}
+
+/* Merged Study Dashboard (Learner Progress & Sync + Focus Study Timer) */
+.dash-grid{
+  display:grid;grid-template-columns:1.35fr 1fr;gap:16px;align-items:stretch;margin-bottom:28px;
+}
+.dash-card{
+  background:var(--card);border:1px solid var(--line2);border-radius:18px;padding:22px;
+  backdrop-filter:blur(10px);box-shadow:0 12px 34px rgba(11,27,43,.06);
+  display:flex;flex-direction:column;justify-content:space-between;gap:14px;
+}
+.dash-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:4px;flex-wrap:wrap}
+.dash-title{font-family:var(--f-head);font-weight:700;font-size:17px}
+.sync-badge{font-family:var(--f-mono);font-size:10.5px;padding:2px 9px;border-radius:99px;
+  background:var(--card2);color:var(--ink2);border:1px solid var(--line)}
+.sync-badge.ok{background:var(--teal-s);color:var(--teal);border-color:var(--teal)}
+.sync-pill-btn{
+  display:inline-flex;align-items:center;gap:8px;padding:7px 14px;border-radius:99px;
+  font-family:var(--f-mono);font-size:12px;font-weight:700;cursor:pointer;position:relative;
+  transition:all .18s;border:1px solid;
+}
+.sync-pill-btn.is-synced{background:var(--teal-s);color:var(--teal);border-color:var(--teal)}
+.sync-pill-btn.not-synced{background:var(--red-s);color:var(--red);border-color:var(--red)}
+.sync-pill-btn .s-dot{width:8px;height:8px;border-radius:50%;background:currentColor;box-shadow:0 0 8px currentColor}
+.sync-pill-btn::after{
+  content:attr(data-tip);position:absolute;bottom:calc(100% + 8px);right:0;
+  background:var(--ink);color:var(--bg);font-size:11px;font-weight:500;padding:5px 10px;
+  border-radius:8px;white-space:nowrap;opacity:0;pointer-events:none;transform:translateY(4px);
+  transition:all .15s;box-shadow:0 6px 18px rgba(0,0,0,.22);z-index:20;
+}
+.sync-pill-btn:hover::after{opacity:1;transform:translateY(0)}
+.prog-bar-wrap{height:9px;border-radius:99px;background:var(--card2);overflow:hidden;margin:4px 0 2px;border:1px solid var(--line)}
+.prog-bar-fill{height:100%;background:linear-gradient(90deg,var(--ice),var(--teal));width:0%;transition:width .35s ease}
+.dash-stats{display:flex;gap:10px;flex-wrap:wrap}
+.d-stat{flex:1;min-width:75px;background:var(--bg);border:1px solid var(--line);border-radius:11px;padding:8px 12px;text-align:center}
+.d-stat b{font-family:var(--f-head);font-size:18px;display:block;line-height:1.1}
+.d-stat span{font-family:var(--f-mono);font-size:10px;color:var(--ink3)}
+.dash-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+
+.tool-card.dash-timer-card{
+  background:var(--card);border:1px solid var(--line2);border-radius:18px;padding:22px;
+  backdrop-filter:blur(10px);box-shadow:0 12px 34px rgba(11,27,43,.06);
+  display:flex;flex-direction:column;justify-content:space-between;gap:10px;
+}
+.timer-display{
+  font-family:var(--f-mono);font-size:38px;font-weight:700;letter-spacing:.04em;margin:4px 0;
+  color:var(--ice);text-shadow:0 0 20px rgba(10,134,194,.18);
+}
+.timer-controls{display:flex;flex-wrap:wrap;gap:8px}
+
+/* Section Headers */
+.sec-head{display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:12px;margin:48px 0 20px}
+.sec-head h2{font-family:var(--f-head);font-size:24px;font-weight:700;display:flex;align-items:center;gap:10px}
+.sec-head h2::before{content:"";width:4px;height:24px;border-radius:3px;background:var(--ice)}
+.sec-head p{font-size:14px;color:var(--ink2)}
+
+/* Learning Tracks Row */
+.tracks-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px}
+.track-card{
+  background:var(--card);border:1px solid var(--line2);border-radius:15px;padding:20px;
+  cursor:pointer;transition:all .18s;position:relative;overflow:hidden;text-align:left;
+}
+.track-card:hover{border-color:var(--ice);transform:translateY(-2px);box-shadow:0 10px 28px rgba(10,134,194,.11)}
+.track-card.active{border-color:var(--ice);box-shadow:0 0 0 2px var(--ice-s)}
+.track-card.locked{opacity:.65}
+.track-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.track-icon{font-size:22px}
+.track-pill{font-family:var(--f-mono);font-size:10px;padding:2px 8px;border-radius:99px;border:1px solid var(--line2);color:var(--ink2)}
+.track-card h3{font-family:var(--f-head);font-size:17px;margin-bottom:4px}
+.track-card p{font-size:13px;color:var(--ink2);margin-bottom:12px;line-height:1.45}
+.track-mini-bar{height:5px;border-radius:99px;background:var(--card2);overflow:hidden}
+.track-mini-bar i{display:block;height:100%;background:var(--teal);width:0%;transition:width .3s}
+
+/* Filter Toolbar */
+.toolbar{
+  background:var(--card);border:1px solid var(--line2);border-radius:14px;padding:12px 16px;
+  display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-bottom:20px;
+  backdrop-filter:blur(8px);
+}
+.pill-group{display:flex;flex-wrap:wrap;gap:6px;flex:1}
+.f-pill{
+  font-family:var(--f-mono);font-size:11.5px;font-weight:600;padding:6px 12px;border-radius:99px;
+  border:1px solid var(--line2);background:var(--bg);color:var(--ink2);cursor:pointer;transition:all .15s;
+}
+.f-pill:hover{border-color:var(--ice);color:var(--ice)}
+.f-pill.active{background:var(--ice);border-color:var(--ice);color:#fff}
+.search-box{
+  font-family:var(--f-mono);font-size:12.5px;padding:7px 12px;border-radius:9px;
+  border:1px solid var(--line2);background:var(--bg);color:var(--ink);outline:none;width:230px;
+}
+.search-box:focus{border-color:var(--ice);background:var(--card-solid)}
+
+/* Catalog Grid */
+.catalog-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px;align-items:start}
+.item-card{
+  background:var(--card);border:1px solid var(--line);border-radius:15px;padding:20px;
+  display:flex;flex-direction:column;gap:10px;transition:all .18s;position:relative;overflow:hidden;
+  cursor:pointer;
+}
+.item-card:hover{border-color:var(--ice);transform:translateY(-2px);box-shadow:0 10px 30px rgba(10,134,194,.11)}
+.item-card.is-done{border-color:color-mix(in srgb,var(--teal) 50%,var(--line))}
+.item-card.is-locked{opacity:.72}
+.item-stripe{position:absolute;left:0;top:0;bottom:0;width:4px}
+.item-head{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px 8px}
+.item-code{
+  font-family:var(--f-mono);font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+  padding:3px 9px;border-radius:99px;display:inline-flex;align-items:center;gap:5px;white-space:nowrap;
+}
+.badge-snowflake{background:var(--ice-s);color:var(--ice);border:1px solid rgba(10,134,194,.35)}
+.badge-labs{background:var(--teal-s);color:var(--teal);border:1px solid rgba(11,138,106,.35)}
+.badge-simulators{background:var(--violet-s);color:var(--violet);border:1px solid rgba(109,40,217,.35)}
+.badge-deepdives{background:var(--amber-s);color:var(--amber);border:1px solid rgba(184,111,0,.35)}
+.cat-group-head{
+  grid-column:1 / -1;display:flex;align-items:center;gap:12px;margin:14px 0 2px;
+  font-family:var(--f-head);font-size:18px;font-weight:700;color:var(--ink);
+}
+.cat-group-head:first-child{margin-top:0}
+.cat-group-head::after{content:"";flex:1;height:1px;background:var(--line)}
+.cat-group-count{font-family:var(--f-mono);font-size:10.5px;padding:2px 9px;border-radius:99px;
+  border:1px solid var(--line2);color:var(--ink3);background:var(--card-solid)}
+.item-actions{display:flex;align-items:center;gap:6px}
+.icon-btn{
+  border:1px solid var(--line2);background:var(--bg);color:var(--ink2);border-radius:7px;
+  padding:3px 8px;font-size:11.5px;cursor:pointer;font-family:var(--f-mono);transition:all .15s;
+}
+.icon-btn:hover{border-color:var(--ice);color:var(--ice)}
+.icon-btn.done-on{background:var(--teal-s);border-color:var(--teal);color:var(--teal);font-weight:700}
+.icon-btn.star-on{background:var(--amber-s);border-color:var(--amber);color:var(--amber)}
+.item-title{font-family:var(--f-head);font-size:17.5px;font-weight:700;line-height:1.25}
+.item-desc{font-size:13.5px;color:var(--ink2);line-height:1.5;flex:1}
+.item-foot{display:flex;align-items:center;justify-content:space-between;gap:8px;padding-top:8px;border-top:1px solid var(--line)}
+.item-meta{font-family:var(--f-mono);font-size:11px;color:var(--ink3)}
+.open-link{font-family:var(--f-mono);font-size:12px;font-weight:700;color:var(--ice);text-decoration:none}
+.open-link:hover{text-decoration:underline}
+/* Classic Compound Card File Links */
+.file-links{display:flex;flex-direction:column;gap:6px;margin:6px 0 4px}
+.file-link{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:9px;
+  background:var(--card2);border:1px solid var(--line);font-size:12.5px;color:var(--ink2);
   text-decoration:none;transition:all .15s}
 .file-link:hover{border-color:var(--ice);color:var(--ice);background:var(--ice-s);transform:translateX(3px)}
-.fl-type{font-family:var(--f-mono);font-size:10px;padding:2px 7px;border-radius:5px;
-  flex-shrink:0;letter-spacing:.05em;font-weight:700}
+.fl-type{font-family:var(--f-mono);font-size:9.5px;padding:2px 6px;border-radius:5px;flex-shrink:0;letter-spacing:.05em;font-weight:700}
 .fl-sim{background:var(--ice-s);color:var(--ice);border:1px solid rgba(10,134,194,.4)}
 .fl-lab{background:var(--teal-s);color:var(--teal);border:1px solid rgba(11,138,106,.4)}
 .fl-qa{background:var(--amber-s);color:var(--amber);border:1px solid rgba(184,111,0,.4)}
 .fl-vis{background:var(--red-s);color:var(--red);border:1px solid rgba(201,60,60,.4)}
 .fl-guide{background:var(--violet-s);color:var(--violet);border:1px solid rgba(109,40,217,.4)}
 .fl-name{flex:1;line-height:1.3}
-.fl-arr{font-size:11px;color:var(--ink3);flex-shrink:0;transition:transform .15s}
-.file-link:hover .fl-arr{transform:translateX(3px);color:var(--ice)}
-.card-new{font-family:var(--f-mono);font-size:9px;padding:2px 7px;border-radius:4px;
-  background:var(--violet-s);color:var(--violet);border:1px solid rgba(109,40,217,.3);
-  font-weight:700;letter-spacing:.06em;margin-left:8px;vertical-align:middle}
-.note{max-width:860px;margin:0 auto 48px;padding:0 28px;font-size:14px;color:var(--ink3);font-style:italic}
-/* content-type filter bar */
-.filter-bar{max-width:1200px;margin:0 auto 28px;padding:0 28px}
-.filter-inner{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 16px;display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;box-shadow:0 4px 20px rgba(11,27,43,.05)}
-.filter-pills{display:flex;flex-wrap:wrap;gap:6px;align-items:center;flex:1}
-.filter-pill{font-family:var(--f-mono);font-size:11.5px;font-weight:600;padding:6px 13px;border-radius:99px;
-  border:1px solid var(--line2);background:var(--bg);color:var(--ink2);cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
-.filter-pill:hover{border-color:var(--ice);color:var(--ice);background:var(--ice-s)}
-.filter-pill.is-active{background:var(--ice);border-color:var(--ice);color:#fff;box-shadow:0 3px 12px rgba(10,134,194,.25)}
-.filter-pill b{font-size:10px;opacity:.85;background:rgba(255,255,255,.22);padding:1px 6px;border-radius:99px}
-.filter-pill:not(.is-active) b{background:var(--card2);color:var(--ink3)}
-/* divider between pills and right controls */
-.filter-divider{width:1px;height:28px;background:var(--line);flex-shrink:0}
-.filter-search{display:flex;align-items:center;gap:8px;flex-shrink:0}
-.filter-input{font-family:var(--f-mono);font-size:12px;padding:7px 12px;border-radius:9px;border:1px solid var(--line2);
-  background:var(--bg);color:var(--ink);outline:none;width:200px;transition:all .15s}
-.filter-input:focus{border-color:var(--ice);background:var(--card);box-shadow:0 0 0 3px var(--ice-s);width:230px}
-.filter-count{font-family:var(--f-mono);font-size:11px;color:var(--ink3);white-space:nowrap;min-width:60px;text-align:right}
-.is-hidden{display:none !important}
-.file-link.is-dim{opacity:.38}
-/* book-style Table of Contents */
-.toc-wrap{max-width:1200px;margin:0 auto 32px;padding:0 28px}
-.toc-panel{background:var(--card);border:1px solid var(--line2);border-radius:16px;padding:28px 32px;box-shadow:0 10px 32px rgba(11,27,43,.06)}
-.toc-head{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:12px;border-bottom:2px solid var(--line);padding-bottom:14px;margin-bottom:22px}
-.toc-head h2{font-family:var(--f-head);font-size:22px;font-weight:700;letter-spacing:-.02em}
-.toc-head p{font-size:13px;color:var(--ink2);margin-top:2px}
-.toc-actions{display:flex;gap:8px;align-items:center}
-.toc-btn{font-family:var(--f-mono);font-size:11px;font-weight:600;padding:6px 12px;border-radius:8px;border:1px solid var(--line2);background:var(--card2);color:var(--ink);cursor:pointer;transition:all .15s}
-.toc-btn:hover{border-color:var(--ice);color:var(--ice)}
-.toc-cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(460px,1fr));gap:26px 36px}
-.toc-part{break-inside:avoid}
-.toc-part-title{font-family:var(--f-mono);font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--ice);border-bottom:1px solid var(--line);padding-bottom:6px;margin-bottom:10px;display:flex;justify-content:space-between}
-.toc-list{list-style:none;display:flex;flex-direction:column;gap:9px}
-.toc-item{display:flex;flex-direction:column;gap:2px}
-.toc-row{display:flex;align-items:baseline;gap:8px;text-decoration:none;color:var(--ink);font-size:14px;line-height:1.35}
-.toc-row:hover .toc-name{color:var(--ice);text-decoration:underline}
-.toc-num{font-family:var(--f-mono);font-size:11px;font-weight:700;color:var(--ink3);min-width:54px;flex-shrink:0}
-.toc-name{font-weight:600}
-.toc-dots{flex:1;border-bottom:1px dotted var(--line2);min-width:16px;transform:translateY(-3px)}
-.toc-meta{font-family:var(--f-mono);font-size:11px;color:var(--ink3);white-space:nowrap;flex-shrink:0}
-.toc-desc{font-size:12px;color:var(--ink2);padding-left:62px;line-height:1.45}
-@media(max-width:720px){.filter-bar,.toc-wrap{padding:0 18px}.toc-panel{padding:20px 18px}.toc-cols{grid-template-columns:1fr}.toc-desc{padding-left:0}.filter-search{margin-left:0;width:100%;justify-content:flex-start}.filter-input{flex:1;width:auto;max-width:none}.filter-divider{display:none}}
-@media print{.top,.filter-bar,.toc-actions{display:none !important}.toc-wrap{display:block !important}}
+.fl-arr{font-size:11px;color:var(--ink3);flex-shrink:0}
+.card-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:2px}
+.tag{font-family:var(--f-mono);font-size:10px;padding:2px 8px;border-radius:99px;border:1px solid var(--line2);color:var(--ink3)}
+.tag.q{border-color:var(--amber);color:var(--amber);background:var(--amber-s)}
+.tag.s{border-color:var(--ice);color:var(--ice);background:var(--ice-s)}
+
+/* Study Tools & Pomodoro Section */
+.tools-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:20px}
+.tool-card{background:var(--card);border:1px solid var(--line2);border-radius:16px;padding:24px}
+.timer-display{font-family:var(--f-mono);font-size:40px;font-weight:700;letter-spacing:.04em;margin:12px 0;color:var(--ice)}
+.timer-controls{display:flex;flex-wrap:wrap;gap:8px}
+
+/* Modal */
+.modal-backdrop{
+  position:fixed;inset:0;z-index:100;background:rgba(7,17,28,.65);backdrop-filter:blur(6px);
+  display:none;align-items:center;justify-content:center;padding:20px;
+}
+.modal-backdrop.open{display:flex}
+.modal{
+  background:var(--card-solid);border:1px solid var(--line2);border-radius:18px;
+  max-width:440px;width:100%;padding:26px;box-shadow:0 24px 64px rgba(0,0,0,.35);
+}
+.modal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.modal-head h3{font-family:var(--f-head);font-size:20px}
+.modal-tabs{display:flex;gap:6px;margin-bottom:16px;background:var(--card2);padding:4px;border-radius:10px}
+.m-tab{flex:1;padding:7px;border:none;background:transparent;border-radius:8px;font-family:var(--f-mono);
+  font-size:11.5px;font-weight:600;color:var(--ink2);cursor:pointer}
+.m-tab.active{background:var(--card-solid);color:var(--ice);box-shadow:0 2px 6px rgba(0,0,0,.08)}
+.field{margin-bottom:12px}
+.field label{display:block;font-family:var(--f-mono);font-size:11px;color:var(--ink2);margin-bottom:4px}
+.field input{width:100%;padding:9px 12px;border-radius:9px;border:1px solid var(--line2);
+  background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:14px;outline:none}
+.field input:focus{border-color:var(--ice)}
+.msg-box{font-size:12.5px;padding:9px 12px;border-radius:9px;margin-bottom:12px;display:none}
+.msg-box.err{display:block;background:var(--red-s);color:var(--red);border:1px solid var(--red)}
+.msg-box.ok{display:block;background:var(--teal-s);color:var(--teal);border:1px solid var(--teal)}
 .footer-socials{display:inline-flex;align-items:center;gap:10px;vertical-align:middle}
 .social-icon-link{
   display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:9px;
@@ -190,600 +319,131 @@ h1 .thin{font-weight:300;color:var(--ink2)}
 }
 .social-icon-link.li:hover{border-color:#0A66C2}
 .social-icon-link.ig:hover{border-color:#E1306C}
-footer{padding:36px 28px;text-align:center;color:var(--ink3);font-size:12px;font-family:var(--f-mono);border-top:1px solid var(--line);margin-top:16px;display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:14px;line-height:1.6}
-@media(max-width:600px){.hero{padding:40px 18px 28px}.grid,.grid.wide{padding:0 18px;grid-template-columns:1fr}.sec-div{padding:0 18px}.stat-strip{flex-direction:column;width:100%;border-radius:12px}.stat-item{border-right:none;border-bottom:1px solid var(--line)}.stat-item:last-child{border-bottom:none}}
-@media(prefers-reduced-motion:no-preference){
-  .card{animation:rise .5s both}
-  @keyframes rise{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
-  .card:nth-child(2){animation-delay:.04s}.card:nth-child(3){animation-delay:.08s}
-  .card:nth-child(4){animation-delay:.12s}.card:nth-child(5){animation-delay:.16s}
-  .card:nth-child(6){animation-delay:.20s}.card:nth-child(7){animation-delay:.24s}
-  .card:nth-child(8){animation-delay:.28s}.card:nth-child(9){animation-delay:.32s}
-  .card:nth-child(10){animation-delay:.36s}.card:nth-child(11){animation-delay:.40s}
-  .card:nth-child(12){animation-delay:.44s}.card:nth-child(13){animation-delay:.48s}
-  .card:nth-child(14){animation-delay:.52s}.card:nth-child(15){animation-delay:.56s}
-  .card:nth-child(16){animation-delay:.60s}.card:nth-child(17){animation-delay:.64s}
-}
+
+footer{padding:38px 28px;text-align:center;color:var(--ink3);font-size:12px;font-family:var(--f-mono);
+  border-top:1px solid var(--line);margin-top:56px;display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:14px;line-height:1.6}
+
+@media(max-width:900px){.dash-card,.tools-grid{grid-template-columns:1fr}.dash-stats{justify-content:flex-start}.nav-links{display:none}}
+@media(max-width:600px){.topbar{padding:10px 16px;flex-wrap:wrap}.wrap{padding:0 16px}.search-box{width:100%}}
 </style>
 </head>
 <body>
-<div class="top">
+
+<div id="scroll-progress"></div>
+<canvas id="scroll-canvas" aria-hidden="true"></canvas>
+<div class="scroll-hud" id="scrollHud">
+  <span class="scroll-hud-dot"></span>
+  <span id="scrollStageLabel">STAGE 01 // ASSEMBLED DATA CORE · 0%</span>
+</div>
+
+<header class="topbar">
   <div class="brand">SF KNOWLEDGE BASE</div>
-  <a class="top-notes-nav-btn" href="demo.html" style="margin-left:auto;text-decoration:none;" title="Open Interactive Showcase &amp; Demo">🎬 Demo</a>
-  <button class="top-notes-nav-btn sf-master-search-btn" id="sfMasterSearchBtn" onclick="openMasterSearchModal()" title="Search all Snowflake interview topics (⌘K / Ctrl+K)"><span>🔍 Search</span> <kbd>⌘K</kbd></button>
-  <button class="top-notes-nav-btn sf-master-lock-btn locked" id="sfMasterLockBtn" onclick="openMasterUnlockModal()" title="Enter password to enable notes across all modules"><span>🔒 Enable Notes</span></button>
-  <button class="theme" id="themeBtn" style="margin-left:0;">Dark / light</button>
-</div>
-
-<div class="hero">
-  <div class="eyebrow">SNOWFLAKE INTERVIEW LAB · 16 MODULES + 15 HANDS-ON LABS + SIMULATORS</div>
-  <h1>Everything you need<br><span class="thin" style="display:block;min-height:1.12em"><span class="tw-text" id="typewriter" data-phrases='["to ace the interview.","to master Snowflake.","for SQL &amp; Snowsight.","for senior DE rounds."]'>to ace the interview.</span><span class="tw-cursor" aria-hidden="true">|</span></span></h1>
-  <p class="lead">A complete, interactive preparation course for senior Snowflake data-engineering roles — from architecture fundamentals to enterprise IaC and integrations. Each module has a simulator, a SQL lab, interview Q&amp;As, a quiz and a cheat sheet.</p>
-  <div class="stat-strip">
-    <div class="stat-item">
-      <span class="stat-icon">📚</span>
-      <div><div class="stat-num">16</div><div class="stat-label">Modules</div></div>
-    </div>
-    <div class="stat-item">
-      <span class="stat-icon">⚡</span>
-      <div><div class="stat-num">160+</div><div class="stat-label">Simulators</div></div>
-    </div>
-    <div class="stat-item">
-      <span class="stat-icon">💬</span>
-      <div><div class="stat-num">300+</div><div class="stat-label">Q&amp;As</div></div>
-    </div>
-    <div class="stat-item">
-      <span class="stat-icon">🧪</span>
-      <div><div class="stat-num">15</div><div class="stat-label">SQL Labs</div></div>
-    </div>
-    <div class="stat-item">
-      <span class="stat-icon">🔬</span>
-      <div><div class="stat-num">51</div><div class="stat-label">Backend Scenarios</div></div>
-    </div>
-    <div class="stat-item">
-      <span class="stat-icon">☁️</span>
-      <div><div class="stat-num">21</div><div class="stat-label">S3 Labs</div></div>
-    </div>
+  <nav class="nav-links" aria-label="Sections">
+    <a href="#dashboard">Dashboard</a>
+    <a href="#tracks">Tracks</a>
+    <a href="#catalog">Catalog</a>
+  </nav>
+  <div class="top-right">
+    <button class="top-notes-nav-btn sf-master-search-btn" id="sfMasterSearchBtn" type="button" onclick="openMasterSearchModal()" title="Search all Snowflake interview topics (⌘K / Ctrl+K)"><span>🔍 Search</span> <kbd>⌘K</kbd></button>
+    <button class="top-notes-nav-btn sf-master-lock-btn locked" id="sfMasterLockBtn" type="button" onclick="openMasterUnlockModal()" title="Enter password to enable notes across all modules"><span>🔒 Enable Notes</span></button>
+    <button class="btn" id="adminApprovalsBtn" type="button" style="display:none" title="Owner: Approve or Revoke Learner Access">👥 Approvals</button>
+    <button class="btn" id="sheetConfigBtn" type="button" style="display:none" title="Owner: Configure Google Sheets Auth URL">⚙️ Sheet Config</button>
+    <button class="btn primary" id="authBtn" type="button">🔐 Sign In</button>
+    <button class="btn" id="themeBtn" type="button">Dark / light</button>
   </div>
-</div>
+</header>
 
-<div class="filter-bar" id="contentFilterBar">
-  <div class="filter-inner">
-    <div class="filter-pills" role="tablist" aria-label="Filter by content type">
-      <button class="filter-pill is-active" type="button" data-filter="all">All <b id="cnt-all">35</b></button>
-      <button class="filter-pill" type="button" data-filter="learning">📚 Modules <b id="cnt-learning">16</b></button>
-      <button class="filter-pill" type="button" data-filter="lab">🧪 Labs <b id="cnt-lab">17</b></button>
-      <button class="filter-pill" type="button" data-filter="simulator">⚡ Simulators <b id="cnt-simulator">7</b></button>
-      <button class="filter-pill" type="button" data-filter="guide">📖 Guides &amp; Q&amp;A <b id="cnt-guide">2</b></button>
-    </div>
-    <div class="filter-search">
-      <div class="filter-divider"></div>
-      <button class="filter-pill" type="button" id="tocToggleBtn" aria-expanded="false" title="Show or hide the Book-Style Table of Contents">📖 Book Index</button>
-      <input class="filter-input" id="cardFilterInput" type="search" placeholder="Search cards…" aria-label="Filter modules and labs">
-      <span class="filter-count" id="filterCountLabel">35 / 35</span>
-    </div>
-  </div>
-</div>
+<main class="wrap">
 
-<section class="toc-wrap" id="bookToc" aria-label="Course Table of Contents">
-  <div class="toc-panel">
-    <div class="toc-head">
+  <!-- HERO (Centered, zero-shift typewriter) -->
+  <section class="hero" id="top">
+    <h1>Everything you need for<span class="tw-line"><span class="tw-text" id="typewriter" data-phrases='["Snowflake","SQL Mastery","Data Pipelines","System Design"]'>Snowflake</span><span class="tw-cursor" aria-hidden="true">|</span></span><span class="thin">built for real interviews.</span></h1>
+    <p class="lead">Interactive simulators, guided Snowsight labs, visual cheat sheets, and a self-reality check to track your readiness.</p>
+    <div class="hero-cta">
+      <a class="btn primary" href="#catalog">Browse All Content ↓</a>
+      <a class="btn" id="continueBtn" href="module01/">▶ Continue Learning</a>
+    </div>
+  </section>
+
+  <!-- STUDY DASHBOARD (MERGED: LEARNER PROGRESS & FOCUS STUDY TIMER) -->
+  <section class="dash-grid" id="dashboard" aria-label="Study Dashboard & Tools">
+    
+    <!-- LEARNER PROGRESS & SYNC -->
+    <div class="dash-card reveal">
       <div>
-        <h2>📖 Course Index &amp; Table of Contents</h2>
-        <p>Complete chapter-by-chapter reference across all 16 learning modules, 15 Snowsight SQL labs, 2 simulators, and 2 deep-dive sets.</p>
-      </div>
-      <div class="toc-actions">
-        <button class="toc-btn" type="button" onclick="window.print()">🖨 Print / PDF</button>
-        <button class="toc-btn" type="button" id="tocCloseBtn">Hide Index</button>
-      </div>
-    </div>
-    <div class="toc-cols">
-
-      <div class="toc-part">
-        <div class="toc-part-title"><span>Part I · Core Learning Modules</span><span>Modules 01 – 13</span></div>
-        <ul class="toc-list">
-          <li class="toc-item"><a class="toc-row" href="module01/"><span class="toc-num">Ch. 01</span><span class="toc-name">Architecture</span><span class="toc-dots"></span><span class="toc-meta">12 sims · 16 Q&amp;A · 12 quiz</span></a><div class="toc-desc">Three-layer design, micro-partitions, pruning, warehouses, multi-cluster, caches, billing &amp; editions.</div></li>
-          <li class="toc-item"><a class="toc-row" href="module02/"><span class="toc-num">Ch. 02</span><span class="toc-name">Load &amp; Automate</span><span class="toc-dots"></span><span class="toc-meta">10 sims · 26 Q&amp;A · 14 quiz</span></a><div class="toc-desc">SnowSQL, PUT/COPY deep dive, unstructured data &amp; AI parsing, streams, tasks, stored procedures.</div></li>
-          <li class="toc-item"><a class="toc-row" href="module03/"><span class="toc-num">Ch. 03</span><span class="toc-name">Performance Tuning</span><span class="toc-dots"></span><span class="toc-meta">9 sims · 19 Q&amp;A · 14 quiz</span></a><div class="toc-desc">Query Profile mastery, clustering keys, Search Optimization, QAS, MVs, SQL anti-patterns.</div></li>
-          <li class="toc-item"><a class="toc-row" href="module04/"><span class="toc-num">Ch. 04</span><span class="toc-name">Data Ingestion</span><span class="toc-dots"></span><span class="toc-meta">9 sims · 20 Q&amp;A · 14 quiz</span></a><div class="toc-desc">Stages &amp; storage integrations, COPY, file sizing, Snowpipe, Snowpipe Streaming, Iceberg &amp; schema evolution.</div></li>
-          <li class="toc-item"><a class="toc-row" href="module05/"><span class="toc-num">Ch. 05</span><span class="toc-name">Dynamic Tables &amp; Transforms</span><span class="toc-dots"></span><span class="toc-meta">10 sims · 22 Q&amp;A · 14 quiz</span></a><div class="toc-desc">Declarative vs procedural pipelines, target lag, incremental refresh, MERGE, SCD, dedup, UDFs.</div></li>
-          <li class="toc-item"><a class="toc-row" href="module06/"><span class="toc-num">Ch. 06</span><span class="toc-name">Semi-structured Data</span><span class="toc-dots"></span><span class="toc-meta">7 sims · 19 Q&amp;A · 14 quiz</span></a><div class="toc-desc">VARIANT/OBJECT/ARRAY internals, path notation, two kinds of null, FLATTEN &amp; LATERAL, JSON loading.</div></li>
-          <li class="toc-item"><a class="toc-row" href="module07/"><span class="toc-num">Ch. 07</span><span class="toc-name">Data Protection</span><span class="toc-dots"></span><span class="toc-meta">7 sims · 19 Q&amp;A · 14 quiz</span></a><div class="toc-desc">Micro-partition lifecycle, Time Travel (AT/BEFORE), Fail-safe, table types, zero-copy cloning, replication.</div></li>
-          <li class="toc-item"><a class="toc-row" href="module08/"><span class="toc-num">Ch. 08</span><span class="toc-name">Security &amp; Governance</span><span class="toc-dots"></span><span class="toc-meta">9 sims · 19 Q&amp;A · 14 quiz</span></a><div class="toc-desc">RBAC + DAC, privilege chains, auth &amp; network policies, dynamic masking, row access policies, tags.</div></li>
-          <li class="toc-item"><a class="toc-row" href="module09/"><span class="toc-num">Ch. 09</span><span class="toc-name">Cost Optimization</span><span class="toc-dots"></span><span class="toc-meta">7 sims · 18 Q&amp;A · 14 quiz</span></a><div class="toc-desc">Three cost buckets, warehouse fleet tuning, storage lifecycle, serverless billing, resource monitors.</div></li>
-          <li class="toc-item"><a class="toc-row" href="module10/"><span class="toc-num">Ch. 10</span><span class="toc-name">Data Sharing &amp; Collaboration</span><span class="toc-dots"></span><span class="toc-meta">7 sims · 19 Q&amp;A · 14 quiz</span></a><div class="toc-desc">Secure Data Sharing, reader accounts, cross-region/cloud sharing, Marketplace, Clean Rooms, Native Apps.</div></li>
-          <li class="toc-item"><a class="toc-row" href="module11/"><span class="toc-num">Ch. 11</span><span class="toc-name">Snowpark &amp; Cortex AI</span><span class="toc-dots"></span><span class="toc-meta">8 sims · 19 Q&amp;A · 13 quiz</span></a><div class="toc-desc">DataFrames &amp; lazy eval, UDFs/UDTFs, Container Services, Cortex AI SQL, Vectors &amp; RAG, Analyst, ML.</div></li>
-          <li class="toc-item"><a class="toc-row" href="module12/"><span class="toc-num">Ch. 12</span><span class="toc-name">Advanced SQL</span><span class="toc-dots"></span><span class="toc-meta">8 sims · 21 Q&amp;A · 14 quiz</span></a><div class="toc-desc">Execution order, window functions, QUALIFY, recursive CTEs, ROLLUP/CUBE/PIVOT, ASOF, MATCH_RECOGNIZE.</div></li>
-          <li class="toc-item"><a class="toc-row" href="module13/"><span class="toc-num">Ch. 13</span><span class="toc-name">Modeling &amp; Tooling</span><span class="toc-dots"></span><span class="toc-meta">8 sims · 21 Q&amp;A · 14 quiz</span></a><div class="toc-desc">Dimensional modeling, SCD types, Data Vault 2.0, medallion, dbt, orchestration &amp; blue-green CI/CD.</div></li>
-        </ul>
-      </div>
-
-      <div class="toc-part">
-        <div class="toc-part-title"><span>Part II · Extended Architect Modules</span><span>Modules 14 – 16</span></div>
-        <ul class="toc-list">
-          <li class="toc-item"><a class="toc-row" href="module14/"><span class="toc-num">Ch. 14</span><span class="toc-name">Enterprise Architecture &amp; Governance</span><span class="toc-dots"></span><span class="toc-meta">9 steps · 10 Q&amp;A · 5 quiz</span></a><div class="toc-desc">Late-arriving data, multi-account strategy, PrivateLink, Tri-secret Compose, Horizon, compliance.</div></li>
-          <li class="toc-item"><a class="toc-row" href="module15/"><span class="toc-num">Ch. 15</span><span class="toc-name">External Integrations</span><span class="toc-dots"></span><span class="toc-meta">6 steps · 7 Q&amp;A · 5 quiz</span></a><div class="toc-desc">Kafka Connector, Spark vs Snowpark, Debezium CDC → Snowpipe Streaming, External Functions.</div></li>
-          <li class="toc-item"><a class="toc-row" href="module16/"><span class="toc-num">Ch. 16</span><span class="toc-name">IaC, CI/CD &amp; Orchestration</span><span class="toc-dots"></span><span class="toc-meta">4 steps · 7 Q&amp;A · 5 quiz</span></a><div class="toc-desc">Terraform for Snowflake, Native Git Integration, dbt + Airflow/Dagster, GitHub Actions CI/CD.</div></li>
-        </ul>
-
-        <div class="toc-part-title" style="margin-top:22px"><span>Part III · Interactive Simulators &amp; Deep Dives</span><span>Backend · S3 · Guides</span></div>
-        <ul class="toc-list">
-          <li class="toc-item"><a class="toc-row" href="snowflake_query_backend_lab_FINAL.html"><span class="toc-num">Sim 01</span><span class="toc-name">Snowflake Query Backend Lab</span><span class="toc-dots"></span><span class="toc-meta">51 scenarios · 8 levels</span></a><div class="toc-desc">Step-by-step Cloud Services, Micro-partitions, Warehouse &amp; Result Cache + live SQLite WASM Playground.</div></li>
-          <li class="toc-item"><a class="toc-row" href="S3_Simulator_FINAL.html"><span class="toc-num">Sim 02</span><span class="toc-name">AWS S3 Console, CloudShell &amp; boto3</span><span class="toc-dots"></span><span class="toc-meta">21 labs · Time Machine</span></a><div class="toc-desc">Buckets, IAM/bucket policies, Block Public Access, CLI, Python SDK, and S3 → Snowflake Snowpipe lab.</div></li>
-          <li class="toc-item"><a class="toc-row" href="SnowSQL_Streams_Tasks_Step_by_Step_Guide_FINAL.html"><span class="toc-num">Set 01</span><span class="toc-name">Deep Dive: SnowSQL, Streams &amp; Tasks</span><span class="toc-dots"></span><span class="toc-meta">5 files · 44 steps · 174 Q&amp;A</span></a><div class="toc-desc">Step-by-step guide, Lab guide, Terminal Simulator, Visual Guide, and 174-question Interview Q&amp;A.</div></li>
-          <li class="toc-item"><a class="toc-row" href="JSON_S3_to_Snowflake_Lab_Step_by_Step_Guide_FINAL.html"><span class="toc-num">Set 02</span><span class="toc-name">Deep Dive: JSON S3 → Snowflake</span><span class="toc-dots"></span><span class="toc-meta">4 files · 9 steps · 158 Q&amp;A</span></a><div class="toc-desc">Lab guide, Interactive Simulator, Visual Guide, and 158-question Interview Q&amp;A on VARIANT/FLATTEN.</div></li>
-        </ul>
-      </div>
-
-      <div class="toc-part" style="grid-column:1 / -1">
-        <div class="toc-part-title"><span>Part IV · Hands-On Snowsight SQL Labs (15 Labs · 216 Guided Steps)</span><span><a href="snowflake_learning_labs_FINAL.html" style="color:var(--ice);text-decoration:none">Open Full Hub →</a></span></div>
-        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(420px,1fr));gap:10px 36px">
-          <ul class="toc-list">
-            <li class="toc-item"><a class="toc-row" href="snowflake_learning_labs_FINAL.html#architecture_dev"><span class="toc-num">Lab 01</span><span class="toc-name">Architecture, Snowpark, UDFs &amp; Cortex</span><span class="toc-dots"></span><span class="toc-meta">Real SQL · 16 steps</span></a></li>
-            <li class="toc-item"><a class="toc-row" href="snowflake_learning_labs_FINAL.html#micro_partitions"><span class="toc-num">Lab 02</span><span class="toc-name">Micro-partitions, Pruning &amp; Transient Tables</span><span class="toc-dots"></span><span class="toc-meta">Simulated · Explainer</span></a></li>
-            <li class="toc-item"><a class="toc-row" href="snowflake_learning_labs_FINAL.html#mp_lab"><span class="toc-num">Lab 03</span><span class="toc-name">Micro-partitions Lab: Loading, Pruning &amp; Clustering</span><span class="toc-dots"></span><span class="toc-meta">Real SQL · 17 steps</span></a></li>
-            <li class="toc-item"><a class="toc-row" href="snowflake_learning_labs_FINAL.html#table_types"><span class="toc-num">Lab 04</span><span class="toc-name">Table Types (Permanent, Transient, Temp, Dynamic, Hybrid, Iceberg)</span><span class="toc-dots"></span><span class="toc-meta">Real SQL · 16 steps</span></a></li>
-            <li class="toc-item"><a class="toc-row" href="snowflake_learning_labs_FINAL.html#query_profile"><span class="toc-num">Lab 05</span><span class="toc-name">Query Profile &amp; Warehouse Sizing</span><span class="toc-dots"></span><span class="toc-meta">Simulated · 15 steps</span></a></li>
-            <li class="toc-item"><a class="toc-row" href="snowflake_learning_labs_FINAL.html#caching_cost"><span class="toc-num">Lab 06</span><span class="toc-name">Caching, Credits &amp; Cost Controls</span><span class="toc-dots"></span><span class="toc-meta">Real SQL · 15 steps</span></a></li>
-            <li class="toc-item"><a class="toc-row" href="snowflake_learning_labs_FINAL.html#perf_features"><span class="toc-num">Lab 07</span><span class="toc-name">Clustering, Search Optimization, MVs &amp; QAS</span><span class="toc-dots"></span><span class="toc-meta">Simulated · 15 steps</span></a></li>
-            <li class="toc-item"><a class="toc-row" href="snowflake_learning_labs_FINAL.html#time_travel"><span class="toc-num">Lab 08</span><span class="toc-name">Time Travel, Fail-safe, Cloning &amp; Table Types</span><span class="toc-dots"></span><span class="toc-meta">Real SQL · 16 steps</span></a></li>
-          </ul>
-          <ul class="toc-list">
-            <li class="toc-item"><a class="toc-row" href="snowflake_learning_labs_FINAL.html#loading"><span class="toc-num">Lab 09</span><span class="toc-name">Loading Data from S3: Stages, COPY INTO, Snowpipe &amp; JSON</span><span class="toc-dots"></span><span class="toc-meta">Real SQL · 13 steps</span></a></li>
-            <li class="toc-item"><a class="toc-row" href="snowflake_learning_labs_FINAL.html#pipelines"><span class="toc-num">Lab 10</span><span class="toc-name">Pipelines: Streams, Tasks, MERGE &amp; Dynamic Tables</span><span class="toc-dots"></span><span class="toc-meta">Real SQL · 15 steps</span></a></li>
-            <li class="toc-item"><a class="toc-row" href="snowflake_learning_labs_FINAL.html#sql_patterns"><span class="toc-num">Lab 11</span><span class="toc-name">SQL Patterns: QUALIFY, Windows, Constraints &amp; Sequences</span><span class="toc-dots"></span><span class="toc-meta">Real SQL · 15 steps</span></a></li>
-            <li class="toc-item"><a class="toc-row" href="snowflake_learning_labs_FINAL.html#star_schema"><span class="toc-num">Lab 12</span><span class="toc-name">Star Schema vs Snowflake, Galaxy, OBT, 3NF &amp; Data Vault</span><span class="toc-dots"></span><span class="toc-meta">Real SQL · 15 steps</span></a></li>
-            <li class="toc-item"><a class="toc-row" href="snowflake_learning_labs_FINAL.html#security"><span class="toc-num">Lab 13</span><span class="toc-name">Access Control &amp; Data Governance (RBAC, Masking, RAP)</span><span class="toc-dots"></span><span class="toc-meta">Real SQL · 15 steps</span></a></li>
-            <li class="toc-item"><a class="toc-row" href="snowflake_learning_labs_FINAL.html#sharing"><span class="toc-num">Lab 14</span><span class="toc-name">Data Sharing &amp; Cross-Region Replication</span><span class="toc-dots"></span><span class="toc-meta">Real SQL · 15 steps</span></a></li>
-            <li class="toc-item"><a class="toc-row" href="snowflake_learning_labs_FINAL.html#cortex_ai"><span class="toc-num">Lab 15</span><span class="toc-name">Snowflake Cortex AI: AISQL, Search/RAG, Analyst, Agents &amp; ML</span><span class="toc-dots"></span><span class="toc-meta">Real SQL · 18 steps</span></a></li>
-          </ul>
+        <div class="dash-head">
+          <div class="dash-title" id="dashGreeting">Learner Progress</div>
+          <span style="font-family:var(--f-mono);font-size:12px;color:var(--ink2)"><strong id="progPctLabel">0% (0 / 36)</strong></span>
         </div>
+        <div class="prog-bar-wrap"><div class="prog-bar-fill" id="progBarFill"></div></div>
       </div>
-
+      <div class="dash-stats">
+        <div class="d-stat"><b id="statDone">0</b><span>Completed</span></div>
+        <div class="d-stat"><b id="statBookmarks">0</b><span>Bookmarked</span></div>
+        <div class="d-stat"><b id="statStreak">1d</b><span>Streak</span></div>
+      </div>
+      <div class="dash-actions">
+        <button class="sync-pill-btn not-synced" id="syncNowBtn" type="button" data-tip="Not in sync · Click to sync" title="Not in sync · Click to sync">
+          <span class="s-dot"></span>
+          <span id="syncBtnLabel">Not in Sync</span>
+        </button>
+        <button class="btn" id="openAuthFromTools" type="button" style="font-size:12px;padding:6px 14px">🔐 Sign In / Account</button>
+      </div>
     </div>
-  </div>
-</section>
 
-<div class="sec-div"><h2>Core Course</h2><span>Modules 01 – 13</span></div>
-<div class="grid">
-
-  <a class="card arch" href="module01/">
-    <div class="card-num">MODULE 01</div>
-    <div class="card-title-row">
-      <div class="card-title">Architecture</div>
-      <button class="topic-note-btn" type="button" data-topic="Module 01: Architecture" title="Notes on Architecture">📝 Notes</button>
+    <!-- FOCUS STUDY TIMER -->
+    <div class="tool-card dash-timer-card reveal" aria-label="Focus Study Timer">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px">
+        <h3 style="font-family:var(--f-head);font-size:17px;font-weight:700;margin:0">⏱ Focus Study Timer</h3>
+        <span style="font-family:var(--f-mono);font-size:11px;color:var(--ink3)">25m sprint · 5m break</span>
+      </div>
+      <div class="timer-display" id="timerDisplay">25:00</div>
+      <div class="timer-controls">
+        <button class="btn primary" id="timerStartBtn" type="button">Start</button>
+        <button class="btn" id="timerPauseBtn" type="button">Pause</button>
+        <button class="btn" id="timerResetBtn" type="button">Reset 25m</button>
+        <button class="btn" id="timerBreakBtn" type="button">5m Break</button>
+      </div>
     </div>
-    <div class="card-sub">Three-layer design, micro-partitions, pruning, warehouses, multi-cluster, caches, billing and editions.</div>
-    <div class="card-meta"><span class="tag s">12 simulators</span><span class="tag q">16 Q&amp;As</span><span class="tag">12 quiz</span></div>
-    <div class="cta">Start here</div>
-  </a>
 
-  <a class="card load" href="module02/">
-    <div class="card-num">MODULE 02</div>
-    <div class="card-title-row">
-      <div class="card-title">Load &amp; Automate</div>
-      <button class="topic-note-btn" type="button" data-topic="Module 02: Load &amp; Automate" title="Notes on Load &amp; Automate">📝 Notes</button>
+  </section>
+
+  <!-- LEARNING TRACKS -->
+  <section id="tracks" class="reveal">
+    <div class="sec-head">
+      <div>
+        <h2>Learning Tracks</h2>
+        <p>Select a track to focus your study path — ready to expand with future courses.</p>
+      </div>
     </div>
-    <div class="card-sub">SnowSQL, PUT/COPY deep dive, unstructured data &amp; AI parsing, streams, tasks, stored procedures.</div>
-    <div class="card-meta"><span class="tag s">10 simulators</span><span class="tag q">26 Q&amp;As</span><span class="tag">14 quiz</span></div>
-    <div class="cta">Open module</div>
-  </a>
+    <div class="tracks-grid" id="tracksGrid"></div>
+  </section>
 
-  <a class="card perf" href="module03/">
-    <div class="card-num">MODULE 03</div>
-    <div class="card-title-row">
-      <div class="card-title">Performance Tuning</div>
-      <button class="topic-note-btn" type="button" data-topic="Module 03: Performance Tuning" title="Notes on Performance Tuning">📝 Notes</button>
+  <!-- CATALOG -->
+  <section id="catalog" class="reveal">
+    <div class="sec-head">
+      <div>
+        <h2>Course Catalog</h2>
+        <p id="catalogSubtitle">Showing all modules, SQL labs, simulators, and deep-dive guides.</p>
+      </div>
     </div>
-    <div class="card-sub">Query Profile mastery, clustering keys, Search Optimization, Query Acceleration, MVs, SQL anti-patterns, warehouse debugging.</div>
-    <div class="card-meta"><span class="tag s">9 simulators</span><span class="tag q">19 Q&amp;As</span><span class="tag">14 quiz</span></div>
-    <div class="cta">Open module</div>
-  </a>
 
-  <a class="card ing" href="module04/">
-    <div class="card-num">MODULE 04</div>
-    <div class="card-title-row">
-      <div class="card-title">Data Ingestion</div>
-      <button class="topic-note-btn" type="button" data-topic="Module 04: Data Ingestion" title="Notes on Data Ingestion">📝 Notes</button>
+    <div class="toolbar">
+      <div class="pill-group" id="statusPills">
+        <button class="f-pill active" type="button" data-status="all">All</button>
+        <button class="f-pill" type="button" data-status="todo">To Do</button>
+        <button class="f-pill" type="button" data-status="done">Completed</button>
+        <button class="f-pill" type="button" data-status="bookmarked">★ Bookmarked</button>
+      </div>
+      <input class="search-box" id="searchInput" type="search" placeholder="Search topics (press /)…" aria-label="Search learning content">
     </div>
-    <div class="card-sub">Stages &amp; storage integrations, COPY deep dive, file sizing, Snowpipe auto-ingest, Snowpipe Streaming, External &amp; Iceberg tables, schema evolution.</div>
-    <div class="card-meta"><span class="tag s">9 simulators</span><span class="tag q">20 Q&amp;As</span><span class="tag">14 quiz</span></div>
-    <div class="cta">Open module</div>
-  </a>
 
-  <a class="card dyn" href="module05/">
-    <div class="card-num">MODULE 05</div>
-    <div class="card-title-row">
-      <div class="card-title">Dynamic Tables &amp; Transforms</div>
-      <button class="topic-note-btn" type="button" data-topic="Module 05: Dynamic Tables &amp; Transforms" title="Notes on Dynamic Tables &amp; Transforms">📝 Notes</button>
-    </div>
-    <div class="card-sub">Declarative vs procedural pipelines, target lag, incremental vs full refresh, MERGE &amp; SCD, dedup, UDFs, transactions &amp; concurrency.</div>
-    <div class="card-meta"><span class="tag s">10 simulators</span><span class="tag q">22 Q&amp;As</span><span class="tag">14 quiz</span></div>
-    <div class="cta">Open module</div>
-  </a>
+    <div class="catalog-grid" id="catalogGrid"></div>
+  </section>
 
-  <a class="card semi" href="module06/">
-    <div class="card-num">MODULE 06</div>
-    <div class="card-title-row">
-      <div class="card-title">Semi-structured Data</div>
-      <button class="topic-note-btn" type="button" data-topic="Module 06: Semi-structured Data" title="Notes on Semi-structured Data">📝 Notes</button>
-    </div>
-    <div class="card-sub">VARIANT/OBJECT/ARRAY internals, path notation, two kinds of null, FLATTEN &amp; LATERAL, building JSON, loading files, performance &amp; promotion decisions.</div>
-    <div class="card-meta"><span class="tag s">7 simulators</span><span class="tag q">19 Q&amp;As</span><span class="tag">14 quiz</span></div>
-    <div class="cta">Open module</div>
-  </a>
 
-  <a class="card prot" href="module07/">
-    <div class="card-num">MODULE 07</div>
-    <div class="card-title-row">
-      <div class="card-title">Data Protection</div>
-      <button class="topic-note-btn" type="button" data-topic="Module 07: Data Protection" title="Notes on Data Protection">📝 Notes</button>
-    </div>
-    <div class="card-sub">Micro-partition lifecycle, Time Travel (AT/BEFORE), Fail-safe, table types, zero-copy cloning, replication &amp; failover, backup strategy.</div>
-    <div class="card-meta"><span class="tag s">7 simulators</span><span class="tag q">19 Q&amp;As</span><span class="tag">14 quiz</span></div>
-    <div class="cta">Open module</div>
-  </a>
 
-  <a class="card sec" href="module08/">
-    <div class="card-num">MODULE 08</div>
-    <div class="card-title-row">
-      <div class="card-title">Security &amp; Governance</div>
-      <button class="topic-note-btn" type="button" data-topic="Module 08: Security &amp; Governance" title="Notes on Security &amp; Governance">📝 Notes</button>
-    </div>
-    <div class="card-sub">Defence in depth, RBAC + DAC, privilege chains, authentication &amp; network policies, dynamic masking, row access policies, tags &amp; classification, encryption.</div>
-    <div class="card-meta"><span class="tag s">9 simulators</span><span class="tag q">19 Q&amp;As</span><span class="tag">14 quiz</span></div>
-    <div class="cta">Open module</div>
-  </a>
-
-  <a class="card cost" href="module09/">
-    <div class="card-num">MODULE 09</div>
-    <div class="card-title-row">
-      <div class="card-title">Cost Optimization</div>
-      <button class="topic-note-btn" type="button" data-topic="Module 09: Cost Optimization" title="Notes on Cost Optimization">📝 Notes</button>
-    </div>
-    <div class="card-sub">Three cost buckets, warehouse fleet tuning, storage lifecycle, serverless &amp; cloud-services billing, resource monitors, visibility &amp; attribution, investigation playbook.</div>
-    <div class="card-meta"><span class="tag s">7 simulators</span><span class="tag q">18 Q&amp;As</span><span class="tag">14 quiz</span></div>
-    <div class="cta">Open module</div>
-  </a>
-
-  <a class="card share" href="module10/">
-    <div class="card-num">MODULE 10</div>
-    <div class="card-title-row">
-      <div class="card-title">Data Sharing &amp; Collaboration</div>
-      <button class="topic-note-btn" type="button" data-topic="Module 10: Data Sharing &amp; Collaboration" title="Notes on Data Sharing &amp; Collaboration">📝 Notes</button>
-    </div>
-    <div class="card-sub">Secure Data Sharing, reader accounts, cross-region &amp; cross-cloud sharing, listings &amp; Marketplace, Data Clean Rooms, Native Apps, governance in sharing.</div>
-    <div class="card-meta"><span class="tag s">7 simulators</span><span class="tag q">19 Q&amp;As</span><span class="tag">14 quiz</span></div>
-    <div class="cta">Open module</div>
-  </a>
-
-  <a class="card ai" href="module11/">
-    <div class="card-num">MODULE 11</div>
-    <div class="card-title-row">
-      <div class="card-title">Snowpark &amp; Cortex AI</div>
-      <button class="topic-note-btn" type="button" data-topic="Module 11: Snowpark &amp; Cortex AI" title="Notes on Snowpark &amp; Cortex AI">📝 Notes</button>
-    </div>
-    <div class="card-sub">DataFrames &amp; lazy evaluation, UDFs/UDTFs/vectorized, Container Services, Cortex AI SQL functions, Vectors &amp; RAG, Cortex Analyst, Snowflake ML.</div>
-    <div class="card-meta"><span class="tag s">8 simulators</span><span class="tag q">19 Q&amp;As</span><span class="tag">13 quiz</span></div>
-    <div class="cta">Open module</div>
-  </a>
-
-  <a class="card sql" href="module12/">
-    <div class="card-num">MODULE 12</div>
-    <div class="card-title-row">
-      <div class="card-title">Advanced SQL</div>
-      <button class="topic-note-btn" type="button" data-topic="Module 12: Advanced SQL" title="Notes on Advanced SQL">📝 Notes</button>
-    </div>
-    <div class="card-sub">Logical execution order, window functions deep dive, QUALIFY &amp; top-N, recursive CTEs, ROLLUP/CUBE/PIVOT, special joins (ASOF, anti), MATCH_RECOGNIZE, 11-problem bank.</div>
-    <div class="card-meta"><span class="tag s">8 simulators</span><span class="tag q">21 Q&amp;As</span><span class="tag">14 quiz</span></div>
-    <div class="cta">Open module</div>
-  </a>
-
-  <a class="card mod" href="module13/">
-    <div class="card-num">MODULE 13</div>
-    <div class="card-title-row">
-      <div class="card-title">Modeling &amp; Tooling</div>
-      <button class="topic-note-btn" type="button" data-topic="Module 13: Modeling &amp; Tooling" title="Notes on Modeling &amp; Tooling">📝 Notes</button>
-    </div>
-    <div class="card-sub">Dimensional modeling, SCD types, Data Vault 2.0, medallion architecture, keys &amp; constraints, dbt with Snowflake, orchestration &amp; CI/CD blue-green deployments.</div>
-    <div class="card-meta"><span class="tag s">8 simulators</span><span class="tag q">21 Q&amp;As</span><span class="tag">14 quiz</span></div>
-    <div class="cta">Open module</div>
-  </a>
-
-</div>
-
-<div class="sec-div"><h2>Extended Modules</h2><span>Staff / Architect Level · Modules 14 – 16</span></div>
-<div class="grid">
-
-  <a class="card gov" href="module14/">
-    <div class="card-num">MODULE 14</div>
-    <div class="card-title-row">
-      <div class="card-title">Enterprise Architecture &amp; Governance</div>
-      <button class="topic-note-btn" type="button" data-topic="Module 14: Enterprise Architecture &amp; Governance" title="Notes on Enterprise Architecture &amp; Governance">📝 Notes</button>
-    </div>
-    <div class="card-sub">Late-arriving data patterns, multi-account strategy, AWS/Azure PrivateLink, Tri-secret Compose, Snowflake Horizon, Object Tagging, SYSTEM$CLASSIFY, compliance (SOC 2 / HIPAA / PCI-DSS).</div>
-    <div class="card-meta"><span class="tag n">9 lab steps</span><span class="tag q">10 Q&amp;As</span><span class="tag">5 quiz</span></div>
-    <div class="cta">Open module</div>
-  </a>
-
-  <a class="card int" href="module15/">
-    <div class="card-num">MODULE 15</div>
-    <div class="card-title-row">
-      <div class="card-title">External Integrations</div>
-      <button class="topic-note-btn" type="button" data-topic="Module 15: External Integrations" title="Notes on External Integrations">📝 Notes</button>
-    </div>
-    <div class="card-sub">Kafka Connector (RSA auth, buffer tuning, schema evolution), Spark Connector vs Snowpark, CDC end-to-end (Debezium → Kafka → Snowpipe Streaming), External Functions &amp; API Integration.</div>
-    <div class="card-meta"><span class="tag n">6 lab steps</span><span class="tag q">7 Q&amp;As</span><span class="tag">5 quiz</span></div>
-    <div class="cta">Open module</div>
-  </a>
-
-  <a class="card iac" href="module16/">
-    <div class="card-num">MODULE 16</div>
-    <div class="card-title-row">
-      <div class="card-title">IaC, CI/CD &amp; Orchestration</div>
-      <button class="topic-note-btn" type="button" data-topic="Module 16: IaC, CI/CD &amp; Orchestration" title="Notes on IaC, CI/CD &amp; Orchestration">📝 Notes</button>
-    </div>
-    <div class="card-sub">Terraform for Snowflake (warehouses, roles, grants, resource monitors), native Git Integration, dbt + Airflow / Prefect / Dagster, GitHub Actions CI/CD, blue-green deployments.</div>
-    <div class="card-meta"><span class="tag n">4 lab steps</span><span class="tag q">7 Q&amp;As</span><span class="tag">5 quiz</span></div>
-    <div class="cta">Open module</div>
-  </a>
-
-</div>
-
-<div class="sec-div"><h2>Hands-On Snowsight SQL Labs</h2><span>15 Labs · 216 Guided Steps · <a href="snowflake_learning_labs_FINAL.html" style="color:var(--ice);text-decoration:none;font-weight:700">Open Full Hub →</a></span></div>
-<div class="grid" id="labsGrid">
-
-  <a class="card arch" href="snowflake_learning_labs_FINAL.html#architecture_dev" data-types="lab">
-    <div class="card-num">LAB 01 · FOUNDATIONS <span class="card-new">REAL SQL</span></div>
-    <div class="card-title-row">
-      <div class="card-title">Architecture, Snowpark, UDFs &amp; Cortex</div>
-      <button class="topic-note-btn" type="button" data-topic="Lab 01: Architecture, Snowpark, UDFs and Cortex" title="Notes on Lab 01">📝 Notes</button>
-    </div>
-    <div class="card-sub">Query flow through cloud services, compute &amp; storage, plus Snowpark DataFrames, UDFs, stored procedures and Cortex AI.</div>
-    <div class="card-meta"><span class="tag s">16 steps</span><span class="tag">Snowpark</span><span class="tag">UDFs</span></div>
-    <div class="cta">Open lab</div>
-  </a>
-
-  <a class="card perf" href="snowflake_learning_labs_FINAL.html#micro_partitions" data-types="lab simulator">
-    <div class="card-num">LAB 02 · FOUNDATIONS <span class="card-new">SIMULATED</span></div>
-    <div class="card-title-row">
-      <div class="card-title">Micro-partitions, Pruning &amp; Transient Tables</div>
-      <button class="topic-note-btn" type="button" data-topic="Lab 02: Micro-partitions, pruning and transient tables" title="Notes on Lab 02">📝 Notes</button>
-    </div>
-    <div class="card-sub">Interactive explainer of micro-partition storage, pruning ranges, ORDER BY vs clustering keys, and transient tables.</div>
-    <div class="card-meta"><span class="tag n">Explainer</span><span class="tag">Pruning</span><span class="tag">Transient</span></div>
-    <div class="cta">Open explainer</div>
-  </a>
-
-  <a class="card perf" href="snowflake_learning_labs_FINAL.html#mp_lab" data-types="lab">
-    <div class="card-num">LAB 03 · FOUNDATIONS <span class="card-new">REAL SQL</span></div>
-    <div class="card-title-row">
-      <div class="card-title">Micro-partitions Lab: Loading &amp; Clustering</div>
-      <button class="topic-note-btn" type="button" data-topic="Lab 03: Micro-partitions lab: loading, pruning and clustering" title="Notes on Lab 03">📝 Notes</button>
-    </div>
-    <div class="card-sub">Watch tables split into micro-partitions by size, inspect Query Profile pruning, test MIN/MAX filters and clustering depth.</div>
-    <div class="card-meta"><span class="tag s">17 steps</span><span class="tag">Clustering</span><span class="tag">Pruning</span></div>
-    <div class="cta">Open lab</div>
-  </a>
-
-  <a class="card prot" href="snowflake_learning_labs_FINAL.html#table_types" data-types="lab">
-    <div class="card-num">LAB 04 · FOUNDATIONS <span class="card-new">REAL SQL</span></div>
-    <div class="card-title-row">
-      <div class="card-title">Table Types: Permanent, Transient, Iceberg &amp; More</div>
-      <button class="topic-note-btn" type="button" data-topic="Lab 04: Table types lab: permanent, transient, temporary, external, dynamic, hybrid, Iceberg and event" title="Notes on Lab 04">📝 Notes</button>
-    </div>
-    <div class="card-sub">Build &amp; compare Permanent, Transient, Temporary, External, Dynamic, Hybrid, Iceberg and Event tables in SQL.</div>
-    <div class="card-meta"><span class="tag s">16 steps</span><span class="tag">Iceberg</span><span class="tag">Hybrid</span></div>
-    <div class="cta">Open lab</div>
-  </a>
-
-  <a class="card perf" href="snowflake_learning_labs_FINAL.html#query_profile" data-types="lab simulator">
-    <div class="card-num">LAB 05 · PERFORMANCE &amp; COST <span class="card-new">SIMULATED</span></div>
-    <div class="card-title-row">
-      <div class="card-title">Query Profile &amp; Warehouse Sizing</div>
-      <button class="topic-note-btn" type="button" data-topic="Lab 05: Query Profile and warehouse sizing" title="Notes on Lab 05">📝 Notes</button>
-    </div>
-    <div class="card-sub">Simulated Snowsight Query Profile: pruning, spilling, caching, exploding joins, queuing, and scaling up vs out.</div>
-    <div class="card-meta"><span class="tag n">15 steps</span><span class="tag">Spilling</span><span class="tag">Queuing</span></div>
-    <div class="cta">Open lab</div>
-  </a>
-
-  <a class="card cost" href="snowflake_learning_labs_FINAL.html#caching_cost" data-types="lab">
-    <div class="card-num">LAB 06 · PERFORMANCE &amp; COST <span class="card-new">REAL SQL</span></div>
-    <div class="card-title-row">
-      <div class="card-title">Caching, Credits &amp; Cost Controls</div>
-      <button class="topic-note-btn" type="button" data-topic="Lab 06: Caching, credits and cost controls" title="Notes on Lab 06">📝 Notes</button>
-    </div>
-    <div class="card-sub">Result, warehouse &amp; metadata caches, 60-second credit billing, resource monitors, timeouts, and ACCOUNT_USAGE queries.</div>
-    <div class="card-meta"><span class="tag s">15 steps</span><span class="tag">Credits</span><span class="tag">Monitors</span></div>
-    <div class="cta">Open lab</div>
-  </a>
-
-  <a class="card perf" href="snowflake_learning_labs_FINAL.html#perf_features" data-types="lab simulator">
-    <div class="card-num">LAB 07 · PERFORMANCE &amp; COST <span class="card-new">SIMULATED</span></div>
-    <div class="card-title-row">
-      <div class="card-title">Clustering, Search Opt, MVs &amp; QAS</div>
-      <button class="topic-note-btn" type="button" data-topic="Lab 07: Clustering, search optimization, materialized views and query acceleration" title="Notes on Lab 07">📝 Notes</button>
-    </div>
-    <div class="card-sub">Compare clustering keys, Search Optimization Service, Materialized Views and Query Acceleration by query pattern &amp; cost.</div>
-    <div class="card-meta"><span class="tag n">15 steps</span><span class="tag">SOS</span><span class="tag">QAS</span></div>
-    <div class="cta">Open lab</div>
-  </a>
-
-  <a class="card prot" href="snowflake_learning_labs_FINAL.html#time_travel" data-types="lab">
-    <div class="card-num">LAB 08 · DATA PROTECTION <span class="card-new">REAL SQL</span></div>
-    <div class="card-title-row">
-      <div class="card-title">Time Travel, Fail-safe &amp; Zero-Copy Cloning</div>
-      <button class="topic-note-btn" type="button" data-topic="Lab 08: Time Travel, Fail-safe, cloning and table types" title="Notes on Lab 08">📝 Notes</button>
-    </div>
-    <div class="card-sub">Query the past with AT/BEFORE, UNDROP dropped tables, create zero-copy clones, and understand Fail-safe &amp; retention cost.</div>
-    <div class="card-meta"><span class="tag s">16 steps</span><span class="tag">UNDROP</span><span class="tag">Clone</span></div>
-    <div class="cta">Open lab</div>
-  </a>
-
-  <a class="card load" href="snowflake_learning_labs_FINAL.html#loading" data-types="lab">
-    <div class="card-num">LAB 09 · LOADING &amp; PIPELINES <span class="card-new">REAL SQL</span></div>
-    <div class="card-title-row">
-      <div class="card-title">Loading from S3: Stages, COPY &amp; Snowpipe</div>
-      <button class="topic-note-btn" type="button" data-topic="Lab 09: Loading data from S3: stages, COPY INTO, Snowpipe and JSON" title="Notes on Lab 09">📝 Notes</button>
-    </div>
-    <div class="card-sub">Connect S3 via storage integration, define file formats, run COPY INTO with ON_ERROR/VALIDATION_MODE, Snowpipe &amp; VARIANT.</div>
-    <div class="card-meta"><span class="tag s">13 steps</span><span class="tag">COPY INTO</span><span class="tag">JSON</span></div>
-    <div class="cta">Open lab</div>
-  </a>
-
-  <a class="card dyn" href="snowflake_learning_labs_FINAL.html#pipelines" data-types="lab">
-    <div class="card-num">LAB 10 · LOADING &amp; PIPELINES <span class="card-new">REAL SQL</span></div>
-    <div class="card-title-row">
-      <div class="card-title">Pipelines: Streams, Tasks, MERGE &amp; Dynamic Tables</div>
-      <button class="topic-note-btn" type="button" data-topic="Lab 10: Pipelines: streams, tasks, MERGE and dynamic tables" title="Notes on Lab 10">📝 Notes</button>
-    </div>
-    <div class="card-sub">Build incremental pipelines with Streams (METADATA$), Task DAGs, MERGE, SCD Type 2, and compare with Dynamic Tables.</div>
-    <div class="card-meta"><span class="tag s">15 steps</span><span class="tag">Streams</span><span class="tag">Tasks</span></div>
-    <div class="cta">Open lab</div>
-  </a>
-
-  <a class="card sql" href="snowflake_learning_labs_FINAL.html#sql_patterns" data-types="lab">
-    <div class="card-num">LAB 11 · MODELING &amp; SQL <span class="card-new">REAL SQL</span></div>
-    <div class="card-title-row">
-      <div class="card-title">SQL Patterns: QUALIFY, Windows &amp; Constraints</div>
-      <button class="topic-note-btn" type="button" data-topic="Lab 11: SQL patterns every Snowflake data engineer needs" title="Notes on Lab 11">📝 Notes</button>
-    </div>
-    <div class="card-sub">QUALIFY, window functions, NULL traps, sequences/IDENTITY, unenforced constraints, deduplication and Top-N exercises.</div>
-    <div class="card-meta"><span class="tag s">15 steps</span><span class="tag">QUALIFY</span><span class="tag">Dedup</span></div>
-    <div class="cta">Open lab</div>
-  </a>
-
-  <a class="card mod" href="snowflake_learning_labs_FINAL.html#star_schema" data-types="lab">
-    <div class="card-num">LAB 12 · MODELING &amp; SQL <span class="card-new">REAL SQL</span></div>
-    <div class="card-title-row">
-      <div class="card-title">Star Schema vs Snowflake, OBT, 3NF &amp; Data Vault</div>
-      <button class="topic-note-btn" type="button" data-topic="Lab 12: Star schema compared with snowflake, galaxy, OBT, 3NF and Data Vault" title="Notes on Lab 12">📝 Notes</button>
-    </div>
-    <div class="card-sub">Query the same retail dataset across six schemas, compare join cost, and handle SCD Type 1 and Type 2 history.</div>
-    <div class="card-meta"><span class="tag s">15 steps</span><span class="tag">Star</span><span class="tag">SCD2</span></div>
-    <div class="cta">Open lab</div>
-  </a>
-
-  <a class="card sec" href="snowflake_learning_labs_FINAL.html#security" data-types="lab">
-    <div class="card-num">LAB 13 · SECURITY &amp; SHARING <span class="card-new">REAL SQL</span></div>
-    <div class="card-title-row">
-      <div class="card-title">Access Control &amp; Data Governance</div>
-      <button class="topic-note-btn" type="button" data-topic="Lab 13: Access control and data governance" title="Notes on Lab 13">📝 Notes</button>
-    </div>
-    <div class="card-sub">RBAC, role hierarchy, future grants, masking policies, row access policies, tags, secure views and network policies.</div>
-    <div class="card-meta"><span class="tag s">15 steps</span><span class="tag">RBAC</span><span class="tag">Masking</span></div>
-    <div class="cta">Open lab</div>
-  </a>
-
-  <a class="card share" href="snowflake_learning_labs_FINAL.html#sharing" data-types="lab">
-    <div class="card-num">LAB 14 · SECURITY &amp; SHARING <span class="card-new">REAL SQL</span></div>
-    <div class="card-title-row">
-      <div class="card-title">Data Sharing &amp; Cross-Region Replication</div>
-      <button class="topic-note-btn" type="button" data-topic="Lab 14: Data sharing and replication" title="Notes on Lab 14">📝 Notes</button>
-    </div>
-    <div class="card-sub">Share live data without copying, create reader accounts, verify who pays compute, and run replication/failover drills.</div>
-    <div class="card-meta"><span class="tag s">15 steps</span><span class="tag">Shares</span><span class="tag">Failover</span></div>
-    <div class="cta">Open lab</div>
-  </a>
-
-  <a class="card ai" href="snowflake_learning_labs_FINAL.html#cortex_ai" data-types="lab">
-    <div class="card-num">LAB 15 · AI &amp; ML <span class="card-new">REAL SQL</span></div>
-    <div class="card-title-row">
-      <div class="card-title">Snowflake Cortex AI: AISQL, RAG, Analyst &amp; ML</div>
-      <button class="topic-note-btn" type="button" data-topic="Lab 15: Snowflake Cortex AI: AISQL functions, Search &amp; RAG, Analyst, Agents and ML" title="Notes on Lab 15">📝 Notes</button>
-    </div>
-    <div class="card-sub">AI_COMPLETE, AI_CLASSIFY, AI_FILTER, Cortex Search RAG, Cortex Analyst semantic YAML, Cortex Agents and ML forecasting.</div>
-    <div class="card-meta"><span class="tag s">18 steps</span><span class="tag">RAG</span><span class="tag">Agents</span></div>
-    <div class="cta">Open lab</div>
-  </a>
-
-</div>
-
-<div class="sec-div"><h2>Interactive Simulators &amp; Backend Labs</h2><span>Engine Execution · AWS S3 Console · CloudShell · boto3</span></div>
-<div class="grid wide">
-
-  <a class="card sql" href="snowflake_query_backend_lab_FINAL.html" data-types="simulator lab">
-    <div class="card-num">SIMULATOR + SQL PLAYGROUND <span class="card-new">51 SCENARIOS</span></div>
-    <div class="card-title-row">
-      <div class="card-title">Snowflake Query Backend Lab</div>
-      <button class="topic-note-btn" type="button" data-topic="Hands-On: Query Backend Lab &amp; S3 Simulator" title="Notes on Query Backend Lab">📝 Notes</button>
-    </div>
-    <div class="card-sub">Step through Cloud Services, Micro-partition pruning, Warehouse workers and Result Cache across 51 SQL scenarios (Q0–Q25, GROUP BY, Tricky JOINs, Bonus) with an interactive SQLite WASM Playground.</div>
-    <div class="card-meta"><span class="tag s">51 scenarios</span><span class="tag n">8 levels</span><span class="tag q">Live SQL Playground</span></div>
-    <div class="cta">Launch backend lab</div>
-  </a>
-
-  <a class="card ing" href="S3_Simulator_FINAL.html" data-types="simulator lab">
-    <div class="card-num">AWS S3 CONSOLE SIMULATOR <span class="card-new">21 GUIDED LABS</span></div>
-    <div class="card-title-row">
-      <div class="card-title">AWS S3 Console, CloudShell &amp; Snowpipe Lab</div>
-      <button class="topic-note-btn" type="button" data-topic="Hands-On: Query Backend Lab &amp; S3 Simulator" title="Notes on S3 Simulator">📝 Notes</button>
-    </div>
-    <div class="card-sub">Practice S3 buckets, IAM &amp; bucket policies, Block Public Access, Time Machine, CloudShell CLI, Python boto3, and the S3 → Snowflake data lake + SQS Snowpipe auto-ingest lab.</div>
-    <div class="card-meta"><span class="tag s">21 guided labs</span><span class="tag n">CloudShell + boto3</span><span class="tag q">S3 → Snowflake</span></div>
-    <div class="cta">Launch S3 simulator</div>
-  </a>
-
-</div>
-
-<div class="sec-div"><h2>Deep-Dive Topic Labs</h2><span>Multi-file practice sets · Simulator · Step-by-step · Q&amp;A · Visual guide</span></div>
-<div class="grid wide">
-
-  <div class="card compound deep-sql" data-types="guide lab simulator">
-    <div class="card-num">DEEP DIVE · 5 FILES</div>
-    <div class="card-title-row">
-      <div class="card-title">SnowSQL, Streams &amp; Tasks</div>
-      <button class="topic-note-btn" type="button" data-topic="Deep Dive: SnowSQL, Streams &amp; Tasks" title="Notes on SnowSQL, Streams &amp; Tasks">📝 Notes</button>
-    </div>
-    <div class="card-sub">Internal staging with PUT, CSV COPY, standard &amp; append-only streams, Task DAGs, nightly MERGE pipelines, schema drift, monitoring. 44-step hands-on lab with batch CSV data.</div>
-    <div class="card-meta"><span class="tag s">44 lab steps</span><span class="tag q">174 Q&amp;As</span><span class="tag">22 quiz</span></div>
-    <div class="file-links">
-      <a class="file-link" href="SnowSQL_Streams_Tasks_Step_by_Step_Guide_FINAL.html">
-        <span class="fl-type fl-guide">GUIDE</span><span class="fl-name">Full Step-by-Step Guide — 44 steps, side nav, all SQL</span><span class="fl-arr">→</span>
-      </a>
-      <a class="file-link" href="SnowSQL_Streams_Tasks_Lab_Step_by_Step_Guide_FINAL.html">
-        <span class="fl-type fl-lab">LAB</span><span class="fl-name">Lab Step-by-Step Guide — checkpoints &amp; pitfalls</span><span class="fl-arr">→</span>
-      </a>
-      <a class="file-link" href="SnowSQL_Streams_Tasks_Lab_Simulator_FINAL.html">
-        <span class="fl-type fl-sim">SIM</span><span class="fl-name">Lab Simulator — interactive terminal emulator</span><span class="fl-arr">→</span>
-      </a>
-      <a class="file-link" href="SnowSQL_Streams_Tasks_Visual_Guide_FINAL.html">
-        <span class="fl-type fl-vis">VIS</span><span class="fl-name">Visual Guide — diagrams, cheat sheet, self-quiz</span><span class="fl-arr">→</span>
-      </a>
-      <a class="file-link" href="SnowSQL_Streams_Tasks_Interview_QA_FINAL.html">
-        <span class="fl-type fl-qa">Q&amp;A</span><span class="fl-name">Interview Q&amp;A — 174 questions, filter by topic &amp; level</span><span class="fl-arr">→</span>
-      </a>
-    </div>
-  </div>
-
-  <div class="card compound deep-json" data-types="guide lab simulator">
-    <div class="card-num">DEEP DIVE · 4 FILES</div>
-    <div class="card-title-row">
-      <div class="card-title">JSON S3 → Snowflake</div>
-      <button class="topic-note-btn" type="button" data-topic="Deep Dive: JSON S3 → Snowflake" title="Notes on JSON S3 → Snowflake">📝 Notes</button>
-    </div>
-    <div class="card-sub">External S3 stage &amp; IAM trust, JSON file formats, COPY INTO VARIANT, STRIP_OUTER_ARRAY, FLATTEN, LATERAL, bad-data quarantine, Snowpipe auto-ingest, schema drift handling. 9-step lab.</div>
-    <div class="card-meta"><span class="tag s">9 lab steps</span><span class="tag q">158 Q&amp;As</span><span class="tag">18 quiz</span></div>
-    <div class="file-links">
-      <a class="file-link" href="JSON_S3_to_Snowflake_Lab_Step_by_Step_Guide_FINAL.html">
-        <span class="fl-type fl-lab">LAB</span><span class="fl-name">Lab Step-by-Step Guide — 9 steps, checkpoints &amp; pitfalls</span><span class="fl-arr">→</span>
-      </a>
-      <a class="file-link" href="JSON_S3_to_Snowflake_Lab_Simulator_FINAL.html">
-        <span class="fl-type fl-sim">SIM</span><span class="fl-name">Lab Simulator — interactive S3 → Snowflake walkthrough</span><span class="fl-arr">→</span>
-      </a>
-      <a class="file-link" href="JSON_S3_to_Snowflake_Visual_Guide_FINAL.html">
-        <span class="fl-type fl-vis">VIS</span><span class="fl-name">Visual Guide — architecture diagrams, gotchas, cheat sheet</span><span class="fl-arr">→</span>
-      </a>
-      <a class="file-link" href="JSON_S3_to_Snowflake_Interview_QA_FINAL.html">
-        <span class="fl-type fl-qa">Q&amp;A</span><span class="fl-name">Interview Q&amp;A — 158 questions, filter by topic &amp; level</span><span class="fl-arr">→</span>
-      </a>
-    </div>
-  </div>
-
-</div>
-
-<p class="note" style="margin-top:40px">Numbers in course cards are approximate per-module averages. Simulator outputs and benchmark figures throughout the course are illustrative — verify fast-changing limits (Cortex model names, VARIANT size, Gen2 warehouse rates, backup feature names) against the Snowflake docs before your interview.</p>
+</main>
 
 <footer>
   <span>Owned &amp; Copyright &copy; 2026 All Rights Reserved by <a href="https://100ravpatel.github.io/Portfolio/" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;white-space:nowrap">Saurav Patel</a></span>
@@ -797,7 +457,7 @@ footer{padding:36px 28px;text-align:center;color:var(--ink3);font-size:12px;font
     <a class="social-icon-link ig" href="https://www.instagram.com/100ravpatel/" target="_blank" rel="noopener" title="Instagram · Saurav Patel" aria-label="Instagram">
       <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true">
         <defs>
-          <linearGradient id="ig-grad-idx" x1="0%" y1="100%" x2="100%" y2="0%">
+          <linearGradient id="ig-grad" x1="0%" y1="100%" x2="100%" y2="0%">
             <stop offset="0%" stop-color="#f09433"/>
             <stop offset="25%" stop-color="#e6683c"/>
             <stop offset="50%" stop-color="#dc2743"/>
@@ -805,7 +465,7 @@ footer{padding:36px 28px;text-align:center;color:var(--ink3);font-size:12px;font
             <stop offset="100%" stop-color="#bc1888"/>
           </linearGradient>
         </defs>
-        <rect width="24" height="24" rx="5.5" fill="url(#ig-grad-idx)"/>
+        <rect width="24" height="24" rx="5.5" fill="url(#ig-grad)"/>
         <rect x="5.2" y="5.2" width="13.6" height="13.6" rx="4" fill="none" stroke="#ffffff" stroke-width="1.8"/>
         <circle cx="12" cy="12" r="3.2" fill="none" stroke="#ffffff" stroke-width="1.8"/>
         <circle cx="15.8" cy="8.2" r="1.1" fill="#ffffff"/>
@@ -814,84 +474,738 @@ footer{padding:36px 28px;text-align:center;color:var(--ink3);font-size:12px;font
   </span>
 </footer>
 
+<!-- GOOGLE SHEETS LOGIN / REGISTER / CONFIG MODAL -->
+<div class="modal-backdrop" id="authModal" role="dialog" aria-modal="true" aria-labelledby="authModalTitle">
+  <div class="modal">
+    <div class="modal-head">
+      <h3 id="authModalTitle">Google Sheets Access</h3>
+      <button class="btn" id="closeModalBtn" type="button">✕</button>
+    </div>
+
+    <div class="modal-tabs">
+      <button class="m-tab active" type="button" data-mtab="login">Sign In</button>
+      <button class="m-tab" type="button" data-mtab="register">Request Access</button>
+      <button class="m-tab" id="configTabBtn" type="button" data-mtab="config" style="display:none">Sheet URL</button>
+    </div>
+
+    <div class="msg-box" id="authMsg"></div>
+
+    <!-- Login Form -->
+    <form id="loginForm">
+      <div class="field">
+        <label for="loginEmail">Email or User ID</label>
+        <input id="loginEmail" type="text" required placeholder="you@example.com or user id">
+      </div>
+      <div class="field">
+        <label for="loginPass">Password</label>
+        <input id="loginPass" type="password" required placeholder="Enter password">
+      </div>
+      <div style="display:flex;gap:8px;margin-top:14px">
+        <button class="btn primary" type="submit" style="flex:1;justify-content:center">Sign In</button>
+      </div>
+    </form>
+
+    <!-- Register Form -->
+    <form id="registerForm" style="display:none">
+      <div class="field">
+        <label for="regName">Full Name</label>
+        <input id="regName" type="text" required placeholder="Your name">
+      </div>
+      <div class="field">
+        <label for="regEmail">Email or User ID (unique)</label>
+        <input id="regEmail" type="text" required minlength="3" placeholder="you@example.com or unique user id">
+      </div>
+      <div class="field">
+        <label for="regPass">Create Password</label>
+        <input id="regPass" type="password" required minlength="4" placeholder="Choose a password">
+      </div>
+      <button class="btn primary" type="submit" style="width:100%;justify-content:center;margin-top:8px">Submit Access Request</button>
+      <p style="font-size:12px;color:var(--ink3);margin-top:10px;text-align:center">New requests start in <strong>pending</strong> state until approved by the owner. For urgent access, email <a href="mailto:wasteofbyte@gmail.com" style="color:var(--ice)">wasteofbyte@gmail.com</a>.</p>
+    </form>
+
+    <!-- Sheet URL Config -->
+    <form id="configForm" style="display:none">
+      <div class="field">
+        <label for="sheetUrlInput">Google Apps Script Web App URL (/exec)</label>
+        <input id="sheetUrlInput" type="url" placeholder="https://script.google.com/macros/s/.../exec">
+      </div>
+      <button class="btn primary" type="submit" style="width:100%;justify-content:center">Save Sheet URL</button>
+      <p style="font-size:12px;color:var(--ink3);margin-top:10px">Owner-only configuration.</p>
+    </form>
+  </div>
+</div>
+
+<!-- OWNER APPROVALS MODAL (Admin only) -->
+<div class="modal-backdrop" id="adminModal" role="dialog" aria-modal="true" aria-labelledby="adminModalTitle">
+  <div class="modal" style="max-width:640px">
+    <div class="modal-head">
+      <h3 id="adminModalTitle">👥 Learner Access Approvals</h3>
+      <button class="btn" id="closeAdminModalBtn" type="button">✕</button>
+    </div>
+    <div class="msg-box" id="adminMsg"></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <span style="font-size:13px;color:var(--ink2)">Approve or revoke learner requests directly from here.</span>
+      <button class="btn" id="refreshUsersBtn" type="button">↻ Refresh</button>
+    </div>
+    <div id="adminUsersList" style="max-height:360px;overflow-y:auto;display:flex;flex-direction:column;gap:8px"></div>
+  </div>
+</div>
+
 <script>
-const root = document.documentElement;
-root.dataset.theme = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-try{ const s=localStorage.getItem('sf-index-theme'); if(s) root.dataset.theme=s; }catch(e){}
-document.getElementById('themeBtn').onclick = () => {
-  const next = root.dataset.theme === 'dark' ? 'light' : 'dark';
-  root.dataset.theme = next;
-  try{ localStorage.setItem('sf-index-theme', next); }catch(e){}
-};
+(() => {
+  'use strict';
 
-// Content-type & keyword filtering for Course Home cards
-(function initHomeFilters(){
-  document.querySelectorAll('a.card[href^="module"]').forEach(c => {
-    if (!c.dataset.types) c.dataset.types = 'learning';
+  // Deployed Google Apps Script Web App URL:
+  const DEFAULT_AUTH_SHEET_URL = 'https://script.google.com/macros/s/AKfycbwPk-aGNupW_zXVEDra4uvhdBVQrAELt5FOO7GpK6h-hcwY4A3JeKp1jrNGFVmTiZE/exec';
+  const LS_SHEET_URL = 'sf_academy_sheet_url_v1';
+  const LS_USER = 'sf_academy_user_v1';
+  const LS_PROGRESS = 'sf_academy_progress_v1';
+  const LS_LAST_ITEM = 'sf_academy_last_url_v1';
+
+  // Extensible Track Definitions — add future courses/tracks here!
+  const TRACKS = [
+    { id: 'all', name: 'All Tracks', icon: '🌐', desc: 'Complete library across Snowflake, SQL labs, simulators, and interview guides.', color: 'var(--ice)' },
+    { id: 'snowflake', name: 'Snowflake Core & Architect', icon: '❄️', desc: '16 comprehensive modules from architecture to Terraform & CDC.', color: 'var(--ice)' },
+    { id: 'labs', name: 'Snowsight SQL Labs', icon: '🧪', desc: '15 guided hands-on labs (216 steps) with interactive worksheets.', color: 'var(--teal)' },
+    { id: 'simulators', name: 'Backend & AWS S3 Simulators', icon: '⚡', desc: '51 query execution scenarios + 21 AWS S3 & Snowpipe labs.', color: 'var(--violet)' },
+    { id: 'deepdives', name: 'Interview Deep-Dive Suites', icon: '📖', desc: '330+ specialized Q&As on Streams, Tasks, SnowSQL & JSON.', color: 'var(--amber)' },
+    { id: 'upcoming', name: 'Next Track (Extensible Slot)', icon: '🚀', desc: 'Template ready for dbt, Airflow, Python, or Spark tracks.', color: 'var(--orange)' }
+  ];
+
+  const CATALOG = [
+    // Snowflake Core & Architect (16)
+    { id: 'm01', track: 'snowflake', code: 'Module 01', title: 'Architecture', desc: 'Three-layer design, micro-partitions, pruning, warehouses, multi-cluster, caches & billing.', meta: '12 sims · 16 Q&As', href: 'module01/', color: 'var(--amber)' },
+    { id: 'm02', track: 'snowflake', code: 'Module 02', title: 'Load & Automate', desc: 'SnowSQL, PUT/COPY deep dive, unstructured data, streams, tasks & stored procedures.', meta: '10 sims · 26 Q&As', href: 'module02/', color: 'var(--teal)' },
+    { id: 'm03', track: 'snowflake', code: 'Module 03', title: 'Performance Tuning', desc: 'Query Profile mastery, clustering keys, Search Optimization, QAS, MVs & anti-patterns.', meta: '9 sims · 19 Q&As', href: 'module03/', color: 'var(--ice)' },
+    { id: 'm04', track: 'snowflake', code: 'Module 04', title: 'Data Ingestion', desc: 'Stages, storage integrations, COPY, file sizing, Snowpipe, Streaming & Iceberg tables.', meta: '9 sims · 20 Q&As', href: 'module04/', color: 'var(--violet)' },
+    { id: 'm05', track: 'snowflake', code: 'Module 05', title: 'Dynamic Tables & Transforms', desc: 'Declarative pipelines, target lag, incremental refresh, MERGE, SCD & UDFs.', meta: '10 sims · 22 Q&As', href: 'module05/', color: 'var(--emerald)' },
+    { id: 'm06', track: 'snowflake', code: 'Module 06', title: 'Semi-structured Data', desc: 'VARIANT/OBJECT/ARRAY internals, path notation, two kinds of null, FLATTEN & LATERAL.', meta: '7 sims · 19 Q&As', href: 'module06/', color: 'var(--orange)' },
+    { id: 'm07', track: 'snowflake', code: 'Module 07', title: 'Data Protection', desc: 'Micro-partition lifecycle, Time Travel, Fail-safe, table types, cloning & replication.', meta: '7 sims · 19 Q&As', href: 'module07/', color: 'var(--amber)' },
+    { id: 'm08', track: 'snowflake', code: 'Module 08', title: 'Security & Governance', desc: 'RBAC + DAC, privilege chains, network/auth policies, masking, RAP & tagging.', meta: '9 sims · 19 Q&As', href: 'module08/', color: 'var(--red)' },
+    { id: 'm09', track: 'snowflake', code: 'Module 09', title: 'Cost Optimization', desc: 'Three cost buckets, warehouse fleet tuning, serverless billing & resource monitors.', meta: '7 sims · 18 Q&As', href: 'module09/', color: 'var(--teal)' },
+    { id: 'm10', track: 'snowflake', code: 'Module 10', title: 'Data Sharing & Collaboration', desc: 'Secure Data Sharing, reader accounts, cross-region sharing, Marketplace & Native Apps.', meta: '7 sims · 19 Q&As', href: 'module10/', color: 'var(--ice)' },
+    { id: 'm11', track: 'snowflake', code: 'Module 11', title: 'Snowpark & Cortex AI', desc: 'DataFrames, UDFs/UDTFs, Container Services, Cortex AI SQL, Vectors/RAG & Analyst.', meta: '8 sims · 19 Q&As', href: 'module11/', color: 'var(--violet)' },
+    { id: 'm12', track: 'snowflake', code: 'Module 12', title: 'Advanced SQL', desc: 'Execution order, window functions, QUALIFY, recursive CTEs, ASOF & MATCH_RECOGNIZE.', meta: '8 sims · 21 Q&As', href: 'module12/', color: 'var(--emerald)' },
+    { id: 'm13', track: 'snowflake', code: 'Module 13', title: 'Modeling & Tooling', desc: 'Dimensional modeling, SCD types, Data Vault 2.0, medallion, dbt & blue-green CI/CD.', meta: '8 sims · 21 Q&As', href: 'module13/', color: 'var(--orange)' },
+    { id: 'm14', track: 'snowflake', code: 'Module 14', title: 'Enterprise Architecture & Governance', desc: 'Late-arriving data, multi-account strategy, PrivateLink, Horizon & compliance.', meta: '9 steps · 10 Q&As', href: 'module14/', color: 'var(--violet)' },
+    { id: 'm15', track: 'snowflake', code: 'Module 15', title: 'External Integrations', desc: 'Kafka Connector, Spark vs Snowpark, Debezium CDC → Snowpipe Streaming & APIs.', meta: '6 steps · 7 Q&As', href: 'module15/', color: 'var(--orange)' },
+    { id: 'm16', track: 'snowflake', code: 'Module 16', title: 'IaC, CI/CD & Orchestration', desc: 'Terraform for Snowflake, Native Git Integration, dbt + Airflow/Dagster & Actions.', meta: '4 steps · 7 Q&As', href: 'module16/', color: 'var(--emerald)' },
+
+    // Snowsight SQL Labs (15)
+    { id: 'l01', track: 'labs', code: 'Lab 01', title: 'Architecture, Snowpark, UDFs & Cortex', desc: 'Real SQL lab exploring core architecture, Snowpark & Cortex functions.', meta: 'Real SQL · 16 steps', href: 'snowflake_learning_labs_FINAL.html#architecture_dev', color: 'var(--teal)' },
+    { id: 'l02', track: 'labs', code: 'Lab 02', title: 'Micro-partitions, Pruning & Transient Tables', desc: 'Interactive visual explainer of micro-partition metadata pruning.', meta: 'Simulated · Explainer', href: 'snowflake_learning_labs_FINAL.html#micro_partitions', color: 'var(--ice)' },
+    { id: 'l03', track: 'labs', code: 'Lab 03', title: 'Micro-partitions: Loading, Pruning & Clustering', desc: 'Hands-on SQL checking clustering depth and partition pruning.', meta: 'Real SQL · 17 steps', href: 'snowflake_learning_labs_FINAL.html#mp_lab', color: 'var(--teal)' },
+    { id: 'l04', track: 'labs', code: 'Lab 04', title: 'Table Types (Permanent to Iceberg)', desc: 'Compare Permanent, Transient, Temp, Dynamic, Hybrid & Iceberg tables.', meta: 'Real SQL · 16 steps', href: 'snowflake_learning_labs_FINAL.html#table_types', color: 'var(--teal)' },
+    { id: 'l05', track: 'labs', code: 'Lab 05', title: 'Query Profile & Warehouse Sizing', desc: 'Diagnose spilling, skew, and warehouse scaling bottlenecks.', meta: 'Simulated · 15 steps', href: 'snowflake_learning_labs_FINAL.html#query_profile', color: 'var(--ice)' },
+    { id: 'l06', track: 'labs', code: 'Lab 06', title: 'Caching, Credits & Cost Controls', desc: 'Result cache vs SSD cache, resource monitors & credit budgeting.', meta: 'Real SQL · 15 steps', href: 'snowflake_learning_labs_FINAL.html#caching_cost', color: 'var(--teal)' },
+    { id: 'l07', track: 'labs', code: 'Lab 07', title: 'Clustering, Search Optimization, MVs & QAS', desc: 'Choose the right acceleration feature for point lookups vs scans.', meta: 'Simulated · 15 steps', href: 'snowflake_learning_labs_FINAL.html#perf_features', color: 'var(--ice)' },
+    { id: 'l08', track: 'labs', code: 'Lab 08', title: 'Time Travel, Fail-safe & Cloning', desc: 'AT/BEFORE queries, UNDROP, and zero-copy database cloning.', meta: 'Real SQL · 16 steps', href: 'snowflake_learning_labs_FINAL.html#time_travel', color: 'var(--teal)' },
+    { id: 'l09', track: 'labs', code: 'Lab 09', title: 'Loading Data from S3 & Snowpipe', desc: 'External stages, COPY INTO, error handling, Snowpipe & JSON.', meta: 'Real SQL · 13 steps', href: 'snowflake_learning_labs_FINAL.html#loading', color: 'var(--teal)' },
+    { id: 'l10', track: 'labs', code: 'Lab 10', title: 'Pipelines: Streams, Tasks & Dynamic Tables', desc: 'Build CDC pipelines with Streams, Tasks, MERGE & Dynamic Tables.', meta: 'Real SQL · 15 steps', href: 'snowflake_learning_labs_FINAL.html#pipelines', color: 'var(--teal)' },
+    { id: 'l11', track: 'labs', code: 'Lab 11', title: 'SQL Patterns: QUALIFY & Windows', desc: 'Deduplication, ranking, constraints & sequences in Snowsight.', meta: 'Real SQL · 15 steps', href: 'snowflake_learning_labs_FINAL.html#sql_patterns', color: 'var(--teal)' },
+    { id: 'l12', track: 'labs', code: 'Lab 12', title: 'Star Schema, OBT, 3NF & Data Vault', desc: 'Compare analytical warehouse schemas hands-on.', meta: 'Real SQL · 15 steps', href: 'snowflake_learning_labs_FINAL.html#star_schema', color: 'var(--teal)' },
+    { id: 'l13', track: 'labs', code: 'Lab 13', title: 'Access Control & Data Governance', desc: 'RBAC hierarchy, dynamic data masking & row access policies.', meta: 'Real SQL · 15 steps', href: 'snowflake_learning_labs_FINAL.html#security', color: 'var(--teal)' },
+    { id: 'l14', track: 'labs', code: 'Lab 14', title: 'Data Sharing & Cross-Region Replication', desc: 'Shares, reader accounts & database replication groups.', meta: 'Real SQL · 15 steps', href: 'snowflake_learning_labs_FINAL.html#sharing', color: 'var(--teal)' },
+    { id: 'l15', track: 'labs', code: 'Lab 15', title: 'Snowflake Cortex AI: AISQL, RAG & Agents', desc: 'LLM SQL functions, Cortex Search, Analyst & ML workflows.', meta: 'Real SQL · 18 steps', href: 'snowflake_learning_labs_FINAL.html#cortex_ai', color: 'var(--teal)' },
+
+    // Simulators (2)
+    { id: 's01', track: 'simulators', code: 'Simulator 01', title: 'Snowflake Query Backend Lab', desc: 'Step-by-step Cloud Services, Micro-partitions, Warehouse & Result Cache + WASM SQL Playground.', meta: '51 scenarios · 8 levels', href: 'snowflake_query_backend_lab_FINAL.html', color: 'var(--violet)' },
+    { id: 's02', track: 'simulators', code: 'Simulator 02', title: 'AWS S3 Console, CloudShell & boto3', desc: 'Stateful S3 buckets, IAM/bucket policies, CLI, Python SDK & Snowpipe trigger lab.', meta: '21 labs · Time Machine', href: 'S3_Simulator_FINAL.html', color: 'var(--violet)' },
+
+    // Deep-Dive Suites (2) — Classic compound presentation
+    {
+      id: 'd01', track: 'deepdives', code: 'Deep Dive 01',
+      title: 'SnowSQL, Streams & Tasks',
+      desc: 'Internal staging with PUT, CSV COPY, standard & append-only streams, Task DAGs, nightly MERGE pipelines, schema drift, monitoring. 44-step hands-on lab with batch CSV data.',
+      meta: '44 lab steps · 174 Q&As · 22 quiz',
+      tags: [{ t: '44 lab steps', cls: 's' }, { t: '174 Q&As', cls: 'q' }, { t: '22 quiz', cls: '' }],
+      href: 'SnowSQL_Streams_Tasks_Step_by_Step_Guide_FINAL.html',
+      color: 'var(--teal)',
+      files: [
+        { type: 'GUIDE', cls: 'fl-guide', name: 'Full Step-by-Step Guide — 44 steps, side nav, all SQL', href: 'SnowSQL_Streams_Tasks_Step_by_Step_Guide_FINAL.html' },
+        { type: 'LAB', cls: 'fl-lab', name: 'Lab Step-by-Step Guide — checkpoints & pitfalls', href: 'SnowSQL_Streams_Tasks_Lab_Step_by_Step_Guide_FINAL.html' },
+        { type: 'SIM', cls: 'fl-sim', name: 'Lab Simulator — interactive terminal emulator', href: 'SnowSQL_Streams_Tasks_Lab_Simulator_FINAL.html' },
+        { type: 'VIS', cls: 'fl-vis', name: 'Visual Guide — diagrams, cheat sheet, self-quiz', href: 'SnowSQL_Streams_Tasks_Visual_Guide_FINAL.html' },
+        { type: 'Q&A', cls: 'fl-qa', name: 'Interview Q&A — 174 questions, filter by topic & level', href: 'SnowSQL_Streams_Tasks_Interview_QA_FINAL.html' }
+      ]
+    },
+    {
+      id: 'd02', track: 'deepdives', code: 'Deep Dive 02',
+      title: 'JSON S3 → Snowflake',
+      desc: 'External S3 stage, VARIANT, PARSE_JSON, colon/bracket paths, FLATTEN & LATERAL, snowpipe & stream automation, schema-on-read vs promoted columns.',
+      meta: '9 steps · 158 Q&As · 22 quiz',
+      tags: [{ t: '9 lab steps', cls: 's' }, { t: '158 Q&As', cls: 'q' }, { t: '22 quiz', cls: '' }],
+      href: 'JSON_S3_to_Snowflake_Lab_Step_by_Step_Guide_FINAL.html',
+      color: 'var(--amber)',
+      files: [
+        { type: 'LAB', cls: 'fl-lab', name: 'Lab Step-by-Step Guide — S3 stage, VARIANT & FLATTEN', href: 'JSON_S3_to_Snowflake_Lab_Step_by_Step_Guide_FINAL.html' },
+        { type: 'SIM', cls: 'fl-sim', name: 'Lab Simulator — interactive JSON & SQL workbench', href: 'JSON_S3_to_Snowflake_Lab_Simulator_FINAL.html' },
+        { type: 'VIS', cls: 'fl-vis', name: 'Visual Guide — architecture, cheat sheet & quiz', href: 'JSON_S3_to_Snowflake_Visual_Guide_FINAL.html' },
+        { type: 'Q&A', cls: 'fl-qa', name: 'Interview Q&A — 158 questions on semi-structured data', href: 'JSON_S3_to_Snowflake_Interview_QA_FINAL.html' }
+      ]
+    },
+    {
+      id: 'fb01', track: 'deepdives', code: 'Flashback',
+      title: 'Quick Interview Flashback & Self Reality Check',
+      desc: 'Visual SQL scenario explainer, 30-second Snowflake interview answers, common traps, decoder, and self-reality check ("Got it" vs "Not yet" tracking).',
+      meta: 'Visual SQL · Self Check · Traps',
+      tags: [{ t: 'Visual Scenarios', cls: 's' }, { t: 'Interview Flashback', cls: 'q' }, { t: 'Reality Check', cls: '' }],
+      href: 'flashback/',
+      color: 'var(--teal)'
+    }
+  ];
+
+  // State
+  let currentTrack = 'all';
+  let currentStatus = 'all';
+  let searchQuery = '';
+  let user = loadJSON(LS_USER, null);
+  let progress = loadJSON(LS_PROGRESS, { completedIds: [], bookmarks: [], streakDays: 1, lastActive: '' });
+  let isSynced = !!(user && user.mode === 'sheet');
+
+  function loadJSON(key, fallback) {
+    try {
+      const raw = localStorage.getItem(key);
+      return raw ? JSON.parse(raw) : fallback;
+    } catch (e) { return fallback; }
+  }
+  function saveState() {
+    try {
+      if (user) localStorage.setItem(LS_USER, JSON.stringify(user));
+      else localStorage.removeItem(LS_USER);
+      localStorage.setItem(LS_PROGRESS, JSON.stringify(progress));
+    } catch (e) {}
+  }
+  function getSheetUrl() {
+    return localStorage.getItem(LS_SHEET_URL) || DEFAULT_AUTH_SHEET_URL;
+  }
+
+  async function sha256Hex(str) {
+    if (window.crypto && crypto.subtle) {
+      const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+      return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+    return str;
+  }
+
+  function isTrackAllowed(trackId) {
+    if (!user || !user.allowedTracks || user.allowedTracks === 'ALL') return true;
+    const list = String(user.allowedTracks).toLowerCase().split(',').map(s => s.trim());
+    return list.includes('all') || list.includes(trackId.toLowerCase());
+  }
+
+  // Theme
+  const rootEl = document.documentElement;
+  if (localStorage.getItem('sf_theme') === 'dark') rootEl.setAttribute('data-theme', 'dark');
+  document.getElementById('themeBtn').onclick = () => {
+    const next = rootEl.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+    if (next === 'dark') rootEl.setAttribute('data-theme', 'dark');
+    else rootEl.removeAttribute('data-theme');
+    localStorage.setItem('sf_theme', next);
+  };
+
+  // Render Dashboard
+  function renderDashboard() {
+    const total = CATALOG.length;
+    const doneCount = progress.completedIds.length;
+    const pct = Math.round((doneCount / total) * 100);
+    document.getElementById('progPctLabel').textContent = `${pct}% (${doneCount} / ${total})`;
+    document.getElementById('progBarFill').style.width = `${pct}%`;
+    document.getElementById('statDone').textContent = doneCount;
+    document.getElementById('statBookmarks').textContent = progress.bookmarks.length;
+    document.getElementById('statStreak').textContent = (progress.streakDays || 1) + 'd';
+
+    const authBtn = document.getElementById('authBtn');
+    const openAuthBtn = document.getElementById('openAuthFromTools');
+    const syncBtn = document.getElementById('syncNowBtn');
+    const syncLabel = document.getElementById('syncBtnLabel');
+    const greeting = document.getElementById('dashGreeting');
+    const isAdmin = (user && user.role === 'admin') || new URLSearchParams(location.search).get('admin') === '1';
+    const sheetCfgBtn = document.getElementById('sheetConfigBtn');
+    const cfgTabBtn = document.getElementById('configTabBtn');
+    const approvalsBtn = document.getElementById('adminApprovalsBtn');
+    if (sheetCfgBtn) sheetCfgBtn.style.display = isAdmin ? 'inline-flex' : 'none';
+    if (cfgTabBtn) cfgTabBtn.style.display = isAdmin ? 'block' : 'none';
+    if (approvalsBtn) approvalsBtn.style.display = (user && user.role === 'admin') ? 'inline-flex' : 'none';
+
+    if (user) {
+      authBtn.textContent = `👤 ${user.name} · Sign Out`;
+      authBtn.classList.remove('primary');
+      authBtn.classList.add('teal');
+      if (openAuthBtn) {
+        openAuthBtn.textContent = `👤 Sign Out`;
+        openAuthBtn.classList.remove('primary');
+        openAuthBtn.classList.add('teal');
+      }
+      greeting.textContent = `Welcome back, ${user.name}`;
+    } else {
+      authBtn.textContent = '🔐 Sign In';
+      authBtn.classList.add('primary');
+      authBtn.classList.remove('teal');
+      if (openAuthBtn) {
+        openAuthBtn.textContent = '🔐 Sign In / Account';
+        openAuthBtn.classList.add('primary');
+        openAuthBtn.classList.remove('teal');
+      }
+      greeting.textContent = 'Learner Progress';
+    }
+
+    if (syncBtn && syncLabel) {
+      const ok = !!(user && user.mode === 'sheet' && isSynced);
+      syncBtn.classList.toggle('is-synced', ok);
+      syncBtn.classList.toggle('not-synced', !ok);
+      if (ok) {
+        syncLabel.textContent = 'Synced';
+        syncBtn.dataset.tip = 'Up to date ✓';
+        syncBtn.title = 'Up to date ✓';
+      } else if (user && user.mode === 'sheet') {
+        syncLabel.textContent = 'Not in Sync';
+        syncBtn.dataset.tip = 'Not in sync · Click to sync';
+        syncBtn.title = 'Not in sync · Click to sync';
+      } else {
+        syncLabel.textContent = 'Not Synced';
+        syncBtn.dataset.tip = 'Not in sync · Click to sign in & sync';
+        syncBtn.title = 'Not in sync · Click to sign in & sync';
+      }
+    }
+
+    const lastHref = localStorage.getItem(LS_LAST_ITEM);
+    if (lastHref) document.getElementById('continueBtn').href = lastHref;
+  }
+
+  // Render Tracks
+  function renderTracks() {
+    const grid = document.getElementById('tracksGrid');
+    grid.innerHTML = TRACKS.map(t => {
+      const items = t.id === 'all' ? CATALOG : CATALOG.filter(c => c.track === t.id);
+      const done = items.filter(c => progress.completedIds.includes(c.id)).length;
+      const pct = items.length ? Math.round((done / items.length) * 100) : 0;
+      const allowed = t.id === 'all' || t.id === 'upcoming' || isTrackAllowed(t.id);
+      return `
+        <button class="track-card ${currentTrack === t.id ? 'active' : ''} ${!allowed ? 'locked' : ''}" type="button" data-track="${t.id}">
+          <div class="track-top">
+            <span class="track-icon">${t.icon}</span>
+            <span class="track-pill">${items.length ? `${done}/${items.length} done` : 'Template'}</span>
+          </div>
+          <h3>${t.name}</h3>
+          <p>${t.desc}</p>
+          <div class="track-mini-bar"><i style="width:${pct}%"></i></div>
+        </button>
+      `;
+    }).join('');
+
+    grid.querySelectorAll('.track-card').forEach(btn => {
+      btn.onclick = () => {
+        currentTrack = btn.dataset.track;
+        renderTracks();
+        renderCatalog();
+        document.getElementById('catalog').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      };
+    });
+  }
+
+  // Render Catalog
+  function renderCatalog() {
+    const grid = document.getElementById('catalogGrid');
+    if (currentTrack === 'upcoming') {
+      grid.innerHTML = `
+        <div class="item-card" style="grid-column:1/-1;text-align:center;padding:36px">
+          <div style="font-size:28px">🚀</div>
+          <div class="item-title">Extensible Track Slot</div>
+          <p class="item-desc" style="max-width:520px;margin:0 auto">Add new courses (Python, dbt, Airflow, Apache Spark, System Design) by appending entries to the <code>TRACKS</code> and <code>CATALOG</code> arrays inside <code>academy.html</code>.</p>
+        </div>`;
+      return;
+    }
+
+    const q = searchQuery.trim().toLowerCase();
+    const filtered = CATALOG.filter(item => {
+      if (currentTrack !== 'all' && item.track !== currentTrack) return false;
+      const isDone = progress.completedIds.includes(item.id);
+      const isStar = progress.bookmarks.includes(item.id);
+      if (currentStatus === 'todo' && isDone) return false;
+      if (currentStatus === 'done' && !isDone) return false;
+      if (currentStatus === 'bookmarked' && !isStar) return false;
+      if (q && !(item.title + ' ' + item.desc + ' ' + item.code).toLowerCase().includes(q)) return false;
+      return true;
+    });
+
+    document.getElementById('catalogSubtitle').textContent = `Showing ${filtered.length} of ${CATALOG.length} learning items.`;
+
+    if (!filtered.length) {
+      grid.innerHTML = `<div class="item-card" style="grid-column:1/-1;text-align:center;padding:28px"><div class="item-title">No matching items</div><p class="item-desc">Try clearing your search or status filter.</p></div>`;
+      return;
+    }
+
+    const TRACK_LABELS = {
+      snowflake: { icon: '📚', title: 'Learning Modules' },
+      labs: { icon: '🧪', title: 'Hands-On Snowsight SQL Labs' },
+      simulators: { icon: '⚡', title: 'Interactive Simulators' },
+      deepdives: { icon: '📖', title: 'Deep-Dive Topic Suites' }
+    };
+
+    const renderCard = item => {
+      const isDone = progress.completedIds.includes(item.id);
+      const isStar = progress.bookmarks.includes(item.id);
+      const allowed = isTrackAllowed(item.track);
+      const tIcon = (TRACK_LABELS[item.track] && TRACK_LABELS[item.track].icon) || '📄';
+      return `
+        <article class="item-card ${isDone ? 'is-done' : ''} ${!allowed ? 'is-locked' : ''}" ${allowed ? `data-card-href="${item.href}"` : ''}>
+          <div class="item-stripe" style="background:${item.color}"></div>
+          <div class="item-head">
+            <span class="item-code badge-${item.track}">${tIcon} ${item.code}</span>
+            <div class="item-actions">
+              <button class="topic-note-btn" type="button" data-topic="${item.code}: ${item.title}" title="Notes on ${item.title}">📝 Notes</button>
+              <button class="icon-btn ${isStar ? 'star-on' : ''}" type="button" data-star="${item.id}" title="Bookmark">${isStar ? '★' : '☆'}</button>
+              <button class="icon-btn ${isDone ? 'done-on' : ''}" type="button" data-done="${item.id}" title="Mark completed">${isDone ? '✓ Done' : 'Mark Done'}</button>
+            </div>
+          </div>
+          <div class="item-title">${item.title}</div>
+          <p class="item-desc">${item.desc}</p>
+          ${item.tags ? `<div class="card-tags">${item.tags.map(tg => `<span class="tag ${tg.cls}">${tg.t}</span>`).join('')}</div>` : ''}
+          ${allowed && item.files ? `
+            <div class="file-links">
+              ${item.files.map(f => `
+                <a class="file-link" href="${f.href}" data-open="${f.href}">
+                  <span class="fl-type ${f.cls}">${f.type}</span>
+                  <span class="fl-name">${f.name}</span>
+                  <span class="fl-arr">→</span>
+                </a>
+              `).join('')}
+            </div>
+          ` : ''}
+          <div class="item-foot">
+            <span class="item-meta">${item.meta}</span>
+            ${allowed
+              ? `<a class="open-link" href="${item.href}" data-open="${item.href}">Open →</a>`
+              : `<span class="item-meta">🔒 Track restricted</span>`
+            }
+          </div>
+        </article>
+      `;
+    };
+
+    if (currentTrack === 'all') {
+      const order = ['snowflake', 'labs', 'simulators', 'deepdives'];
+      grid.innerHTML = order.map(tk => {
+        const group = filtered.filter(i => i.track === tk);
+        if (!group.length) return '';
+        const meta = TRACK_LABELS[tk];
+        return `
+          <div class="cat-group-head">
+            <span>${meta.icon} ${meta.title}</span>
+            <span class="cat-group-count">${group.length}</span>
+          </div>
+          ${group.map(renderCard).join('')}
+        `;
+      }).join('');
+    } else {
+      grid.innerHTML = filtered.map(renderCard).join('');
+    }
+
+    grid.querySelectorAll('[data-done]').forEach(btn => {
+      btn.onclick = () => {
+        const id = btn.dataset.done;
+        const idx = progress.completedIds.indexOf(id);
+        if (idx >= 0) progress.completedIds.splice(idx, 1);
+        else progress.completedIds.push(id);
+        progress.lastActive = new Date().toISOString().slice(0, 10);
+        isSynced = false;
+        saveState();
+        renderDashboard();
+        renderTracks();
+        renderCatalog();
+        syncProgressToSheet(true);
+      };
+    });
+
+    grid.querySelectorAll('[data-star]').forEach(btn => {
+      btn.onclick = () => {
+        const id = btn.dataset.star;
+        const idx = progress.bookmarks.indexOf(id);
+        if (idx >= 0) progress.bookmarks.splice(idx, 1);
+        else progress.bookmarks.push(id);
+        isSynced = false;
+        saveState();
+        renderDashboard();
+        renderCatalog();
+        syncProgressToSheet(true);
+      };
+    });
+
+    grid.querySelectorAll('[data-card-href]').forEach(card => {
+      card.onclick = e => {
+        if (e.target.closest('button, a')) return;
+        const href = card.dataset.cardHref;
+        if (href) {
+          localStorage.setItem(LS_LAST_ITEM, href);
+          window.location.href = href;
+        }
+      };
+    });
+
+    grid.querySelectorAll('[data-open]').forEach(a => {
+      a.onclick = () => {
+        localStorage.setItem(LS_LAST_ITEM, a.dataset.open);
+      };
+    });
+
+    grid.querySelectorAll('.topic-note-btn').forEach(btn => {
+      btn.onclick = () => {
+        if (typeof window.openTopicNotes === 'function') {
+          window.openTopicNotes(btn.dataset.topic);
+        }
+      };
+    });
+  }
+
+  // Filter Pills & Search
+  document.querySelectorAll('#statusPills .f-pill').forEach(btn => {
+    btn.onclick = () => {
+      document.querySelectorAll('#statusPills .f-pill').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentStatus = btn.dataset.status;
+      renderCatalog();
+    };
   });
-  const cards = Array.from(document.querySelectorAll('.grid .card'));
-  const grids = Array.from(document.querySelectorAll('.grid'));
-  const pills = Array.from(document.querySelectorAll('#contentFilterBar .filter-pill'));
-  const input = document.getElementById('cardFilterInput');
-  const countLabel = document.getElementById('filterCountLabel');
-  let activeType = 'all';
-
-  const countFor = t => cards.filter(c => t === 'all' || (c.dataset.types || '').split(/\s+/).includes(t)).length;
-  ['all','learning','lab','simulator','guide'].forEach(t => {
-    const el = document.getElementById('cnt-' + t);
-    if (el) el.textContent = countFor(t);
+  const searchInput = document.getElementById('searchInput');
+  searchInput.addEventListener('input', () => {
+    searchQuery = searchInput.value;
+    renderCatalog();
+  });
+  document.addEventListener('keydown', e => {
+    if (e.key === '/' && document.activeElement.tagName !== 'INPUT') {
+      e.preventDefault();
+      searchInput.focus();
+    }
   });
 
-  function applyFilters() {
-    const q = (input ? input.value : '').trim().toLowerCase();
-    let visible = 0;
-    cards.forEach(c => {
-      const types = (c.dataset.types || '').split(/\s+/);
-      const typeOk = activeType === 'all' || types.includes(activeType);
-      const textOk = !q || c.textContent.toLowerCase().includes(q);
-      const show = typeOk && textOk;
-      c.classList.toggle('is-hidden', !show);
-      if (show) visible++;
-      // Highlight/dim individual file links inside compound cards when filtering by type
-      c.querySelectorAll('.file-link').forEach(fl => {
-        const badge = (fl.querySelector('.fl-type')?.textContent || '').trim().toLowerCase();
-        const ftype = badge === 'sim' ? 'simulator' : badge === 'lab' ? 'lab' : 'guide';
-        fl.classList.toggle('is-dim', activeType !== 'all' && ftype !== activeType);
+  // Google Sheets Auth Modal
+  const modal = document.getElementById('authModal');
+  const authMsg = document.getElementById('authMsg');
+  function showMsg(text, isErr) {
+    authMsg.textContent = text;
+    authMsg.className = 'msg-box ' + (isErr ? 'err' : 'ok');
+  }
+  function clearMsg() {
+    authMsg.className = 'msg-box';
+    authMsg.textContent = '';
+  }
+  function switchModalTab(tab) {
+    clearMsg();
+    document.querySelectorAll('.m-tab').forEach(t => t.classList.toggle('active', t.dataset.mtab === tab));
+    document.getElementById('loginForm').style.display = tab === 'login' ? 'block' : 'none';
+    document.getElementById('registerForm').style.display = tab === 'register' ? 'block' : 'none';
+    document.getElementById('configForm').style.display = tab === 'config' ? 'block' : 'none';
+    if (tab === 'config') document.getElementById('sheetUrlInput').value = getSheetUrl();
+  }
+  function openModal(tab = 'login') {
+    switchModalTab(tab);
+    modal.classList.add('open');
+  }
+  function closeModal() { modal.classList.remove('open'); }
+
+  document.querySelectorAll('.m-tab').forEach(t => { t.onclick = () => switchModalTab(t.dataset.mtab); });
+  document.getElementById('closeModalBtn').onclick = closeModal;
+  modal.onclick = e => { if (e.target === modal) closeModal(); };
+  document.getElementById('sheetConfigBtn').onclick = () => openModal('config');
+  const openAuthFromTools = document.getElementById('openAuthFromTools');
+  if (openAuthFromTools) {
+    openAuthFromTools.onclick = () => {
+      if (user) {
+        user = null;
+        saveState();
+        renderDashboard();
+        showMsg('Signed out of Google Sheet account.', 'ok');
+      } else {
+        openModal('login');
+      }
+    };
+  }
+  document.getElementById('authBtn').onclick = () => {
+    if (user) {
+      user = null;
+      saveState();
+      renderDashboard();
+      renderTracks();
+      renderCatalog();
+    } else {
+      openModal('login');
+    }
+  };
+
+  async function callSheetApi(payload) {
+    const url = getSheetUrl();
+    if (!url) throw new Error('Google Sheet Web App URL is not configured yet. Open "Sheet URL" tab to paste your /exec URL.');
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(payload)
+    });
+    return await res.json();
+  }
+
+  document.getElementById('loginForm').onsubmit = async e => {
+    e.preventDefault();
+    clearMsg();
+    const email = document.getElementById('loginEmail').value.trim().toLowerCase();
+    const pass = document.getElementById('loginPass').value;
+    try {
+      const passwordHash = await sha256Hex(pass);
+      const data = await callSheetApi({ action: 'login', email, passwordHash });
+      if (!data.ok) { showMsg(data.error || 'Login failed.', true); return; }
+      user = { ...data.user, passwordHash, mode: 'sheet' };
+      isSynced = true;
+      if (data.progress) {
+        const mergedDone = Array.from(new Set([...progress.completedIds, ...(data.progress.completedIds || [])]));
+        const mergedStars = Array.from(new Set([...progress.bookmarks, ...(data.progress.bookmarks || [])]));
+        progress.completedIds = mergedDone;
+        progress.bookmarks = mergedStars;
+        progress.streakDays = Math.max(progress.streakDays || 1, data.progress.streakDays || 1);
+      }
+      saveState();
+      renderDashboard();
+      renderTracks();
+      renderCatalog();
+      closeModal();
+    } catch (err) {
+      showMsg(err.message, true);
+    }
+  };
+
+  document.getElementById('registerForm').onsubmit = async e => {
+    e.preventDefault();
+    clearMsg();
+    const name = document.getElementById('regName').value.trim();
+    const email = document.getElementById('regEmail').value.trim().toLowerCase();
+    const pass = document.getElementById('regPass').value;
+    try {
+      const passwordHash = await sha256Hex(pass);
+      const data = await callSheetApi({ action: 'register', name, email, passwordHash });
+      if (!data.ok) { showMsg(data.error || 'Request failed.', true); return; }
+      showMsg(data.message || 'Access requested!', false);
+    } catch (err) {
+      showMsg(err.message, true);
+    }
+  };
+
+  document.getElementById('configForm').onsubmit = e => {
+    e.preventDefault();
+    const url = document.getElementById('sheetUrlInput').value.trim();
+    if (url) localStorage.setItem(LS_SHEET_URL, url);
+    else localStorage.removeItem(LS_SHEET_URL);
+    renderDashboard();
+    showMsg('Google Sheet Web App URL saved.', false);
+  };
+
+  async function syncProgressToSheet(silent = false) {
+    if (!user || user.mode !== 'sheet' || !getSheetUrl()) {
+      if (!silent) openModal('login');
+      return;
+    }
+    try {
+      const res = await callSheetApi({
+        action: 'syncProgress',
+        email: user.email,
+        passwordHash: user.passwordHash,
+        completedIds: progress.completedIds,
+        bookmarks: progress.bookmarks,
+        streakDays: progress.streakDays,
+        lastActive: progress.lastActive
       });
-    });
-    grids.forEach(g => {
-      const hasVisible = Array.from(g.querySelectorAll('.card')).some(c => !c.classList.contains('is-hidden'));
-      g.classList.toggle('is-hidden', !hasVisible);
-      const div = g.previousElementSibling;
-      if (div && div.classList.contains('sec-div')) div.classList.toggle('is-hidden', !hasVisible);
-    });
-    if (countLabel) countLabel.textContent = `${visible} / ${cards.length}`;
+      if (res.ok) {
+        isSynced = true;
+        renderDashboard();
+      }
+    } catch (e) {
+      isSynced = false;
+      renderDashboard();
+    }
+  }
+  document.getElementById('syncNowBtn').onclick = () => syncProgressToSheet(false);
+
+  // Owner Approvals Panel (Admin only)
+  const adminModal = document.getElementById('adminModal');
+  const adminMsg = document.getElementById('adminMsg');
+  const adminList = document.getElementById('adminUsersList');
+
+  function showAdminMsg(text, isErr) {
+    adminMsg.textContent = text;
+    adminMsg.className = 'msg-box ' + (isErr ? 'err' : 'ok');
   }
 
-  pills.forEach(p => p.addEventListener('click', () => {
-    pills.forEach(x => x.classList.remove('is-active'));
-    p.classList.add('is-active');
-    activeType = p.dataset.filter || 'all';
-    applyFilters();
-  }));
-  if (input) input.addEventListener('input', applyFilters);
-  applyFilters();
+  async function loadAdminUsers() {
+    if (!user || user.role !== 'admin') return;
+    adminMsg.className = 'msg-box';
+    adminList.innerHTML = '<div style="font-size:13px;color:var(--ink3);padding:12px;text-align:center">Loading requests…</div>';
+    try {
+      const data = await callSheetApi({ action: 'listUsers', email: user.email, passwordHash: user.passwordHash });
+      if (!data.ok) { showAdminMsg(data.error || 'Could not load users.', true); adminList.innerHTML = ''; return; }
+      const users = data.users || [];
+      if (!users.length) { adminList.innerHTML = '<div style="font-size:13px;color:var(--ink3);padding:12px">No users found.</div>'; return; }
+      adminList.innerHTML = users.map(u => {
+        const badgeColor = u.status === 'ACTIVE' ? 'var(--teal)' : u.status === 'PENDING' ? 'var(--amber)' : 'var(--red)';
+        return `
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--bg);flex-wrap:wrap">
+            <div>
+              <div style="font-weight:700;font-size:13.5px">${u.name} <span style="font-family:var(--f-mono);font-size:10px;padding:2px 7px;border-radius:99px;border:1px solid ${badgeColor};color:${badgeColor};margin-left:6px">${u.status}</span></div>
+              <div style="font-family:var(--f-mono);font-size:11.5px;color:var(--ink2)">${u.email} · role: ${u.role}</div>
+            </div>
+            <div style="display:flex;gap:6px">
+              ${u.status !== 'ACTIVE' ? `<button class="btn teal" type="button" data-approve="${u.email}" style="padding:4px 10px;font-size:12px">✓ Approve</button>` : ''}
+              ${u.status !== 'REVOKED' && u.role !== 'admin' ? `<button class="btn" type="button" data-revoke="${u.email}" style="padding:4px 10px;font-size:12px;color:var(--red);border-color:var(--red)">✕ Revoke</button>` : ''}
+            </div>
+          </div>
+        `;
+      }).join('');
 
-  // Book Index / Table of Contents toggle (collapsed by default for a clean landing view)
-  const toc = document.getElementById('bookToc');
-  const tocBtn = document.getElementById('tocToggleBtn');
-  const tocClose = document.getElementById('tocCloseBtn');
-  function setTocOpen(open) {
-    if (!toc) return;
-    toc.classList.toggle('is-hidden', !open);
-    if (tocBtn) { tocBtn.classList.toggle('is-active', open); tocBtn.setAttribute('aria-expanded', String(open)); }
-    try { localStorage.setItem('sf-toc-open', open ? '1' : '0'); } catch (e) {}
+      adminList.querySelectorAll('[data-approve]').forEach(b => {
+        b.onclick = async () => {
+          const r = await callSheetApi({ action: 'updateUserStatus', email: user.email, passwordHash: user.passwordHash, targetEmail: b.dataset.approve, newStatus: 'ACTIVE' });
+          if (r.ok) { showAdminMsg(`Approved ${b.dataset.approve}!`, false); loadAdminUsers(); }
+          else showAdminMsg(r.error || 'Failed to approve.', true);
+        };
+      });
+      adminList.querySelectorAll('[data-revoke]').forEach(b => {
+        b.onclick = async () => {
+          const r = await callSheetApi({ action: 'updateUserStatus', email: user.email, passwordHash: user.passwordHash, targetEmail: b.dataset.revoke, newStatus: 'REVOKED' });
+          if (r.ok) { showAdminMsg(`Revoked ${b.dataset.revoke}.`, false); loadAdminUsers(); }
+          else showAdminMsg(r.error || 'Failed to revoke.', true);
+        };
+      });
+    } catch (err) {
+      showAdminMsg(err.message, true);
+      adminList.innerHTML = '';
+    }
   }
-  let tocOpen = false;
-  try { const saved = localStorage.getItem('sf-toc-open'); if (saved !== null) tocOpen = saved === '1'; } catch (e) {}
-  setTocOpen(tocOpen);
-  if (tocBtn) tocBtn.addEventListener('click', () => setTocOpen(toc.classList.contains('is-hidden')));
-  if (tocClose) tocClose.addEventListener('click', () => setTocOpen(false));
+
+  document.getElementById('adminApprovalsBtn').onclick = () => { adminModal.classList.add('open'); loadAdminUsers(); };
+  document.getElementById('refreshUsersBtn').onclick = loadAdminUsers;
+  document.getElementById('closeAdminModalBtn').onclick = () => adminModal.classList.remove('open');
+  adminModal.onclick = e => { if (e.target === adminModal) adminModal.classList.remove('open'); };
+
+  // Study Timer
+  let timerSec = 25 * 60;
+  let timerInt = null;
+  function drawTimer() {
+    const m = String(Math.floor(timerSec / 60)).padStart(2, '0');
+    const s = String(timerSec % 60).padStart(2, '0');
+    document.getElementById('timerDisplay').textContent = `${m}:${s}`;
+  }
+  document.getElementById('timerStartBtn').onclick = () => {
+    if (timerInt) return;
+    timerInt = setInterval(() => {
+      if (timerSec > 0) { timerSec--; drawTimer(); }
+      else { clearInterval(timerInt); timerInt = null; alert('Study sprint complete!'); }
+    }, 1000);
+  };
+  document.getElementById('timerPauseBtn').onclick = () => { clearInterval(timerInt); timerInt = null; };
+  document.getElementById('timerResetBtn').onclick = () => { clearInterval(timerInt); timerInt = null; timerSec = 25 * 60; drawTimer(); };
+  document.getElementById('timerBreakBtn').onclick = () => { clearInterval(timerInt); timerInt = null; timerSec = 5 * 60; drawTimer(); };
+
+  // Init
+  renderDashboard();
+  renderTracks();
+  renderCatalog();
 })();
 </script>
 <script src="notes.js"></script>
