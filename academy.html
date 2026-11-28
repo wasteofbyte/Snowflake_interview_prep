@@ -108,6 +108,79 @@ body{
   font-family:var(--f-mono);font-size:12px;font-weight:600;cursor:pointer;
 }
 
+/* Notification Bell & Dropdown Popover */
+.notif-wrap{position:relative;display:inline-flex}
+.notif-btn{
+  position:relative;padding:6px 10px;font-size:14px;line-height:1;
+}
+.notif-badge{
+  position:absolute;top:-4px;right:-4px;min-width:17px;height:17px;padding:0 4px;
+  background:#E11D48;color:#fff;border-radius:99px;font-family:var(--f-mono);
+  font-size:10px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;
+  border:2px solid var(--bg);box-shadow:0 2px 6px rgba(225,29,72,.4);
+  transition:transform .2s ease,opacity .2s ease;
+}
+.notif-popover{
+  position:absolute;top:calc(100% + 8px);right:0;width:370px;max-width:calc(100vw - 32px);
+  background:var(--card-solid);border:1px solid var(--line2);border-radius:16px;
+  box-shadow:0 20px 50px rgba(0,0,0,.3);backdrop-filter:blur(14px);
+  display:none;flex-direction:column;z-index:150;overflow:hidden;
+  animation:notifPop .18s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.notif-popover.open{display:flex}
+@keyframes notifPop{
+  from{opacity:0;transform:translateY(6px) scale(.98)}
+  to{opacity:1;transform:translateY(0) scale(1)}
+}
+.notif-head{
+  padding:13px 16px;border-bottom:1px solid var(--line);
+  display:flex;align-items:center;justify-content:space-between;gap:10px;
+}
+.notif-title{font-family:var(--f-head);font-size:15px;font-weight:700;display:flex;align-items:center;gap:6px}
+.notif-mark-all{
+  background:none;border:none;color:var(--ice);font-family:var(--f-mono);
+  font-size:11px;font-weight:600;cursor:pointer;padding:3px 6px;border-radius:6px;
+  transition:background .15s;
+}
+.notif-mark-all:hover{background:var(--ice-s)}
+.notif-list{max-height:380px;overflow-y:auto;padding:4px 0}
+.notif-item{
+  display:flex;gap:12px;padding:12px 16px;border-bottom:1px solid var(--line);
+  transition:background .15s;position:relative;cursor:pointer;text-align:left;
+}
+.notif-item:last-child{border-bottom:none}
+.notif-item:hover{background:var(--card2)}
+.notif-item.unread{background:color-mix(in srgb,var(--ice-s) 40%,var(--card-solid))}
+.notif-item.unread:hover{background:color-mix(in srgb,var(--ice-s) 65%,var(--card-solid))}
+.notif-icon-box{
+  width:32px;height:32px;border-radius:9px;background:var(--card);border:1px solid var(--line2);
+  display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;margin-top:2px;
+}
+.notif-body{flex:1;min-width:0}
+.notif-item-top{display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:3px}
+.notif-item-title{font-family:var(--f-head);font-size:13px;font-weight:700;color:var(--ink)}
+.notif-time{font-family:var(--f-mono);font-size:10px;color:var(--ink3);white-space:nowrap}
+.notif-item-desc{font-size:12px;color:var(--ink2);line-height:1.45;margin-bottom:6px}
+.notif-item-foot{display:flex;align-items:center;justify-content:space-between;gap:6px}
+.notif-tag{
+  font-family:var(--f-mono);font-size:9.5px;font-weight:600;padding:2px 7px;
+  border-radius:99px;border:1px solid var(--line2);color:var(--ink2);background:var(--bg);
+}
+.notif-read-toggle{
+  background:none;border:none;font-family:var(--f-mono);font-size:10.5px;
+  color:var(--ink3);cursor:pointer;padding:2px 6px;border-radius:4px;
+}
+.notif-read-toggle:hover{color:var(--ice);background:var(--ice-s)}
+.notif-unread-dot{
+  width:7px;height:7px;border-radius:50%;background:var(--ice);
+  box-shadow:0 0 6px var(--ice);flex-shrink:0;
+}
+.notif-foot{
+  padding:10px 16px;border-top:1px solid var(--line);background:var(--card2);
+  display:flex;align-items:center;justify-content:space-between;
+  font-family:var(--f-mono);font-size:11px;color:var(--ink3);
+}
+
 .wrap{max-width:1200px;margin:0 auto;padding:0 28px}
 
 /* Hero Section */
@@ -346,6 +419,26 @@ footer{padding:38px 28px;text-align:center;color:var(--ink3);font-size:12px;font
   <div class="top-right">
     <button class="top-notes-nav-btn sf-master-search-btn" id="sfMasterSearchBtn" type="button" onclick="openMasterSearchModal()" title="Search all Snowflake interview topics (⌘K / Ctrl+K)"><span>🔍 Search</span> <kbd>⌘K</kbd></button>
     <button class="top-notes-nav-btn sf-master-lock-btn locked" id="sfMasterLockBtn" type="button" onclick="openMasterUnlockModal()" title="Enter password to enable notes across all modules"><span>🔒 Enable Notes</span></button>
+    
+    <!-- NOTIFICATION BELL & POPOVER -->
+    <div class="notif-wrap" id="notifWrap">
+      <button class="btn notif-btn" id="notifBellBtn" type="button" aria-label="Notifications" title="Platform Notifications &amp; Updates">
+        <span>🔔</span>
+        <span class="notif-badge" id="notifBadge" style="display:none">0</span>
+      </button>
+      <div class="notif-popover" id="notifPopover" role="dialog" aria-label="Notifications Panel">
+        <div class="notif-head">
+          <div class="notif-title">🔔 Notifications <span id="notifUnreadBadge" style="font-size:11px;font-family:var(--f-mono);font-weight:600;color:var(--ice);margin-left:4px"></span></div>
+          <button class="notif-mark-all" id="notifMarkAllBtn" type="button" title="Mark all notifications as read">Mark all as read ✓</button>
+        </div>
+        <div class="notif-list" id="notifList"></div>
+        <div class="notif-foot">
+          <span id="notifStatusText">Platform announcements &amp; tips</span>
+          <button class="notif-mark-all" id="notifResetBtn" type="button" style="color:var(--ink3);font-size:10px" title="Reset notification read state for testing">Reset</button>
+        </div>
+      </div>
+    </div>
+
     <button class="btn" id="adminApprovalsBtn" type="button" style="display:none" title="Owner: Approve or Revoke Learner Access">👥 Approvals</button>
     <button class="btn" id="sheetConfigBtn" type="button" style="display:none" title="Owner: Configure Google Sheets Auth URL">⚙️ Sheet Config</button>
     <button class="btn primary" id="authBtn" type="button">🔐 Sign In</button>
@@ -1202,10 +1295,197 @@ footer{padding:38px 28px;text-align:center;color:var(--ink3);font-size:12px;font
   document.getElementById('timerResetBtn').onclick = () => { clearInterval(timerInt); timerInt = null; timerSec = 25 * 60; drawTimer(); };
   document.getElementById('timerBreakBtn').onclick = () => { clearInterval(timerInt); timerInt = null; timerSec = 5 * 60; drawTimer(); };
 
+  // Platform Notifications & Mark Read System
+  const NOTIFICATIONS = [
+    {
+      id: 'notif-flashback',
+      icon: '⚡',
+      badge: 'New Module',
+      title: 'Quick Interview Flashback & Reality Check',
+      desc: 'Visual SQL scenarios, 30s rapid interview answers, trap warnings, and self-reality check tracking.',
+      href: 'flashback/',
+      time: 'New'
+    },
+    {
+      id: 'notif-labs',
+      icon: '💻',
+      badge: 'SQL Labs',
+      title: '15 Guided Snowsight SQL Worksheets',
+      desc: '216 interactive practice steps with query execution scenarios and real-world data pipelines.',
+      href: '#catalog',
+      time: '15 Labs'
+    },
+    {
+      id: 'notif-timer',
+      icon: '⏱',
+      badge: 'Study Tool',
+      title: 'Built-in Pomodoro Study Sprint Timer',
+      desc: '25-minute deep focus sprints with 5-minute breaks integrated directly beside your Learner Progress.',
+      href: '#dashboard',
+      time: 'Focus'
+    },
+    {
+      id: 'notif-search',
+      icon: '🔍',
+      badge: 'Tip',
+      title: 'Master Search across all 16 Modules',
+      desc: 'Press ⌘K or Ctrl+K anywhere to search all architecture, SQL, simulators, and interview Q&As instantly.',
+      action: 'openSearch',
+      time: 'Shortcut'
+    },
+    {
+      id: 'notif-sync',
+      icon: '📊',
+      badge: 'Account',
+      title: 'Google Sheets Cloud Progress Sync',
+      desc: 'Sign in to save your completion percentage, streak days, bookmarks, and custom notes across devices.',
+      href: '#dashboard',
+      time: 'Cloud'
+    }
+  ];
+
+  const LS_READ_NOTIFS = 'sf_read_notifs_v1';
+  function getReadNotifIds() {
+    try {
+      return JSON.parse(localStorage.getItem(LS_READ_NOTIFS) || '[]');
+    } catch(e) { return []; }
+  }
+  function saveReadNotifIds(ids) {
+    try {
+      localStorage.setItem(LS_READ_NOTIFS, JSON.stringify(ids));
+    } catch(e) {}
+  }
+
+  function renderNotifications() {
+    const readIds = getReadNotifIds();
+    const listEl = document.getElementById('notifList');
+    const badgeEl = document.getElementById('notifBadge');
+    const unreadCountBadge = document.getElementById('notifUnreadBadge');
+    const statusText = document.getElementById('notifStatusText');
+    const markAllBtn = document.getElementById('notifMarkAllBtn');
+    if (!listEl) return;
+
+    const unreadCount = NOTIFICATIONS.filter(n => !readIds.includes(n.id)).length;
+
+    if (unreadCount > 0) {
+      badgeEl.textContent = unreadCount;
+      badgeEl.style.display = 'inline-flex';
+      unreadCountBadge.textContent = `(${unreadCount} unread)`;
+      statusText.textContent = `${unreadCount} unread notification${unreadCount > 1 ? 's' : ''}`;
+      markAllBtn.style.display = 'inline-block';
+    } else {
+      badgeEl.style.display = 'none';
+      unreadCountBadge.textContent = '(All read)';
+      statusText.textContent = 'All caught up ✓';
+      markAllBtn.style.display = 'none';
+    }
+
+    listEl.innerHTML = NOTIFICATIONS.map(n => {
+      const isRead = readIds.includes(n.id);
+      return `
+        <div class="notif-item ${isRead ? 'read' : 'unread'}" data-nid="${n.id}">
+          <div class="notif-icon-box">${n.icon}</div>
+          <div class="notif-body">
+            <div class="notif-item-top">
+              <span class="notif-item-title">${n.title}</span>
+              <span class="notif-time">${n.time}</span>
+            </div>
+            <div class="notif-item-desc">${n.desc}</div>
+            <div class="notif-item-foot">
+              <span class="notif-tag">${n.badge}</span>
+              <div style="display:flex;align-items:center;gap:6px;margin-left:auto">
+                <button class="notif-read-toggle" type="button" data-nid="${n.id}" title="${isRead ? 'Mark as unread' : 'Mark as read'}">
+                  ${isRead ? 'Mark unread' : 'Mark read ✓'}
+                </button>
+                ${!isRead ? '<span class="notif-unread-dot" title="Unread"></span>' : ''}
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    listEl.querySelectorAll('.notif-read-toggle').forEach(btn => {
+      btn.onclick = (e) => {
+        e.stopPropagation();
+        const nid = btn.dataset.nid;
+        let cur = getReadNotifIds();
+        if (cur.includes(nid)) {
+          cur = cur.filter(id => id !== nid);
+        } else {
+          cur.push(nid);
+        }
+        saveReadNotifIds(cur);
+        renderNotifications();
+      };
+    });
+
+    listEl.querySelectorAll('.notif-item').forEach(item => {
+      item.onclick = () => {
+        const nid = item.dataset.nid;
+        const cur = getReadNotifIds();
+        if (!cur.includes(nid)) {
+          cur.push(nid);
+          saveReadNotifIds(cur);
+          renderNotifications();
+        }
+        const notif = NOTIFICATIONS.find(n => n.id === nid);
+        if (notif) {
+          const popover = document.getElementById('notifPopover');
+          if (popover) popover.classList.remove('open');
+          if (notif.action === 'openSearch') {
+            if (typeof openMasterSearchModal === 'function') openMasterSearchModal();
+          } else if (notif.href) {
+            if (notif.href.startsWith('#')) {
+              const target = document.querySelector(notif.href);
+              if (target) target.scrollIntoView({ behavior: 'smooth' });
+            } else {
+              window.location.href = notif.href;
+            }
+          }
+        }
+      };
+    });
+  }
+
+  const bellBtn = document.getElementById('notifBellBtn');
+  const notifPopover = document.getElementById('notifPopover');
+  if (bellBtn && notifPopover) {
+    bellBtn.onclick = (e) => {
+      e.stopPropagation();
+      notifPopover.classList.toggle('open');
+    };
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('#notifWrap')) {
+        notifPopover.classList.remove('open');
+      }
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && notifPopover.classList.contains('open')) {
+        notifPopover.classList.remove('open');
+      }
+    });
+  }
+  const markAllBtn = document.getElementById('notifMarkAllBtn');
+  if (markAllBtn) {
+    markAllBtn.onclick = () => {
+      saveReadNotifIds(NOTIFICATIONS.map(n => n.id));
+      renderNotifications();
+    };
+  }
+  const resetNotifBtn = document.getElementById('notifResetBtn');
+  if (resetNotifBtn) {
+    resetNotifBtn.onclick = () => {
+      saveReadNotifIds([]);
+      renderNotifications();
+    };
+  }
+
   // Init
   renderDashboard();
   renderTracks();
   renderCatalog();
+  renderNotifications();
 })();
 </script>
 <script src="notes.js"></script>
