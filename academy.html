@@ -274,6 +274,7 @@ footer{padding:38px 28px;text-align:center;color:var(--ink3);font-size:12px;font
   <div class="top-right">
     <button class="top-notes-nav-btn sf-master-search-btn" id="sfMasterSearchBtn" type="button" onclick="openMasterSearchModal()" title="Search all Snowflake interview topics (⌘K / Ctrl+K)"><span>🔍 Search</span> <kbd>⌘K</kbd></button>
     <button class="top-notes-nav-btn sf-master-lock-btn locked" id="sfMasterLockBtn" type="button" onclick="openMasterUnlockModal()" title="Enter password to enable notes across all modules"><span>🔒 Enable Notes</span></button>
+    <button class="btn" id="adminApprovalsBtn" type="button" style="display:none" title="Owner: Approve or Revoke Learner Access">👥 Approvals</button>
     <button class="btn" id="sheetConfigBtn" type="button" style="display:none" title="Owner: Configure Google Sheets Auth URL">⚙️ Sheet Config</button>
     <button class="btn primary" id="authBtn" type="button">🔐 Sign In</button>
     <button class="btn" id="themeBtn" type="button">Dark / light</button>
@@ -431,7 +432,7 @@ footer{padding:38px 28px;text-align:center;color:var(--ink3);font-size:12px;font
         <input id="regPass" type="password" required minlength="4" placeholder="Choose a password">
       </div>
       <button class="btn primary" type="submit" style="width:100%;justify-content:center;margin-top:8px">Submit Access Request</button>
-      <p style="font-size:12px;color:var(--ink3);margin-top:10px;text-align:center">New accounts start as <code>PENDING</code> until approved in the Google Sheet.</p>
+      <p style="font-size:12px;color:var(--ink3);margin-top:10px;text-align:center">New requests start in <strong>pending</strong> state until approved by the owner. For urgent access, email <a href="mailto:sauravpateliit120@gmail.com" style="color:var(--ice)">sauravpateliit120@gmail.com</a>.</p>
     </form>
 
     <!-- Sheet URL Config -->
@@ -441,8 +442,24 @@ footer{padding:38px 28px;text-align:center;color:var(--ink3);font-size:12px;font
         <input id="sheetUrlInput" type="url" placeholder="https://script.google.com/macros/s/.../exec">
       </div>
       <button class="btn primary" type="submit" style="width:100%;justify-content:center">Save Sheet URL</button>
-      <p style="font-size:12px;color:var(--ink3);margin-top:10px">Deploy <code>apps_script_auth/Code.gs</code> as a Web App and paste its <code>/exec</code> URL here.</p>
+      <p style="font-size:12px;color:var(--ink3);margin-top:10px">Owner-only configuration.</p>
     </form>
+  </div>
+</div>
+
+<!-- OWNER APPROVALS MODAL (Admin only) -->
+<div class="modal-backdrop" id="adminModal" role="dialog" aria-modal="true" aria-labelledby="adminModalTitle">
+  <div class="modal" style="max-width:640px">
+    <div class="modal-head">
+      <h3 id="adminModalTitle">👥 Learner Access Approvals</h3>
+      <button class="btn" id="closeAdminModalBtn" type="button">✕</button>
+    </div>
+    <div class="msg-box" id="adminMsg"></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <span style="font-size:13px;color:var(--ink2)">Approve or revoke learner requests directly from here.</span>
+      <button class="btn" id="refreshUsersBtn" type="button">↻ Refresh</button>
+    </div>
+    <div id="adminUsersList" style="max-height:360px;overflow-y:auto;display:flex;flex-direction:column;gap:8px"></div>
   </div>
 </div>
 
@@ -577,8 +594,10 @@ footer{padding:38px 28px;text-align:center;color:var(--ink3);font-size:12px;font
     const isAdmin = (user && user.role === 'admin') || new URLSearchParams(location.search).get('admin') === '1';
     const sheetCfgBtn = document.getElementById('sheetConfigBtn');
     const cfgTabBtn = document.getElementById('configTabBtn');
+    const approvalsBtn = document.getElementById('adminApprovalsBtn');
     if (sheetCfgBtn) sheetCfgBtn.style.display = isAdmin ? 'inline-flex' : 'none';
     if (cfgTabBtn) cfgTabBtn.style.display = isAdmin ? 'block' : 'none';
+    if (approvalsBtn) approvalsBtn.style.display = (user && user.role === 'admin') ? 'inline-flex' : 'none';
 
     if (user) {
       authBtn.textContent = `👤 ${user.name} · Sign Out`;
@@ -893,6 +912,66 @@ footer{padding:38px 28px;text-align:center;color:var(--ink3);font-size:12px;font
     }
   }
   document.getElementById('syncNowBtn').onclick = () => syncProgressToSheet(false);
+
+  // Owner Approvals Panel (Admin only)
+  const adminModal = document.getElementById('adminModal');
+  const adminMsg = document.getElementById('adminMsg');
+  const adminList = document.getElementById('adminUsersList');
+
+  function showAdminMsg(text, isErr) {
+    adminMsg.textContent = text;
+    adminMsg.className = 'msg-box ' + (isErr ? 'err' : 'ok');
+  }
+
+  async function loadAdminUsers() {
+    if (!user || user.role !== 'admin') return;
+    adminMsg.className = 'msg-box';
+    adminList.innerHTML = '<div style="font-size:13px;color:var(--ink3);padding:12px;text-align:center">Loading requests…</div>';
+    try {
+      const data = await callSheetApi({ action: 'listUsers', email: user.email, passwordHash: user.passwordHash });
+      if (!data.ok) { showAdminMsg(data.error || 'Could not load users.', true); adminList.innerHTML = ''; return; }
+      const users = data.users || [];
+      if (!users.length) { adminList.innerHTML = '<div style="font-size:13px;color:var(--ink3);padding:12px">No users found.</div>'; return; }
+      adminList.innerHTML = users.map(u => {
+        const badgeColor = u.status === 'ACTIVE' ? 'var(--teal)' : u.status === 'PENDING' ? 'var(--amber)' : 'var(--red)';
+        return `
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--bg);flex-wrap:wrap">
+            <div>
+              <div style="font-weight:700;font-size:13.5px">${u.name} <span style="font-family:var(--f-mono);font-size:10px;padding:2px 7px;border-radius:99px;border:1px solid ${badgeColor};color:${badgeColor};margin-left:6px">${u.status}</span></div>
+              <div style="font-family:var(--f-mono);font-size:11.5px;color:var(--ink2)">${u.email} · role: ${u.role}</div>
+            </div>
+            <div style="display:flex;gap:6px">
+              ${u.status !== 'ACTIVE' ? `<button class="btn teal" type="button" data-approve="${u.email}" style="padding:4px 10px;font-size:12px">✓ Approve</button>` : ''}
+              ${u.status !== 'REVOKED' && u.role !== 'admin' ? `<button class="btn" type="button" data-revoke="${u.email}" style="padding:4px 10px;font-size:12px;color:var(--red);border-color:var(--red)">✕ Revoke</button>` : ''}
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      adminList.querySelectorAll('[data-approve]').forEach(b => {
+        b.onclick = async () => {
+          const r = await callSheetApi({ action: 'updateUserStatus', email: user.email, passwordHash: user.passwordHash, targetEmail: b.dataset.approve, newStatus: 'ACTIVE' });
+          if (r.ok) { showAdminMsg(`Approved ${b.dataset.approve}!`, false); loadAdminUsers(); }
+          else showAdminMsg(r.error || 'Failed to approve.', true);
+        };
+      });
+      adminList.querySelectorAll('[data-revoke]').forEach(b => {
+        b.onclick = async () => {
+          const r = await callSheetApi({ action: 'updateUserStatus', email: user.email, passwordHash: user.passwordHash, targetEmail: b.dataset.revoke, newStatus: 'REVOKED' });
+          if (r.ok) { showAdminMsg(`Revoked ${b.dataset.revoke}.`, false); loadAdminUsers(); }
+          else showAdminMsg(r.error || 'Failed to revoke.', true);
+        };
+      });
+    } catch (err) {
+      showAdminMsg(err.message, true);
+      adminList.innerHTML = '';
+    }
+  }
+
+  document.getElementById('adminApprovalsBtn').onclick = () => { adminModal.classList.add('open'); loadAdminUsers(); };
+  document.getElementById('refreshUsersBtn').onclick = loadAdminUsers;
+  document.getElementById('closeAdminModalBtn').onclick = () => adminModal.classList.remove('open');
+  adminModal.onclick = e => { if (e.target === adminModal) adminModal.classList.remove('open'); };
 
   // Study Timer
   let timerSec = 25 * 60;
