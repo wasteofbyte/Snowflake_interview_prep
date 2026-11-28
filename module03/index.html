@@ -300,7 +300,7 @@ footer{padding:40px 0;color:var(--ink3);font-size:13px;font-family:var(--f-mono)
 </head>
 <body>
 <div class="top">
-  <a class="sf-topbar-home-btn" href="../" title="Back to Course Home">← Course Home</a>
+  <a class="sf-topbar-home-btn" href="../academy.html" title="Back to Academy Home">← Academy Home</a>
   <span class="pill">Module 03 · Performance tuning</span>
   <div class="prog"><i id="progBar"></i></div>
   <span class="prog-l" id="progLbl">0% explored</span>
@@ -346,7 +346,7 @@ footer{padding:40px 0;color:var(--ink3);font-size:13px;font-family:var(--f-mono)
 
 <section id="intro">
   <div class="eyebrow">MODULE 03 · PERFORMANCE TUNING</div>
-  <h1>Make it fast.<br><span class="thin">Know why it was slow.</span></h1>
+  <h1>Make it fast.<br><span class="thin"><span class="tw-text" id="typewriter">Know why it was slow.</span><span class="tw-cursor" aria-hidden="true">|</span></span></h1>
   <p class="lead" style="margin-top:18px">Module 1 showed how Snowflake is built: micro-partitions, warehouses, three cache layers. This module turns that knowledge into a skill interviewers test hard at the senior level: <b>looking at a slow query and explaining, with evidence, what to change</b>. You'll learn to read the Query Profile, choose between clustering, Search Optimization, Query Acceleration and materialized views, spot SQL anti-patterns, and walk through a real "dashboard got slow" investigation.</p>
   <p style="margin-top:14px">Think of performance tuning like a <b>doctor's visit</b>. A good doctor never prescribes before examining. Four steps, every time:</p>
   <div class="analogy-grid">
@@ -1601,5 +1601,6 @@ qShow(0);
 })();
 </script>
 <script src="../notes.js"></script>
+<script src="../scroll-stage.js"></script>
 </body>
 </html>

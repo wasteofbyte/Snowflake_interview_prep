@@ -276,7 +276,7 @@ table.t td.hl,table.t th.hl{background:var(--ice-s)}
 </head>
 <body>
 <div class="top">
-  <a class="sf-topbar-home-btn" href="../" title="Back to Course Home">← Course Home</a>
+  <a class="sf-topbar-home-btn" href="../academy.html" title="Back to Academy Home">← Academy Home</a>
   <span class="pill">Module 07 · Data protection</span>
   <div class="prog"><i id="progBar"></i></div>
   <span class="prog-l" id="progLbl">0% explored</span>
@@ -321,7 +321,7 @@ table.t td.hl,table.t th.hl{background:var(--ice-s)}
 
 <section id="intro">
   <div class="eyebrow">MODULE 07 · DATA PROTECTION</div>
-  <h1>Nothing is overwritten.<br><span class="thin">So almost anything can be undone.</span></h1>
+  <h1>Nothing is overwritten.<br><span class="thin"><span class="tw-text" id="typewriter">So almost anything can be undone.</span><span class="tw-cursor" aria-hidden="true">|</span></span></h1>
   <p class="lead" style="margin-top:18px">Module 1 taught you that Snowflake stores table data in <b>immutable micro-partitions</b>: files that are written once and never edited. This module shows the payoff. Because old files are kept instead of overwritten, Snowflake can rewind tables (<b>Time Travel</b>), keep a last-resort copy (<b>Fail-safe</b>), copy terabytes in seconds (<b>zero-copy cloning</b>), and ship only the changed files to another region (<b>replication</b>).</p>
   <p style="margin-top:14px">Four everyday analogies for this module:</p>
   <div class="analogy-grid">
@@ -1349,5 +1349,6 @@ qShow(0);
 })();
 </script>
 <script src="../notes.js"></script>
+<script src="../scroll-stage.js"></script>
 </body>
 </html>

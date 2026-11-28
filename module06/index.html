@@ -287,7 +287,7 @@ footer{padding:40px 0;color:var(--ink3);font-size:13px;font-family:var(--f-mono)
 </head>
 <body>
 <div class="top">
-  <a class="sf-topbar-home-btn" href="../" title="Back to Course Home">← Course Home</a>
+  <a class="sf-topbar-home-btn" href="../academy.html" title="Back to Academy Home">← Academy Home</a>
   <span class="pill">Module 06 · Semi-structured data</span>
   <div class="prog"><i id="progBar"></i></div>
   <span class="prog-l" id="progLbl">0% explored</span>
@@ -333,7 +333,7 @@ footer{padding:40px 0;color:var(--ink3);font-size:13px;font-family:var(--f-mono)
 
 <section id="intro">
   <div class="eyebrow">MODULE 06 · SEMI-STRUCTURED DATA</div>
-  <h1>Messy JSON in.<br><span class="thin">Clean SQL out.</span></h1>
+  <h1>Messy JSON in.<br><span class="thin"><span class="tw-text" id="typewriter">Clean SQL out.</span><span class="tw-cursor" aria-hidden="true">|</span></span></h1>
   <p class="lead" style="margin-top:18px">APIs, event streams, mobile apps and SaaS exports rarely hand you neat CSV rows. They send JSON, Avro, Parquet or XML: nested, optional, and changing shape every few weeks. Snowflake lets you load that data <b>as-is</b> into a single <code>VARIANT</code> column and query it with SQL straight away. This module goes from "what is JSON" to how Snowflake stores VARIANT inside micro-partitions, why some JSON queries prune beautifully and others scan everything, and when a senior engineer "promotes" fields into real columns.</p>
   <p style="margin-top:14px">Four everyday pictures to keep in your head:</p>
   <div class="analogy-grid">
@@ -1471,5 +1471,6 @@ qShow(0);
 })();
 </script>
 <script src="../notes.js"></script>
+<script src="../scroll-stage.js"></script>
 </body>
 </html>

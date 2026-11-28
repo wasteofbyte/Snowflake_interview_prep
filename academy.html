@@ -11,6 +11,7 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/ibm-plex-sans@5/600.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/jetbrains-mono@5/400.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/jetbrains-mono@5/700.css">
+<link rel="stylesheet" href="notes.css?v=2">
 <style>
 :root{
   --bg:#F2F6FA;--card:rgba(255,255,255,.88);--card-solid:#FFFFFF;--card2:#E9EFF5;
@@ -82,13 +83,14 @@ body{
 }
 .brand{font-family:var(--f-mono);font-weight:700;letter-spacing:.06em;font-size:13px;white-space:nowrap}
 .brand b{color:var(--ice)}
-.nav-links{display:flex;align-items:center;gap:6px;margin-left:14px}
+.nav-links{display:flex;align-items:center;gap:4px;margin-left:10px}
 .nav-links a{
-  font-size:13px;font-weight:500;color:var(--ink2);text-decoration:none;padding:5px 10px;
+  font-size:12.5px;font-weight:500;color:var(--ink2);text-decoration:none;padding:5px 8px;
   border-radius:8px;transition:all .15s;white-space:nowrap;
 }
 .nav-links a:hover{color:var(--ice);background:var(--ice-s)}
-.top-right{margin-left:auto;display:flex;align-items:center;gap:8px}
+.top-right{margin-left:auto;display:flex;align-items:center;gap:7px;flex-shrink:0}
+.top-notes-nav-btn{white-space:nowrap;flex-shrink:0}
 .btn{
   border:1px solid var(--line2);background:var(--card-solid);color:var(--ink);border-radius:9px;
   padding:6px 13px;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--f-body);
@@ -269,6 +271,8 @@ footer{padding:38px 28px;text-align:center;color:var(--ink3);font-size:12px;font
     <a href="index.html">Classic Index</a>
   </nav>
   <div class="top-right">
+    <button class="top-notes-nav-btn sf-master-search-btn" id="sfMasterSearchBtn" type="button" onclick="openMasterSearchModal()" title="Search all Snowflake interview topics (⌘K / Ctrl+K)"><span>🔍 Search</span> <kbd>⌘K</kbd></button>
+    <button class="top-notes-nav-btn sf-master-lock-btn locked" id="sfMasterLockBtn" type="button" onclick="openMasterUnlockModal()" title="Enter password to enable notes across all modules"><span>🔒 Enable Notes</span></button>
     <button class="btn" id="sheetConfigBtn" type="button" title="Configure Google Sheets Auth URL">⚙️ Sheet Config</button>
     <button class="btn primary" id="authBtn" type="button">🔐 Sign In</button>
     <button class="btn" id="themeBtn" type="button">Dark / light</button>
@@ -280,7 +284,7 @@ footer{padding:38px 28px;text-align:center;color:var(--ink3);font-size:12px;font
   <!-- HERO (Centered, zero-shift typewriter) -->
   <section class="hero" id="top">
     <div class="eyebrow">UNIFIED LEARNING PLATFORM · GOOGLE SHEETS ACCESS</div>
-    <h1>Learn<span class="tw-line"><span class="tw-text" id="typewriter">Data Engineering</span><span class="tw-cursor" aria-hidden="true">|</span></span><span class="thin">in one focused workspace.</span></h1>
+    <h1>Learn<span class="tw-line"><span class="tw-text" id="typewriter" data-phrases='["Data Engineering","Snowflake Architecture","Snowsight SQL Labs","Query Performance","AWS S3 & Snowpipe"]'>Data Engineering</span><span class="tw-cursor" aria-hidden="true">|</span></span><span class="thin">in one focused workspace.</span></h1>
     <p class="lead">All your Snowflake modules, Snowsight SQL labs, Query Backend scenarios, AWS S3 simulators, and interview guides organized into structured tracks — with Google Sheets login, progress tracking, bookmarks, and a built-in study timer.</p>
     <div class="hero-cta">
       <a class="btn primary" href="#catalog">Browse All Content ↓</a>
@@ -669,6 +673,7 @@ footer{padding:38px 28px;text-align:center;color:var(--ink3);font-size:12px;font
           <div class="item-head">
             <span class="item-code">${item.code}</span>
             <div class="item-actions">
+              <button class="topic-note-btn" type="button" data-topic="${item.code}: ${item.title}" title="Notes on ${item.title}">📝 Notes</button>
               <button class="icon-btn ${isStar ? 'star-on' : ''}" type="button" data-star="${item.id}" title="Bookmark">${isStar ? '★' : '☆'}</button>
               <button class="icon-btn ${isDone ? 'done-on' : ''}" type="button" data-done="${item.id}" title="Mark completed">${isDone ? '✓ Done' : 'Mark Done'}</button>
             </div>
@@ -717,6 +722,14 @@ footer{padding:38px 28px;text-align:center;color:var(--ink3);font-size:12px;font
     grid.querySelectorAll('[data-open]').forEach(a => {
       a.onclick = () => {
         localStorage.setItem(LS_LAST_ITEM, a.dataset.open);
+      };
+    });
+
+    grid.querySelectorAll('.topic-note-btn').forEach(btn => {
+      btn.onclick = () => {
+        if (typeof window.openTopicNotes === 'function') {
+          window.openTopicNotes(btn.dataset.topic);
+        }
       };
     });
   }
@@ -902,235 +915,9 @@ footer{padding:38px 28px;text-align:center;color:var(--ink3);font-size:12px;font
   renderDashboard();
   renderTracks();
   renderCatalog();
-
-  // =========================================================================
-  // Scroll-Driven 3D Canvas Sequence & Choreography
-  // =========================================================================
-  const progressBar = document.getElementById('scroll-progress');
-  const stageLabel = document.getElementById('scrollStageLabel');
-  const canvas = document.getElementById('scroll-canvas');
-  const ctx = canvas.getContext('2d');
-
-  // Scroll-reveal sections
-  const revEls = document.querySelectorAll('.reveal');
-  if ('IntersectionObserver' in window) {
-    const io = new IntersectionObserver(entries => {
-      entries.forEach(en => { if (en.isIntersecting) en.target.classList.add('in'); });
-    }, { threshold: 0.08 });
-    revEls.forEach(el => io.observe(el));
-  } else {
-    revEls.forEach(el => el.classList.add('in'));
-  }
-
-  // Generate 3D particle nodes on a cube/octahedron + orbital ring
-  const NODES = 54;
-  const particles = Array.from({ length: NODES }, (_, i) => {
-    const phi = Math.acos(1 - 2 * (i + 0.5) / NODES);
-    const theta = Math.PI * (1 + Math.sqrt(5)) * i;
-    return {
-      // Stage 1: Sphere / Data Core
-      sx: Math.sin(phi) * Math.cos(theta),
-      sy: Math.sin(phi) * Math.sin(theta),
-      sz: Math.cos(phi),
-      // Stage 2: 3-Layer Architecture Rings (Cloud Services, Warehouses, Storage)
-      layer: i % 3,
-      angle: (i / NODES) * Math.PI * 2 * 3,
-      // Stage 3: Streaming Pipeline Flow
-      lane: (i % 5) - 2,
-      phase: (i / NODES)
-    };
-  });
-
-  let targetScroll = 0;
-  let smoothScroll = 0;
-  let timeTick = 0;
-
-  function updateScrollTarget() {
-    const max = Math.max(1, document.documentElement.scrollHeight - window.innerHeight);
-    targetScroll = Math.min(1, Math.max(0, window.scrollY / max));
-    progressBar.style.width = (targetScroll * 100).toFixed(1) + '%';
-
-    const pct = Math.round(targetScroll * 100);
-    let label = 'STAGE 01 // ASSEMBLED DATA CORE';
-    if (targetScroll >= 0.72) label = 'STAGE 04 // CORTEX NEURAL CONSTELLATION';
-    else if (targetScroll >= 0.42) label = 'STAGE 03 // STREAMING PIPELINES';
-    else if (targetScroll >= 0.16) label = 'STAGE 02 // 3-LAYER ARCHITECTURE';
-    stageLabel.textContent = `${label} · ${pct}%`;
-  }
-
-  function resizeCanvas() {
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
-    canvas.width = window.innerWidth * dpr;
-    canvas.height = window.innerHeight * dpr;
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-  }
-
-  function lerp(a, b, t) { return a + (b - a) * t; }
-  function clamp01(v) { return Math.min(1, Math.max(0, v)); }
-
-  function drawFrame() {
-    timeTick += 0.008;
-    smoothScroll += (targetScroll - smoothScroll) * 0.08;
-
-    const w = window.innerWidth;
-    const h = window.innerHeight;
-    ctx.clearRect(0, 0, w, h);
-
-    const isDark = rootEl.getAttribute('data-theme') === 'dark';
-    const colIce = isDark ? 'rgba(76, 195, 240,' : 'rgba(10, 134, 194,';
-    const colTeal = isDark ? 'rgba(63, 211, 168,' : 'rgba(11, 138, 106,';
-    const colViolet = isDark ? 'rgba(167, 139, 250,' : 'rgba(109, 40, 217,';
-
-    // Blend weights between stages based on smoothScroll
-    const t12 = clamp01((smoothScroll - 0.08) / 0.22); // Core -> 3-Layer Rings
-    const t23 = clamp01((smoothScroll - 0.36) / 0.22); // Rings -> Streaming Pipeline
-    const t34 = clamp01((smoothScroll - 0.68) / 0.24); // Pipeline -> Neural Constellation
-
-    const cx = lerp(w * 0.74, w * 0.5, t12) ;
-    const cy = h * 0.5;
-    const radius = Math.min(w, h) * lerp(0.24, 0.32, t12);
-    const rotY = timeTick + smoothScroll * Math.PI * 3.2;
-    const rotX = 0.35 + Math.sin(smoothScroll * Math.PI) * 0.45;
-
-    const projected = [];
-
-    for (let i = 0; i < particles.length; i++) {
-      const p = particles[i];
-
-      // Position 1: 3D Data Core Sphere
-      const x1 = p.sx * radius;
-      const y1 = p.sy * radius;
-      const z1 = p.sz * radius;
-
-      // Position 2: 3 Stacked Architecture Rings
-      const ringR = radius * (0.75 + p.layer * 0.22);
-      const x2 = Math.cos(p.angle + timeTick * (p.layer + 1) * 0.35) * ringR;
-      const y2 = (p.layer - 1) * (radius * 0.52);
-      const z2 = Math.sin(p.angle + timeTick * (p.layer + 1) * 0.35) * ringR;
-
-      // Position 3: Flowing Data Pipeline Ribbons across screen
-      const flowX = ((p.phase + timeTick * 0.12 + smoothScroll * 0.9) % 1) * w - w * 0.5;
-      const flowY = p.lane * (h * 0.13) + Math.sin(flowX * 0.008 + timeTick * 2 + p.lane) * 42;
-      const flowZ = Math.cos(flowX * 0.006 + p.lane) * 60;
-
-      // Position 4: Neural Constellation Ring
-      const a4 = p.angle + timeTick * 0.5;
-      const r4 = radius * (0.6 + (i % 4) * 0.18);
-      const x4 = Math.cos(a4) * r4;
-      const y4 = Math.sin(a4) * r4 * 0.7;
-      const z4 = Math.sin(a4 * 2 + timeTick) * 90;
-
-      // Interpolate through scroll stages
-      let x = lerp(x1, x2, t12);
-      let y = lerp(y1, y2, t12);
-      let z = lerp(z1, z2, t12);
-
-      x = lerp(x, flowX, t23);
-      y = lerp(y, flowY, t23);
-      z = lerp(z, flowZ, t23);
-
-      x = lerp(x, x4, t34);
-      y = lerp(y, y4, t34);
-      z = lerp(z, z4, t34);
-
-      // 3D rotation (diminished during flat pipeline wave)
-      const rotBlend = 1 - t23 * (1 - t34) * 0.75;
-      const ry = rotY * rotBlend;
-      const rx = rotX * rotBlend;
-
-      const cosY = Math.cos(ry), sinY = Math.sin(ry);
-      const rx1 = x * cosY - z * sinY;
-      const rz1 = x * sinY + z * cosY;
-
-      const cosX = Math.cos(rx), sinX = Math.sin(rx);
-      const ry2 = y * cosX - rz1 * sinX;
-      const rz2 = y * sinX + rz1 * cosX;
-
-      const scale = 680 / (680 + rz2);
-      projected.push({
-        px: cx + rx1 * scale,
-        py: cy + ry2 * scale,
-        scale,
-        layer: p.layer
-      });
-    }
-
-    // Draw connecting edges between nearby nodes
-    ctx.lineWidth = 1;
-    for (let i = 0; i < projected.length; i++) {
-      for (let j = i + 1; j < projected.length; j++) {
-        const a = projected[i], b = projected[j];
-        const dx = a.px - b.px, dy = a.py - b.py;
-        const dist = Math.hypot(dx, dy);
-        if (dist < 130) {
-          const alpha = (1 - dist / 130) * (isDark ? 0.24 : 0.16);
-          ctx.strokeStyle = (a.layer === 1 ? colTeal : a.layer === 2 ? colViolet : colIce) + alpha.toFixed(3) + ')';
-          ctx.beginPath();
-          ctx.moveTo(a.px, a.py);
-          ctx.lineTo(b.px, b.py);
-          ctx.stroke();
-        }
-      }
-    }
-
-    // Draw nodes
-    for (let i = 0; i < projected.length; i++) {
-      const n = projected[i];
-      const r = Math.max(1.8, 3.6 * n.scale);
-      const alpha = Math.min(0.65, 0.22 + n.scale * 0.22);
-      const c = n.layer === 1 ? colTeal : n.layer === 2 ? colViolet : colIce;
-      ctx.fillStyle = c + alpha.toFixed(3) + ')';
-      ctx.beginPath();
-      ctx.arc(n.px, n.py, r, 0, Math.PI * 2);
-      ctx.fill();
-    }
-
-    requestAnimationFrame(drawFrame);
-  }
-
-  window.addEventListener('scroll', updateScrollTarget, { passive: true });
-  window.addEventListener('resize', resizeCanvas);
-  resizeCanvas();
-  updateScrollTarget();
-  if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-    requestAnimationFrame(drawFrame);
-
-    // Hero Typewriter Effect
-    const twEl = document.getElementById('typewriter');
-    const phrases = [
-      'Data Engineering',
-      'Snowflake Architecture',
-      'Snowsight SQL Labs',
-      'Query Performance',
-      'AWS S3 & Snowpipe'
-    ];
-    let pIdx = 0, cIdx = phrases[0].length, deleting = true;
-    function stepTypewriter() {
-      const word = phrases[pIdx];
-      if (deleting) {
-        cIdx--;
-        twEl.textContent = word.slice(0, cIdx);
-        if (cIdx <= 0) {
-          deleting = false;
-          pIdx = (pIdx + 1) % phrases.length;
-          setTimeout(stepTypewriter, 350);
-          return;
-        }
-        setTimeout(stepTypewriter, 45);
-      } else {
-        cIdx++;
-        twEl.textContent = word.slice(0, cIdx);
-        if (cIdx >= word.length) {
-          deleting = true;
-          setTimeout(stepTypewriter, 1900);
-          return;
-        }
-        setTimeout(stepTypewriter, 75);
-      }
-    }
-    setTimeout(stepTypewriter, 1800);
-  }
 })();
 </script>
+<script src="notes.js"></script>
+<script src="scroll-stage.js"></script>
 </body>
 </html>

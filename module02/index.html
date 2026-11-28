@@ -263,7 +263,7 @@ footer{padding:40px 0;color:var(--ink3);font-size:13px;font-family:var(--f-mono)
 </head>
 <body>
 <div class="top">
-  <a class="sf-topbar-home-btn" href="../" title="Back to Course Home">← Course Home</a>
+  <a class="sf-topbar-home-btn" href="../academy.html" title="Back to Academy Home">← Academy Home</a>
   <span class="pill">Module 02 · Load &amp; automate</span>
   <div class="prog"><i id="progBar"></i></div>
   <span class="prog-l" id="progLbl">0% explored</span>
@@ -310,7 +310,7 @@ footer{padding:40px 0;color:var(--ink3);font-size:13px;font-family:var(--f-mono)
 
 <section id="intro">
   <div class="eyebrow">MODULE 02 · LOAD &amp; AUTOMATE</div>
-  <h1>Get data in.<br><span class="thin">Keep it moving.</span></h1>
+  <h1>Get data in.<br><span class="thin"><span class="tw-text" id="typewriter">Keep it moving.</span><span class="tw-cursor" aria-hidden="true">|</span></span></h1>
   <p class="lead" style="margin-top:18px">Module 1 showed how Snowflake is built. This module covers how data actually gets into it and keeps flowing: SnowSQL to move files from your laptop, the unstructured data pipeline for PDFs, audio and images, streams and tasks to process new data automatically, and stored procedures to package multi-step logic into one call.</p>
   <p style="margin-top:14px">We'll keep the restaurant analogy from Module 1 and add four new characters:</p>
   <div class="analogy-grid">
@@ -1677,5 +1677,6 @@ $('#pcLangCode').textContent = PL.sql.c; $('#pcLangNote').innerHTML = PL.sql.n;
 })();
 </script>
 <script src="../notes.js"></script>
+<script src="../scroll-stage.js"></script>
 </body>
 </html>

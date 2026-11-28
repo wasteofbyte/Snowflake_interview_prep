@@ -293,7 +293,7 @@ tr.vis td:first-child{box-shadow:inset 3px 0 var(--teal)}
 </head>
 <body>
 <div class="top">
-  <a class="sf-topbar-home-btn" href="../" title="Back to Course Home">← Course Home</a>
+  <a class="sf-topbar-home-btn" href="../academy.html" title="Back to Academy Home">← Academy Home</a>
   <span class="pill">Module 08 · Security &amp; governance</span>
   <div class="prog"><i id="progBar"></i></div>
   <span class="prog-l" id="progLbl">0% explored</span>
@@ -339,7 +339,7 @@ tr.vis td:first-child{box-shadow:inset 3px 0 var(--teal)}
 
 <section id="intro">
   <div class="eyebrow">MODULE 08 · SECURITY &amp; GOVERNANCE</div>
-  <h1>Who are you?<br><span class="thin">What may you see?</span></h1>
+  <h1>Who are you?<br><span class="thin"><span class="tw-text" id="typewriter">What may you see?</span><span class="tw-cursor" aria-hidden="true">|</span></span></h1>
   <p class="lead" style="margin-top:18px">Every query in Snowflake passes through a series of checks before a single row comes back: where is it coming from, who is sending it, which role is active, which rows and columns that role may see, and who wrote it all down. This module walks through each check, from network policies and key-pair logins to role hierarchies, masking and row access policies, tags, audit views and the encryption keys underneath.</p>
   <p style="margin-top:14px">Think of Snowflake as a <b>big office building</b> that stores everyone's files:</p>
   <div class="analogy-grid">
@@ -1549,5 +1549,6 @@ qShow(0);
 })();
 </script>
 <script src="../notes.js"></script>
+<script src="../scroll-stage.js"></script>
 </body>
 </html>

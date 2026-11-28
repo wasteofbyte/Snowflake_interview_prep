@@ -281,7 +281,7 @@ footer{padding:40px 0;color:var(--ink3);font-size:13px;font-family:var(--f-mono)
 </head>
 <body>
 <div class="top">
-  <a class="sf-topbar-home-btn" href="../" title="Back to Course Home">← Course Home</a>
+  <a class="sf-topbar-home-btn" href="../academy.html" title="Back to Academy Home">← Academy Home</a>
   <span class="pill">Module 04 · Data ingestion</span>
   <div class="prog"><i id="progBar"></i></div>
   <span class="prog-l" id="progLbl">0% explored</span>
@@ -328,7 +328,7 @@ footer{padding:40px 0;color:var(--ink3);font-size:13px;font-family:var(--f-mono)
 
 <section id="intro">
   <div class="eyebrow">MODULE 04 · DATA INGESTION</div>
-  <h1>Land it once.<br><span class="thin">Land it right.</span></h1>
+  <h1>Land it once.<br><span class="thin"><span class="tw-text" id="typewriter">Land it right.</span><span class="tw-cursor" aria-hidden="true">|</span></span></h1>
   <p class="lead" style="margin-top:18px">Module 02 showed the basics: <code>PUT</code> a file to a stage, then <code>COPY INTO</code> a table. Real platforms go much further. Files arrive every few seconds from hundreds of systems, some rows are broken, some files are duplicates, some data must stay in the lake for Spark, and the business wants dashboards that are minutes (or seconds) old. This module goes deep on every way data gets into Snowflake and what really happens in the backend.</p>
   <p style="margin-top:14px">We keep the restaurant from earlier modules. Today we meet the people who deal with <b>deliveries</b>:</p>
   <div class="analogy-grid">
@@ -1606,5 +1606,6 @@ qShow(0);
 })();
 </script>
 <script src="../notes.js"></script>
+<script src="../scroll-stage.js"></script>
 </body>
 </html>
