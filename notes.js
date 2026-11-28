@@ -44,6 +44,7 @@
     'Module 14: Enterprise Architecture & Governance',
     'Module 15: External Integrations',
     'Module 16: IaC, CI/CD & Orchestration',
+    'Flashback: Quick Interview & Self Reality Check',
     'Deep Dive: SnowSQL, Streams & Tasks',
     'Deep Dive: JSON S3 → Snowflake'
   ];
