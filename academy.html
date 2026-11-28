@@ -199,7 +199,22 @@ body{
 .item-card.is-locked{opacity:.72}
 .item-stripe{position:absolute;left:0;top:0;bottom:0;width:4px}
 .item-head{display:flex;align-items:center;justify-content:space-between;gap:8px}
-.item-code{font-family:var(--f-mono);font-size:10.5px;color:var(--ink3);letter-spacing:.1em;text-transform:uppercase}
+.item-code{
+  font-family:var(--f-mono);font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+  padding:3px 9px;border-radius:99px;display:inline-flex;align-items:center;gap:5px;white-space:nowrap;
+}
+.badge-snowflake{background:var(--ice-s);color:var(--ice);border:1px solid rgba(10,134,194,.35)}
+.badge-labs{background:var(--teal-s);color:var(--teal);border:1px solid rgba(11,138,106,.35)}
+.badge-simulators{background:var(--violet-s);color:var(--violet);border:1px solid rgba(109,40,217,.35)}
+.badge-deepdives{background:var(--amber-s);color:var(--amber);border:1px solid rgba(184,111,0,.35)}
+.cat-group-head{
+  grid-column:1 / -1;display:flex;align-items:center;gap:12px;margin:14px 0 2px;
+  font-family:var(--f-head);font-size:18px;font-weight:700;color:var(--ink);
+}
+.cat-group-head:first-child{margin-top:0}
+.cat-group-head::after{content:"";flex:1;height:1px;background:var(--line)}
+.cat-group-count{font-family:var(--f-mono);font-size:10.5px;padding:2px 9px;border-radius:99px;
+  border:1px solid var(--line2);color:var(--ink3);background:var(--card-solid)}
 .item-actions{display:flex;align-items:center;gap:6px}
 .icon-btn{
   border:1px solid var(--line2);background:var(--bg);color:var(--ink2);border-radius:7px;
@@ -729,15 +744,23 @@ footer{padding:38px 28px;text-align:center;color:var(--ink3);font-size:12px;font
       return;
     }
 
-    grid.innerHTML = filtered.map(item => {
+    const TRACK_LABELS = {
+      snowflake: { icon: '📚', title: 'Learning Modules' },
+      labs: { icon: '🧪', title: 'Hands-On Snowsight SQL Labs' },
+      simulators: { icon: '⚡', title: 'Interactive Simulators' },
+      deepdives: { icon: '📖', title: 'Deep-Dive Topic Suites' }
+    };
+
+    const renderCard = item => {
       const isDone = progress.completedIds.includes(item.id);
       const isStar = progress.bookmarks.includes(item.id);
       const allowed = isTrackAllowed(item.track);
+      const tIcon = (TRACK_LABELS[item.track] && TRACK_LABELS[item.track].icon) || '📄';
       return `
         <article class="item-card ${isDone ? 'is-done' : ''} ${!allowed ? 'is-locked' : ''}" ${allowed ? `data-card-href="${item.href}"` : ''}>
           <div class="item-stripe" style="background:${item.color}"></div>
           <div class="item-head">
-            <span class="item-code">${item.code}</span>
+            <span class="item-code badge-${item.track}">${tIcon} ${item.code}</span>
             <div class="item-actions">
               <button class="topic-note-btn" type="button" data-topic="${item.code}: ${item.title}" title="Notes on ${item.title}">📝 Notes</button>
               <button class="icon-btn ${isStar ? 'star-on' : ''}" type="button" data-star="${item.id}" title="Bookmark">${isStar ? '★' : '☆'}</button>
@@ -767,7 +790,25 @@ footer{padding:38px 28px;text-align:center;color:var(--ink3);font-size:12px;font
           </div>
         </article>
       `;
-    }).join('');
+    };
+
+    if (currentTrack === 'all') {
+      const order = ['snowflake', 'labs', 'simulators', 'deepdives'];
+      grid.innerHTML = order.map(tk => {
+        const group = filtered.filter(i => i.track === tk);
+        if (!group.length) return '';
+        const meta = TRACK_LABELS[tk];
+        return `
+          <div class="cat-group-head">
+            <span>${meta.icon} ${meta.title}</span>
+            <span class="cat-group-count">${group.length}</span>
+          </div>
+          ${group.map(renderCard).join('')}
+        `;
+      }).join('');
+    } else {
+      grid.innerHTML = filtered.map(renderCard).join('');
+    }
 
     grid.querySelectorAll('[data-done]').forEach(btn => {
       btn.onclick = () => {
