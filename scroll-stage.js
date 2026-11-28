@@ -20,10 +20,10 @@
           position:fixed;inset:0;width:100vw;height:100vh;z-index:0;pointer-events:none;
         }
         body > header, body > .top, body > .topbar{
-          position:sticky;top:0;z-index:900 !important;
+          position:sticky !important;top:0 !important;z-index:99999 !important;
         }
         body > main, body > footer, body > .wrap{
-          position:relative;z-index:2;
+          position:relative !important;z-index:1 !important;
         }
         .scroll-hud{
           position:fixed;bottom:18px;left:20px;z-index:35;

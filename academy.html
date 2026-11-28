@@ -59,7 +59,7 @@ body{
 #scroll-canvas{
   position:fixed;inset:0;width:100vw;height:100vh;z-index:0;pointer-events:none;
 }
-main,footer{position:relative;z-index:2}
+main,footer{position:relative;z-index:1 !important}
 .scroll-hud{
   position:fixed;bottom:18px;left:20px;z-index:35;
   display:inline-flex;align-items:center;gap:9px;padding:7px 14px;border-radius:99px;
@@ -77,10 +77,10 @@ main,footer{position:relative;z-index:2}
 @media(prefers-reduced-motion:reduce){.reveal{opacity:1;transform:none;transition:none}.tw-cursor{animation:none}}
 @media(max-width:720px){.scroll-hud{display:none}}
 
-.topbar{
-  position:sticky;top:0;z-index:900;display:flex;align-items:center;gap:14px;padding:11px 28px;
+header.topbar,.topbar{
+  position:sticky !important;top:0 !important;z-index:99999 !important;display:flex;align-items:center;gap:14px;padding:11px 28px;
   border-bottom:1px solid var(--line);
-  background:color-mix(in srgb,var(--bg) 85%,transparent);
+  background:var(--card-solid);
   backdrop-filter:saturate(1.5) blur(14px);
 }
 .brand{font-family:var(--f-mono);font-weight:700;letter-spacing:.06em;font-size:13px;white-space:nowrap}
@@ -122,15 +122,15 @@ main,footer{position:relative;z-index:2}
 }
 .notif-popover{
   position:absolute;top:calc(100% + 8px);right:0;width:370px;max-width:calc(100vw - 32px);
-  background:var(--card-solid);border:1px solid var(--line2);border-radius:16px;
-  box-shadow:0 24px 64px rgba(0,0,0,.35);backdrop-filter:blur(16px);
-  display:none;flex-direction:column;z-index:999;overflow:hidden;
+  background:var(--card-solid) !important;border:1px solid var(--line2);border-radius:16px;
+  box-shadow:0 24px 64px rgba(0,0,0,.45), 0 4px 16px rgba(0,0,0,.15);
+  display:none;flex-direction:column;z-index:100000 !important;overflow:hidden;
   animation:notifPop .18s cubic-bezier(0.16, 1, 0.3, 1);
 }
 @media(max-width:600px){
   .notif-popover{
-    position:fixed;top:56px;left:12px;right:12px;width:auto;max-width:none;
-    max-height:calc(100vh - 72px);box-shadow:0 24px 60px rgba(0,0,0,.45);
+    position:fixed !important;top:56px !important;left:12px !important;right:12px !important;width:auto !important;max-width:none !important;
+    max-height:calc(100vh - 72px) !important;z-index:100000 !important;box-shadow:0 24px 60px rgba(0,0,0,.55) !important;
   }
 }
 .notif-popover.open{display:flex}
