@@ -273,7 +273,7 @@ footer{padding:38px 28px;text-align:center;color:var(--ink3);font-size:12px;font
   <div class="top-right">
     <button class="top-notes-nav-btn sf-master-search-btn" id="sfMasterSearchBtn" type="button" onclick="openMasterSearchModal()" title="Search all Snowflake interview topics (⌘K / Ctrl+K)"><span>🔍 Search</span> <kbd>⌘K</kbd></button>
     <button class="top-notes-nav-btn sf-master-lock-btn locked" id="sfMasterLockBtn" type="button" onclick="openMasterUnlockModal()" title="Enter password to enable notes across all modules"><span>🔒 Enable Notes</span></button>
-    <button class="btn" id="sheetConfigBtn" type="button" title="Configure Google Sheets Auth URL">⚙️ Sheet Config</button>
+    <button class="btn" id="sheetConfigBtn" type="button" style="display:none" title="Owner: Configure Google Sheets Auth URL">⚙️ Sheet Config</button>
     <button class="btn primary" id="authBtn" type="button">🔐 Sign In</button>
     <button class="btn" id="themeBtn" type="button">Dark / light</button>
   </div>
@@ -289,7 +289,6 @@ footer{padding:38px 28px;text-align:center;color:var(--ink3);font-size:12px;font
     <div class="hero-cta">
       <a class="btn primary" href="#catalog">Browse All Content ↓</a>
       <a class="btn" id="continueBtn" href="module01/">▶ Continue Learning</a>
-      <a class="btn" href="apps_script_auth/SETUP_GUIDE.md" target="_blank">📄 Sheet Setup Guide</a>
     </div>
   </section>
 
@@ -370,11 +369,10 @@ footer{padding:38px 28px;text-align:center;color:var(--ink3);font-size:12px;font
       </div>
 
       <div class="tool-card">
-        <h3 style="font-family:var(--f-head);font-size:19px">📊 Google Sheets Access Control</h3>
-        <p style="font-size:13.5px;color:var(--ink2);margin-bottom:14px">Manage learners, approvals (<code>PENDING</code> → <code>ACTIVE</code>), track permissions (<code>allowed_tracks</code>), and cloud progress sync directly from your Google Sheet.</p>
+        <h3 style="font-family:var(--f-head);font-size:19px">🔐 Learner Account &amp; Sync</h3>
+        <p style="font-size:13.5px;color:var(--ink2);margin-bottom:14px">Sign in or request access to save your completed modules, bookmarks, and study streak across devices.</p>
         <div style="display:flex;flex-wrap:wrap;gap:8px">
-          <button class="btn primary" id="openAuthFromTools" type="button">🔐 Open Login / Request Access</button>
-          <a class="btn" href="apps_script_auth/Code.gs" target="_blank">📜 View Code.gs</a>
+          <button class="btn primary" id="openAuthFromTools" type="button">🔐 Sign In / Request Access</button>
           <a class="btn" href="https://100ravpatel.github.io/Portfolio/" target="_blank" rel="noopener">👤 Owner Portfolio ↗</a>
         </div>
       </div>
@@ -398,7 +396,7 @@ footer{padding:38px 28px;text-align:center;color:var(--ink3);font-size:12px;font
     <div class="modal-tabs">
       <button class="m-tab active" type="button" data-mtab="login">Sign In</button>
       <button class="m-tab" type="button" data-mtab="register">Request Access</button>
-      <button class="m-tab" type="button" data-mtab="config">Sheet URL</button>
+      <button class="m-tab" id="configTabBtn" type="button" data-mtab="config" style="display:none">Sheet URL</button>
     </div>
 
     <div class="msg-box" id="authMsg"></div>
@@ -414,10 +412,7 @@ footer{padding:38px 28px;text-align:center;color:var(--ink3);font-size:12px;font
         <input id="loginPass" type="password" required placeholder="Enter password">
       </div>
       <div style="display:flex;gap:8px;margin-top:14px">
-        <button class="btn primary" type="submit" style="flex:1;justify-content:center">Sign In via Google Sheet</button>
-      </div>
-      <div style="margin-top:10px;text-align:center">
-        <button class="btn" id="localPreviewBtn" type="button" style="width:100%;justify-content:center;font-size:12px">⚡ Quick Owner Preview (Local Mode)</button>
+        <button class="btn primary" type="submit" style="flex:1;justify-content:center">Sign In</button>
       </div>
     </form>
 
@@ -579,6 +574,11 @@ footer{padding:38px 28px;text-align:center;color:var(--ink3);font-size:12px;font
     const authBtn = document.getElementById('authBtn');
     const syncBadge = document.getElementById('syncStatus');
     const greeting = document.getElementById('dashGreeting');
+    const isAdmin = (user && user.role === 'admin') || new URLSearchParams(location.search).get('admin') === '1';
+    const sheetCfgBtn = document.getElementById('sheetConfigBtn');
+    const cfgTabBtn = document.getElementById('configTabBtn');
+    if (sheetCfgBtn) sheetCfgBtn.style.display = isAdmin ? 'inline-flex' : 'none';
+    if (cfgTabBtn) cfgTabBtn.style.display = isAdmin ? 'block' : 'none';
 
     if (user) {
       authBtn.textContent = `👤 ${user.name} · Sign Out`;
@@ -834,15 +834,6 @@ footer{padding:38px 28px;text-align:center;color:var(--ink3);font-size:12px;font
     } catch (err) {
       showMsg(err.message, true);
     }
-  };
-
-  document.getElementById('localPreviewBtn').onclick = () => {
-    user = { email: 'owner@wasteofbyte.dev', name: 'Saurav Patel', role: 'admin', allowedTracks: 'ALL', mode: 'local' };
-    saveState();
-    renderDashboard();
-    renderTracks();
-    renderCatalog();
-    closeModal();
   };
 
   document.getElementById('registerForm').onsubmit = async e => {
