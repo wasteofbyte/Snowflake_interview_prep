@@ -1,0 +1,872 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Saurav Patel Academy · Unified Learning Platform</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/space-grotesk@5/300.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/space-grotesk@5/700.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/ibm-plex-sans@5/300.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/ibm-plex-sans@5/400.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/ibm-plex-sans@5/600.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/jetbrains-mono@5/400.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/jetbrains-mono@5/700.css">
+<style>
+:root{
+  --bg:#F2F6FA;--card:rgba(255,255,255,.88);--card-solid:#FFFFFF;--card2:#E9EFF5;
+  --ink:#0B1B2B;--ink2:#46596B;--ink3:#7F90A2;
+  --line:rgba(11,27,43,.11);--line2:rgba(11,27,43,.22);
+  --ice:#0A86C2;--ice-s:#DCEFF9;--teal:#0B8A6A;--teal-s:#DAF3EB;
+  --amber:#B86F00;--amber-s:#FFF0D4;--violet:#6D28D9;--violet-s:rgba(109,40,217,.10);
+  --red:#C93C3C;--red-s:#FCE4E4;--emerald:#065F46;--orange:#C2410C;
+  --grid:rgba(10,134,194,.055);
+  --f-head:"Space Grotesk",sans-serif;--f-body:"IBM Plex Sans",sans-serif;--f-mono:"JetBrains Mono",monospace;
+}
+[data-theme="dark"]{
+  --bg:#07111C;--card:rgba(15,29,44,.86);--card-solid:#0F1D2C;--card2:#16293B;
+  --ink:#E5EDF5;--ink2:#9DB0C3;--ink3:#687D91;
+  --line:rgba(229,237,245,.10);--line2:rgba(229,237,245,.22);
+  --ice:#4CC3F0;--ice-s:rgba(76,195,240,.13);--teal:#3FD3A8;--teal-s:rgba(63,211,168,.13);
+  --amber:#FFB938;--amber-s:rgba(255,185,56,.13);--violet:#A78BFA;--violet-s:rgba(167,139,250,.13);
+  --red:#FF7070;--red-s:rgba(255,112,112,.14);--emerald:#34D399;--orange:#FB923C;
+  --grid:rgba(76,195,240,.045);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  font-family:var(--f-body);color:var(--ink);line-height:1.6;font-size:15.5px;
+  /* Single continuous scrollable canvas */
+  background:
+    radial-gradient(1100px 600px at 88% 4%, var(--ice-s), transparent 62%),
+    radial-gradient(950px 550px at 8% 35%, var(--teal-s), transparent 60%),
+    radial-gradient(1000px 600px at 80% 72%, var(--violet-s), transparent 60%),
+    linear-gradient(var(--grid) 1px, transparent 1px) 0 0 / 34px 34px,
+    linear-gradient(90deg, var(--grid) 1px, transparent 1px) 0 0 / 34px 34px,
+    var(--bg);
+  background-attachment:fixed;
+  min-height:100vh;
+}
+
+/* Sticky Top Navigation */
+.topbar{
+  position:sticky;top:0;z-index:40;display:flex;align-items:center;gap:14px;padding:11px 28px;
+  border-bottom:1px solid var(--line);
+  background:color-mix(in srgb,var(--bg) 80%,transparent);
+  backdrop-filter:saturate(1.5) blur(12px);
+}
+.brand{font-family:var(--f-mono);font-weight:700;letter-spacing:.06em;font-size:13px;white-space:nowrap}
+.brand b{color:var(--ice)}
+.nav-links{display:flex;align-items:center;gap:6px;margin-left:14px}
+.nav-links a{
+  font-size:13px;font-weight:500;color:var(--ink2);text-decoration:none;padding:5px 10px;
+  border-radius:8px;transition:all .15s;white-space:nowrap;
+}
+.nav-links a:hover{color:var(--ice);background:var(--ice-s)}
+.top-right{margin-left:auto;display:flex;align-items:center;gap:8px}
+.btn{
+  border:1px solid var(--line2);background:var(--card-solid);color:var(--ink);border-radius:9px;
+  padding:6px 13px;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--f-body);
+  display:inline-flex;align-items:center;gap:6px;transition:all .15s;text-decoration:none;white-space:nowrap;
+}
+.btn:hover{border-color:var(--ice);color:var(--ice);background:var(--card2)}
+.btn.primary{background:var(--ice);border-color:var(--ice);color:#fff;box-shadow:0 3px 12px rgba(10,134,194,.24)}
+.btn.primary:hover{filter:brightness(1.08);color:#fff}
+.btn.teal{background:var(--teal-s);border-color:var(--teal);color:var(--teal)}
+.user-pill{
+  display:inline-flex;align-items:center;gap:7px;padding:5px 12px;border-radius:99px;
+  border:1px solid var(--teal);background:var(--teal-s);color:var(--teal);
+  font-family:var(--f-mono);font-size:12px;font-weight:600;cursor:pointer;
+}
+
+.wrap{max-width:1200px;margin:0 auto;padding:0 28px}
+
+/* Hero Section */
+.hero{padding:64px 0 40px;display:grid;grid-template-columns:1.2fr .8fr;gap:32px;align-items:center}
+.eyebrow{
+  display:inline-flex;align-items:center;gap:8px;font-family:var(--f-mono);font-size:11px;
+  letter-spacing:.14em;color:var(--ice);background:var(--ice-s);border:1px solid rgba(10,134,194,.3);
+  padding:4px 12px;border-radius:99px;margin-bottom:16px;font-weight:700;
+}
+.hero h1{
+  font-family:var(--f-head);font-weight:700;font-size:clamp(36px,5.2vw,62px);
+  line-height:1.03;letter-spacing:-.03em;margin-bottom:16px;
+}
+.hero h1 .thin{font-weight:300;color:var(--ink2)}
+.hero .lead{font-size:17px;font-weight:300;color:var(--ink2);max-width:580px;margin-bottom:26px}
+.hero-cta{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+
+/* Progress / Auth Card in Hero */
+.dash-card{
+  background:var(--card);border:1px solid var(--line2);border-radius:18px;padding:24px;
+  backdrop-filter:blur(10px);box-shadow:0 14px 40px rgba(11,27,43,.07);
+}
+.dash-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.dash-title{font-family:var(--f-head);font-weight:700;font-size:17px}
+.sync-badge{font-family:var(--f-mono);font-size:10.5px;padding:3px 9px;border-radius:99px;
+  background:var(--card2);color:var(--ink2);border:1px solid var(--line)}
+.sync-badge.ok{background:var(--teal-s);color:var(--teal);border-color:var(--teal)}
+.prog-bar-wrap{height:10px;border-radius:99px;background:var(--card2);overflow:hidden;margin:10px 0 14px;border:1px solid var(--line)}
+.prog-bar-fill{height:100%;background:linear-gradient(90deg,var(--ice),var(--teal));width:0%;transition:width .35s ease}
+.dash-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
+.d-stat{background:var(--bg);border:1px solid var(--line);border-radius:11px;padding:10px;text-align:center}
+.d-stat b{font-family:var(--f-head);font-size:20px;display:block;line-height:1.1}
+.d-stat span{font-family:var(--f-mono);font-size:10px;color:var(--ink3)}
+
+/* Section Headers */
+.sec-head{display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:12px;margin:48px 0 20px}
+.sec-head h2{font-family:var(--f-head);font-size:24px;font-weight:700;display:flex;align-items:center;gap:10px}
+.sec-head h2::before{content:"";width:4px;height:24px;border-radius:3px;background:var(--ice)}
+.sec-head p{font-size:14px;color:var(--ink2)}
+
+/* Learning Tracks Row */
+.tracks-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px}
+.track-card{
+  background:var(--card);border:1px solid var(--line2);border-radius:15px;padding:20px;
+  cursor:pointer;transition:all .18s;position:relative;overflow:hidden;text-align:left;
+}
+.track-card:hover{border-color:var(--ice);transform:translateY(-2px);box-shadow:0 10px 28px rgba(10,134,194,.11)}
+.track-card.active{border-color:var(--ice);box-shadow:0 0 0 2px var(--ice-s)}
+.track-card.locked{opacity:.65}
+.track-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.track-icon{font-size:22px}
+.track-pill{font-family:var(--f-mono);font-size:10px;padding:2px 8px;border-radius:99px;border:1px solid var(--line2);color:var(--ink2)}
+.track-card h3{font-family:var(--f-head);font-size:17px;margin-bottom:4px}
+.track-card p{font-size:13px;color:var(--ink2);margin-bottom:12px;line-height:1.45}
+.track-mini-bar{height:5px;border-radius:99px;background:var(--card2);overflow:hidden}
+.track-mini-bar i{display:block;height:100%;background:var(--teal);width:0%;transition:width .3s}
+
+/* Filter Toolbar */
+.toolbar{
+  background:var(--card);border:1px solid var(--line2);border-radius:14px;padding:12px 16px;
+  display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-bottom:20px;
+  backdrop-filter:blur(8px);
+}
+.pill-group{display:flex;flex-wrap:wrap;gap:6px;flex:1}
+.f-pill{
+  font-family:var(--f-mono);font-size:11.5px;font-weight:600;padding:6px 12px;border-radius:99px;
+  border:1px solid var(--line2);background:var(--bg);color:var(--ink2);cursor:pointer;transition:all .15s;
+}
+.f-pill:hover{border-color:var(--ice);color:var(--ice)}
+.f-pill.active{background:var(--ice);border-color:var(--ice);color:#fff}
+.search-box{
+  font-family:var(--f-mono);font-size:12.5px;padding:7px 12px;border-radius:9px;
+  border:1px solid var(--line2);background:var(--bg);color:var(--ink);outline:none;width:230px;
+}
+.search-box:focus{border-color:var(--ice);background:var(--card-solid)}
+
+/* Catalog Grid */
+.catalog-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:16px}
+.item-card{
+  background:var(--card);border:1px solid var(--line);border-radius:15px;padding:20px;
+  display:flex;flex-direction:column;gap:10px;transition:all .18s;position:relative;overflow:hidden;
+}
+.item-card:hover{border-color:var(--ice);transform:translateY(-2px);box-shadow:0 10px 30px rgba(10,134,194,.11)}
+.item-card.is-done{border-color:color-mix(in srgb,var(--teal) 50%,var(--line))}
+.item-card.is-locked{opacity:.72}
+.item-stripe{position:absolute;left:0;top:0;bottom:0;width:4px}
+.item-head{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.item-code{font-family:var(--f-mono);font-size:10.5px;color:var(--ink3);letter-spacing:.1em;text-transform:uppercase}
+.item-actions{display:flex;align-items:center;gap:6px}
+.icon-btn{
+  border:1px solid var(--line2);background:var(--bg);color:var(--ink2);border-radius:7px;
+  padding:3px 8px;font-size:11.5px;cursor:pointer;font-family:var(--f-mono);transition:all .15s;
+}
+.icon-btn:hover{border-color:var(--ice);color:var(--ice)}
+.icon-btn.done-on{background:var(--teal-s);border-color:var(--teal);color:var(--teal);font-weight:700}
+.icon-btn.star-on{background:var(--amber-s);border-color:var(--amber);color:var(--amber)}
+.item-title{font-family:var(--f-head);font-size:17.5px;font-weight:700;line-height:1.25}
+.item-desc{font-size:13.5px;color:var(--ink2);line-height:1.5;flex:1}
+.item-foot{display:flex;align-items:center;justify-content:space-between;gap:8px;padding-top:8px;border-top:1px solid var(--line)}
+.item-meta{font-family:var(--f-mono);font-size:11px;color:var(--ink3)}
+.open-link{font-family:var(--f-mono);font-size:12px;font-weight:700;color:var(--ice);text-decoration:none}
+.open-link:hover{text-decoration:underline}
+
+/* Study Tools & Pomodoro Section */
+.tools-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:20px}
+.tool-card{background:var(--card);border:1px solid var(--line2);border-radius:16px;padding:24px}
+.timer-display{font-family:var(--f-mono);font-size:40px;font-weight:700;letter-spacing:.04em;margin:12px 0;color:var(--ice)}
+.timer-controls{display:flex;flex-wrap:wrap;gap:8px}
+
+/* Modal */
+.modal-backdrop{
+  position:fixed;inset:0;z-index:100;background:rgba(7,17,28,.65);backdrop-filter:blur(6px);
+  display:none;align-items:center;justify-content:center;padding:20px;
+}
+.modal-backdrop.open{display:flex}
+.modal{
+  background:var(--card-solid);border:1px solid var(--line2);border-radius:18px;
+  max-width:440px;width:100%;padding:26px;box-shadow:0 24px 64px rgba(0,0,0,.35);
+}
+.modal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.modal-head h3{font-family:var(--f-head);font-size:20px}
+.modal-tabs{display:flex;gap:6px;margin-bottom:16px;background:var(--card2);padding:4px;border-radius:10px}
+.m-tab{flex:1;padding:7px;border:none;background:transparent;border-radius:8px;font-family:var(--f-mono);
+  font-size:11.5px;font-weight:600;color:var(--ink2);cursor:pointer}
+.m-tab.active{background:var(--card-solid);color:var(--ice);box-shadow:0 2px 6px rgba(0,0,0,.08)}
+.field{margin-bottom:12px}
+.field label{display:block;font-family:var(--f-mono);font-size:11px;color:var(--ink2);margin-bottom:4px}
+.field input{width:100%;padding:9px 12px;border-radius:9px;border:1px solid var(--line2);
+  background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:14px;outline:none}
+.field input:focus{border-color:var(--ice)}
+.msg-box{font-size:12.5px;padding:9px 12px;border-radius:9px;margin-bottom:12px;display:none}
+.msg-box.err{display:block;background:var(--red-s);color:var(--red);border:1px solid var(--red)}
+.msg-box.ok{display:block;background:var(--teal-s);color:var(--teal);border:1px solid var(--teal)}
+
+footer{padding:38px 28px;text-align:center;color:var(--ink3);font-size:12px;font-family:var(--f-mono);
+  border-top:1px solid var(--line);margin-top:56px}
+
+@media(max-width:900px){.hero,.tools-grid{grid-template-columns:1fr}.nav-links{display:none}}
+@media(max-width:600px){.topbar{padding:10px 16px;flex-wrap:wrap}.wrap{padding:0 16px}.search-box{width:100%}}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">SAURAV PATEL <b>· ACADEMY</b></div>
+  <nav class="nav-links" aria-label="Sections">
+    <a href="#tracks">Tracks</a>
+    <a href="#catalog">Catalog</a>
+    <a href="#tools">Study Tools</a>
+    <a href="demo.html">Demo</a>
+    <a href="index.html">Classic Index</a>
+  </nav>
+  <div class="top-right">
+    <button class="btn" id="sheetConfigBtn" type="button" title="Configure Google Sheets Auth URL">⚙️ Sheet Config</button>
+    <button class="btn primary" id="authBtn" type="button">🔐 Sign In</button>
+    <button class="btn" id="themeBtn" type="button">Dark / light</button>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <!-- HERO + PERSONAL PROGRESS DASHBOARD -->
+  <section class="hero" id="top">
+    <div>
+      <div class="eyebrow">UNIFIED LEARNING PLATFORM · GOOGLE SHEETS ACCESS</div>
+      <h1>Learn Data Engineering<br><span class="thin">in one focused workspace.</span></h1>
+      <p class="lead">All your Snowflake modules, Snowsight SQL labs, Query Backend scenarios, AWS S3 simulators, and interview guides organized into structured tracks — with Google Sheets login, progress tracking, bookmarks, and a built-in study timer.</p>
+      <div class="hero-cta">
+        <a class="btn primary" href="#catalog">Browse All Content ↓</a>
+        <a class="btn" id="continueBtn" href="module01/">▶ Continue Learning</a>
+        <a class="btn" href="apps_script_auth/SETUP_GUIDE.md" target="_blank">📄 Sheet Setup Guide</a>
+      </div>
+    </div>
+
+    <div class="dash-card" id="dashboard">
+      <div class="dash-head">
+        <div class="dash-title" id="dashGreeting">Learner Progress</div>
+        <span class="sync-badge" id="syncStatus">Local Mode</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-family:var(--f-mono);font-size:12px;color:var(--ink2)">
+        <span>Course Completion</span>
+        <strong id="progPctLabel">0% (0 / 35)</strong>
+      </div>
+      <div class="prog-bar-wrap"><div class="prog-bar-fill" id="progBarFill"></div></div>
+      <div class="dash-stats">
+        <div class="d-stat"><b id="statDone">0</b><span>Completed</span></div>
+        <div class="d-stat"><b id="statBookmarks">0</b><span>Bookmarked</span></div>
+        <div class="d-stat"><b id="statStreak">1d</b><span>Streak</span></div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn" id="syncNowBtn" type="button" style="flex:1;justify-content:center">☁️ Sync to Sheet</button>
+        <button class="btn" id="dashAuthBtn" type="button" style="flex:1;justify-content:center">🔐 Sign In / Switch</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- LEARNING TRACKS -->
+  <section id="tracks">
+    <div class="sec-head">
+      <div>
+        <h2>Learning Tracks</h2>
+        <p>Select a track to focus your study path — ready to expand with future courses.</p>
+      </div>
+    </div>
+    <div class="tracks-grid" id="tracksGrid"></div>
+  </section>
+
+  <!-- CATALOG -->
+  <section id="catalog">
+    <div class="sec-head">
+      <div>
+        <h2>Course Catalog</h2>
+        <p id="catalogSubtitle">Showing all modules, SQL labs, simulators, and deep-dive guides.</p>
+      </div>
+    </div>
+
+    <div class="toolbar">
+      <div class="pill-group" id="statusPills">
+        <button class="f-pill active" type="button" data-status="all">All</button>
+        <button class="f-pill" type="button" data-status="todo">To Do</button>
+        <button class="f-pill" type="button" data-status="done">Completed</button>
+        <button class="f-pill" type="button" data-status="bookmarked">★ Bookmarked</button>
+      </div>
+      <input class="search-box" id="searchInput" type="search" placeholder="Search topics (press /)…" aria-label="Search learning content">
+    </div>
+
+    <div class="catalog-grid" id="catalogGrid"></div>
+  </section>
+
+  <!-- STUDY TOOLS -->
+  <section id="tools">
+    <div class="sec-head">
+      <div>
+        <h2>Study Tools &amp; Platform Controls</h2>
+        <p>Stay focused with a built-in Pomodoro timer and quick keyboard shortcuts.</p>
+      </div>
+    </div>
+
+    <div class="tools-grid">
+      <div class="tool-card">
+        <h3 style="font-family:var(--f-head);font-size:19px">⏱ Focus Study Timer</h3>
+        <p style="font-size:13.5px;color:var(--ink2)">25-minute deep work sprints with 5-minute breaks.</p>
+        <div class="timer-display" id="timerDisplay">25:00</div>
+        <div class="timer-controls">
+          <button class="btn primary" id="timerStartBtn" type="button">Start</button>
+          <button class="btn" id="timerPauseBtn" type="button">Pause</button>
+          <button class="btn" id="timerResetBtn" type="button">Reset 25m</button>
+          <button class="btn" id="timerBreakBtn" type="button">5m Break</button>
+        </div>
+      </div>
+
+      <div class="tool-card">
+        <h3 style="font-family:var(--f-head);font-size:19px">📊 Google Sheets Access Control</h3>
+        <p style="font-size:13.5px;color:var(--ink2);margin-bottom:14px">Manage learners, approvals (<code>PENDING</code> → <code>ACTIVE</code>), track permissions (<code>allowed_tracks</code>), and cloud progress sync directly from your Google Sheet.</p>
+        <div style="display:flex;flex-wrap:wrap;gap:8px">
+          <button class="btn primary" id="openAuthFromTools" type="button">🔐 Open Login / Request Access</button>
+          <a class="btn" href="apps_script_auth/Code.gs" target="_blank">📜 View Code.gs</a>
+          <a class="btn" href="https://100ravpatel.github.io/Portfolio/" target="_blank" rel="noopener">👤 Owner Portfolio ↗</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  Owned &amp; Copyright &copy; 2026 All Rights Reserved by <a href="https://100ravpatel.github.io/Portfolio/" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline">Saurav Patel</a>
+</footer>
+
+<!-- GOOGLE SHEETS LOGIN / REGISTER / CONFIG MODAL -->
+<div class="modal-backdrop" id="authModal" role="dialog" aria-modal="true" aria-labelledby="authModalTitle">
+  <div class="modal">
+    <div class="modal-head">
+      <h3 id="authModalTitle">Google Sheets Access</h3>
+      <button class="btn" id="closeModalBtn" type="button">✕</button>
+    </div>
+
+    <div class="modal-tabs">
+      <button class="m-tab active" type="button" data-mtab="login">Sign In</button>
+      <button class="m-tab" type="button" data-mtab="register">Request Access</button>
+      <button class="m-tab" type="button" data-mtab="config">Sheet URL</button>
+    </div>
+
+    <div class="msg-box" id="authMsg"></div>
+
+    <!-- Login Form -->
+    <form id="loginForm">
+      <div class="field">
+        <label for="loginEmail">Email</label>
+        <input id="loginEmail" type="email" required placeholder="you@example.com">
+      </div>
+      <div class="field">
+        <label for="loginPass">Password</label>
+        <input id="loginPass" type="password" required placeholder="Enter password">
+      </div>
+      <div style="display:flex;gap:8px;margin-top:14px">
+        <button class="btn primary" type="submit" style="flex:1;justify-content:center">Sign In via Google Sheet</button>
+      </div>
+      <div style="margin-top:10px;text-align:center">
+        <button class="btn" id="localPreviewBtn" type="button" style="width:100%;justify-content:center;font-size:12px">⚡ Quick Owner Preview (Local Mode)</button>
+      </div>
+    </form>
+
+    <!-- Register Form -->
+    <form id="registerForm" style="display:none">
+      <div class="field">
+        <label for="regName">Full Name</label>
+        <input id="regName" type="text" required placeholder="Your name">
+      </div>
+      <div class="field">
+        <label for="regEmail">Email</label>
+        <input id="regEmail" type="email" required placeholder="you@example.com">
+      </div>
+      <div class="field">
+        <label for="regPass">Create Password</label>
+        <input id="regPass" type="password" required minlength="4" placeholder="Choose a password">
+      </div>
+      <button class="btn primary" type="submit" style="width:100%;justify-content:center;margin-top:8px">Submit Access Request</button>
+      <p style="font-size:12px;color:var(--ink3);margin-top:10px;text-align:center">New accounts start as <code>PENDING</code> until approved in the Google Sheet.</p>
+    </form>
+
+    <!-- Sheet URL Config -->
+    <form id="configForm" style="display:none">
+      <div class="field">
+        <label for="sheetUrlInput">Google Apps Script Web App URL (/exec)</label>
+        <input id="sheetUrlInput" type="url" placeholder="https://script.google.com/macros/s/.../exec">
+      </div>
+      <button class="btn primary" type="submit" style="width:100%;justify-content:center">Save Sheet URL</button>
+      <p style="font-size:12px;color:var(--ink3);margin-top:10px">Deploy <code>apps_script_auth/Code.gs</code> as a Web App and paste its <code>/exec</code> URL here.</p>
+    </form>
+  </div>
+</div>
+
+<script>
+(() => {
+  'use strict';
+
+  // Paste your deployed Apps Script Web App URL here once ready:
+  const DEFAULT_AUTH_SHEET_URL = '';
+  const LS_SHEET_URL = 'sf_academy_sheet_url_v1';
+  const LS_USER = 'sf_academy_user_v1';
+  const LS_PROGRESS = 'sf_academy_progress_v1';
+  const LS_LAST_ITEM = 'sf_academy_last_url_v1';
+
+  // Extensible Track Definitions — add future courses/tracks here!
+  const TRACKS = [
+    { id: 'all', name: 'All Tracks', icon: '🌐', desc: 'Complete library across Snowflake, SQL labs, simulators, and interview guides.', color: 'var(--ice)' },
+    { id: 'snowflake', name: 'Snowflake Core & Architect', icon: '❄️', desc: '16 comprehensive modules from architecture to Terraform & CDC.', color: 'var(--ice)' },
+    { id: 'labs', name: 'Snowsight SQL Labs', icon: '🧪', desc: '15 guided hands-on labs (216 steps) with interactive worksheets.', color: 'var(--teal)' },
+    { id: 'simulators', name: 'Backend & AWS S3 Simulators', icon: '⚡', desc: '51 query execution scenarios + 21 AWS S3 & Snowpipe labs.', color: 'var(--violet)' },
+    { id: 'deepdives', name: 'Interview Deep-Dive Suites', icon: '📖', desc: '330+ specialized Q&As on Streams, Tasks, SnowSQL & JSON.', color: 'var(--amber)' },
+    { id: 'upcoming', name: 'Next Track (Extensible Slot)', icon: '🚀', desc: 'Template ready for dbt, Airflow, Python, or Spark tracks.', color: 'var(--orange)' }
+  ];
+
+  const CATALOG = [
+    // Snowflake Core & Architect (16)
+    { id: 'm01', track: 'snowflake', code: 'Module 01', title: 'Architecture', desc: 'Three-layer design, micro-partitions, pruning, warehouses, multi-cluster, caches & billing.', meta: '12 sims · 16 Q&As', href: 'module01/', color: 'var(--amber)' },
+    { id: 'm02', track: 'snowflake', code: 'Module 02', title: 'Load & Automate', desc: 'SnowSQL, PUT/COPY deep dive, unstructured data, streams, tasks & stored procedures.', meta: '10 sims · 26 Q&As', href: 'module02/', color: 'var(--teal)' },
+    { id: 'm03', track: 'snowflake', code: 'Module 03', title: 'Performance Tuning', desc: 'Query Profile mastery, clustering keys, Search Optimization, QAS, MVs & anti-patterns.', meta: '9 sims · 19 Q&As', href: 'module03/', color: 'var(--ice)' },
+    { id: 'm04', track: 'snowflake', code: 'Module 04', title: 'Data Ingestion', desc: 'Stages, storage integrations, COPY, file sizing, Snowpipe, Streaming & Iceberg tables.', meta: '9 sims · 20 Q&As', href: 'module04/', color: 'var(--violet)' },
+    { id: 'm05', track: 'snowflake', code: 'Module 05', title: 'Dynamic Tables & Transforms', desc: 'Declarative pipelines, target lag, incremental refresh, MERGE, SCD & UDFs.', meta: '10 sims · 22 Q&As', href: 'module05/', color: 'var(--emerald)' },
+    { id: 'm06', track: 'snowflake', code: 'Module 06', title: 'Semi-structured Data', desc: 'VARIANT/OBJECT/ARRAY internals, path notation, two kinds of null, FLATTEN & LATERAL.', meta: '7 sims · 19 Q&As', href: 'module06/', color: 'var(--orange)' },
+    { id: 'm07', track: 'snowflake', code: 'Module 07', title: 'Data Protection', desc: 'Micro-partition lifecycle, Time Travel, Fail-safe, table types, cloning & replication.', meta: '7 sims · 19 Q&As', href: 'module07/', color: 'var(--amber)' },
+    { id: 'm08', track: 'snowflake', code: 'Module 08', title: 'Security & Governance', desc: 'RBAC + DAC, privilege chains, network/auth policies, masking, RAP & tagging.', meta: '9 sims · 19 Q&As', href: 'module08/', color: 'var(--red)' },
+    { id: 'm09', track: 'snowflake', code: 'Module 09', title: 'Cost Optimization', desc: 'Three cost buckets, warehouse fleet tuning, serverless billing & resource monitors.', meta: '7 sims · 18 Q&As', href: 'module09/', color: 'var(--teal)' },
+    { id: 'm10', track: 'snowflake', code: 'Module 10', title: 'Data Sharing & Collaboration', desc: 'Secure Data Sharing, reader accounts, cross-region sharing, Marketplace & Native Apps.', meta: '7 sims · 19 Q&As', href: 'module10/', color: 'var(--ice)' },
+    { id: 'm11', track: 'snowflake', code: 'Module 11', title: 'Snowpark & Cortex AI', desc: 'DataFrames, UDFs/UDTFs, Container Services, Cortex AI SQL, Vectors/RAG & Analyst.', meta: '8 sims · 19 Q&As', href: 'module11/', color: 'var(--violet)' },
+    { id: 'm12', track: 'snowflake', code: 'Module 12', title: 'Advanced SQL', desc: 'Execution order, window functions, QUALIFY, recursive CTEs, ASOF & MATCH_RECOGNIZE.', meta: '8 sims · 21 Q&As', href: 'module12/', color: 'var(--emerald)' },
+    { id: 'm13', track: 'snowflake', code: 'Module 13', title: 'Modeling & Tooling', desc: 'Dimensional modeling, SCD types, Data Vault 2.0, medallion, dbt & blue-green CI/CD.', meta: '8 sims · 21 Q&As', href: 'module13/', color: 'var(--orange)' },
+    { id: 'm14', track: 'snowflake', code: 'Module 14', title: 'Enterprise Architecture & Governance', desc: 'Late-arriving data, multi-account strategy, PrivateLink, Horizon & compliance.', meta: '9 steps · 10 Q&As', href: 'module14/', color: 'var(--violet)' },
+    { id: 'm15', track: 'snowflake', code: 'Module 15', title: 'External Integrations', desc: 'Kafka Connector, Spark vs Snowpark, Debezium CDC → Snowpipe Streaming & APIs.', meta: '6 steps · 7 Q&As', href: 'module15/', color: 'var(--orange)' },
+    { id: 'm16', track: 'snowflake', code: 'Module 16', title: 'IaC, CI/CD & Orchestration', desc: 'Terraform for Snowflake, Native Git Integration, dbt + Airflow/Dagster & Actions.', meta: '4 steps · 7 Q&As', href: 'module16/', color: 'var(--emerald)' },
+
+    // Snowsight SQL Labs (15)
+    { id: 'l01', track: 'labs', code: 'Lab 01', title: 'Architecture, Snowpark, UDFs & Cortex', desc: 'Real SQL lab exploring core architecture, Snowpark & Cortex functions.', meta: 'Real SQL · 16 steps', href: 'snowflake_learning_labs_FINAL.html#architecture_dev', color: 'var(--teal)' },
+    { id: 'l02', track: 'labs', code: 'Lab 02', title: 'Micro-partitions, Pruning & Transient Tables', desc: 'Interactive visual explainer of micro-partition metadata pruning.', meta: 'Simulated · Explainer', href: 'snowflake_learning_labs_FINAL.html#micro_partitions', color: 'var(--ice)' },
+    { id: 'l03', track: 'labs', code: 'Lab 03', title: 'Micro-partitions: Loading, Pruning & Clustering', desc: 'Hands-on SQL checking clustering depth and partition pruning.', meta: 'Real SQL · 17 steps', href: 'snowflake_learning_labs_FINAL.html#mp_lab', color: 'var(--teal)' },
+    { id: 'l04', track: 'labs', code: 'Lab 04', title: 'Table Types (Permanent to Iceberg)', desc: 'Compare Permanent, Transient, Temp, Dynamic, Hybrid & Iceberg tables.', meta: 'Real SQL · 16 steps', href: 'snowflake_learning_labs_FINAL.html#table_types', color: 'var(--teal)' },
+    { id: 'l05', track: 'labs', code: 'Lab 05', title: 'Query Profile & Warehouse Sizing', desc: 'Diagnose spilling, skew, and warehouse scaling bottlenecks.', meta: 'Simulated · 15 steps', href: 'snowflake_learning_labs_FINAL.html#query_profile', color: 'var(--ice)' },
+    { id: 'l06', track: 'labs', code: 'Lab 06', title: 'Caching, Credits & Cost Controls', desc: 'Result cache vs SSD cache, resource monitors & credit budgeting.', meta: 'Real SQL · 15 steps', href: 'snowflake_learning_labs_FINAL.html#caching_cost', color: 'var(--teal)' },
+    { id: 'l07', track: 'labs', code: 'Lab 07', title: 'Clustering, Search Optimization, MVs & QAS', desc: 'Choose the right acceleration feature for point lookups vs scans.', meta: 'Simulated · 15 steps', href: 'snowflake_learning_labs_FINAL.html#perf_features', color: 'var(--ice)' },
+    { id: 'l08', track: 'labs', code: 'Lab 08', title: 'Time Travel, Fail-safe & Cloning', desc: 'AT/BEFORE queries, UNDROP, and zero-copy database cloning.', meta: 'Real SQL · 16 steps', href: 'snowflake_learning_labs_FINAL.html#time_travel', color: 'var(--teal)' },
+    { id: 'l09', track: 'labs', code: 'Lab 09', title: 'Loading Data from S3 & Snowpipe', desc: 'External stages, COPY INTO, error handling, Snowpipe & JSON.', meta: 'Real SQL · 13 steps', href: 'snowflake_learning_labs_FINAL.html#loading', color: 'var(--teal)' },
+    { id: 'l10', track: 'labs', code: 'Lab 10', title: 'Pipelines: Streams, Tasks & Dynamic Tables', desc: 'Build CDC pipelines with Streams, Tasks, MERGE & Dynamic Tables.', meta: 'Real SQL · 15 steps', href: 'snowflake_learning_labs_FINAL.html#pipelines', color: 'var(--teal)' },
+    { id: 'l11', track: 'labs', code: 'Lab 11', title: 'SQL Patterns: QUALIFY & Windows', desc: 'Deduplication, ranking, constraints & sequences in Snowsight.', meta: 'Real SQL · 15 steps', href: 'snowflake_learning_labs_FINAL.html#sql_patterns', color: 'var(--teal)' },
+    { id: 'l12', track: 'labs', code: 'Lab 12', title: 'Star Schema, OBT, 3NF & Data Vault', desc: 'Compare analytical warehouse schemas hands-on.', meta: 'Real SQL · 15 steps', href: 'snowflake_learning_labs_FINAL.html#star_schema', color: 'var(--teal)' },
+    { id: 'l13', track: 'labs', code: 'Lab 13', title: 'Access Control & Data Governance', desc: 'RBAC hierarchy, dynamic data masking & row access policies.', meta: 'Real SQL · 15 steps', href: 'snowflake_learning_labs_FINAL.html#security', color: 'var(--teal)' },
+    { id: 'l14', track: 'labs', code: 'Lab 14', title: 'Data Sharing & Cross-Region Replication', desc: 'Shares, reader accounts & database replication groups.', meta: 'Real SQL · 15 steps', href: 'snowflake_learning_labs_FINAL.html#sharing', color: 'var(--teal)' },
+    { id: 'l15', track: 'labs', code: 'Lab 15', title: 'Snowflake Cortex AI: AISQL, RAG & Agents', desc: 'LLM SQL functions, Cortex Search, Analyst & ML workflows.', meta: 'Real SQL · 18 steps', href: 'snowflake_learning_labs_FINAL.html#cortex_ai', color: 'var(--teal)' },
+
+    // Simulators (2)
+    { id: 's01', track: 'simulators', code: 'Simulator 01', title: 'Snowflake Query Backend Lab', desc: 'Step-by-step Cloud Services, Micro-partitions, Warehouse & Result Cache + WASM SQL Playground.', meta: '51 scenarios · 8 levels', href: 'snowflake_query_backend_lab_FINAL.html', color: 'var(--violet)' },
+    { id: 's02', track: 'simulators', code: 'Simulator 02', title: 'AWS S3 Console, CloudShell & boto3', desc: 'Stateful S3 buckets, IAM/bucket policies, CLI, Python SDK & Snowpipe trigger lab.', meta: '21 labs · Time Machine', href: 'S3_Simulator_FINAL.html', color: 'var(--violet)' },
+
+    // Deep-Dive Suites (2)
+    { id: 'd01', track: 'deepdives', code: 'Deep Dive 01', title: 'SnowSQL, Streams & Tasks Suite', desc: 'Step-by-step guide, terminal simulator, visual guide & 174 interview Q&As.', meta: '5 files · 174 Q&As', href: 'SnowSQL_Streams_Tasks_Step_by_Step_Guide_FINAL.html', color: 'var(--amber)' },
+    { id: 'd02', track: 'deepdives', code: 'Deep Dive 02', title: 'JSON S3 → Snowflake Suite', desc: 'Lab guide, interactive simulator, visual guide & 158 VARIANT/FLATTEN Q&As.', meta: '4 files · 158 Q&As', href: 'JSON_S3_to_Snowflake_Lab_Step_by_Step_Guide_FINAL.html', color: 'var(--amber)' }
+  ];
+
+  // State
+  let currentTrack = 'all';
+  let currentStatus = 'all';
+  let searchQuery = '';
+  let user = loadJSON(LS_USER, null);
+  let progress = loadJSON(LS_PROGRESS, { completedIds: [], bookmarks: [], streakDays: 1, lastActive: '' });
+
+  function loadJSON(key, fallback) {
+    try {
+      const raw = localStorage.getItem(key);
+      return raw ? JSON.parse(raw) : fallback;
+    } catch (e) { return fallback; }
+  }
+  function saveState() {
+    try {
+      if (user) localStorage.setItem(LS_USER, JSON.stringify(user));
+      else localStorage.removeItem(LS_USER);
+      localStorage.setItem(LS_PROGRESS, JSON.stringify(progress));
+    } catch (e) {}
+  }
+  function getSheetUrl() {
+    return localStorage.getItem(LS_SHEET_URL) || DEFAULT_AUTH_SHEET_URL;
+  }
+
+  async function sha256Hex(str) {
+    if (window.crypto && crypto.subtle) {
+      const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+      return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+    return str;
+  }
+
+  function isTrackAllowed(trackId) {
+    if (!user || !user.allowedTracks || user.allowedTracks === 'ALL') return true;
+    const list = String(user.allowedTracks).toLowerCase().split(',').map(s => s.trim());
+    return list.includes('all') || list.includes(trackId.toLowerCase());
+  }
+
+  // Theme
+  const rootEl = document.documentElement;
+  if (localStorage.getItem('sf_theme') === 'dark') rootEl.setAttribute('data-theme', 'dark');
+  document.getElementById('themeBtn').onclick = () => {
+    const next = rootEl.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+    if (next === 'dark') rootEl.setAttribute('data-theme', 'dark');
+    else rootEl.removeAttribute('data-theme');
+    localStorage.setItem('sf_theme', next);
+  };
+
+  // Render Dashboard
+  function renderDashboard() {
+    const total = CATALOG.length;
+    const doneCount = progress.completedIds.length;
+    const pct = Math.round((doneCount / total) * 100);
+    document.getElementById('progPctLabel').textContent = `${pct}% (${doneCount} / ${total})`;
+    document.getElementById('progBarFill').style.width = `${pct}%`;
+    document.getElementById('statDone').textContent = doneCount;
+    document.getElementById('statBookmarks').textContent = progress.bookmarks.length;
+    document.getElementById('statStreak').textContent = (progress.streakDays || 1) + 'd';
+
+    const authBtn = document.getElementById('authBtn');
+    const syncBadge = document.getElementById('syncStatus');
+    const greeting = document.getElementById('dashGreeting');
+
+    if (user) {
+      authBtn.textContent = `👤 ${user.name} · Sign Out`;
+      authBtn.classList.remove('primary');
+      authBtn.classList.add('teal');
+      greeting.textContent = `Welcome back, ${user.name}`;
+      syncBadge.textContent = user.mode === 'local' ? 'Local Preview' : 'Google Sheet Connected';
+      syncBadge.classList.add('ok');
+    } else {
+      authBtn.textContent = '🔐 Sign In';
+      authBtn.classList.add('primary');
+      authBtn.classList.remove('teal');
+      greeting.textContent = 'Learner Progress';
+      syncBadge.textContent = getSheetUrl() ? 'Ready to Sign In' : 'Local Mode';
+      syncBadge.classList.remove('ok');
+    }
+
+    const lastHref = localStorage.getItem(LS_LAST_ITEM);
+    if (lastHref) document.getElementById('continueBtn').href = lastHref;
+  }
+
+  // Render Tracks
+  function renderTracks() {
+    const grid = document.getElementById('tracksGrid');
+    grid.innerHTML = TRACKS.map(t => {
+      const items = t.id === 'all' ? CATALOG : CATALOG.filter(c => c.track === t.id);
+      const done = items.filter(c => progress.completedIds.includes(c.id)).length;
+      const pct = items.length ? Math.round((done / items.length) * 100) : 0;
+      const allowed = t.id === 'all' || t.id === 'upcoming' || isTrackAllowed(t.id);
+      return `
+        <button class="track-card ${currentTrack === t.id ? 'active' : ''} ${!allowed ? 'locked' : ''}" type="button" data-track="${t.id}">
+          <div class="track-top">
+            <span class="track-icon">${t.icon}</span>
+            <span class="track-pill">${items.length ? `${done}/${items.length} done` : 'Template'}</span>
+          </div>
+          <h3>${t.name}</h3>
+          <p>${t.desc}</p>
+          <div class="track-mini-bar"><i style="width:${pct}%"></i></div>
+        </button>
+      `;
+    }).join('');
+
+    grid.querySelectorAll('.track-card').forEach(btn => {
+      btn.onclick = () => {
+        currentTrack = btn.dataset.track;
+        renderTracks();
+        renderCatalog();
+        document.getElementById('catalog').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      };
+    });
+  }
+
+  // Render Catalog
+  function renderCatalog() {
+    const grid = document.getElementById('catalogGrid');
+    if (currentTrack === 'upcoming') {
+      grid.innerHTML = `
+        <div class="item-card" style="grid-column:1/-1;text-align:center;padding:36px">
+          <div style="font-size:28px">🚀</div>
+          <div class="item-title">Extensible Track Slot</div>
+          <p class="item-desc" style="max-width:520px;margin:0 auto">Add new courses (Python, dbt, Airflow, Apache Spark, System Design) by appending entries to the <code>TRACKS</code> and <code>CATALOG</code> arrays inside <code>academy.html</code>.</p>
+        </div>`;
+      return;
+    }
+
+    const q = searchQuery.trim().toLowerCase();
+    const filtered = CATALOG.filter(item => {
+      if (currentTrack !== 'all' && item.track !== currentTrack) return false;
+      const isDone = progress.completedIds.includes(item.id);
+      const isStar = progress.bookmarks.includes(item.id);
+      if (currentStatus === 'todo' && isDone) return false;
+      if (currentStatus === 'done' && !isDone) return false;
+      if (currentStatus === 'bookmarked' && !isStar) return false;
+      if (q && !(item.title + ' ' + item.desc + ' ' + item.code).toLowerCase().includes(q)) return false;
+      return true;
+    });
+
+    document.getElementById('catalogSubtitle').textContent = `Showing ${filtered.length} of ${CATALOG.length} learning items.`;
+
+    if (!filtered.length) {
+      grid.innerHTML = `<div class="item-card" style="grid-column:1/-1;text-align:center;padding:28px"><div class="item-title">No matching items</div><p class="item-desc">Try clearing your search or status filter.</p></div>`;
+      return;
+    }
+
+    grid.innerHTML = filtered.map(item => {
+      const isDone = progress.completedIds.includes(item.id);
+      const isStar = progress.bookmarks.includes(item.id);
+      const allowed = isTrackAllowed(item.track);
+      return `
+        <article class="item-card ${isDone ? 'is-done' : ''} ${!allowed ? 'is-locked' : ''}">
+          <div class="item-stripe" style="background:${item.color}"></div>
+          <div class="item-head">
+            <span class="item-code">${item.code}</span>
+            <div class="item-actions">
+              <button class="icon-btn ${isStar ? 'star-on' : ''}" type="button" data-star="${item.id}" title="Bookmark">${isStar ? '★' : '☆'}</button>
+              <button class="icon-btn ${isDone ? 'done-on' : ''}" type="button" data-done="${item.id}" title="Mark completed">${isDone ? '✓ Done' : 'Mark Done'}</button>
+            </div>
+          </div>
+          <div class="item-title">${item.title}</div>
+          <p class="item-desc">${item.desc}</p>
+          <div class="item-foot">
+            <span class="item-meta">${item.meta}</span>
+            ${allowed
+              ? `<a class="open-link" href="${item.href}" data-open="${item.href}">Open →</a>`
+              : `<span class="item-meta">🔒 Track restricted</span>`
+            }
+          </div>
+        </article>
+      `;
+    }).join('');
+
+    grid.querySelectorAll('[data-done]').forEach(btn => {
+      btn.onclick = () => {
+        const id = btn.dataset.done;
+        const idx = progress.completedIds.indexOf(id);
+        if (idx >= 0) progress.completedIds.splice(idx, 1);
+        else progress.completedIds.push(id);
+        progress.lastActive = new Date().toISOString().slice(0, 10);
+        saveState();
+        renderDashboard();
+        renderTracks();
+        renderCatalog();
+        syncProgressToSheet(true);
+      };
+    });
+
+    grid.querySelectorAll('[data-star]').forEach(btn => {
+      btn.onclick = () => {
+        const id = btn.dataset.star;
+        const idx = progress.bookmarks.indexOf(id);
+        if (idx >= 0) progress.bookmarks.splice(idx, 1);
+        else progress.bookmarks.push(id);
+        saveState();
+        renderDashboard();
+        renderCatalog();
+        syncProgressToSheet(true);
+      };
+    });
+
+    grid.querySelectorAll('[data-open]').forEach(a => {
+      a.onclick = () => {
+        localStorage.setItem(LS_LAST_ITEM, a.dataset.open);
+      };
+    });
+  }
+
+  // Filter Pills & Search
+  document.querySelectorAll('#statusPills .f-pill').forEach(btn => {
+    btn.onclick = () => {
+      document.querySelectorAll('#statusPills .f-pill').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentStatus = btn.dataset.status;
+      renderCatalog();
+    };
+  });
+  const searchInput = document.getElementById('searchInput');
+  searchInput.addEventListener('input', () => {
+    searchQuery = searchInput.value;
+    renderCatalog();
+  });
+  document.addEventListener('keydown', e => {
+    if (e.key === '/' && document.activeElement.tagName !== 'INPUT') {
+      e.preventDefault();
+      searchInput.focus();
+    }
+  });
+
+  // Google Sheets Auth Modal
+  const modal = document.getElementById('authModal');
+  const authMsg = document.getElementById('authMsg');
+  function showMsg(text, isErr) {
+    authMsg.textContent = text;
+    authMsg.className = 'msg-box ' + (isErr ? 'err' : 'ok');
+  }
+  function clearMsg() {
+    authMsg.className = 'msg-box';
+    authMsg.textContent = '';
+  }
+  function switchModalTab(tab) {
+    clearMsg();
+    document.querySelectorAll('.m-tab').forEach(t => t.classList.toggle('active', t.dataset.mtab === tab));
+    document.getElementById('loginForm').style.display = tab === 'login' ? 'block' : 'none';
+    document.getElementById('registerForm').style.display = tab === 'register' ? 'block' : 'none';
+    document.getElementById('configForm').style.display = tab === 'config' ? 'block' : 'none';
+    if (tab === 'config') document.getElementById('sheetUrlInput').value = getSheetUrl();
+  }
+  function openModal(tab = 'login') {
+    switchModalTab(tab);
+    modal.classList.add('open');
+  }
+  function closeModal() { modal.classList.remove('open'); }
+
+  document.querySelectorAll('.m-tab').forEach(t => { t.onclick = () => switchModalTab(t.dataset.mtab); });
+  document.getElementById('closeModalBtn').onclick = closeModal;
+  modal.onclick = e => { if (e.target === modal) closeModal(); };
+  document.getElementById('sheetConfigBtn').onclick = () => openModal('config');
+  document.getElementById('dashAuthBtn').onclick = () => openModal('login');
+  document.getElementById('openAuthFromTools').onclick = () => openModal('login');
+  document.getElementById('authBtn').onclick = () => {
+    if (user) {
+      user = null;
+      saveState();
+      renderDashboard();
+      renderTracks();
+      renderCatalog();
+    } else {
+      openModal('login');
+    }
+  };
+
+  async function callSheetApi(payload) {
+    const url = getSheetUrl();
+    if (!url) throw new Error('Google Sheet Web App URL is not configured yet. Open "Sheet URL" tab to paste your /exec URL.');
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(payload)
+    });
+    return await res.json();
+  }
+
+  document.getElementById('loginForm').onsubmit = async e => {
+    e.preventDefault();
+    clearMsg();
+    const email = document.getElementById('loginEmail').value.trim().toLowerCase();
+    const pass = document.getElementById('loginPass').value;
+    try {
+      const passwordHash = await sha256Hex(pass);
+      const data = await callSheetApi({ action: 'login', email, passwordHash });
+      if (!data.ok) { showMsg(data.error || 'Login failed.', true); return; }
+      user = { ...data.user, passwordHash, mode: 'sheet' };
+      if (data.progress) {
+        const mergedDone = Array.from(new Set([...progress.completedIds, ...(data.progress.completedIds || [])]));
+        const mergedStars = Array.from(new Set([...progress.bookmarks, ...(data.progress.bookmarks || [])]));
+        progress.completedIds = mergedDone;
+        progress.bookmarks = mergedStars;
+        progress.streakDays = Math.max(progress.streakDays || 1, data.progress.streakDays || 1);
+      }
+      saveState();
+      renderDashboard();
+      renderTracks();
+      renderCatalog();
+      closeModal();
+    } catch (err) {
+      showMsg(err.message, true);
+    }
+  };
+
+  document.getElementById('localPreviewBtn').onclick = () => {
+    user = { email: 'owner@wasteofbyte.dev', name: 'Saurav Patel', role: 'admin', allowedTracks: 'ALL', mode: 'local' };
+    saveState();
+    renderDashboard();
+    renderTracks();
+    renderCatalog();
+    closeModal();
+  };
+
+  document.getElementById('registerForm').onsubmit = async e => {
+    e.preventDefault();
+    clearMsg();
+    const name = document.getElementById('regName').value.trim();
+    const email = document.getElementById('regEmail').value.trim().toLowerCase();
+    const pass = document.getElementById('regPass').value;
+    try {
+      const passwordHash = await sha256Hex(pass);
+      const data = await callSheetApi({ action: 'register', name, email, passwordHash });
+      if (!data.ok) { showMsg(data.error || 'Request failed.', true); return; }
+      showMsg(data.message || 'Access requested!', false);
+    } catch (err) {
+      showMsg(err.message, true);
+    }
+  };
+
+  document.getElementById('configForm').onsubmit = e => {
+    e.preventDefault();
+    const url = document.getElementById('sheetUrlInput').value.trim();
+    if (url) localStorage.setItem(LS_SHEET_URL, url);
+    else localStorage.removeItem(LS_SHEET_URL);
+    renderDashboard();
+    showMsg('Google Sheet Web App URL saved.', false);
+  };
+
+  async function syncProgressToSheet(silent = false) {
+    if (!user || user.mode !== 'sheet' || !getSheetUrl()) {
+      if (!silent) alert('Sign in with your Google Sheet account first to sync progress.');
+      return;
+    }
+    try {
+      const res = await callSheetApi({
+        action: 'syncProgress',
+        email: user.email,
+        passwordHash: user.passwordHash,
+        completedIds: progress.completedIds,
+        bookmarks: progress.bookmarks,
+        streakDays: progress.streakDays,
+        lastActive: progress.lastActive
+      });
+      if (!silent && res.ok) alert('Progress synced to Google Sheets!');
+    } catch (e) {
+      if (!silent) alert('Sync failed: ' + e.message);
+    }
+  }
+  document.getElementById('syncNowBtn').onclick = () => syncProgressToSheet(false);
+
+  // Study Timer
+  let timerSec = 25 * 60;
+  let timerInt = null;
+  function drawTimer() {
+    const m = String(Math.floor(timerSec / 60)).padStart(2, '0');
+    const s = String(timerSec % 60).padStart(2, '0');
+    document.getElementById('timerDisplay').textContent = `${m}:${s}`;
+  }
+  document.getElementById('timerStartBtn').onclick = () => {
+    if (timerInt) return;
+    timerInt = setInterval(() => {
+      if (timerSec > 0) { timerSec--; drawTimer(); }
+      else { clearInterval(timerInt); timerInt = null; alert('Study sprint complete!'); }
+    }, 1000);
+  };
+  document.getElementById('timerPauseBtn').onclick = () => { clearInterval(timerInt); timerInt = null; };
+  document.getElementById('timerResetBtn').onclick = () => { clearInterval(timerInt); timerInt = null; timerSec = 25 * 60; drawTimer(); };
+  document.getElementById('timerBreakBtn').onclick = () => { clearInterval(timerInt); timerInt = null; timerSec = 5 * 60; drawTimer(); };
+
+  // Init
+  renderDashboard();
+  renderTracks();
+  renderCatalog();
+})();
+</script>
+</body>
+</html>
