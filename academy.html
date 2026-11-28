@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SF Knowledge Base · Learn Snowflake</title>
+<title>SF Knowledge Base · Learn &amp; Ace the Interview</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/space-grotesk@5/300.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/space-grotesk@5/700.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/ibm-plex-sans@5/300.css">
@@ -214,6 +214,20 @@ body{
 .item-meta{font-family:var(--f-mono);font-size:11px;color:var(--ink3)}
 .open-link{font-family:var(--f-mono);font-size:12px;font-weight:700;color:var(--ice);text-decoration:none}
 .open-link:hover{text-decoration:underline}
+/* Classic Compound Card File Links */
+.file-links{display:flex;flex-direction:column;gap:6px;margin:6px 0 4px}
+.file-link{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:9px;
+  background:var(--card2);border:1px solid var(--line);font-size:12.5px;color:var(--ink2);
+  text-decoration:none;transition:all .15s}
+.file-link:hover{border-color:var(--ice);color:var(--ice);background:var(--ice-s);transform:translateX(3px)}
+.fl-type{font-family:var(--f-mono);font-size:9.5px;padding:2px 6px;border-radius:5px;flex-shrink:0;letter-spacing:.05em;font-weight:700}
+.fl-sim{background:var(--ice-s);color:var(--ice);border:1px solid rgba(10,134,194,.4)}
+.fl-lab{background:var(--teal-s);color:var(--teal);border:1px solid rgba(11,138,106,.4)}
+.fl-qa{background:var(--amber-s);color:var(--amber);border:1px solid rgba(184,111,0,.4)}
+.fl-vis{background:var(--red-s);color:var(--red);border:1px solid rgba(201,60,60,.4)}
+.fl-guide{background:var(--violet-s);color:var(--violet);border:1px solid rgba(109,40,217,.4)}
+.fl-name{flex:1;line-height:1.3}
+.fl-arr{font-size:11px;color:var(--ink3);flex-shrink:0}
 
 /* Study Tools & Pomodoro Section */
 .tools-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:20px}
@@ -263,7 +277,7 @@ footer{padding:38px 28px;text-align:center;color:var(--ink3);font-size:12px;font
 </div>
 
 <header class="topbar">
-  <div class="brand">SAURAV PATEL <b>· ACADEMY</b></div>
+  <div class="brand">SF KNOWLEDGE BASE <b>· <a href="https://100ravpatel.github.io/Portfolio/" target="_blank" rel="noopener" style="color:inherit;text-decoration:none">SAURAV PATEL ↗</a></b></div>
   <nav class="nav-links" aria-label="Sections">
     <a href="#tracks">Tracks</a>
     <a href="#catalog">Catalog</a>
@@ -524,9 +538,36 @@ footer{padding:38px 28px;text-align:center;color:var(--ink3);font-size:12px;font
     { id: 's01', track: 'simulators', code: 'Simulator 01', title: 'Snowflake Query Backend Lab', desc: 'Step-by-step Cloud Services, Micro-partitions, Warehouse & Result Cache + WASM SQL Playground.', meta: '51 scenarios · 8 levels', href: 'snowflake_query_backend_lab_FINAL.html', color: 'var(--violet)' },
     { id: 's02', track: 'simulators', code: 'Simulator 02', title: 'AWS S3 Console, CloudShell & boto3', desc: 'Stateful S3 buckets, IAM/bucket policies, CLI, Python SDK & Snowpipe trigger lab.', meta: '21 labs · Time Machine', href: 'S3_Simulator_FINAL.html', color: 'var(--violet)' },
 
-    // Deep-Dive Suites (2)
-    { id: 'd01', track: 'deepdives', code: 'Deep Dive 01', title: 'SnowSQL, Streams & Tasks Suite', desc: 'Step-by-step guide, terminal simulator, visual guide & 174 interview Q&As.', meta: '5 files · 174 Q&As', href: 'SnowSQL_Streams_Tasks_Step_by_Step_Guide_FINAL.html', color: 'var(--amber)' },
-    { id: 'd02', track: 'deepdives', code: 'Deep Dive 02', title: 'JSON S3 → Snowflake Suite', desc: 'Lab guide, interactive simulator, visual guide & 158 VARIANT/FLATTEN Q&As.', meta: '4 files · 158 Q&As', href: 'JSON_S3_to_Snowflake_Lab_Step_by_Step_Guide_FINAL.html', color: 'var(--amber)' }
+    // Deep-Dive Suites (2) — Classic compound presentation
+    {
+      id: 'd01', track: 'deepdives', code: 'Deep Dive 01',
+      title: 'SnowSQL, Streams & Tasks',
+      desc: 'Internal staging with PUT, CSV COPY, standard & append-only streams, Task DAGs, nightly MERGE pipelines, schema drift, monitoring. 44-step hands-on lab with batch CSV data.',
+      meta: '44 lab steps · 174 Q&As · 22 quiz',
+      href: 'SnowSQL_Streams_Tasks_Step_by_Step_Guide_FINAL.html',
+      color: 'var(--teal)',
+      files: [
+        { type: 'GUIDE', cls: 'fl-guide', name: 'Full Step-by-Step Guide — 44 steps, side nav, all SQL', href: 'SnowSQL_Streams_Tasks_Step_by_Step_Guide_FINAL.html' },
+        { type: 'LAB', cls: 'fl-lab', name: 'Lab Step-by-Step Guide — checkpoints & pitfalls', href: 'SnowSQL_Streams_Tasks_Lab_Step_by_Step_Guide_FINAL.html' },
+        { type: 'SIM', cls: 'fl-sim', name: 'Lab Simulator — interactive terminal emulator', href: 'SnowSQL_Streams_Tasks_Lab_Simulator_FINAL.html' },
+        { type: 'VIS', cls: 'fl-vis', name: 'Visual Guide — diagrams, cheat sheet, self-quiz', href: 'SnowSQL_Streams_Tasks_Visual_Guide_FINAL.html' },
+        { type: 'Q&A', cls: 'fl-qa', name: 'Interview Q&A — 174 questions, filter by topic & level', href: 'SnowSQL_Streams_Tasks_Interview_QA_FINAL.html' }
+      ]
+    },
+    {
+      id: 'd02', track: 'deepdives', code: 'Deep Dive 02',
+      title: 'JSON S3 → Snowflake',
+      desc: 'External S3 stage, VARIANT, PARSE_JSON, colon/bracket paths, FLATTEN & LATERAL, snowpipe & stream automation, schema-on-read vs promoted columns.',
+      meta: '9 steps · 158 Q&As · 22 quiz',
+      href: 'JSON_S3_to_Snowflake_Lab_Step_by_Step_Guide_FINAL.html',
+      color: 'var(--amber)',
+      files: [
+        { type: 'LAB', cls: 'fl-lab', name: 'Lab Step-by-Step Guide — S3 stage, VARIANT & FLATTEN', href: 'JSON_S3_to_Snowflake_Lab_Step_by_Step_Guide_FINAL.html' },
+        { type: 'SIM', cls: 'fl-sim', name: 'Lab Simulator — interactive JSON & SQL workbench', href: 'JSON_S3_to_Snowflake_Lab_Simulator_FINAL.html' },
+        { type: 'VIS', cls: 'fl-vis', name: 'Visual Guide — architecture, cheat sheet & quiz', href: 'JSON_S3_to_Snowflake_Visual_Guide_FINAL.html' },
+        { type: 'Q&A', cls: 'fl-qa', name: 'Interview Q&A — 158 questions on semi-structured data', href: 'JSON_S3_to_Snowflake_Interview_QA_FINAL.html' }
+      ]
+    }
   ];
 
   // State
@@ -699,6 +740,17 @@ footer{padding:38px 28px;text-align:center;color:var(--ink3);font-size:12px;font
           </div>
           <div class="item-title">${item.title}</div>
           <p class="item-desc">${item.desc}</p>
+          ${allowed && item.files ? `
+            <div class="file-links">
+              ${item.files.map(f => `
+                <a class="file-link" href="${f.href}" data-open="${f.href}">
+                  <span class="fl-type ${f.cls}">${f.type}</span>
+                  <span class="fl-name">${f.name}</span>
+                  <span class="fl-arr">→</span>
+                </a>
+              `).join('')}
+            </div>
+          ` : ''}
           <div class="item-foot">
             <span class="item-meta">${item.meta}</span>
             ${allowed
