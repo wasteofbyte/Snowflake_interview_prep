@@ -137,6 +137,21 @@ body{
 .sync-badge{font-family:var(--f-mono);font-size:10.5px;padding:2px 9px;border-radius:99px;
   background:var(--card2);color:var(--ink2);border:1px solid var(--line)}
 .sync-badge.ok{background:var(--teal-s);color:var(--teal);border-color:var(--teal)}
+.sync-pill-btn{
+  display:inline-flex;align-items:center;gap:8px;padding:7px 14px;border-radius:99px;
+  font-family:var(--f-mono);font-size:12px;font-weight:700;cursor:pointer;position:relative;
+  transition:all .18s;border:1px solid;
+}
+.sync-pill-btn.is-synced{background:var(--teal-s);color:var(--teal);border-color:var(--teal)}
+.sync-pill-btn.not-synced{background:var(--red-s);color:var(--red);border-color:var(--red)}
+.sync-pill-btn .s-dot{width:8px;height:8px;border-radius:50%;background:currentColor;box-shadow:0 0 8px currentColor}
+.sync-pill-btn::after{
+  content:attr(data-tip);position:absolute;bottom:calc(100% + 8px);right:0;
+  background:var(--ink);color:var(--bg);font-size:11px;font-weight:500;padding:5px 10px;
+  border-radius:8px;white-space:nowrap;opacity:0;pointer-events:none;transform:translateY(4px);
+  transition:all .15s;box-shadow:0 6px 18px rgba(0,0,0,.22);z-index:20;
+}
+.sync-pill-btn:hover::after{opacity:1;transform:translateY(0)}
 .prog-bar-wrap{height:9px;border-radius:99px;background:var(--card2);overflow:hidden;margin:6px 0 4px;border:1px solid var(--line)}
 .prog-bar-fill{height:100%;background:linear-gradient(90deg,var(--ice),var(--teal));width:0%;transition:width .35s ease}
 .dash-stats{display:flex;gap:10px}
@@ -331,7 +346,6 @@ footer{padding:38px 28px;text-align:center;color:var(--ink3);font-size:12px;font
     <div class="dash-left">
       <div class="dash-head">
         <div class="dash-title" id="dashGreeting">Learner Progress</div>
-        <span class="sync-badge" id="syncStatus">Local Mode</span>
         <span style="margin-left:auto;font-family:var(--f-mono);font-size:12px;color:var(--ink2)"><strong id="progPctLabel">0% (0 / 35)</strong></span>
       </div>
       <div class="prog-bar-wrap"><div class="prog-bar-fill" id="progBarFill"></div></div>
@@ -342,8 +356,10 @@ footer{padding:38px 28px;text-align:center;color:var(--ink3);font-size:12px;font
       <div class="d-stat"><b id="statStreak">1d</b><span>Streak</span></div>
     </div>
     <div class="dash-actions">
-      <button class="btn" id="syncNowBtn" type="button">☁️ Sync to Sheet</button>
-      <button class="btn" id="dashAuthBtn" type="button">🔐 Sign In / Switch</button>
+      <button class="sync-pill-btn not-synced" id="syncNowBtn" type="button" data-tip="Not in sync · Click to sync" title="Not in sync · Click to sync">
+        <span class="s-dot"></span>
+        <span id="syncBtnLabel">Not in Sync</span>
+      </button>
     </div>
   </section>
 
@@ -606,6 +622,7 @@ footer{padding:38px 28px;text-align:center;color:var(--ink3);font-size:12px;font
   let searchQuery = '';
   let user = loadJSON(LS_USER, null);
   let progress = loadJSON(LS_PROGRESS, { completedIds: [], bookmarks: [], streakDays: 1, lastActive: '' });
+  let isSynced = !!(user && user.mode === 'sheet');
 
   function loadJSON(key, fallback) {
     try {
@@ -660,7 +677,8 @@ footer{padding:38px 28px;text-align:center;color:var(--ink3);font-size:12px;font
     document.getElementById('statStreak').textContent = (progress.streakDays || 1) + 'd';
 
     const authBtn = document.getElementById('authBtn');
-    const syncBadge = document.getElementById('syncStatus');
+    const syncBtn = document.getElementById('syncNowBtn');
+    const syncLabel = document.getElementById('syncBtnLabel');
     const greeting = document.getElementById('dashGreeting');
     const isAdmin = (user && user.role === 'admin') || new URLSearchParams(location.search).get('admin') === '1';
     const sheetCfgBtn = document.getElementById('sheetConfigBtn');
@@ -675,15 +693,30 @@ footer{padding:38px 28px;text-align:center;color:var(--ink3);font-size:12px;font
       authBtn.classList.remove('primary');
       authBtn.classList.add('teal');
       greeting.textContent = `Welcome back, ${user.name}`;
-      syncBadge.textContent = user.mode === 'local' ? 'Local Preview' : 'Google Sheet Connected';
-      syncBadge.classList.add('ok');
     } else {
       authBtn.textContent = '🔐 Sign In';
       authBtn.classList.add('primary');
       authBtn.classList.remove('teal');
       greeting.textContent = 'Learner Progress';
-      syncBadge.textContent = getSheetUrl() ? 'Ready to Sign In' : 'Local Mode';
-      syncBadge.classList.remove('ok');
+    }
+
+    if (syncBtn && syncLabel) {
+      const ok = !!(user && user.mode === 'sheet' && isSynced);
+      syncBtn.classList.toggle('is-synced', ok);
+      syncBtn.classList.toggle('not-synced', !ok);
+      if (ok) {
+        syncLabel.textContent = 'Synced';
+        syncBtn.dataset.tip = 'Up to date ✓';
+        syncBtn.title = 'Up to date ✓';
+      } else if (user && user.mode === 'sheet') {
+        syncLabel.textContent = 'Not in Sync';
+        syncBtn.dataset.tip = 'Not in sync · Click to sync';
+        syncBtn.title = 'Not in sync · Click to sync';
+      } else {
+        syncLabel.textContent = 'Not Synced';
+        syncBtn.dataset.tip = 'Not in sync · Click to sign in & sync';
+        syncBtn.title = 'Not in sync · Click to sign in & sync';
+      }
     }
 
     const lastHref = localStorage.getItem(LS_LAST_ITEM);
@@ -826,6 +859,7 @@ footer{padding:38px 28px;text-align:center;color:var(--ink3);font-size:12px;font
         if (idx >= 0) progress.completedIds.splice(idx, 1);
         else progress.completedIds.push(id);
         progress.lastActive = new Date().toISOString().slice(0, 10);
+        isSynced = false;
         saveState();
         renderDashboard();
         renderTracks();
@@ -840,6 +874,7 @@ footer{padding:38px 28px;text-align:center;color:var(--ink3);font-size:12px;font
         const idx = progress.bookmarks.indexOf(id);
         if (idx >= 0) progress.bookmarks.splice(idx, 1);
         else progress.bookmarks.push(id);
+        isSynced = false;
         saveState();
         renderDashboard();
         renderCatalog();
@@ -923,7 +958,6 @@ footer{padding:38px 28px;text-align:center;color:var(--ink3);font-size:12px;font
   document.getElementById('closeModalBtn').onclick = closeModal;
   modal.onclick = e => { if (e.target === modal) closeModal(); };
   document.getElementById('sheetConfigBtn').onclick = () => openModal('config');
-  document.getElementById('dashAuthBtn').onclick = () => openModal('login');
   document.getElementById('openAuthFromTools').onclick = () => openModal('login');
   document.getElementById('authBtn').onclick = () => {
     if (user) {
@@ -958,6 +992,7 @@ footer{padding:38px 28px;text-align:center;color:var(--ink3);font-size:12px;font
       const data = await callSheetApi({ action: 'login', email, passwordHash });
       if (!data.ok) { showMsg(data.error || 'Login failed.', true); return; }
       user = { ...data.user, passwordHash, mode: 'sheet' };
+      isSynced = true;
       if (data.progress) {
         const mergedDone = Array.from(new Set([...progress.completedIds, ...(data.progress.completedIds || [])]));
         const mergedStars = Array.from(new Set([...progress.bookmarks, ...(data.progress.bookmarks || [])]));
@@ -1002,7 +1037,7 @@ footer{padding:38px 28px;text-align:center;color:var(--ink3);font-size:12px;font
 
   async function syncProgressToSheet(silent = false) {
     if (!user || user.mode !== 'sheet' || !getSheetUrl()) {
-      if (!silent) alert('Sign in with your Google Sheet account first to sync progress.');
+      if (!silent) openModal('login');
       return;
     }
     try {
@@ -1015,9 +1050,13 @@ footer{padding:38px 28px;text-align:center;color:var(--ink3);font-size:12px;font
         streakDays: progress.streakDays,
         lastActive: progress.lastActive
       });
-      if (!silent && res.ok) alert('Progress synced to Google Sheets!');
+      if (res.ok) {
+        isSynced = true;
+        renderDashboard();
+      }
     } catch (e) {
-      if (!silent) alert('Sync failed: ' + e.message);
+      isSynced = false;
+      renderDashboard();
     }
   }
   document.getElementById('syncNowBtn').onclick = () => syncProgressToSheet(false);
