@@ -19,7 +19,10 @@
         #scroll-canvas{
           position:fixed;inset:0;width:100vw;height:100vh;z-index:0;pointer-events:none;
         }
-        body > header, body > main, body > footer, body > .top, body > .topbar, body > .wrap{
+        body > header, body > .top, body > .topbar{
+          position:sticky;top:0;z-index:900 !important;
+        }
+        body > main, body > footer, body > .wrap{
           position:relative;z-index:2;
         }
         .scroll-hud{
