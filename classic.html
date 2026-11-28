@@ -178,18 +178,19 @@ h1 .thin{font-weight:300;color:var(--ink2)}
 .toc-desc{font-size:12px;color:var(--ink2);padding-left:62px;line-height:1.45}
 @media(max-width:720px){.filter-bar,.toc-wrap{padding:0 18px}.toc-panel{padding:20px 18px}.toc-cols{grid-template-columns:1fr}.toc-desc{padding-left:0}.filter-search{margin-left:0;width:100%;justify-content:flex-start}.filter-input{flex:1;width:auto;max-width:none}.filter-divider{display:none}}
 @media print{.top,.filter-bar,.toc-actions{display:none !important}.toc-wrap{display:block !important}}
-.footer-socials{display:inline-flex;align-items:center;gap:10px;vertical-align:middle}
+.footer-socials{display:inline-flex;align-items:center;gap:10px;vertical-align:middle;line-height:1}
 .social-icon-link{
-  display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:9px;
-  border:1px solid var(--line2);background:var(--card-solid);transition:transform .18s cubic-bezier(.16,1,.3,1),box-shadow .18s ease,border-color .18s ease;text-decoration:none;
+  display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:6px;
+  line-height:0;text-decoration:none;transition:transform .18s cubic-bezier(.16,1,.3,1),box-shadow .18s ease;
+  vertical-align:middle;
 }
-.social-icon-link svg{display:block;border-radius:inherit}
+.social-icon-link svg{display:block;width:24px;height:24px;border-radius:5px}
 .social-icon-link:hover{
-  transform:translateY(-2px) scale(1.06);
-  box-shadow:0 6px 14px rgba(0,0,0,.15);
+  transform:translateY(-2px) scale(1.08);
+  box-shadow:0 4px 10px rgba(0,0,0,.18);
 }
-.social-icon-link.li:hover{border-color:#0A66C2}
-.social-icon-link.ig:hover{border-color:#E1306C}
+.social-icon-link.li:hover{box-shadow:0 4px 12px rgba(10,102,194,.35)}
+.social-icon-link.ig:hover{box-shadow:0 4px 12px rgba(225,48,108,.35)}
 footer{padding:36px 28px;text-align:center;color:var(--ink3);font-size:12px;font-family:var(--f-mono);border-top:1px solid var(--line);margin-top:16px;display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:14px;line-height:1.6}
 @media(max-width:600px){.hero{padding:40px 18px 28px}.grid,.grid.wide{padding:0 18px;grid-template-columns:1fr}.sec-div{padding:0 18px}.stat-strip{flex-direction:column;width:100%;border-radius:12px}.stat-item{border-right:none;border-bottom:1px solid var(--line)}.stat-item:last-child{border-bottom:none}}
 @media(prefers-reduced-motion:no-preference){
@@ -786,16 +787,16 @@ footer{padding:36px 28px;text-align:center;color:var(--ink3);font-size:12px;font
 <p class="note" style="margin-top:40px">Numbers in course cards are approximate per-module averages. Simulator outputs and benchmark figures throughout the course are illustrative — verify fast-changing limits (Cortex model names, VARIANT size, Gen2 warehouse rates, backup feature names) against the Snowflake docs before your interview.</p>
 
 <footer>
-  <span>Owned &amp; Copyright &copy; 2026 All Rights Reserved by <a href="https://100ravpatel.github.io/Portfolio/" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;white-space:nowrap">Saurav Patel</a></span>
+  <span>Owned &amp; Copyright &copy; 2026 All Rights Reserved by <a href="https://100ravpatel.github.io/Portfolio/" target="_blank" rel="noopener noreferrer" referrerpolicy="no-referrer" style="color:inherit;text-decoration:underline;white-space:nowrap">Saurav Patel</a></span>
   <span class="footer-socials">
-    <a class="social-icon-link li" href="https://www.linkedin.com/in/100ravpatel/" target="_blank" rel="noopener" title="LinkedIn · Saurav Patel" aria-label="LinkedIn">
-      <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true">
-        <rect width="24" height="24" rx="4.5" fill="#0A66C2"/>
+    <a class="social-icon-link li" href="https://linkedin.com/in/100ravpatel" target="_blank" rel="noopener noreferrer" referrerpolicy="no-referrer" title="LinkedIn · Saurav Patel" aria-label="LinkedIn">
+      <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true">
+        <rect width="24" height="24" rx="5" fill="#0A66C2"/>
         <path fill="#ffffff" d="M8.29 19.5V9.75H5.05V19.5h3.24zm-1.62-11.1c1.13 0 1.83-.75 1.83-1.69-.02-.96-.7-1.69-1.81-1.69-1.12 0-1.83.73-1.83 1.69 0 .94.7 1.69 1.79 1.69h.02zm3.43 11.1h3.24v-5.44c0-.29.02-.58.11-.79.24-.58.77-1.18 1.67-1.18 1.18 0 1.65.9 1.65 2.22V19.5h3.24v-5.83c0-3.12-1.67-4.57-3.9-4.57-1.82 0-2.63 1.01-3.08 1.7h.02V9.75H10.1c.04.91 0 9.75 0 9.75z"/>
       </svg>
     </a>
-    <a class="social-icon-link ig" href="https://www.instagram.com/100ravpatel/" target="_blank" rel="noopener" title="Instagram · Saurav Patel" aria-label="Instagram">
-      <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true">
+    <a class="social-icon-link ig" href="https://www.instagram.com/100ravpatel/" target="_blank" rel="noopener noreferrer" referrerpolicy="no-referrer" title="Instagram · Saurav Patel" aria-label="Instagram">
+      <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true">
         <defs>
           <linearGradient id="ig-grad-idx" x1="0%" y1="100%" x2="100%" y2="0%">
             <stop offset="0%" stop-color="#f09433"/>
@@ -805,7 +806,7 @@ footer{padding:36px 28px;text-align:center;color:var(--ink3);font-size:12px;font
             <stop offset="100%" stop-color="#bc1888"/>
           </linearGradient>
         </defs>
-        <rect width="24" height="24" rx="5.5" fill="url(#ig-grad-idx)"/>
+        <rect width="24" height="24" rx="5" fill="url(#ig-grad-idx)"/>
         <rect x="5.2" y="5.2" width="13.6" height="13.6" rx="4" fill="none" stroke="#ffffff" stroke-width="1.8"/>
         <circle cx="12" cy="12" r="3.2" fill="none" stroke="#ffffff" stroke-width="1.8"/>
         <circle cx="15.8" cy="8.2" r="1.1" fill="#ffffff"/>
