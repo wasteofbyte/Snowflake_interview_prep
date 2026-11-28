@@ -68,7 +68,10 @@ body{
 .scroll-hud-dot{width:7px;height:7px;border-radius:50%;background:var(--ice);box-shadow:0 0 8px var(--ice)}
 .reveal{opacity:0;transform:translateY(22px) scale(.985);transition:opacity .65s cubic-bezier(.2,.8,.2,1),transform .65s cubic-bezier(.2,.8,.2,1)}
 .reveal.in{opacity:1;transform:none}
-@media(prefers-reduced-motion:reduce){.reveal{opacity:1;transform:none;transition:none}}
+.tw-text{color:var(--ice)}
+.tw-cursor{display:inline-block;color:var(--ice);font-weight:300;margin-left:2px;animation:twBlink .9s steps(2,start) infinite}
+@keyframes twBlink{to{opacity:0}}
+@media(prefers-reduced-motion:reduce){.reveal{opacity:1;transform:none;transition:none}.tw-cursor{animation:none}}
 @media(max-width:720px){.scroll-hud{display:none}}
 
 .topbar{
@@ -273,7 +276,7 @@ footer{padding:38px 28px;text-align:center;color:var(--ink3);font-size:12px;font
   <section class="hero" id="top">
     <div>
       <div class="eyebrow">UNIFIED LEARNING PLATFORM · GOOGLE SHEETS ACCESS</div>
-      <h1>Learn Data Engineering<br><span class="thin">in one focused workspace.</span></h1>
+      <h1>Learn <span class="tw-text" id="typewriter">Data Engineering</span><span class="tw-cursor" aria-hidden="true">|</span><br><span class="thin">in one focused workspace.</span></h1>
       <p class="lead">All your Snowflake modules, Snowsight SQL labs, Query Backend scenarios, AWS S3 simulators, and interview guides organized into structured tracks — with Google Sheets login, progress tracking, bookmarks, and a built-in study timer.</p>
       <div class="hero-cta">
         <a class="btn primary" href="#catalog">Browse All Content ↓</a>
@@ -1088,6 +1091,41 @@ footer{padding:38px 28px;text-align:center;color:var(--ink3);font-size:12px;font
   updateScrollTarget();
   if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
     requestAnimationFrame(drawFrame);
+
+    // Hero Typewriter Effect
+    const twEl = document.getElementById('typewriter');
+    const phrases = [
+      'Data Engineering',
+      'Snowflake Architecture',
+      'Snowsight SQL Labs',
+      'Query Performance',
+      'AWS S3 & Snowpipe'
+    ];
+    let pIdx = 0, cIdx = phrases[0].length, deleting = true;
+    function stepTypewriter() {
+      const word = phrases[pIdx];
+      if (deleting) {
+        cIdx--;
+        twEl.textContent = word.slice(0, cIdx);
+        if (cIdx <= 0) {
+          deleting = false;
+          pIdx = (pIdx + 1) % phrases.length;
+          setTimeout(stepTypewriter, 350);
+          return;
+        }
+        setTimeout(stepTypewriter, 45);
+      } else {
+        cIdx++;
+        twEl.textContent = word.slice(0, cIdx);
+        if (cIdx >= word.length) {
+          deleting = true;
+          setTimeout(stepTypewriter, 1900);
+          return;
+        }
+        setTimeout(stepTypewriter, 75);
+      }
+    }
+    setTimeout(stepTypewriter, 1800);
   }
 })();
 </script>
