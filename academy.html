@@ -192,6 +192,7 @@ body{
 .item-card{
   background:var(--card);border:1px solid var(--line);border-radius:15px;padding:20px;
   display:flex;flex-direction:column;gap:10px;transition:all .18s;position:relative;overflow:hidden;
+  cursor:pointer;
 }
 .item-card:hover{border-color:var(--ice);transform:translateY(-2px);box-shadow:0 10px 30px rgba(10,134,194,.11)}
 .item-card.is-done{border-color:color-mix(in srgb,var(--teal) 50%,var(--line))}
@@ -283,7 +284,6 @@ footer{padding:38px 28px;text-align:center;color:var(--ink3);font-size:12px;font
 
   <!-- HERO (Centered, zero-shift typewriter) -->
   <section class="hero" id="top">
-    <div class="eyebrow">UNIFIED LEARNING PLATFORM · GOOGLE SHEETS ACCESS</div>
     <h1>Learn<span class="tw-line"><span class="tw-text" id="typewriter" data-phrases='["Data Engineering","Snowflake Architecture","Snowsight SQL Labs","Query Performance","AWS S3 & Snowpipe"]'>Data Engineering</span><span class="tw-cursor" aria-hidden="true">|</span></span><span class="thin">in one focused workspace.</span></h1>
     <p class="lead">All your Snowflake modules, Snowsight SQL labs, Query Backend scenarios, AWS S3 simulators, and interview guides organized into structured tracks — with Google Sheets login, progress tracking, bookmarks, and a built-in study timer.</p>
     <div class="hero-cta">
@@ -668,7 +668,7 @@ footer{padding:38px 28px;text-align:center;color:var(--ink3);font-size:12px;font
       const isStar = progress.bookmarks.includes(item.id);
       const allowed = isTrackAllowed(item.track);
       return `
-        <article class="item-card ${isDone ? 'is-done' : ''} ${!allowed ? 'is-locked' : ''}">
+        <article class="item-card ${isDone ? 'is-done' : ''} ${!allowed ? 'is-locked' : ''}" ${allowed ? `data-card-href="${item.href}"` : ''}>
           <div class="item-stripe" style="background:${item.color}"></div>
           <div class="item-head">
             <span class="item-code">${item.code}</span>
@@ -716,6 +716,17 @@ footer{padding:38px 28px;text-align:center;color:var(--ink3);font-size:12px;font
         renderDashboard();
         renderCatalog();
         syncProgressToSheet(true);
+      };
+    });
+
+    grid.querySelectorAll('[data-card-href]').forEach(card => {
+      card.onclick = e => {
+        if (e.target.closest('button, a')) return;
+        const href = card.dataset.cardHref;
+        if (href) {
+          localStorage.setItem(LS_LAST_ITEM, href);
+          window.location.href = href;
+        }
       };
     });
 
