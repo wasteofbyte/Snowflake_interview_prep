@@ -405,8 +405,8 @@ footer{padding:38px 28px;text-align:center;color:var(--ink3);font-size:12px;font
     <!-- Login Form -->
     <form id="loginForm">
       <div class="field">
-        <label for="loginEmail">Email</label>
-        <input id="loginEmail" type="email" required placeholder="you@example.com">
+        <label for="loginEmail">Email or User ID</label>
+        <input id="loginEmail" type="text" required placeholder="you@example.com or user id">
       </div>
       <div class="field">
         <label for="loginPass">Password</label>
@@ -424,8 +424,8 @@ footer{padding:38px 28px;text-align:center;color:var(--ink3);font-size:12px;font
         <input id="regName" type="text" required placeholder="Your name">
       </div>
       <div class="field">
-        <label for="regEmail">Email</label>
-        <input id="regEmail" type="email" required placeholder="you@example.com">
+        <label for="regEmail">Email or User ID (unique)</label>
+        <input id="regEmail" type="text" required minlength="3" placeholder="you@example.com or unique user id">
       </div>
       <div class="field">
         <label for="regPass">Create Password</label>
