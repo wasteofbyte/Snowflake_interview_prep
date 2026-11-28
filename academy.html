@@ -126,16 +126,17 @@ body{
 .hero .lead{font-size:17.5px;font-weight:300;color:var(--ink2);max-width:680px;margin:0 auto 28px}
 .hero-cta{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:center}
 
-/* Horizontal Progress Strip (placed cleanly below Hero) */
-.dash-card{
-  background:var(--card);border:1px solid var(--line2);border-radius:18px;padding:18px 24px;
-  backdrop-filter:blur(10px);box-shadow:0 12px 34px rgba(11,27,43,.06);
-  display:grid;grid-template-columns:1.3fr auto auto;gap:22px;align-items:center;
-  margin-bottom:12px;
+/* Merged Study Dashboard (Learner Progress & Sync + Focus Study Timer) */
+.dash-grid{
+  display:grid;grid-template-columns:1.35fr 1fr;gap:16px;align-items:stretch;margin-bottom:28px;
 }
-.dash-left{min-width:240px}
-.dash-head{display:flex;align-items:center;gap:10px;margin-bottom:6px;flex-wrap:wrap}
-.dash-title{font-family:var(--f-head);font-weight:700;font-size:16px}
+.dash-card{
+  background:var(--card);border:1px solid var(--line2);border-radius:18px;padding:22px;
+  backdrop-filter:blur(10px);box-shadow:0 12px 34px rgba(11,27,43,.06);
+  display:flex;flex-direction:column;justify-content:space-between;gap:14px;
+}
+.dash-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:4px;flex-wrap:wrap}
+.dash-title{font-family:var(--f-head);font-weight:700;font-size:17px}
 .sync-badge{font-family:var(--f-mono);font-size:10.5px;padding:2px 9px;border-radius:99px;
   background:var(--card2);color:var(--ink2);border:1px solid var(--line)}
 .sync-badge.ok{background:var(--teal-s);color:var(--teal);border-color:var(--teal)}
@@ -154,13 +155,24 @@ body{
   transition:all .15s;box-shadow:0 6px 18px rgba(0,0,0,.22);z-index:20;
 }
 .sync-pill-btn:hover::after{opacity:1;transform:translateY(0)}
-.prog-bar-wrap{height:9px;border-radius:99px;background:var(--card2);overflow:hidden;margin:6px 0 4px;border:1px solid var(--line)}
+.prog-bar-wrap{height:9px;border-radius:99px;background:var(--card2);overflow:hidden;margin:4px 0 2px;border:1px solid var(--line)}
 .prog-bar-fill{height:100%;background:linear-gradient(90deg,var(--ice),var(--teal));width:0%;transition:width .35s ease}
-.dash-stats{display:flex;gap:10px}
-.d-stat{background:var(--bg);border:1px solid var(--line);border-radius:11px;padding:8px 14px;text-align:center;min-width:86px}
-.d-stat b{font-family:var(--f-head);font-size:19px;display:block;line-height:1.1}
+.dash-stats{display:flex;gap:10px;flex-wrap:wrap}
+.d-stat{flex:1;min-width:75px;background:var(--bg);border:1px solid var(--line);border-radius:11px;padding:8px 12px;text-align:center}
+.d-stat b{font-family:var(--f-head);font-size:18px;display:block;line-height:1.1}
 .d-stat span{font-family:var(--f-mono);font-size:10px;color:var(--ink3)}
-.dash-actions{display:flex;gap:8px;flex-wrap:wrap}
+.dash-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+
+.tool-card.dash-timer-card{
+  background:var(--card);border:1px solid var(--line2);border-radius:18px;padding:22px;
+  backdrop-filter:blur(10px);box-shadow:0 12px 34px rgba(11,27,43,.06);
+  display:flex;flex-direction:column;justify-content:space-between;gap:10px;
+}
+.timer-display{
+  font-family:var(--f-mono);font-size:38px;font-weight:700;letter-spacing:.04em;margin:4px 0;
+  color:var(--ice);text-shadow:0 0 20px rgba(10,134,194,.18);
+}
+.timer-controls{display:flex;flex-wrap:wrap;gap:8px}
 
 /* Section Headers */
 .sec-head{display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:12px;margin:48px 0 20px}
@@ -327,9 +339,9 @@ footer{padding:38px 28px;text-align:center;color:var(--ink3);font-size:12px;font
 <header class="topbar">
   <div class="brand">SF KNOWLEDGE BASE</div>
   <nav class="nav-links" aria-label="Sections">
+    <a href="#dashboard">Dashboard</a>
     <a href="#tracks">Tracks</a>
     <a href="#catalog">Catalog</a>
-    <a href="#tools">Study Tools</a>
   </nav>
   <div class="top-right">
     <button class="top-notes-nav-btn sf-master-search-btn" id="sfMasterSearchBtn" type="button" onclick="openMasterSearchModal()" title="Search all Snowflake interview topics (⌘K / Ctrl+K)"><span>🔍 Search</span> <kbd>⌘K</kbd></button>
@@ -353,26 +365,47 @@ footer{padding:38px 28px;text-align:center;color:var(--ink3);font-size:12px;font
     </div>
   </section>
 
-  <!-- LEARNER PROGRESS STRIP (Below Hero) -->
-  <section class="dash-card reveal" id="dashboard" aria-label="Learner Progress">
-    <div class="dash-left">
-      <div class="dash-head">
-        <div class="dash-title" id="dashGreeting">Learner Progress</div>
-        <span style="margin-left:auto;font-family:var(--f-mono);font-size:12px;color:var(--ink2)"><strong id="progPctLabel">0% (0 / 35)</strong></span>
+  <!-- STUDY DASHBOARD (MERGED: LEARNER PROGRESS & FOCUS STUDY TIMER) -->
+  <section class="dash-grid" id="dashboard" aria-label="Study Dashboard & Tools">
+    
+    <!-- LEARNER PROGRESS & SYNC -->
+    <div class="dash-card reveal">
+      <div>
+        <div class="dash-head">
+          <div class="dash-title" id="dashGreeting">Learner Progress</div>
+          <span style="font-family:var(--f-mono);font-size:12px;color:var(--ink2)"><strong id="progPctLabel">0% (0 / 36)</strong></span>
+        </div>
+        <div class="prog-bar-wrap"><div class="prog-bar-fill" id="progBarFill"></div></div>
       </div>
-      <div class="prog-bar-wrap"><div class="prog-bar-fill" id="progBarFill"></div></div>
+      <div class="dash-stats">
+        <div class="d-stat"><b id="statDone">0</b><span>Completed</span></div>
+        <div class="d-stat"><b id="statBookmarks">0</b><span>Bookmarked</span></div>
+        <div class="d-stat"><b id="statStreak">1d</b><span>Streak</span></div>
+      </div>
+      <div class="dash-actions">
+        <button class="sync-pill-btn not-synced" id="syncNowBtn" type="button" data-tip="Not in sync · Click to sync" title="Not in sync · Click to sync">
+          <span class="s-dot"></span>
+          <span id="syncBtnLabel">Not in Sync</span>
+        </button>
+        <button class="btn" id="openAuthFromTools" type="button" style="font-size:12px;padding:6px 14px">🔐 Sign In / Account</button>
+      </div>
     </div>
-    <div class="dash-stats">
-      <div class="d-stat"><b id="statDone">0</b><span>Completed</span></div>
-      <div class="d-stat"><b id="statBookmarks">0</b><span>Bookmarked</span></div>
-      <div class="d-stat"><b id="statStreak">1d</b><span>Streak</span></div>
+
+    <!-- FOCUS STUDY TIMER -->
+    <div class="tool-card dash-timer-card reveal" aria-label="Focus Study Timer">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px">
+        <h3 style="font-family:var(--f-head);font-size:17px;font-weight:700;margin:0">⏱ Focus Study Timer</h3>
+        <span style="font-family:var(--f-mono);font-size:11px;color:var(--ink3)">25m sprint · 5m break</span>
+      </div>
+      <div class="timer-display" id="timerDisplay">25:00</div>
+      <div class="timer-controls">
+        <button class="btn primary" id="timerStartBtn" type="button">Start</button>
+        <button class="btn" id="timerPauseBtn" type="button">Pause</button>
+        <button class="btn" id="timerResetBtn" type="button">Reset 25m</button>
+        <button class="btn" id="timerBreakBtn" type="button">5m Break</button>
+      </div>
     </div>
-    <div class="dash-actions">
-      <button class="sync-pill-btn not-synced" id="syncNowBtn" type="button" data-tip="Not in sync · Click to sync" title="Not in sync · Click to sync">
-        <span class="s-dot"></span>
-        <span id="syncBtnLabel">Not in Sync</span>
-      </button>
-    </div>
+
   </section>
 
   <!-- LEARNING TRACKS -->
@@ -408,38 +441,7 @@ footer{padding:38px 28px;text-align:center;color:var(--ink3);font-size:12px;font
     <div class="catalog-grid" id="catalogGrid"></div>
   </section>
 
-  <!-- STUDY TOOLS -->
-  <section id="tools" class="reveal">
-    <div class="sec-head">
-      <div>
-        <h2>Study Tools &amp; Platform Controls</h2>
-        <p>Stay focused with a built-in Pomodoro timer and quick keyboard shortcuts.</p>
-      </div>
-    </div>
 
-    <div class="tools-grid">
-      <div class="tool-card">
-        <h3 style="font-family:var(--f-head);font-size:19px">⏱ Focus Study Timer</h3>
-        <p style="font-size:13.5px;color:var(--ink2)">25-minute deep work sprints with 5-minute breaks.</p>
-        <div class="timer-display" id="timerDisplay">25:00</div>
-        <div class="timer-controls">
-          <button class="btn primary" id="timerStartBtn" type="button">Start</button>
-          <button class="btn" id="timerPauseBtn" type="button">Pause</button>
-          <button class="btn" id="timerResetBtn" type="button">Reset 25m</button>
-          <button class="btn" id="timerBreakBtn" type="button">5m Break</button>
-        </div>
-      </div>
-
-      <div class="tool-card">
-        <h3 style="font-family:var(--f-head);font-size:19px">🔐 Learner Account &amp; Sync</h3>
-        <p style="font-size:13.5px;color:var(--ink2);margin-bottom:14px">Sign in or request access to save your completed modules, bookmarks, and study streak across devices.</p>
-        <div style="display:flex;flex-wrap:wrap;gap:8px">
-          <button class="btn primary" id="openAuthFromTools" type="button">🔐 Sign In / Request Access</button>
-          <a class="btn" href="https://100ravpatel.github.io/Portfolio/" target="_blank" rel="noopener">👤 Owner Portfolio ↗</a>
-        </div>
-      </div>
-    </div>
-  </section>
 
 </main>
 
@@ -714,6 +716,7 @@ footer{padding:38px 28px;text-align:center;color:var(--ink3);font-size:12px;font
     document.getElementById('statStreak').textContent = (progress.streakDays || 1) + 'd';
 
     const authBtn = document.getElementById('authBtn');
+    const openAuthBtn = document.getElementById('openAuthFromTools');
     const syncBtn = document.getElementById('syncNowBtn');
     const syncLabel = document.getElementById('syncBtnLabel');
     const greeting = document.getElementById('dashGreeting');
@@ -729,11 +732,21 @@ footer{padding:38px 28px;text-align:center;color:var(--ink3);font-size:12px;font
       authBtn.textContent = `👤 ${user.name} · Sign Out`;
       authBtn.classList.remove('primary');
       authBtn.classList.add('teal');
+      if (openAuthBtn) {
+        openAuthBtn.textContent = `👤 Sign Out`;
+        openAuthBtn.classList.remove('primary');
+        openAuthBtn.classList.add('teal');
+      }
       greeting.textContent = `Welcome back, ${user.name}`;
     } else {
       authBtn.textContent = '🔐 Sign In';
       authBtn.classList.add('primary');
       authBtn.classList.remove('teal');
+      if (openAuthBtn) {
+        openAuthBtn.textContent = '🔐 Sign In / Account';
+        openAuthBtn.classList.add('primary');
+        openAuthBtn.classList.remove('teal');
+      }
       greeting.textContent = 'Learner Progress';
     }
 
@@ -995,7 +1008,19 @@ footer{padding:38px 28px;text-align:center;color:var(--ink3);font-size:12px;font
   document.getElementById('closeModalBtn').onclick = closeModal;
   modal.onclick = e => { if (e.target === modal) closeModal(); };
   document.getElementById('sheetConfigBtn').onclick = () => openModal('config');
-  document.getElementById('openAuthFromTools').onclick = () => openModal('login');
+  const openAuthFromTools = document.getElementById('openAuthFromTools');
+  if (openAuthFromTools) {
+    openAuthFromTools.onclick = () => {
+      if (user) {
+        user = null;
+        saveState();
+        renderDashboard();
+        showMsg('Signed out of Google Sheet account.', 'ok');
+      } else {
+        openModal('login');
+      }
+    };
+  }
   document.getElementById('authBtn').onclick = () => {
     if (user) {
       user = null;
